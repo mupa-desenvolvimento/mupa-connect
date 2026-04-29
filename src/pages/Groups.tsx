@@ -231,9 +231,18 @@ export default function GroupsPage() {
       const targetNode = over.data.current?.node;
       const isDroppingInPanel = over.data.current?.type === 'available-panel';
 
-      const devicesToMove = selectedDevices.has(active.data.current.device?.id || active.id)
+      const getDeviceId = (id: string) => {
+        if (typeof id === 'string' && id.startsWith('device-')) {
+          return parseInt(id.replace('device-', ''));
+        }
+        return parseInt(id);
+      };
+
+      const activeDeviceId = active.data.current?.device?.id || getDeviceId(active.id as string);
+
+      const devicesToMove = selectedDevices.has(activeDeviceId)
         ? Array.from(selectedDevices)
-        : [active.data.current.device?.id || active.id];
+        : [activeDeviceId];
 
       try {
         let updateData: any = {};
