@@ -242,32 +242,32 @@ export default function PlaylistEditor() {
       if (id === "new") {
         const { data: newPlaylist, error: createError } = await supabase
           .from("playlists")
-          .insert({ name: updatedName, tenant_id: tenantId, is_active: true })
+          .insert({ name: updatedName, tenant_id: tenantId as any, is_active: true })
           .select().single();
           
         if (createError) throw createError;
         currentPlaylistId = newPlaylist.id;
         navigate(`/playlists/${currentPlaylistId}`, { replace: true });
       } else {
-        const { error: updateError } = await (supabase
+        const { error: updateError } = await supabase
           .from("playlists")
-          .update({ name: updatedName, updated_at: new Date().toISOString() }) as any)
-          .eq("id", id!);
+          .update({ name: updatedName, updated_at: new Date().toISOString() })
+          .eq("id", id! as any);
         if (updateError) throw updateError;
       }
 
       // 1. Limpar itens antigos (CRITICAL: Garante que a lista seja recriada do zero)
-      const { error: deleteError } = await (supabase
+      const { error: deleteError } = await supabase
         .from("playlist_items")
-        .delete() as any)
-        .eq("playlist_id", currentPlaylistId as string);
+        .delete()
+        .eq("playlist_id", currentPlaylistId as any);
       
       if (deleteError) throw deleteError;
 
       // 2. Inserir novos itens se existirem
       if (updatedItems.length > 0) {
         const itemsToInsert = updatedItems.map((it, idx) => ({
-          playlist_id: currentPlaylistId!,
+          playlist_id: currentPlaylistId! as any,
           media_id: it.mediaId,
           duracao: it.duration,
           prioridade: it.priority,
