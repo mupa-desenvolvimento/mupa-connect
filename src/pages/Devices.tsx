@@ -16,7 +16,8 @@ import {
   Monitor, 
   Settings, 
   Play,
-  FilterX
+  FilterX,
+  RotateCcw
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
