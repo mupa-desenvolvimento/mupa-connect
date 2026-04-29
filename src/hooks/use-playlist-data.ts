@@ -15,7 +15,7 @@ export function useMedias(tenantId?: string) {
       if (!tenantId) return [];
       const { data, error } = await supabase
         .from("media_items")
-        .select("*")
+        .select("id, name, thumbnail_url, file_url, type, duration, tenant_id")
         .eq("tenant_id", tenantId)
         .eq("status", "active")
         .order("created_at", { ascending: false });
@@ -35,8 +35,8 @@ export function usePlaylists(tenantId?: string) {
       const { data, error } = await supabase
         .from("playlists")
         .select(`
-          *,
-          playlist_items (*)
+          id, name, updated_at, is_active, tenant_id,
+          playlist_items (id, media_id, duracao, tipo, ordem, position, prioridade)
         `)
         .eq("tenant_id", tenantId)
         .order("updated_at", { ascending: false });
