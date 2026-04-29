@@ -32,6 +32,7 @@ export default function PlaylistsPage() {
   const navigate = useNavigate();
   const { data: tenantId, isLoading: isTenantLoading } = useTenant();
   const { data: playlistsData, isLoading: isPlaylistsLoading } = usePlaylists(tenantId || undefined);
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
@@ -47,8 +48,6 @@ export default function PlaylistsPage() {
     playlist_items: (p as any).playlist_items || []
   })) || [];
   
-  // console.log("Playlists processing:", { raw: playlistsData, processed: playlists });
-
   const filteredPlaylists = playlists.filter(playlist => {
     const playlistName = playlist.name || "";
     const matchesSearch = playlistName.toLowerCase().includes(searchQuery.toLowerCase());
@@ -57,6 +56,14 @@ export default function PlaylistsPage() {
       filterStatus === "active" ? playlist.is_active :
       !playlist.is_active;
     return matchesSearch && matchesStatus;
+  });
+
+  console.log("Playlists debug:", { 
+    isTenantLoading, 
+    isPlaylistsLoading, 
+    tenantId, 
+    rawCount: playlistsData?.length, 
+    filteredCount: filteredPlaylists.length 
   });
 
   const isLoading = isTenantLoading || isPlaylistsLoading;
