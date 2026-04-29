@@ -63,6 +63,8 @@ import { usePlaylist, useMedias, useTenant } from "@/hooks/use-playlist-data";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { handlePlaylistError } from "@/utils/error-handlers";
+import { PlaylistErrorBanner } from "@/components/PlaylistErrorBanner";
 
 // --- Types ---
 interface EditorPlaylistItem {
@@ -351,13 +353,12 @@ export default function PlaylistEditor() {
       toast.success("Playlist salva com sucesso!");
       setTimeout(() => setSaveStatus("idle"), 2000);
     } catch (error: any) {
-      console.error("Save error:", error);
       setDebugData({ 
         operation: "GENERAL_SAVE_ERROR",
         error: error,
         timestamp: new Date().toISOString()
       });
-      toast.error(`Erro ao salvar: ${error.message || 'Erro desconhecido'}`);
+      handlePlaylistError(error, "Salvar playlist");
       setSaveStatus("idle");
       setIsSaving(false);
     }
@@ -463,6 +464,8 @@ export default function PlaylistEditor() {
 
   return (
     <div className="flex flex-col h-screen bg-[#09090b] text-white">
+      <PlaylistErrorBanner error={playlistData === null && id !== 'new' ? "Playlist não encontrada ou sem permissão de acesso." : null} className="m-4" />
+      
       {/* Header */}
       <header className="h-16 border-b border-white/5 bg-card/10 backdrop-blur-xl px-6 flex items-center justify-between z-50 shrink-0">
         <div className="flex items-center gap-4">

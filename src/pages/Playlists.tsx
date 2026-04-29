@@ -30,6 +30,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
+import { handlePlaylistError } from "@/utils/error-handlers";
+import { PlaylistErrorBanner } from "@/components/PlaylistErrorBanner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,6 +41,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
 export default function PlaylistsPage() {
@@ -97,8 +100,7 @@ export default function PlaylistsPage() {
       toast.success("Playlist excluída com sucesso");
       refetch();
     } catch (error: any) {
-      console.error("Error deleting playlist:", error);
-      toast.error("Erro ao excluir playlist: " + error.message);
+      handlePlaylistError(error, "Excluir playlist");
     } finally {
       setIsDeleting(false);
       setPlaylistToDelete(null);
@@ -173,8 +175,7 @@ export default function PlaylistsPage() {
       refetch();
     } catch (error: any) {
       toast.dismiss();
-      console.error("Error duplicating playlist:", error);
-      toast.error("Erro ao duplicar: " + error.message);
+      handlePlaylistError(error, "Duplicar playlist");
     }
   };
 
@@ -213,6 +214,8 @@ export default function PlaylistsPage() {
           </Button>
         }
       />
+
+      <PlaylistErrorBanner error={isError ? "Ocorreu um erro ao carregar as playlists. Verifique sua conexão ou permissões." : null} onRetry={refetch} className="mb-6" />
 
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-card/30 backdrop-blur-md p-4 rounded-2xl border border-white/5 shadow-inner">
         <div className="relative w-full md:w-96">
