@@ -196,24 +196,62 @@ export default function GroupsPage() {
                   <h4 className="text-xs font-bold text-white/40 uppercase mb-3 flex items-center gap-2">
                     <Layers className="w-3 h-3" /> Playlist Ativa
                   </h4>
-                  {selectedNode?.playlist_id ? (
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <p className="text-lg font-bold text-white">{selectedNode.playlist_name}</p>
-                        <p className="text-xs text-[#085CF0]">
-                          {selectedNode.inherited_from ? `Herdado de ${selectedNode.inherited_from}` : 'Definido localmente (Override)'}
-                        </p>
-                      </div>
-                      <Button size="icon" variant="ghost" className="text-white/40 hover:text-white">
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="space-y-1 flex-1 min-w-0">
+                      {selectedNode?.playlist_id ? (
+                        <>
+                          <p className="text-lg font-bold text-white truncate">{selectedNode.playlist_name}</p>
+                          <p className="text-xs text-[#085CF0]">
+                            {selectedNode.inherited_from ? `Herdado de ${selectedNode.inherited_from}` : 'Definido localmente (Override)'}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-white/20 italic">Nenhuma playlist vinculada</p>
+                      )}
                     </div>
-                  ) : (
-                    <div className="text-center py-4">
-                      <p className="text-white/20 italic">Nenhuma playlist vinculada</p>
-                      <Button variant="link" className="text-[#085CF0] text-xs">Vincular agora</Button>
-                    </div>
-                  )}
+                    
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button size="icon" variant="ghost" className="text-white/40 hover:text-white shrink-0 h-10 w-10 bg-white/5">
+                          {isUpdatingPlaylist ? <Layers className="w-4 h-4 animate-spin" /> : <Edit2 className="w-4 h-4" />}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[300px] p-0 bg-[#18181b] border-white/10" align="end">
+                        <Command className="bg-transparent">
+                          <CommandInput placeholder="Buscar playlist..." className="text-white" />
+                          <CommandList>
+                            <CommandEmpty className="p-4 text-xs text-white/40">Nenhuma playlist encontrada.</CommandEmpty>
+                            <CommandGroup heading="Ações">
+                              <CommandItem
+                                onSelect={() => handleUpdatePlaylist(null)}
+                                className="text-red-400 focus:text-red-400 cursor-pointer"
+                              >
+                                <X className="mr-2 h-4 w-4" />
+                                Remover Playlist (Usar Herança)
+                              </CommandItem>
+                            </CommandGroup>
+                            <CommandGroup heading="Playlists Disponíveis">
+                              {playlists?.map((playlist) => (
+                                <CommandItem
+                                  key={playlist.id}
+                                  onSelect={() => handleUpdatePlaylist(playlist.id)}
+                                  className="text-white cursor-pointer"
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selectedNode?.playlist_id === playlist.id ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  {playlist.name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -229,8 +267,11 @@ export default function GroupsPage() {
               </div>
 
               <div className="pt-4 border-t border-white/5">
-                <Button className="w-full bg-[#085CF0] hover:bg-[#0750d4] text-white gap-2">
-                  <Edit2 className="w-4 h-4" /> Editar Configurações
+                <Button 
+                  className="w-full bg-[#085CF0] hover:bg-[#0750d4] text-white gap-2"
+                  onClick={() => setIsSidebarOpen(false)}
+                >
+                  Concluir
                 </Button>
               </div>
             </TabsContent>
