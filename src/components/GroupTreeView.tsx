@@ -72,6 +72,7 @@ interface GroupTreeViewProps {
   onEditPlaylist?: (node: TreeNode) => void;
   onCreateGroup?: () => void;
   onMoveNode?: (nodeId: string, newParentId: string | null) => void;
+  activeId?: string | null;
 }
 
 const SortableNode = ({ 
@@ -101,10 +102,15 @@ const SortableNode = ({
     setNodeRef,
     transform,
     transition,
-    isDragging
+    isDragging,
+    isOver
   } = useSortable({ 
     id: node.id,
-    disabled: node.type === 'device' // Dispositivos individuais não são arrastáveis por enquanto
+    disabled: node.type === 'device',
+    data: {
+      type: node.type,
+      node
+    }
   });
 
   const style = {
@@ -121,6 +127,7 @@ const SortableNode = ({
       className={cn(
         "group relative flex items-center px-4 py-2 hover:bg-white/5 transition-colors cursor-pointer border-l-2",
         expandedIds.has(node.id) ? "bg-white/5" : "bg-transparent",
+        isOver && "bg-[#085CF0]/10 ring-2 ring-[#085CF0]/50 ring-inset",
         node.has_conflict ? "border-red-500" : 
         (node.playlist_id && !node.inherited_from) ? "border-green-500" :
         node.has_override ? "border-yellow-500" :
@@ -228,7 +235,7 @@ const SortableNode = ({
   );
 };
 
-export function GroupTreeView({ data, onNodeClick, onEditPlaylist, onCreateGroup, onMoveNode }: GroupTreeViewProps) {
+export function GroupTreeView({ data, onNodeClick, onEditPlaylist, onCreateGroup, onMoveNode, activeId }: GroupTreeViewProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
 
