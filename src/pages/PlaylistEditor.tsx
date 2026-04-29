@@ -249,18 +249,18 @@ export default function PlaylistEditor() {
         currentPlaylistId = newPlaylist.id;
         navigate(`/playlists/${currentPlaylistId}`, { replace: true });
       } else {
-        const { error: updateError } = await supabase
+        const { error: updateError } = await (supabase
           .from("playlists")
-          .update({ name: updatedName, updated_at: new Date().toISOString() })
-          .filter("id", "eq", id!);
+          .update({ name: updatedName, updated_at: new Date().toISOString() }) as any)
+          .eq("id", id!);
         if (updateError) throw updateError;
       }
 
       // 1. Limpar itens antigos (CRITICAL: Garante que a lista seja recriada do zero)
-      const { error: deleteError } = await supabase
+      const { error: deleteError } = await (supabase
         .from("playlist_items")
-        .delete()
-        .filter("playlist_id", "eq", currentPlaylistId as string);
+        .delete() as any)
+        .eq("playlist_id", currentPlaylistId as string);
       
       if (deleteError) throw deleteError;
 
