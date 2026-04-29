@@ -31,8 +31,7 @@ export function usePlaylists() {
   return useQuery({
     queryKey: ["playlists"],
     queryFn: async () => {
-      const targetTenantId = 'f822bf9d-39e9-4726-82f7-c16bf267bc39';
-      
+      // 1. Buscamos todas as playlists para garantir visibilidade
       const { data, error } = await supabase
         .from("playlists")
         .select(`
@@ -55,16 +54,19 @@ export function usePlaylists() {
               type
             )
           )
-        `)
-        .eq("tenant_id", targetTenantId)
-        .order("updated_at", { ascending: false });
+        `);
 
       if (error) {
         console.error("Critical error fetching playlists:", error);
         throw error;
       }
       
-      return data || [];
+      // 2. Filtramos apenas o que pertence ao Stok Center (ou nulo para segurança)
+      const targetTenantId = 'f822bf9d-39e9-4726-82f7-c16bf267bc39';
+      const filtered = (data || []).filter(p => p.tenant_id === targetTenantId || !p.tenant_id);
+      
+      console.log(`[usePlaylists] Total: ${data?.length}, Filtrado: ${filtered.length}`);
+      return filtered;
     },
     staleTime: 0,
     refetchOnMount: true,
