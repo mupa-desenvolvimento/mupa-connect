@@ -489,9 +489,11 @@ export default function PlaylistEditor() {
                       </AnimatePresence>
                     </SortableContext>
 
-                    <DragOverlay dropAnimation={defaultDropAnimationSideEffects({
-                      styles: { active: { opacity: '0.5' } }
-                    })}>
+                    <DragOverlay dropAnimation={{
+                      sideEffects: defaultDropAnimationSideEffects({
+                        styles: { active: { opacity: '0.5' } }
+                      })
+                    }}>
                       {activeId ? (
                         <div className="w-48 h-32 rounded-xl border border-purple-500 bg-purple-500/20 backdrop-blur-xl shadow-2xl scale-105" />
                       ) : null}
