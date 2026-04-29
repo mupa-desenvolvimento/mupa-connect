@@ -76,7 +76,7 @@ export default function SuperAdminDashboard() {
             <Button variant="outline" className="flex gap-2">
               <Building2 className="h-4 w-4" /> Nova Revenda
             </Button>
-            <Button className="bg-gradient-primary text-primary-foreground flex gap-2">
+            <Button className="bg-gradient-primary text-primary-foreground flex gap-2" onClick={() => setIsUserModalOpen(true)}>
               <Plus className="h-4 w-4" /> Nova Empresa
             </Button>
           </div>
@@ -120,7 +120,7 @@ export default function SuperAdminDashboard() {
               <UserPlus className="h-6 w-6" />
               <span>Cadastrar Usuário</span>
             </Button>
-            <Button variant="outline" className="h-24 flex flex-col gap-2 border-dashed">
+            <Button variant="outline" className="h-24 flex flex-col gap-2 border-dashed" onClick={() => setIsUserModalOpen(true)}>
               <Building2 className="h-6 w-6" />
               <span>Cadastrar Empresa</span>
             </Button>
@@ -128,7 +128,7 @@ export default function SuperAdminDashboard() {
               <ShieldCheck className="h-6 w-6" />
               <span>Gerenciar Revendas</span>
             </Button>
-            <Button variant="outline" className="h-24 flex flex-col gap-2 border-dashed">
+            <Button variant="outline" className="h-24 flex flex-col gap-2 border-dashed" onClick={() => setIsUserModalOpen(true)}>
               <Edit className="h-6 w-6" />
               <span>Vincular Usuário</span>
             </Button>
@@ -166,7 +166,7 @@ export default function SuperAdminDashboard() {
         isOpen={isUserModalOpen} 
         onClose={() => setIsUserModalOpen(false)} 
         onSuccess={() => {
-          // Refresh logic can be added here
+          window.location.reload();
         }}
       />
     </>
