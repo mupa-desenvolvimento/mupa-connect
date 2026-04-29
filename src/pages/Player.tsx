@@ -21,7 +21,7 @@ export default function PlayerPage() {
       try {
         const { data: device, error: devError } = await supabase
           .from("dispositivos")
-          .select("id, num_filial, grupo_dispositivos, empresa, apelido_interno, serial")
+          .select("id, num_filial, grupo_dispositivos, empresa, apelido_interno, serial, playlist_id")
           .eq("apelido_interno", deviceCode)
           .maybeSingle();
 
@@ -30,7 +30,7 @@ export default function PlayerPage() {
         if (devError || !device) {
           const { data: deviceBySerial } = await supabase
             .from("dispositivos")
-            .select("id, num_filial, grupo_dispositivos, empresa, apelido_interno, serial")
+            .select("id, num_filial, grupo_dispositivos, empresa, apelido_interno, serial, playlist_id")
             .eq("serial", deviceCode)
             .maybeSingle();
             
@@ -44,12 +44,32 @@ export default function PlayerPage() {
 
         setDeviceUuid(targetDevice.id.toString());
         setDeviceInfo(targetDevice);
-        await loadHierarchyPlaylist(targetDevice);
+        if (targetDevice.playlist_id) {
+          await loadDirectPlaylist(targetDevice.playlist_id);
+        } else {
+          await loadHierarchyPlaylist(targetDevice);
+        }
       } catch (err) {
         console.error("Resolution error:", err);
       } finally {
         setIsLoading(false);
       }
+    }
+
+    async function loadDirectPlaylist(playlistId: string) {
+      const { data: playlistData } = await supabase
+        .from("playlists")
+        .select(`
+          *,
+          playlist_items (
+            *,
+            media_items (*)
+          )
+        `)
+        .eq("id", playlistId)
+        .single();
+        
+      setPlaylist(playlistData);
     }
 
     async function loadHierarchyPlaylist(device: any) {
