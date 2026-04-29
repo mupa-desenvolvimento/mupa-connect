@@ -30,10 +30,11 @@ import { useState, useEffect, useMemo } from "react";
 
 export default function PlaylistsPage() {
   const navigate = useNavigate();
-  const { data: tenantId, isLoading: isTenantLoading } = useTenant();
-  // Forçamos o ID do Stok Center se não houver um tenantId detectado
-  const effectiveId = tenantId || 'f822bf9d-39e9-4726-82f7-c16bf267bc39';
-  const { data: playlistsData, isLoading: isPlaylistsLoading, refetch } = usePlaylists(effectiveId);
+  const { data: playlistsData, isLoading: isPlaylistsLoading, isError } = usePlaylists();
+  
+  if (isError) {
+    console.error("Error detected in usePlaylists within component");
+  }
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
@@ -44,14 +45,6 @@ export default function PlaylistsPage() {
   useEffect(() => {
     localStorage.setItem("playlists-view-mode", viewMode);
   }, [viewMode]);
-
-  // Forçar atualização quando o tenantId mudar
-  useEffect(() => {
-    if (tenantId) {
-      console.log("Tenant identified, refetching playlists:", tenantId);
-      refetch();
-    }
-  }, [tenantId, refetch]);
 
   const playlists = playlistsData || [];
   
@@ -71,8 +64,7 @@ export default function PlaylistsPage() {
     });
   }, [playlists, searchQuery, filterStatus]);
 
-
-  const isLoading = isTenantLoading || isPlaylistsLoading;
+  const isLoading = isPlaylistsLoading;
 
   if (isLoading) {
     return (

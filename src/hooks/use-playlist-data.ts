@@ -27,13 +27,11 @@ export function useMedias(tenantId?: string) {
   });
 }
 
-export function usePlaylists(tenantId?: string) {
+export function usePlaylists() {
   return useQuery({
-    queryKey: ["playlists", tenantId],
+    queryKey: ["playlists"],
     queryFn: async () => {
-      // Prioridade absoluta para o tenant Stok Center se for o caso, 
-      // mas mantemos a flexibilidade para o tenantId vindo do hook
-      const effectiveTenantId = tenantId || 'f822bf9d-39e9-4726-82f7-c16bf267bc39';
+      const targetTenantId = 'f822bf9d-39e9-4726-82f7-c16bf267bc39';
       
       const { data, error } = await supabase
         .from("playlists")
@@ -42,21 +40,20 @@ export function usePlaylists(tenantId?: string) {
           name, 
           updated_at, 
           is_active, 
-          tenant_id,
-          playlist_items(id)
+          tenant_id
         `)
-        .eq("tenant_id", effectiveTenantId)
-        .order("updated_at", { ascending: false });
+        .eq("tenant_id", targetTenantId);
 
       if (error) {
-        console.error("Error fetching tenant playlists:", error);
+        console.error("Critical error fetching playlists:", error);
         throw error;
       }
       
+      console.log("Playlists loaded for Stok Center:", data?.length);
       return data || [];
     },
-    staleTime: 0, // Garantir que sempre busque dados novos
-    enabled: true,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 }
 
