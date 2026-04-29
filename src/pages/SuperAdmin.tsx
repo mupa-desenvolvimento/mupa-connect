@@ -157,6 +157,14 @@ export default function SuperAdminDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <CreateUserModal 
+        isOpen={isUserModalOpen} 
+        onClose={() => setIsUserModalOpen(false)} 
+        onSuccess={() => {
+          // Refresh stats or last users if needed
+        }}
+      />
     </>
   );
 }
