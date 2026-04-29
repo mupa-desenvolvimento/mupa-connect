@@ -431,7 +431,7 @@ export default function PlaylistEditor() {
                          <Play className="h-5 w-5 fill-current" />
                       </Button>
                       <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
-                         <div className="h-full bg-purple-500 w-1/3" />
+                         <div className="h-full bg-accent w-1/3" />
                       </div>
                       <span className="text-xs font-mono font-bold">03:20 / {totalDuration}S</span>
                       <Button size="icon" variant="ghost" className="text-white hover:bg-white/10">
