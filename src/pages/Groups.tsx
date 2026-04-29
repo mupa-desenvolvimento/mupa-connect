@@ -3,8 +3,9 @@ import { PageHeader } from "@/components/PageHeader";
 import { GroupTreeView, TreeNode } from "@/components/GroupTreeView";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { useTenant } from "@/hooks/use-playlist-data";
+import { useTenant, usePlaylists } from "@/hooks/use-playlist-data";
 import { DeviceAvailablePanel } from "@/components/DeviceAvailablePanel";
+import { useQueryClient } from "@tanstack/react-query";
 import { 
   DndContext, 
   closestCenter, 
