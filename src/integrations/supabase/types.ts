@@ -3679,6 +3679,7 @@ export type Database = {
       playlists: {
         Row: {
           channel_id: string | null
+          company_id: string
           content_scale: string | null
           created_at: string | null
           days_of_week: number[] | null
@@ -3696,11 +3697,12 @@ export type Database = {
           schedule: Json | null
           start_date: string | null
           start_time: string | null
-          tenant_id: string | null
+          tenant_id: string
           updated_at: string | null
         }
         Insert: {
           channel_id?: string | null
+          company_id: string
           content_scale?: string | null
           created_at?: string | null
           days_of_week?: number[] | null
@@ -3718,11 +3720,12 @@ export type Database = {
           schedule?: Json | null
           start_date?: string | null
           start_time?: string | null
-          tenant_id?: string | null
+          tenant_id: string
           updated_at?: string | null
         }
         Update: {
           channel_id?: string | null
+          company_id?: string
           content_scale?: string | null
           created_at?: string | null
           days_of_week?: number[] | null
@@ -3740,10 +3743,17 @@ export type Database = {
           schedule?: Json | null
           start_date?: string | null
           start_time?: string | null
-          tenant_id?: string | null
+          tenant_id?: string
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "playlists_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "playlists_fallback_media_id_fkey"
             columns: ["fallback_media_id"]
