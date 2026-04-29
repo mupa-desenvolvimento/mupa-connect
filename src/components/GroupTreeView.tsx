@@ -106,7 +106,7 @@ const SortableNode = ({
     isOver
   } = useSortable({ 
     id: node.id,
-    disabled: false // Todos os nós agora são arrastáveis, incluindo dispositivos
+    disabled: false, // Todos os nós agora são arrastáveis, incluindo dispositivos
     data: {
       type: node.type,
       node
