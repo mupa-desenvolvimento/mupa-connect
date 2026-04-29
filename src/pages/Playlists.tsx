@@ -78,7 +78,7 @@ export default function PlaylistsPage() {
           return (
             <Card 
               key={playlist.id} 
-              className="group overflow-hidden border-border/40 bg-card/40 backdrop-blur-sm hover:border-purple-500/40 hover:shadow-2xl hover:shadow-purple-500/5 transition-all duration-300"
+              className="group overflow-hidden border-border/40 bg-card/40 backdrop-blur-sm hover:border-accent/40 hover:shadow-2xl hover:shadow-accent/5 transition-all duration-300"
             >
               <div className="aspect-video relative overflow-hidden bg-muted">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
