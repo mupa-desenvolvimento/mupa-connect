@@ -556,12 +556,17 @@ export default function PlaylistEditor() {
               </TabsList>
               <div className="relative mt-4">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-                <Input placeholder="Pesquisar..." className="pl-9 h-9 bg-black/20 border-white/10 focus:border-[#085CF0]/50 text-white" />
+                <Input 
+                  placeholder="Pesquisar..." 
+                  className="pl-9 h-9 bg-black/20 border-white/10 focus:border-[#085CF0]/50 text-white" 
+                  value={mediaSearch}
+                  onChange={(e) => setMediaSearch(e.target.value)}
+                />
               </div>
             </div>
             <ScrollArea className="flex-1">
               <TabsContent value="media" className="p-4 m-0 grid grid-cols-2 gap-3">
-                {medias?.map((media) => (
+                {medias?.filter(m => m.name.toLowerCase().includes(mediaSearch.toLowerCase())).map((media) => (
                   <motion.div
                     key={media.id}
                     whileHover={{ scale: 1.02 }}
@@ -577,6 +582,17 @@ export default function PlaylistEditor() {
                     </div>
                   </motion.div>
                 ))}
+                {(!medias || medias.length === 0) && (
+                  <div className="col-span-2 text-center py-10 text-white/20 text-[10px] uppercase font-bold tracking-widest">
+                    {isMediasLoading ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2 className="h-3 w-3 animate-spin" /> Carregando...
+                      </div>
+                    ) : (
+                      "Nenhuma mídia encontrada"
+                    )}
+                  </div>
+                )}
               </TabsContent>
             </ScrollArea>
           </Tabs>
