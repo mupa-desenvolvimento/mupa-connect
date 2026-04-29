@@ -412,6 +412,30 @@ export default function PlaylistsPage() {
           </div>
         )}
       </div>
+
+      <AlertDialog open={!!playlistToDelete} onOpenChange={(open) => !open && setPlaylistToDelete(null)}>
+        <AlertDialogContent className="bg-[#18181b] border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Excluir Playlist
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Tem certeza que deseja excluir esta playlist? Esta ação não pode ser desfeita e removerá o conteúdo de todos os dispositivos vinculados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              className="bg-red-500 hover:bg-red-600 text-white"
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Excluindo..." : "Excluir Definitivamente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
