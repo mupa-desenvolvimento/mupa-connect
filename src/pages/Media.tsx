@@ -67,6 +67,7 @@ export default function MediaPage() {
   const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
 
   useEffect(() => {
+  useEffect(() => {
     if (tenantId) {
       fetchMedia();
       fetchFolders();
@@ -75,8 +76,11 @@ export default function MediaPage() {
       } else {
         setFolderPath([]);
       }
+    } else if (!isTenantLoading) {
+      setIsLoading(false);
     }
-  }, [currentFolder, tenantId]);
+  }, [currentFolder, tenantId, isTenantLoading]);
+  }, [currentFolder, tenantId, isTenantLoading]);
 
   const updateFolderPath = async (folderId: string) => {
     const path: FolderItem[] = [];
@@ -100,8 +104,12 @@ export default function MediaPage() {
   };
 
   const fetchMedia = async () => {
-    if (!tenantId) return;
+    if (!tenantId) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
+    
     let query = supabase
       .from("media_items")
       .select("*")
@@ -126,6 +134,7 @@ export default function MediaPage() {
 
   const fetchFolders = async () => {
     if (!tenantId) return;
+    
     let query = supabase
       .from("folders")
       .select("*")
