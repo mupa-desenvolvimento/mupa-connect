@@ -260,7 +260,7 @@ export default function PlaylistEditor() {
       const { error: deleteError } = await supabase
         .from("playlist_items")
         .delete()
-        .eq("playlist_id", currentPlaylistId as string);
+        .filter("playlist_id", "eq", currentPlaylistId as string);
       
       if (deleteError) throw deleteError;
 
