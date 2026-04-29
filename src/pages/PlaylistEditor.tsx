@@ -298,7 +298,7 @@ export default function PlaylistEditor() {
         const { error: updateError } = await supabase
           .from("playlists")
           .update({ name: updatedName, updated_at: new Date().toISOString() })
-          .eq("id", id! as any);
+          .eq("id", id as any);
         if (updateError) throw updateError;
       }
 
@@ -313,7 +313,7 @@ export default function PlaylistEditor() {
       // 2. Inserir novos itens se existirem
       if (updatedItems.length > 0) {
         const itemsToInsert = updatedItems.map((it, idx) => ({
-          playlist_id: currentPlaylistId! as any,
+          playlist_id: currentPlaylistId as any,
           media_id: it.mediaId,
           duracao: it.duration,
           prioridade: it.priority,
@@ -343,10 +343,17 @@ export default function PlaylistEditor() {
       await queryClient.refetchQueries({ queryKey: ["playlists"] });
       await queryClient.refetchQueries({ queryKey: ["playlist", currentPlaylistId] });
       
-      // 4. Enviar sinal de atualização global
-      await supabase.from("dispositivos").update({ 
-        comando: `reload:${Date.now()}` 
-      } as any).eq('empresa', '003ZAF');
+      // 4. Enviar sinal de atualização global para dispositivos Comercial Zaffari (003ZAF)
+      try {
+        await supabase
+          .from("dispositivos")
+          .update({ 
+            comando: `reload:${Date.now()}` 
+          } as any)
+          .eq('empresa', '003ZAF');
+      } catch (e) {
+        console.warn("Silent failure updating dispositivos:", e);
+      }
       
       setSaveStatus("saved");
       setIsSaving(false);
