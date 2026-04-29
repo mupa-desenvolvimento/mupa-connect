@@ -102,7 +102,28 @@ export default function PlaylistsPage() {
             className="pl-9 bg-black/20 border-white/10 focus:border-[#085CF0]/50 transition-all text-white placeholder:text-white/20"
           />
         </div>
-        <div className="flex items-center gap-2 bg-black/20 p-1 rounded-lg border border-white/5">
+        
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1 bg-black/20 p-1 rounded-lg border border-white/5">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => setViewMode("grid")}
+              className={`h-8 w-8 ${viewMode === "grid" ? 'bg-[#085CF0] text-white' : 'text-white/40'}`}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => setViewMode("list")}
+              className={`h-8 w-8 ${viewMode === "list" ? 'bg-[#085CF0] text-white' : 'text-white/40'}`}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-2 bg-black/20 p-1 rounded-lg border border-white/5">
           <Button 
             variant={filterStatus === "all" ? "secondary" : "ghost"}
             size="sm"
