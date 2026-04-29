@@ -71,7 +71,7 @@ export default function PlaylistsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {playlists?.map((playlist) => {
+        {playlists?.filter(p => p.name).map((playlist) => {
           const itemsCount = playlist.playlist_items?.length || 0;
           const updatedAt = playlist.updated_at 
             ? format(new Date(playlist.updated_at), "dd 'de' MMMM", { locale: ptBR })
