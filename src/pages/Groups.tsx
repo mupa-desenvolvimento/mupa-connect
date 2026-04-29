@@ -414,10 +414,12 @@ export default function GroupsPage() {
           <div className="flex-1 min-w-[320px] max-w-[400px] h-full">
             <DeviceAvailablePanel 
               selectedIds={selectedDevices}
-              onToggleSelection={(id) => {
+              onToggleSelection={(ids) => {
                 const next = new Set(selectedDevices);
-                if (next.has(id)) next.delete(id);
-                else next.add(id);
+                ids.forEach(id => {
+                  if (next.has(id)) next.delete(id);
+                  else next.add(id);
+                });
                 setSelectedDevices(next);
               }}
               onSelectAll={(ids) => setSelectedDevices(new Set(ids))}

@@ -159,6 +159,26 @@ export function DeviceAvailablePanel({
     }
   };
 
+  const handleToggle = (id: number, isShiftKey: boolean) => {
+    if (isShiftKey && lastSelectedId !== null) {
+      const lastIndex = filteredDevices.findIndex(d => d.id === lastSelectedId);
+      const currentIndex = filteredDevices.findIndex(d => d.id === id);
+      
+      if (lastIndex !== -1 && currentIndex !== -1) {
+        const start = Math.min(lastIndex, currentIndex);
+        const end = Math.max(lastIndex, currentIndex);
+        const idsInRange = filteredDevices.slice(start, end + 1).map(d => d.id);
+        
+        onToggleSelection(idsInRange);
+        setLastSelectedId(id);
+        return;
+      }
+    }
+    
+    onToggleSelection([id]);
+    setLastSelectedId(id);
+  };
+
   const { setNodeRef, isOver } = useDroppable({
     id: 'available-devices-panel',
     data: {
