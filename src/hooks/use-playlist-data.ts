@@ -15,7 +15,7 @@ export function useMedias(tenantId?: string) {
       let query = supabase
         .from("media_items")
         .select("id, name, thumbnail_url, file_url, type, duration, tenant_id")
-        .eq("status", "ready")
+        .in("status", ["ready", "active"]) // Aceita ambos os status como válidos para exibição
         .order("created_at", { ascending: false });
 
       if (tenantId) {
