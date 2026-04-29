@@ -62,6 +62,7 @@ import { toast } from "sonner";
 import { usePlaylist, useMedias, useTenant } from "@/hooks/use-playlist-data";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 
 // --- Types ---
 interface EditorPlaylistItem {
