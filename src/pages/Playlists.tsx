@@ -30,7 +30,11 @@ import { useState, useEffect, useMemo } from "react";
 
 export default function PlaylistsPage() {
   const navigate = useNavigate();
-  const { data: playlistsData, isLoading: isPlaylistsLoading } = usePlaylists();
+  const { data: playlistsData, isLoading: isPlaylistsLoading, isError } = usePlaylists();
+  
+  if (isError) {
+    console.error("Error detected in usePlaylists within component");
+  }
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
