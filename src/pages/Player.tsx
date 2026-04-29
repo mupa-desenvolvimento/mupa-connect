@@ -189,7 +189,7 @@ export default function PlayerPage() {
     }
   }, [currentIndex, formattedPlaylist.length, deviceInfo?.serial, currentMedia, playlist?.id]);
 
-  if (isLoading) {
+  if (isLoading && !formattedPlaylist.length) {
     return <div className="fixed inset-0 bg-black flex items-center justify-center text-white/40 font-mono text-xs uppercase tracking-widest">Iniciando Player Mupa...</div>;
   }
 
