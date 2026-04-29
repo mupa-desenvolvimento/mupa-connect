@@ -350,7 +350,7 @@ export default function PlaylistEditor() {
           .update({ 
             comando: `reload:${Date.now()}` 
           } as any)
-          .eq('empresa', '003ZAF');
+          .ilike('empresa', '003ZAF');
       } catch (e) {
         console.warn("Silent failure updating dispositivos:", e);
       }
