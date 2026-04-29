@@ -411,6 +411,15 @@ export default function DevicesPage() {
                         </div>
 
                         <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                            onClick={() => handleRebootDevice(d.id.toString(), d.apelido_interno)}
+                            title="Reiniciar Player"
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </Button>
                           <Button asChild variant="outline" size="sm" className="flex-1 h-8 text-xs">
                             <Link to={`/dispositivos/${d.id}`}>Detalhes</Link>
                           </Button>
