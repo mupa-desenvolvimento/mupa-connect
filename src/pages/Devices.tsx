@@ -53,7 +53,7 @@ export default function DevicesPage() {
       const { data, error } = await supabase
         .from("dispositivos")
         .select("*")
-        .eq("empresa", "1728965891007x215886838679286700") // Filtrar por Stok Center
+        .eq("empresa", "003ZAF") // Filtrar por Stok Center
         .order("apelido_interno");
       
       if (error) throw error;
@@ -69,7 +69,7 @@ export default function DevicesPage() {
       const { data, error } = await supabase
         .from("dispositivos")
         .select("num_filial")
-        .eq("empresa", "1728965891007x215886838679286700")
+        .eq("empresa", "003ZAF")
         .not("num_filial", "is", null);
 
       if (error) return [];
