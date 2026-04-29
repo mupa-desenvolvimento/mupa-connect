@@ -158,7 +158,7 @@ export default function PlaylistsPage() {
         ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" 
         : "flex flex-col gap-3"
       }>
-        {filteredPlaylists.map((playlist) => {
+        {filteredPlaylists.length > 0 ? filteredPlaylists.map((playlist) => {
           const itemsCount = playlist.playlist_items?.length || 0;
           const updatedAt = playlist.updated_at 
             ? format(new Date(playlist.updated_at), "dd 'de' MMM, HH:mm", { locale: ptBR })
