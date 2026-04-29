@@ -352,8 +352,12 @@ export default function PlaylistEditor() {
   };
 
   const addItem = (mediaId: string) => {
+    console.log("Adding item to playlist. MediaId:", mediaId);
     const media = medias?.find(m => m.id === mediaId);
-    if (!media) return;
+    if (!media) {
+      console.error("Media not found for ID:", mediaId);
+      return;
+    }
     const newItem: EditorPlaylistItem = {
       id: `temp-${Date.now()}-${Math.random()}`,
       mediaId: media.id,
@@ -363,6 +367,7 @@ export default function PlaylistEditor() {
       media: media
     };
     const newItems = [...items, newItem];
+    console.log("New items state will be:", newItems);
     setItems(newItems);
     setSelectedItem(newItem);
     triggerAutoSave(newItems, playlistName);
