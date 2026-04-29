@@ -387,7 +387,7 @@ export default function PlaylistEditor() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100" />
                     <div className="absolute bottom-1.5 left-1.5 right-1.5 opacity-0 group-hover:opacity-100 flex justify-between items-center">
                       <span className="text-[10px] text-white font-medium truncate">{media.name}</span>
-                      <Plus className="h-3 w-3 text-purple-400 shrink-0" />
+                      <Plus className="h-3 w-3 text-accent shrink-0" />
                     </div>
                   </motion.div>
                 ))}
