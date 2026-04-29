@@ -37,12 +37,10 @@ export function usePlaylists(tenantId?: string) {
         .from("playlists")
         .select(`
           id, name, updated_at, is_active, tenant_id,
-          playlist_items!playlist_items_playlist_id_fkey (id, media_id, duracao, tipo, ordem, position, prioridade)
+          playlist_items (id, media_id, duracao, tipo, ordem, position, prioridade)
         `)
         .or(tenantId ? `tenant_id.eq.${tenantId},tenant_id.is.null` : 'tenant_id.is.null')
         .order("updated_at", { ascending: false, nullsFirst: false });
-
-      const { data, error } = await query.order("updated_at", { ascending: false, nullsFirst: false });
 
       if (error) {
         console.error("Error fetching playlists:", error);
