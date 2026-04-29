@@ -434,8 +434,10 @@ export default function PlaylistEditor() {
             <div className="flex flex-col">
               <input 
                 value={playlistName}
-                onChange={(e) => setPlaylistName(e.target.value)}
-                onBlur={() => setHasUnsavedChanges(true)}
+                onChange={(e) => {
+                  setPlaylistName(e.target.value);
+                  setHasUnsavedChanges(true);
+                }}
                 className="bg-transparent border-none focus:ring-0 text-lg font-display font-semibold text-white p-0 h-7"
               />
             </div>
