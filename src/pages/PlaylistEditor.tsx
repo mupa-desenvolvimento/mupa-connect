@@ -65,6 +65,7 @@ interface EditorPlaylistItem {
   dbId?: string; 
   mediaId: string;
   duration: number;
+  priority: number;
   type: string;
   media?: any;
 }
@@ -194,6 +195,7 @@ export default function PlaylistEditor() {
           dbId: it.id,
           mediaId: it.media_id,
           duration: it.duracao,
+          priority: it.prioridade || 1,
           type: it.tipo,
           media: medias?.find(m => m.id === it.media_id)
         }));
@@ -234,6 +236,7 @@ export default function PlaylistEditor() {
           playlist_id: currentPlaylistId!,
           media_id: it.mediaId,
           duracao: it.duration,
+          prioridade: it.priority,
           tipo: it.type,
           ordem: idx + 1,
           position: idx + 1,
@@ -277,6 +280,7 @@ export default function PlaylistEditor() {
       id: `temp-${Date.now()}-${Math.random()}`,
       mediaId: media.id,
       duration: media.duration || 10,
+      priority: 1,
       type: media.type === 'video' ? 'video' : 'image',
       media: media
     };
@@ -303,6 +307,17 @@ export default function PlaylistEditor() {
     setItems(newItems);
     if (selectedItem?.id === id) {
       setSelectedItem({ ...selectedItem, duration: newDuration });
+    }
+    triggerAutoSave(newItems, playlistName);
+  };
+
+  const updateItemPriority = (id: string, newPriority: number) => {
+    const newItems = items.map(item => 
+      item.id === id ? { ...item, priority: newPriority } : item
+    );
+    setItems(newItems);
+    if (selectedItem?.id === id) {
+      setSelectedItem({ ...selectedItem, priority: newPriority });
     }
     triggerAutoSave(newItems, playlistName);
   };
@@ -579,6 +594,25 @@ export default function PlaylistEditor() {
                             <div className="flex justify-between text-[10px] text-white/20 font-bold uppercase">
                                <span>1s</span>
                                <span>60s</span>
+                            </div>
+                         </div>
+ 
+                         <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                               <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Prioridade de Exibição</label>
+                               <span className="text-xs font-mono font-bold text-[#085CF0]">P{selectedItem.priority}</span>
+                            </div>
+                            <Slider 
+                               value={[selectedItem.priority]} 
+                               min={1} 
+                               max={10} 
+                               step={1}
+                               onValueChange={(val) => updateItemPriority(selectedItem.id, val[0])}
+                               className="py-4"
+                            />
+                            <div className="flex justify-between text-[10px] text-white/20 font-bold uppercase">
+                               <span>Baixa</span>
+                               <span>Alta</span>
                             </div>
                          </div>
 
