@@ -83,7 +83,7 @@ const App = () => {
               <Route path="/play/:deviceCode" element={<Player />} />
 
               {/* Painel Empresa - Protegido */}
-              <Route element={<AppLayout />}>
+              <Route element={session ? <AppLayout /> : <Login />}>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/superadmin" element={<SuperAdmin />} />
                 <Route path="/dispositivos" element={<Devices />} />
