@@ -15,7 +15,7 @@ export default function StoresPage() {
       const { data: devices, error: deviceError } = await supabase
         .from("dispositivos")
         .select("num_filial, online")
-        .eq("empresa", stockCenterId);
+        .ilike("empresa", stockCenterId);
       
       if (deviceError) throw deviceError;
 
