@@ -21,7 +21,7 @@ export default function PlayerPage() {
       try {
         const { data: device, error: devError } = await supabase
           .from("dispositivos")
-          .select("id, num_filial, grupo_dispositivos, empresa, apelido_interno, serial")
+          .select("id, num_filial, grupo_dispositivos, empresa, apelido_interno, serial, playlist_id")
           .eq("apelido_interno", deviceCode)
           .maybeSingle();
 

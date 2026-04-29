@@ -2100,6 +2100,7 @@ export type Database = {
           num_filial: string | null
           online: boolean | null
           pin: string | null
+          playlist_id: string | null
           serial: string | null
           tipo_da_licenca: string | null
           type: string | null
@@ -2119,6 +2120,7 @@ export type Database = {
           num_filial?: string | null
           online?: boolean | null
           pin?: string | null
+          playlist_id?: string | null
           serial?: string | null
           tipo_da_licenca?: string | null
           type?: string | null
@@ -2138,11 +2140,20 @@ export type Database = {
           num_filial?: string | null
           online?: boolean | null
           pin?: string | null
+          playlist_id?: string | null
           serial?: string | null
           tipo_da_licenca?: string | null
           type?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "dispositivos_playlist_id_fkey"
+            columns: ["playlist_id"]
+            isOneToOne: false
+            referencedRelation: "playlists"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       distribution_channels: {
         Row: {
@@ -6080,6 +6091,7 @@ export type Database = {
           num_filial: string | null
           online: boolean | null
           pin: string | null
+          playlist_id: string | null
           serial: string | null
           tipo_da_licenca: string | null
           type: string | null
