@@ -312,7 +312,7 @@ export default function PlaylistEditor() {
   if (isLoadingPlaylist && id !== "new") {
     return (
       <div className="h-screen flex items-center justify-center bg-[#09090b]">
-        <Loader2 className="h-10 w-10 animate-spin text-purple-500" />
+        <Loader2 className="h-10 w-10 animate-spin text-accent" />
       </div>
     );
   }
