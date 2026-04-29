@@ -185,6 +185,16 @@ export default function DevicesPage() {
                 <LayoutGrid className="h-4 w-4" />
               </Button>
             </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRebootAll} 
+              disabled={isLoading || filteredDevices.length === 0} 
+              className="h-10 text-destructive hover:bg-destructive/10"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Reiniciar {filteredDevices.length < devices?.length ? "Filtrados" : "Todos"}
+            </Button>
             <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading} className="h-10">
               <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
               Atualizar
