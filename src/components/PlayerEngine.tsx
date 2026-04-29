@@ -150,12 +150,12 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
             preload="auto"
             onError={handleError}
             onEnded={handleNext}
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover transition-opacity duration-300 ${activeLayer === "A" ? "opacity-100" : "opacity-0"}`}
           />
         ) : (
           <img
             src={activeLayer === "A" ? playlist[currentIndex].url : playlist[nextIndex].url}
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover transition-opacity duration-300 ${activeLayer === "A" ? "opacity-100" : "opacity-0"}`}
             alt="media"
             onError={handleError}
           />
@@ -176,12 +176,12 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
             preload="auto"
             onError={handleError}
             onEnded={handleNext}
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover transition-opacity duration-300 ${activeLayer === "B" ? "opacity-100" : "opacity-0"}`}
           />
         ) : (
           <img
             src={activeLayer === "B" ? playlist[currentIndex].url : playlist[nextIndex].url}
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover transition-opacity duration-300 ${activeLayer === "B" ? "opacity-100" : "opacity-0"}`}
             alt="media"
             onError={handleError}
           />
