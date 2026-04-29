@@ -142,23 +142,26 @@ export function DeviceAvailablePanel({
       const companyId = userData?.company || "1728965891007x215886838679286700";
       
       // 2. Fetch devices for this company
-      const { data, error } = await supabase
-        .from("dispositivos")
-        .select("*")
-        .eq("empresa", companyId)
-        .order("apelido_interno");
+      // 2. Fetch devices and stores for this tenant
+      const [devicesResponse, storesResponse] = await Promise.all([
+        supabase.from("dispositivos").select("*").eq("empresa", companyId),
+        supabase.from("stores").select("code").eq("tenant_id", tenantId)
+      ]);
       
-      if (error) throw error;
+      if (devicesResponse.error) throw devicesResponse.error;
+      if (storesResponse.error) throw storesResponse.error;
 
-      // 3. Filter devices that are NOT linked to a valid UUID group or store
-      // A device is "available" if its grupo_dispositivos is NOT a UUID 
-      // OR if it's null/empty.
+      const devices = devicesResponse.data as Device[];
+      const storeCodes = new Set(storesResponse.data?.map(s => s.code) || []);
+
+      // 3. Filter devices that are NOT correctly linked to a UUID group or a valid Store
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       
-      return (data as Device[]).filter(d => {
+      return devices.filter(d => {
         const hasValidGroup = d.grupo_dispositivos && uuidRegex.test(d.grupo_dispositivos);
-        // Also check if num_filial matches a store code (harder to check here, but group is the main thing)
-        return !hasValidGroup;
+        const hasValidStore = d.num_filial && storeCodes.has(d.num_filial);
+        
+        return !hasValidGroup && !hasValidStore;
       });
     },
     enabled: !!tenantId
