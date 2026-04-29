@@ -65,19 +65,40 @@ export default function MediaPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
+  const [isCheckingConsistency, setIsCheckingConsistency] = useState(false);
 
   useEffect(() => {
-    if (tenantId) {
-      fetchMedia();
-      fetchFolders();
-      if (currentFolder) {
-        updateFolderPath(currentFolder);
-      } else {
-        setFolderPath([]);
+    const initPage = async () => {
+      if (tenantId) {
+        setIsCheckingConsistency(true);
+        // Consistency check: Verify if the current user has access to this tenant
+        const { data: hasAccess, error } = await supabase.rpc('is_member_of_tenant', {
+          check_user_id: (await supabase.auth.getUser()).data.user?.id,
+          check_tenant_id: tenantId
+        });
+
+        if (error || !hasAccess) {
+          console.error("Consistency check failed:", error);
+          toast.error("Erro de consistência: Você não tem permissão para acessar este tenant.");
+          setIsLoading(false);
+          setIsCheckingConsistency(false);
+          return;
+        }
+
+        await Promise.all([fetchMedia(), fetchFolders()]);
+        
+        if (currentFolder) {
+          updateFolderPath(currentFolder);
+        } else {
+          setFolderPath([]);
+        }
+        setIsCheckingConsistency(false);
+      } else if (!isTenantLoading) {
+        setIsLoading(false);
       }
-    } else if (!isTenantLoading) {
-      setIsLoading(false);
-    }
+    };
+
+    initPage();
   }, [currentFolder, tenantId, isTenantLoading]);
 
   const updateFolderPath = async (folderId: string) => {
