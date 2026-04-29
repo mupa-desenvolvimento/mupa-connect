@@ -106,17 +106,18 @@ export default function GroupsPage() {
     
     setIsUpdatingPlaylist(true);
     try {
-      let table = "";
-      if (selectedNode.type === "store_group") table = "groups";
-      else if (selectedNode.type === "store") table = "stores";
-      else if (selectedNode.type === "device_group") table = "device_groups";
+      let query: any;
+      if (selectedNode.type === "store_group") {
+        query = supabase.from("groups").update({ playlist_id: playlistId }).eq("id", selectedNode.id);
+      } else if (selectedNode.type === "store") {
+        query = supabase.from("stores").update({ playlist_id: playlistId }).eq("id", selectedNode.id);
+      } else if (selectedNode.type === "device_group") {
+        query = supabase.from("device_groups").update({ playlist_id: playlistId }).eq("id", selectedNode.id);
+      }
 
-      if (!table) throw new Error("Tipo de nó desconhecido");
+      if (!query) throw new Error("Tipo de nó desconhecido");
 
-      const { error } = await supabase
-        .from(table)
-        .update({ playlist_id: playlistId })
-        .eq("id", selectedNode.id);
+      const { error } = await query;
 
       if (error) throw error;
 
