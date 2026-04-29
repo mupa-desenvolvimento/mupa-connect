@@ -8,6 +8,7 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { 
@@ -23,10 +24,12 @@ import {
   Search, 
   Clock, 
   Play,
-  Filter
+  Filter,
+  ShieldAlert
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 type DeviceStatus = "ativo" | "online" | "offline";
 
@@ -45,11 +48,35 @@ interface Device {
 export default function PlayerMonitoring() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSuperAdmin, setIsSuperAdmin] = useState<boolean | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchDevices();
+    async function checkAccess() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate("/login");
+        return;
+      }
+
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin_global")
+        .single();
+
+      if (!roleData) {
+        setIsSuperAdmin(false);
+      } else {
+        setIsSuperAdmin(true);
+        fetchDevices();
+      }
+    }
+
+    checkAccess();
 
     // Inscrição Realtime para atualizações na tabela dispositivos
     const channel = supabase
@@ -127,6 +154,27 @@ export default function PlayerMonitoring() {
         return <Badge variant="destructive" className="gap-1"><WifiOff className="h-3 w-3" /> Offline</Badge>;
     }
   };
+
+  if (isSuperAdmin === false) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+        <ShieldAlert className="h-16 w-16 text-destructive opacity-50" />
+        <h2 className="text-2xl font-bold">Acesso Restrito</h2>
+        <p className="text-muted-foreground text-center max-w-md">
+          Esta página é reservada apenas para administradores globais do sistema.
+        </p>
+        <Button onClick={() => navigate("/")}>Voltar ao Dashboard</Button>
+      </div>
+    );
+  }
+
+  if (isSuperAdmin === null) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <Activity className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
