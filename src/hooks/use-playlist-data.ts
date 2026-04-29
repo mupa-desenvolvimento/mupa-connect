@@ -51,6 +51,7 @@ export function usePlaylists() {
         throw error;
       }
       
+      console.log("Playlists loaded for Stok Center:", data?.length);
       return data || [];
     },
     staleTime: 0,
