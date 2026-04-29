@@ -95,10 +95,11 @@ export default function PlayerPage() {
           />
         ) : (
           <video
-            key={current?.media.id + String(index)}
+            key={(current?.media.id ?? "") + String(index)}
             src={current?.media.url}
             autoPlay
-            muted
+            muted={volume === 0}
+            ref={(el) => { if (el) el.volume = Math.max(0, Math.min(1, volume / 100)); }}
             playsInline
             className="w-full h-full object-cover"
             onEnded={() => setIndex((i) => (i + 1) % queue.length)}
