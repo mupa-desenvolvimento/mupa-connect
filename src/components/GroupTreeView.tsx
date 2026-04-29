@@ -86,7 +86,8 @@ const SortableNode = ({
   onEditPlaylist,
   getNodeColor,
   getNodeIcon,
-  getStatusLabel
+  getStatusLabel,
+  onRemoveDevice
 }: { 
   node: FlattenedNode, 
   index: number,
@@ -96,7 +97,8 @@ const SortableNode = ({
   onEditPlaylist?: (node: TreeNode) => void,
   getNodeColor: (node: TreeNode) => string,
   getNodeIcon: (type: NodeType) => JSX.Element,
-  getStatusLabel: (node: TreeNode) => string
+  getStatusLabel: (node: TreeNode) => string,
+  onRemoveDevice?: (deviceId: string) => void
 }) => {
   const {
     attributes,
