@@ -121,6 +121,7 @@ export function DeviceAvailablePanel({
   onSelectAll: (ids: number[]) => void,
   onClearSelection: () => void
 }) {
+  const [lastSelectedId, setLastSelectedId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const { data: tenantId } = useTenant();
 
@@ -235,8 +236,8 @@ export function DeviceAvailablePanel({
                 key={device.id} 
                 device={device} 
                 isSelected={selectedIds.has(device.id)}
-                onToggle={onToggleSelection}
-              />
+              onToggle={handleToggle}
+            />
             ))
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
