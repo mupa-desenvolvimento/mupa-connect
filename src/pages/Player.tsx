@@ -243,6 +243,11 @@ export default function PlayerPage() {
         </div>
       </div>
 
+      {/* Discrete device ID */}
+      <div className="absolute bottom-1 right-2 z-30 text-[9px] font-mono text-white/30 tracking-wider select-none pointer-events-none">
+        ID: {deviceInfo?.serial || deviceUuid || deviceCode || "—"}
+      </div>
+
       <style>{`@keyframes mupaProgress { from { width: 0% } to { width: 100% } }`}</style>
     </div>
   );
