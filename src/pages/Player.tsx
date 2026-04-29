@@ -87,7 +87,7 @@ export default function PlayerPage() {
   }, [deviceCode, reloadKey]);
 
   useDeviceCommandChannel(deviceUuid, {
-    reloadPlaylist: () => setReloadKey((k) => k + 1),
+    reloadPlaylist: () => setReloadKey((k: number) => k + 1),
     playCampaign:   (id) => console.info("[player] play_campaign", id),
     setVolume:      (v) => setVolume(v),
     screenshot:     () => undefined,
