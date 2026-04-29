@@ -112,7 +112,7 @@ export default function PlayerPage() {
       }, (payload: any) => {
         if (payload.new.comando && payload.new.comando.startsWith('reload')) {
           console.log("[Player] Manual reload triggered via DB");
-          setReloadKey(k => k + 1);
+          setReloadKey((k: number) => k + 1);
         }
       })
       .subscribe();
