@@ -137,7 +137,7 @@ const SortableItem = ({
       <div 
         {...attributes} 
         {...listeners} 
-        className="absolute bottom-2 left-2 p-1 rounded bg-black/40 hover:bg-purple-600/60 text-white/50 hover:text-white transition-colors cursor-grab active:cursor-grabbing"
+        className="absolute bottom-2 left-2 p-1 rounded bg-black/40 hover:bg-accent/60 text-white/50 hover:text-accent-foreground transition-colors cursor-grab active:cursor-grabbing"
       >
         <GripVertical className="h-4 w-4" />
       </div>
