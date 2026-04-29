@@ -182,6 +182,11 @@ export default function PlaylistEditor() {
   const [debugData, setDebugData] = useState<any>(null);
   const [showDebug, setShowDebug] = useState(false);
 
+  // Monitorar mudanças no estado de itens
+  useEffect(() => {
+    console.log("ITEMS STATE UPDATED. Count:", items.length, items);
+  }, [items]);
+
   // DND Sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
