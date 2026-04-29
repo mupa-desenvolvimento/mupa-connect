@@ -40,16 +40,17 @@ export function usePlaylists() {
           name, 
           updated_at, 
           is_active, 
-          tenant_id
+          tenant_id,
+          playlist_items (id)
         `)
-        .eq("tenant_id", targetTenantId);
+        .eq("tenant_id", targetTenantId)
+        .order("updated_at", { ascending: false });
 
       if (error) {
         console.error("Critical error fetching playlists:", error);
         throw error;
       }
       
-      console.log("Playlists loaded for Stok Center:", data?.length);
       return data || [];
     },
     staleTime: 0,
