@@ -10,6 +10,7 @@ import Devices from "./pages/Devices";
 import DeviceDetail from "./pages/DeviceDetail";
 import Media from "./pages/Media";
 import Playlists from "./pages/Playlists";
+import PlaylistEditor from "./pages/PlaylistEditor";
 import Campaigns from "./pages/Campaigns";
 import Stores from "./pages/Stores";
 import Groups from "./pages/Groups";
@@ -77,8 +78,8 @@ const App = () => {
                 <Route path="/superadmin" element={<SuperAdmin />} />
                 <Route path="/dispositivos" element={<Devices />} />
                 <Route path="/dispositivos/:id" element={<DeviceDetail />} />
-                <Route path="/midias" element={<Media />} />
                 <Route path="/playlists" element={<Playlists />} />
+                <Route path="/playlists/:id" element={<PlaylistEditor />} />
                 <Route path="/campanhas" element={<Campaigns />} />
                 <Route path="/lojas" element={<Stores />} />
                 <Route path="/grupos" element={<Groups />} />
