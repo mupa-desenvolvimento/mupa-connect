@@ -370,7 +370,7 @@ export default function PlaylistEditor() {
               </TabsList>
               <div className="relative mt-4">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-                <Input placeholder="Pesquisar..." className="pl-9 h-9 bg-black/20 border-white/10 focus:border-purple-500/50 text-white" />
+                <Input placeholder="Pesquisar..." className="pl-9 h-9 bg-black/20 border-white/10 focus:border-accent/50 text-white" />
               </div>
             </div>
             <ScrollArea className="flex-1">
