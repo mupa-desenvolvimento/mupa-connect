@@ -313,6 +313,14 @@ export default function PlaylistEditor() {
       }, 500);
     } catch (error: any) {
       console.error("Auto-save error:", error);
+      // Se já não foi setado um debug detalhado dentro do try, seta aqui
+      if (!debugData?.error) {
+        setDebugData({ 
+          operation: "GENERAL_SAVE_ERROR",
+          error: error,
+          timestamp: new Date().toISOString()
+        });
+      }
       toast.error(`Erro ao salvar: ${error.message || 'Erro desconhecido'}`);
       setSaveStatus("idle");
       setIsSaving(false);
