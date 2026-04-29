@@ -290,19 +290,18 @@ export default function MediaPage() {
                 onChange={handleFileUpload}
                 disabled={isUploading}
               />
-              <Button 
-                asChild
+              <Button
+                type="button"
+                onClick={() => document.getElementById('file-upload')?.click()}
                 className="bg-gradient-primary text-primary-foreground shadow-glow"
                 disabled={isUploading}
               >
-                <label htmlFor="file-upload" className="cursor-pointer">
-                  {isUploading ? (
-                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                  ) : (
-                    <Upload className="h-4 w-4 mr-1" />
-                  )}
-                  {isUploading ? "Enviando..." : "Enviar mídia"}
-                </label>
+                {isUploading ? (
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                ) : (
+                  <Upload className="h-4 w-4 mr-1" />
+                )}
+                {isUploading ? "Enviando..." : "Enviar mídia"}
               </Button>
             </div>
           </div>
