@@ -113,9 +113,7 @@ export default function GroupsPage() {
       } else if (selectedNode.type === "store") {
         query = supabase.from("stores").update({ playlist_id: playlistId } as any).eq("id", selectedNode.id);
       } else if (selectedNode.type === "device_group") {
-        // Se a tabela device_groups não tem playlist_id, usamos o channel_id como ponte se necessário
-        // Por enquanto, forçamos 'any' para permitir o salvamento se a coluna existir mas o TS não souber
-        query = supabase.from("device_groups").update({ playlist_id: playlistId } as any).eq("id", selectedNode.id);
+        query = supabase.from("device_groups").update({ channel_id: playlistId } as any).eq("id", selectedNode.id);
       }
 
       if (!query) throw new Error("Tipo de nó desconhecido");
