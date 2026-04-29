@@ -182,6 +182,11 @@ export default function PlaylistEditor() {
   const [debugData, setDebugData] = useState<any>(null);
   const [showDebug, setShowDebug] = useState(false);
 
+  // Monitorar mudanças no estado de itens
+  useEffect(() => {
+    console.log("ITEMS STATE UPDATED. Count:", items.length, items);
+  }, [items]);
+
   // DND Sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -199,7 +204,7 @@ export default function PlaylistEditor() {
       console.log("Loading playlist data:", playlistData);
       setPlaylistName(playlistData.name);
       
-      if (playlistData.playlist_items) {
+      if (playlistData.playlist_items && playlistData.playlist_items.length > 0) {
         const mappedItems = playlistData.playlist_items.map((it: any) => ({
           id: it.id,
           dbId: it.id,
@@ -210,9 +215,11 @@ export default function PlaylistEditor() {
           media: medias?.find(m => m.id === it.media_id)
         }));
         setItems(mappedItems);
-        if (mappedItems.length > 0 && !selectedItem) {
+        if (!selectedItem) {
           setSelectedItem(mappedItems[0]);
         }
+      } else if (items.length === 0) {
+        setItems([]);
       }
     } else if (id === 'new') {
       setPlaylistName("Nova Playlist");
@@ -312,13 +319,14 @@ export default function PlaylistEditor() {
       queryClient.invalidateQueries({ queryKey: ["playlists"] });
       queryClient.invalidateQueries({ queryKey: ["playlist", currentPlaylistId] });
       // Forçar refetch imediato
-      queryClient.refetchQueries({ queryKey: ["playlists"] });
-      queryClient.refetchQueries({ queryKey: ["playlist", currentPlaylistId] });
-      setTimeout(() => {
-        setSaveStatus("saved");
-        setIsSaving(false);
-        setTimeout(() => setSaveStatus("idle"), 2000);
-      }, 500);
+      await queryClient.refetchQueries({ queryKey: ["playlists"] });
+      await queryClient.refetchQueries({ queryKey: ["playlist", currentPlaylistId] });
+      
+      console.log("Full save completed successfully");
+      
+      setSaveStatus("saved");
+      setIsSaving(false);
+      setTimeout(() => setSaveStatus("idle"), 2000);
     } catch (error: any) {
       console.error("Auto-save error:", error);
       // Se já não foi setado um debug detalhado dentro do try, seta aqui
@@ -352,8 +360,12 @@ export default function PlaylistEditor() {
   };
 
   const addItem = (mediaId: string) => {
+    console.log("Adding item to playlist. MediaId:", mediaId);
     const media = medias?.find(m => m.id === mediaId);
-    if (!media) return;
+    if (!media) {
+      console.error("Media not found for ID:", mediaId);
+      return;
+    }
     const newItem: EditorPlaylistItem = {
       id: `temp-${Date.now()}-${Math.random()}`,
       mediaId: media.id,
@@ -363,6 +375,7 @@ export default function PlaylistEditor() {
       media: media
     };
     const newItems = [...items, newItem];
+    console.log("New items state will be:", newItems);
     setItems(newItems);
     setSelectedItem(newItem);
     triggerAutoSave(newItems, playlistName);
