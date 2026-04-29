@@ -36,12 +36,10 @@ export function usePlaylists(tenantId?: string) {
       let query = supabase
         .from("playlists")
         .select(`
-          id, name, updated_at, is_active, tenant_id,
-          playlist_items (id, media_id, duracao, tipo, ordem, position, prioridade)
+          id, name, updated_at, is_active, tenant_id
         `);
 
       if (tenantId) {
-        // Busca tanto do tenant atual quanto as sem tenant (legadas)
         query = query.or(`tenant_id.eq.${tenantId},tenant_id.is.null`);
       }
 
