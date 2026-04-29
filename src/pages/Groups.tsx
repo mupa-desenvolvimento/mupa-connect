@@ -30,7 +30,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Layers, Monitor, Edit2, History, Store, Check, Search, X, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { usePlaylists } from "@/hooks/use-playlist-data";
 import { 
   Command,
   CommandEmpty,
@@ -43,7 +42,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+  } from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -57,6 +56,7 @@ import { Input } from "@/components/ui/input";
 
 export default function GroupsPage() {
   const { data: tenantId } = useTenant();
+  const queryClient = useQueryClient();
   const [treeData, setTreeData] = useState<TreeNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
