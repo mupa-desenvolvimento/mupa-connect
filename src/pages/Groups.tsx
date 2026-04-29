@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { GroupTreeView, TreeNode } from "@/components/GroupTreeView";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Layers, Monitor, Edit2, History, Store, Check, Search, X } from "lucide-react";
+import { Layers, Monitor, Edit2, History, Store, Check, Search, X, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { usePlaylists } from "@/hooks/use-playlist-data";
@@ -31,6 +31,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 export default function GroupsPage() {
   const { data: tenantId } = useTenant();
@@ -40,6 +50,11 @@ export default function GroupsPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isUpdatingPlaylist, setIsUpdatingPlaylist] = useState(false);
   const { data: playlists } = usePlaylists();
+  
+  // Create Group Modal State
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
 
   const fetchTreeData = async () => {
     // console.log("Fetching tree data for tenant:", tenantId);
@@ -80,7 +95,6 @@ export default function GroupsPage() {
       const tree = buildTree(nodes);
       console.log("Built tree structure:", tree);
       setTreeData(tree);
-
     } catch (error) {
       console.error("Error loading tree data:", error);
       toast.error("Erro ao carregar hierarquia de grupos");
@@ -107,6 +121,89 @@ export default function GroupsPage() {
   const handleNodeClick = (node: TreeNode) => {
     setSelectedNode(node);
     setIsSidebarOpen(true);
+  };
+
+  const handleMoveNode = async (nodeId: string, newParentId: string) => {
+    if (!tenantId) return;
+    
+    try {
+      // Identificar o tipo do nó e do destino para decidir como mover
+      const allNodes = (treeData: TreeNode[]): TreeNode[] => {
+        let nodes: TreeNode[] = [];
+        treeData.forEach(n => {
+          nodes.push(n);
+          if (n.children) nodes.push(...allNodes(n.children));
+        });
+        return nodes;
+      };
+      
+      const flatNodes = allNodes(treeData);
+      const movingNode = flatNodes.find(n => n.id === nodeId);
+      const targetNode = flatNodes.find(n => n.id === newParentId);
+      
+      if (!movingNode || !targetNode) return;
+      
+      // Regras de negócio para o Drag & Drop
+      // 1. Loja (store) pode ir para dentro de Store Group (group)
+      if (movingNode.type === 'store' && targetNode.type === 'store_group') {
+        const { error } = await supabase
+          .from("group_stores")
+          .upsert({ group_id: targetNode.id, store_id: movingNode.id });
+        if (error) throw error;
+      } 
+      // 2. Grupo de Dispositivos pode ir para outra Loja
+      else if (movingNode.type === 'device_group' && targetNode.type === 'store') {
+        const { error } = await supabase
+          .from("device_groups")
+          .update({ store_id: targetNode.id } as any)
+          .eq("id", movingNode.id);
+        if (error) throw error;
+      }
+      // 3. Store Group pode ir para dentro de outro Store Group
+      else if (movingNode.type === 'store_group' && targetNode.type === 'store_group' && movingNode.id !== targetNode.id) {
+        const { error } = await supabase
+          .from("groups")
+          .update({ parent_id: targetNode.id } as any)
+          .eq("id", movingNode.id);
+        if (error) throw error;
+      } else {
+        toast.info("Movimentação não permitida para estes tipos de grupos.");
+        return;
+      }
+
+      toast.success("Hierarquia atualizada!");
+      fetchTreeData();
+    } catch (error: any) {
+      console.error("Error moving node:", error);
+      toast.error("Erro ao mover grupo: " + error.message);
+    }
+  };
+
+  const handleCreateGroup = async () => {
+    if (!newGroupName.trim() || !tenantId) return;
+    
+    setIsCreatingGroup(true);
+    try {
+      const { error } = await supabase
+        .from("groups")
+        .insert({
+          name: newGroupName,
+          tenant_id: tenantId,
+          parent_id: null
+        } as any);
+
+      if (error) throw error;
+
+      toast.success("Novo grupo pai criado!");
+      setIsCreateDialogOpen(false);
+      setNewGroupName("");
+      fetchTreeData();
+    } catch (error: any) {
+      console.error("Error creating group:", error);
+      toast.error("Erro ao criar grupo: " + error.message);
+    } finally {
+      setIsCreatingGroup(false);
+    }
   };
 
   const handleUpdatePlaylist = async (playlistId: string | null) => {
@@ -170,15 +267,52 @@ export default function GroupsPage() {
             setSelectedNode(node);
             setIsSidebarOpen(true);
           }}
+          onCreateGroup={() => setIsCreateDialogOpen(true)}
+          onMoveNode={handleMoveNode}
         />
       </div>
+
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="bg-[#09090b] border-white/5 text-white">
+          <DialogHeader>
+            <DialogTitle>Criar Novo Grupo Pai</DialogTitle>
+            <DialogDescription className="text-white/40">
+              Grupos pais servem para organizar lojas e aplicar playlists em massa.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nome do Grupo</Label>
+              <Input 
+                id="name" 
+                value={newGroupName} 
+                onChange={(e) => setNewGroupName(e.target.value)}
+                placeholder="Ex: Região Sul, Lojas de Shopping..."
+                className="bg-black/40 border-white/10"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsCreateDialogOpen(false)}>Cancelar</Button>
+            <Button 
+              onClick={handleCreateGroup} 
+              disabled={isCreatingGroup}
+              className="bg-[#085CF0] hover:bg-[#0750d4]"
+            >
+              {isCreatingGroup ? "Criando..." : "Criar Grupo"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
         <SheetContent className="w-[400px] sm:w-[540px] bg-[#09090b] border-white/5 text-white">
           <SheetHeader className="border-b border-white/5 pb-6 mb-6">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 rounded-xl bg-[#085CF0]/10 text-[#085CF0]">
-                {selectedNode?.type === 'store' ? <Store className="w-5 h-5" /> : <Layers className="w-5 h-5" />}
+                {selectedNode?.type === 'store' ? <Store className="w-5 h-5" /> : 
+                 selectedNode?.type === 'device' ? <Monitor className="w-5 h-5" /> :
+                 <Layers className="w-5 h-5" />}
               </div>
               <div>
                 <SheetTitle className="text-white text-xl">{selectedNode?.name}</SheetTitle>
@@ -192,7 +326,7 @@ export default function GroupsPage() {
           <Tabs defaultValue="info" className="space-y-6">
             <TabsList className="grid w-full grid-cols-3 bg-black/40 border border-white/5">
               <TabsTrigger value="info">Informações</TabsTrigger>
-              <TabsTrigger value="devices">Dispositivos</TabsTrigger>
+              <TabsTrigger value="devices">Estrutura</TabsTrigger>
               <TabsTrigger value="history">Histórico</TabsTrigger>
             </TabsList>
 
@@ -284,7 +418,7 @@ export default function GroupsPage() {
 
             <TabsContent value="devices" className="text-center py-12">
               <Monitor className="w-12 h-12 text-white/10 mx-auto mb-4" />
-              <p className="text-white/40">Visualização de dispositivos em desenvolvimento...</p>
+              <p className="text-white/40">Visualização de sub-itens em desenvolvimento...</p>
             </TabsContent>
 
             <TabsContent value="history" className="text-center py-12">
