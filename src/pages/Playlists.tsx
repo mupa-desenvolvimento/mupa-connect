@@ -67,6 +67,16 @@ export default function PlaylistsPage() {
   });
 
   const isLoading = isTenantLoading || isPlaylistsLoading;
+  
+  // LOG PARA DEBUG DIRETO NO COMPONENTE
+  useEffect(() => {
+    console.log("PLAYLISTS DATA STATE:", { 
+      tenantId, 
+      isLoading, 
+      playlistsCount: playlists.length,
+      playlistsData
+    });
+  }, [tenantId, isLoading, playlists, playlistsData]);
 
   if (isLoading) {
     return (
