@@ -50,7 +50,8 @@ export default function PlaylistsPage() {
   // console.log("Playlists processing:", { raw: playlistsData, processed: playlists });
 
   const filteredPlaylists = playlists.filter(playlist => {
-    const matchesSearch = playlist.name?.toLowerCase().includes(searchQuery.toLowerCase());
+    const playlistName = playlist.name || "";
+    const matchesSearch = playlistName.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = 
       filterStatus === "all" ? true :
       filterStatus === "active" ? playlist.is_active :

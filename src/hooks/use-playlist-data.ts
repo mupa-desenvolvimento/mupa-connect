@@ -31,17 +31,21 @@ export function usePlaylists(tenantId?: string) {
   return useQuery({
     queryKey: ["playlists", tenantId],
     queryFn: async () => {
+      // console.log("Fetching playlists for tenant:", tenantId);
+      
       let query = supabase
         .from("playlists")
         .select(`
-          id, name, updated_at, is_active, tenant_id,
+          id, 
+          name, 
+          updated_at, 
+          is_active, 
+          tenant_id,
           playlist_items(id, media_id, duracao, tipo, ordem, position, prioridade)
         `);
 
       if (tenantId) {
         query = query.or(`tenant_id.eq.${tenantId},tenant_id.is.null`);
-      } else {
-        query = query.is("tenant_id", null);
       }
 
       const { data, error } = await query.order("updated_at", { ascending: false, nullsFirst: false });
