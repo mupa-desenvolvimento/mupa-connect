@@ -341,6 +341,15 @@ export default function DevicesPage() {
                                   <Settings className="h-4 w-4" />
                                 </Link>
                               </Button>
+                              <Button 
+                                size="icon" 
+                                variant="ghost" 
+                                className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                onClick={() => handleRebootDevice(d.id.toString(), d.apelido_interno)}
+                                title="Reiniciar Player"
+                              >
+                                <RotateCcw className="h-4 w-4" />
+                              </Button>
                               <Button asChild size="sm" variant="outline" className="h-8 gap-1">
                                 <Link to={`/play/${d.serial}`} target="_blank">
                                   <Play className="h-3 w-3" /> Player
