@@ -15,40 +15,82 @@ import Stores from "./pages/Stores";
 import Groups from "./pages/Groups";
 import Settings from "./pages/Settings";
 import Player from "./pages/Player";
+import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound.tsx";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Session } from "@supabase/supabase-js";
+import { Loader2 } from "lucide-react";
+
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <ThemeProvider>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Player rota fullscreen, sem layout */}
-            <Route path="/play/:deviceCode" element={<Player />} />
+const App = () => {
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
-            {/* Painel Empresa */}
-            <Route element={<AppLayout />}>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/dispositivos" element={<Devices />} />
-              <Route path="/dispositivos/:id" element={<DeviceDetail />} />
-              <Route path="/midias" element={<Media />} />
-              <Route path="/playlists" element={<Playlists />} />
-              <Route path="/campanhas" element={<Campaigns />} />
-              <Route path="/lojas" element={<Stores />} />
-              <Route path="/grupos" element={<Groups />} />
-              <Route path="/configuracoes" element={<Settings />} />
-            </Route>
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </ThemeProvider>
-);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Rotas Públicas */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/recuperar-senha" element={<ForgotPassword />} />
+              <Route path="/redefinir-senha" element={<ResetPassword />} />
+              
+              {/* Player rota fullscreen, sem layout e sem auth obrigatória (usa deviceCode) */}
+              <Route path="/play/:deviceCode" element={<Player />} />
+
+              {/* Painel Empresa - Protegido */}
+              <Route element={session ? <AppLayout /> : <Login />}>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/dispositivos" element={<Devices />} />
+                <Route path="/dispositivos/:id" element={<DeviceDetail />} />
+                <Route path="/midias" element={<Media />} />
+                <Route path="/playlists" element={<Playlists />} />
+                <Route path="/campanhas" element={<Campaigns />} />
+                <Route path="/lojas" element={<Stores />} />
+                <Route path="/grupos" element={<Groups />} />
+                <Route path="/configuracoes" element={<Settings />} />
+              </Route>
+
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
+  );
+};
+
 
 export default App;
