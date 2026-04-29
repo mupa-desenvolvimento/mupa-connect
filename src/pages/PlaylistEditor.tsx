@@ -461,7 +461,7 @@ export default function PlaylistEditor() {
             </span>
           )}
           <Button 
-            onClick={() => triggerAutoSave(items, playlistName)}
+            onClick={() => savePlaylist(items, playlistName)}
             disabled={isSaving}
             className={cn(
               "h-9 px-4 gap-2 font-bold text-xs transition-all",
