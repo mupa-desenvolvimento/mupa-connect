@@ -156,8 +156,11 @@ export default function MediaPage() {
     let query = supabase
       .from("folders")
       .select("*")
-      .eq("tenant_id", tenantId)
       .order("name");
+
+    if (tenantId) {
+      query = query.eq("tenant_id", tenantId);
+    }
 
     if (currentFolder) {
       query = query.eq("parent_id", currentFolder);
