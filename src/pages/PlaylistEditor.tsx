@@ -252,7 +252,7 @@ export default function PlaylistEditor() {
         const { error: updateError } = await supabase
           .from("playlists")
           .update({ name: updatedName, updated_at: new Date().toISOString() })
-          .eq("id", id!);
+          .filter("id", "eq", id!);
         if (updateError) throw updateError;
       }
 
