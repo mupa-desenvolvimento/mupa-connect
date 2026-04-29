@@ -206,6 +206,8 @@ export default function GroupsPage() {
     setActiveId(active.id);
     if (active.data.current?.type === 'device') {
       setActiveDevice(active.data.current.device);
+    } else if (active.data.current?.type === 'store') {
+      setActiveDevice({ type: 'store', ...active.data.current.store });
     }
   };
 
@@ -219,8 +221,29 @@ export default function GroupsPage() {
     const activeType = active.data.current?.type;
     const overType = over.data.current?.type;
 
-    // Se estiver movendo um grupo (comportamento original)
-    if (activeType !== 'device') {
+    // Se estiver movendo um grupo ou loja do painel lateral
+    if (activeType === 'store' && !active.data.current?.node) {
+      const targetNode = over.data.current?.node;
+      if (targetNode?.type === 'store_group') {
+        try {
+          const { error } = await supabase
+            .from("group_stores")
+            .upsert({ group_id: targetNode.id, store_id: active.data.current.store.id });
+          
+          if (error) throw error;
+          toast.success("Loja adicionada ao grupo!");
+          fetchTreeData();
+          queryClient.invalidateQueries({ queryKey: ["available-stores"] });
+        } catch (error: any) {
+          toast.error("Erro ao mover loja: " + error.message);
+        }
+      } else {
+        toast.info("Lojas devem ser soltas em um Grupo de Lojas.");
+      }
+      return;
+    }
+
+    if (activeType !== 'device' && activeType !== 'store') {
       if (active.id !== over.id) {
         handleMoveNode(active.id, over.id);
       }
@@ -442,11 +465,13 @@ export default function GroupsPage() {
         }}>
           {activeDevice ? (
             <div className="bg-[#085CF0] text-white px-4 py-2 rounded-xl shadow-2xl flex items-center gap-2 border border-white/10">
-              <Monitor className="w-4 h-4" />
+              {activeDevice.type === 'store' ? <Store className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
               <span className="text-sm font-bold">
-                {selectedDevices.has(activeDevice.id) && selectedDevices.size > 1 
-                  ? `${selectedDevices.size} dispositivos` 
-                  : activeDevice.apelido_interno}
+                {activeDevice.type === 'store' 
+                  ? activeDevice.name 
+                  : (selectedDevices.has(activeDevice.id) && selectedDevices.size > 1 
+                    ? `${selectedDevices.size} dispositivos` 
+                    : activeDevice.apelido_interno)}
               </span>
             </div>
           ) : null}
