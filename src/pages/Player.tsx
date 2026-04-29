@@ -56,6 +56,22 @@ export default function PlayerPage() {
       }
     }
 
+    async function loadDirectPlaylist(playlistId: string) {
+      const { data: playlistData } = await supabase
+        .from("playlists")
+        .select(`
+          *,
+          playlist_items (
+            *,
+            media_items (*)
+          )
+        `)
+        .eq("id", playlistId)
+        .single();
+        
+      setPlaylist(playlistData);
+    }
+
     async function loadHierarchyPlaylist(device: any) {
       const tenantId = 'f822bf9d-39e9-4726-82f7-c16bf267bc39';
       
