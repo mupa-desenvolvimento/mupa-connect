@@ -47,11 +47,35 @@ interface Device {
 export default function PlayerMonitoring() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSuperAdmin, setIsSuperAdmin] = useState<boolean | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchDevices();
+    async function checkAccess() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate("/login");
+        return;
+      }
+
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin_global")
+        .single();
+
+      if (!roleData) {
+        setIsSuperAdmin(false);
+      } else {
+        setIsSuperAdmin(true);
+        fetchDevices();
+      }
+    }
+
+    checkAccess();
 
     // Inscrição Realtime para atualizações na tabela dispositivos
     const channel = supabase
