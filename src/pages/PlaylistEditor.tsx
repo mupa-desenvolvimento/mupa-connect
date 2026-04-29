@@ -298,7 +298,6 @@ export default function PlaylistEditor() {
       await queryClient.refetchQueries({ queryKey: ["playlist", currentPlaylistId] });
       
       // 4. Enviar sinal de atualização global
-      // Note: O filtro 'empresa' refere-se ao campo na tabela 'dispositivos'
       await supabase.from("dispositivos").update({ 
         comando: `reload:${Date.now()}` 
       } as any).eq('empresa', '1728965891007x215886838679286700');
