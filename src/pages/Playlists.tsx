@@ -301,12 +301,15 @@ export default function PlaylistsPage() {
                           <DropdownMenuItem onClick={() => navigate(`/playlists/${playlist.id}`)}>
                             <Layers className="h-4 w-4 mr-2" /> Editar Conteúdo
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Copy className="h-4 w-4 mr-2" /> Duplicar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-400 focus:text-red-400">
-                            <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                          </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDuplicate(playlist)}>
+                          <Copy className="h-4 w-4 mr-2" /> Duplicar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="text-red-400 focus:text-red-400"
+                          onClick={() => setPlaylistToDelete(playlist.id)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                        </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
