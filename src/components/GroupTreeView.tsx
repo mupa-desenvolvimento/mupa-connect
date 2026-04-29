@@ -70,11 +70,173 @@ interface GroupTreeViewProps {
   data: TreeNode[];
   onNodeClick?: (node: TreeNode) => void;
   onEditPlaylist?: (node: TreeNode) => void;
+  onCreateGroup?: () => void;
+  onMoveNode?: (nodeId: string, newParentId: string | null) => void;
 }
 
-export function GroupTreeView({ data, onNodeClick, onEditPlaylist }: GroupTreeViewProps) {
+const SortableNode = ({ 
+  node, 
+  index, 
+  expandedIds, 
+  toggleExpand, 
+  onNodeClick, 
+  onEditPlaylist,
+  getNodeColor,
+  getNodeIcon,
+  getStatusLabel
+}: { 
+  node: FlattenedNode, 
+  index: number,
+  expandedIds: Set<string>,
+  toggleExpand: (id: string, e: React.MouseEvent) => void,
+  onNodeClick?: (node: TreeNode) => void,
+  onEditPlaylist?: (node: TreeNode) => void,
+  getNodeColor: (node: TreeNode) => string,
+  getNodeIcon: (type: NodeType) => JSX.Element,
+  getStatusLabel: (node: TreeNode) => string
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ 
+    id: node.id,
+    disabled: node.type === 'device' // Dispositivos individuais não são arrastáveis por enquanto
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 100 : 1,
+  };
+
+  return (
+    <div 
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "group relative flex items-center px-4 py-2 hover:bg-white/5 transition-colors cursor-pointer border-l-2",
+        expandedIds.has(node.id) ? "bg-white/5" : "bg-transparent",
+        node.has_conflict ? "border-red-500" : 
+        (node.playlist_id && !node.inherited_from) ? "border-green-500" :
+        node.has_override ? "border-yellow-500" :
+        node.inherited_from ? "border-blue-500" : "border-transparent"
+      )}
+      style={{ ...style, paddingLeft: `${(node.level * 24) + 16}px` }}
+      onClick={() => onNodeClick?.(node)}
+    >
+      {/* Connection Lines */}
+      {node.level > 0 && (
+        <div className="absolute left-0 top-0 bottom-0 w-px bg-white/5" 
+             style={{ left: `${(node.level * 24)}px` }} />
+      )}
+
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        <div 
+          {...attributes}
+          {...listeners}
+          className="p-1 cursor-grab active:cursor-grabbing text-white/10 hover:text-white/40"
+        >
+          <GripVertical className="w-3.5 h-3.5" />
+        </div>
+
+        <div 
+          onClick={(e) => node.children?.length ? toggleExpand(node.id, e) : null}
+          className={cn(
+            "w-6 h-6 flex items-center justify-center rounded-md hover:bg-white/10 transition-colors",
+            !node.children?.length && "invisible"
+          )}
+        >
+          {node.isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+        </div>
+
+        <div className={cn("p-1.5 rounded-lg", getNodeColor(node))}>
+          {getNodeIcon(node.type)}
+        </div>
+
+        <div className="flex flex-col min-w-0">
+          <span className="text-sm font-semibold text-white truncate">
+            {node.name}
+          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-white/40 uppercase tracking-tighter">
+              {node.type.replace('_', ' ')}
+            </span>
+            {node.device_count !== undefined && node.type !== 'device' && (
+              <span className="text-[10px] text-white/20">
+                • {node.device_count} disp.
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="ml-auto flex items-center gap-3 pr-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          {node.playlist_id ? (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className={cn("gap-1.5 py-0.5 px-2 border-white/5", getNodeColor(node))}>
+                    <div className={cn("w-1.5 h-1.5 rounded-full", 
+                      node.has_conflict ? "bg-red-500" : 
+                      (node.playlist_id && !node.inherited_from) ? "bg-green-500" :
+                      node.has_override ? "bg-yellow-500" : "bg-blue-500"
+                    )} />
+                    <span className="max-w-[80px] truncate">{node.playlist_name}</span>
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent className="bg-[#18181b] border-white/10 text-white p-3 shadow-2xl">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 border-b border-white/5 pb-2 mb-2">
+                      <Info className="w-3 h-3 text-[#085CF0]" />
+                      <span className="text-xs font-bold uppercase tracking-widest">Herança</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+                      <span className="text-white/40">Status:</span>
+                      <span className="font-bold">{getStatusLabel(node)}</span>
+                      <span className="text-white/40">Origem:</span>
+                      <span className="font-bold text-blue-400 truncate max-w-[120px]">
+                        {node.inherited_from || "Local"}
+                      </span>
+                    </div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            <Badge variant="outline" className="text-white/20 border-white/5">
+              Vazio
+            </Badge>
+          )}
+
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 text-white/40 hover:text-white"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEditPlaylist?.(node);
+            }}
+          >
+            <Edit2 className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export function GroupTreeView({ data, onNodeClick, onEditPlaylist, onCreateGroup, onMoveNode }: GroupTreeViewProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const toggleExpand = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
