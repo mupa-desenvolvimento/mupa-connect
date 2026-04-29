@@ -266,15 +266,52 @@ export default function GroupsPage() {
             setSelectedNode(node);
             setIsSidebarOpen(true);
           }}
+          onCreateGroup={() => setIsCreateDialogOpen(true)}
+          onMoveNode={handleMoveNode}
         />
       </div>
+
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="bg-[#09090b] border-white/5 text-white">
+          <DialogHeader>
+            <DialogTitle>Criar Novo Grupo Pai</DialogTitle>
+            <DialogDescription className="text-white/40">
+              Grupos pais servem para organizar lojas e aplicar playlists em massa.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nome do Grupo</Label>
+              <Input 
+                id="name" 
+                value={newGroupName} 
+                onChange={(e) => setNewGroupName(e.target.value)}
+                placeholder="Ex: Região Sul, Lojas de Shopping..."
+                className="bg-black/40 border-white/10"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsCreateDialogOpen(false)}>Cancelar</Button>
+            <Button 
+              onClick={handleCreateGroup} 
+              disabled={isCreatingGroup}
+              className="bg-[#085CF0] hover:bg-[#0750d4]"
+            >
+              {isCreatingGroup ? "Criando..." : "Criar Grupo"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
         <SheetContent className="w-[400px] sm:w-[540px] bg-[#09090b] border-white/5 text-white">
           <SheetHeader className="border-b border-white/5 pb-6 mb-6">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 rounded-xl bg-[#085CF0]/10 text-[#085CF0]">
-                {selectedNode?.type === 'store' ? <Store className="w-5 h-5" /> : <Layers className="w-5 h-5" />}
+                {selectedNode?.type === 'store' ? <Store className="w-5 h-5" /> : 
+                 selectedNode?.type === 'device' ? <Monitor className="w-5 h-5" /> :
+                 <Layers className="w-5 h-5" />}
               </div>
               <div>
                 <SheetTitle className="text-white text-xl">{selectedNode?.name}</SheetTitle>
@@ -288,7 +325,7 @@ export default function GroupsPage() {
           <Tabs defaultValue="info" className="space-y-6">
             <TabsList className="grid w-full grid-cols-3 bg-black/40 border border-white/5">
               <TabsTrigger value="info">Informações</TabsTrigger>
-              <TabsTrigger value="devices">Dispositivos</TabsTrigger>
+              <TabsTrigger value="devices">Estrutura</TabsTrigger>
               <TabsTrigger value="history">Histórico</TabsTrigger>
             </TabsList>
 
@@ -380,7 +417,7 @@ export default function GroupsPage() {
 
             <TabsContent value="devices" className="text-center py-12">
               <Monitor className="w-12 h-12 text-white/10 mx-auto mb-4" />
-              <p className="text-white/40">Visualização de dispositivos em desenvolvimento...</p>
+              <p className="text-white/40">Visualização de sub-itens em desenvolvimento...</p>
             </TabsContent>
 
             <TabsContent value="history" className="text-center py-12">
