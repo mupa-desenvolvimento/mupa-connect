@@ -28,12 +28,11 @@ export function useMedias(tenantId?: string) {
 }
 
 export function usePlaylists(tenantId?: string) {
-  const queryClient = useQueryClient();
-  
   return useQuery({
     queryKey: ["playlists", tenantId],
     queryFn: async () => {
-      // Usar uma query extremamente básica para evitar qualquer erro de relação ou sintaxe .or
+      if (!tenantId) return [];
+      
       const { data, error } = await supabase
         .from("playlists")
         .select(`
@@ -43,23 +42,19 @@ export function usePlaylists(tenantId?: string) {
           is_active, 
           tenant_id,
           playlist_items(id)
-        `);
+        `)
+        .eq("tenant_id", tenantId)
+        .order("updated_at", { ascending: false });
 
       if (error) {
-        console.error("Critical error fetching playlists:", error);
+        console.error("Error fetching tenant playlists:", error);
         throw error;
       }
       
-      // Filtragem manual no lado do cliente para garantir visibilidade absoluta
-      if (!tenantId) return data || [];
-      
-      return (data || []).filter(p => 
-        !p.tenant_id || p.tenant_id === tenantId
-      );
+      return data || [];
     },
-    // Reduzir cache para garantir que dados novos apareçam
-    staleTime: 0,
-    gcTime: 1000 * 60 * 5, 
+    staleTime: 1000 * 30, // 30 seconds
+    enabled: !!tenantId,
   });
 }
 

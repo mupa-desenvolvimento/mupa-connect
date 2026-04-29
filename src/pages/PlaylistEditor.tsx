@@ -306,10 +306,10 @@ export default function PlaylistEditor() {
 
       // Silently invalidate to keep UI smooth without full reload state
       // Don't overwrite cache shape — just mark playlists list stale
-      queryClient.invalidateQueries({ queryKey: ["playlists"] });
+      queryClient.invalidateQueries({ queryKey: ["playlists", tenantId] });
       queryClient.invalidateQueries({ queryKey: ["playlist", currentPlaylistId] });
-      // Forçar refetch imediato
-      queryClient.refetchQueries({ queryKey: ["playlists"] });
+      // Forçar refetch imediato com a chave correta que inclui o tenantId
+      queryClient.refetchQueries({ queryKey: ["playlists", tenantId] });
       queryClient.refetchQueries({ queryKey: ["playlist", currentPlaylistId] });
       setTimeout(() => {
         setSaveStatus("saved");

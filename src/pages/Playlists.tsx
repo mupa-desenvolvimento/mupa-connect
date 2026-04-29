@@ -26,7 +26,7 @@ import {
 import { usePlaylists, useTenant } from "@/hooks/use-playlist-data";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 export default function PlaylistsPage() {
   const navigate = useNavigate();
@@ -45,25 +45,29 @@ export default function PlaylistsPage() {
 
   // Forçar atualização quando o tenantId mudar
   useEffect(() => {
-    if (tenantId) refetch();
+    if (tenantId) {
+      console.log("Tenant identified, refetching playlists:", tenantId);
+      refetch();
+    }
   }, [tenantId, refetch]);
 
   const playlists = playlistsData || [];
   
-  const filteredPlaylists = playlists.filter(playlist => {
-    const playlistName = playlist.name || "";
-    const matchesSearch = playlistName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = 
-      filterStatus === "all" ? true :
-      filterStatus === "active" ? playlist.is_active :
-      !playlist.is_active;
-    return matchesSearch && matchesStatus;
-  }).sort((a, b) => {
-    // Ordenação manual para garantir que as novas apareçam primeiro
-    const dateA = a.updated_at ? new Date(a.updated_at).getTime() : 0;
-    const dateB = b.updated_at ? new Date(b.updated_at).getTime() : 0;
-    return dateB - dateA;
-  });
+  const filteredPlaylists = useMemo(() => {
+    return playlists.filter(playlist => {
+      const playlistName = playlist.name || "";
+      const matchesSearch = playlistName.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = 
+        filterStatus === "all" ? true :
+        filterStatus === "active" ? playlist.is_active :
+        !playlist.is_active;
+      return matchesSearch && matchesStatus;
+    }).sort((a, b) => {
+      const dateA = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+      const dateB = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+      return dateB - dateA;
+    });
+  }, [playlists, searchQuery, filterStatus]);
 
 
   const isLoading = isTenantLoading || isPlaylistsLoading;
