@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-console.log("use-playlist-data.ts loaded");
 import { supabase } from "@/integrations/supabase/client";
 
 import { useTenant as useTenantHook } from "@/hooks/use-tenant";
