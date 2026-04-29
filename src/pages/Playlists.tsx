@@ -1,4 +1,3 @@
-console.log("PLAYLISTS PAGE FILE LOADING AT TOP");
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
