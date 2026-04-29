@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
+import { MediaCacheService } from "./PlayerServices";
 
 interface MediaItem {
   id: string;
@@ -70,10 +71,16 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
     };
   }, [currentIndex, activeLayer, playlist, handleNext]);
 
-  // Preload next media
+  // Preload and Cache next media
   useEffect(() => {
     if (!playlist.length) return;
     const nextMedia = playlist[nextIndex];
+    
+    // Cache media for offline use
+    if (nextMedia?.url) {
+      MediaCacheService.cacheMedia(nextMedia.url);
+    }
+
     const nextLayerVideoRef = activeLayer === "A" ? videoBRef : videoARef;
     
     if (nextMedia?.type === "video" && nextLayerVideoRef.current) {
@@ -117,12 +124,13 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
     return () => clearInterval(watchdog);
   }, [currentIndex, activeLayer, playlist, handleNext]);
 
-  const handleError = (e: any) => {
+  const handleError = useCallback((e: any) => {
     console.error("[PlayerEngine] Media error detected:", e);
+    // If the error is likely network-related, we could try to reload the media
+    // or just skip to next to avoid black screen
     setErrorCount(prev => prev + 1);
-    // Skip to next on error
-    setTimeout(handleNext, 1000);
-  };
+    handleNext();
+  }, [handleNext]);
 
   if (!playlist.length) return null;
 
@@ -142,12 +150,12 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
             preload="auto"
             onError={handleError}
             onEnded={handleNext}
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover transition-opacity duration-300 ${activeLayer === "A" ? "opacity-100" : "opacity-0"}`}
           />
         ) : (
           <img
             src={activeLayer === "A" ? playlist[currentIndex].url : playlist[nextIndex].url}
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover transition-opacity duration-300 ${activeLayer === "A" ? "opacity-100" : "opacity-0"}`}
             alt="media"
             onError={handleError}
           />
@@ -168,12 +176,12 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
             preload="auto"
             onError={handleError}
             onEnded={handleNext}
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover transition-opacity duration-300 ${activeLayer === "B" ? "opacity-100" : "opacity-0"}`}
           />
         ) : (
           <img
             src={activeLayer === "B" ? playlist[currentIndex].url : playlist[nextIndex].url}
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover transition-opacity duration-300 ${activeLayer === "B" ? "opacity-100" : "opacity-0"}`}
             alt="media"
             onError={handleError}
           />
