@@ -398,7 +398,7 @@ export default function GroupsPage() {
                   const { error } = await supabase
                     .from("dispositivos")
                     .update({ num_filial: null, grupo_dispositivos: null })
-                    .eq("id", id);
+                    .eq("id", parseInt(id));
                   if (error) throw error;
                   toast.success("Dispositivo removido do grupo.");
                   fetchTreeData();
