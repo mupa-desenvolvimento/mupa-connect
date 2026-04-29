@@ -41,7 +41,20 @@ export function usePlaylists() {
           updated_at, 
           is_active, 
           tenant_id,
-          playlist_items (id)
+          playlist_items (
+            id,
+            media_id,
+            duracao,
+            tipo,
+            ordem,
+            media_items (
+              id,
+              name,
+              file_url,
+              thumbnail_url,
+              type
+            )
+          )
         `)
         .eq("tenant_id", targetTenantId)
         .order("updated_at", { ascending: false });
@@ -51,7 +64,6 @@ export function usePlaylists() {
         throw error;
       }
       
-      console.log("Playlists loaded for Stok Center:", data?.length);
       return data || [];
     },
     staleTime: 0,
