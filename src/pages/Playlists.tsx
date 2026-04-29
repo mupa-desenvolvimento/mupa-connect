@@ -169,7 +169,7 @@ export default function PlaylistsPage() {
         : "flex flex-col gap-3"
       }>
         {filteredPlaylists.length > 0 ? filteredPlaylists.map((playlist) => {
-          const itemsCount = playlist.playlist_items?.length || 0;
+          const itemsCount = (playlist as any).playlist_items?.length || 0;
           const updatedAt = playlist.updated_at 
             ? format(new Date(playlist.updated_at), "dd 'de' MMM, HH:mm", { locale: ptBR })
             : "Recém criada";
