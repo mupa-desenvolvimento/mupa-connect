@@ -9,7 +9,7 @@ export default function PlayerPage() {
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
   const [playlist, setPlaylist] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [reloadKey, setReloadKey] = useState(0);
+  const [reloadKey, setReloadKey] = useState<number>(0);
   const [volume, setVolume] = useState(60);
 
   // 1. Resolve Device and Hierarchy-based Playlist
