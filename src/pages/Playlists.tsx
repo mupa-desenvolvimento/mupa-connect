@@ -29,6 +29,7 @@ import { ptBR } from "date-fns/locale";
 import { useState, useEffect } from "react";
 
 export default function PlaylistsPage() {
+  console.log("PlaylistsPage COMPONENT EXECUTING");
   const navigate = useNavigate();
   const { data: tenantId, isLoading: isTenantLoading } = useTenant();
   console.log("PlaylistsPage - Current Tenant ID:", tenantId);
