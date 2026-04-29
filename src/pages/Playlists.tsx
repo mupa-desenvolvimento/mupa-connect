@@ -11,7 +11,8 @@ import {
   Trash2, 
   MoreHorizontal,
   Clock,
-  Layers
+  Layers,
+  Loader2
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
@@ -20,10 +21,22 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { playlists, getMediaById } from "@/lib/mock-data";
+import { usePlaylists, useTenant } from "@/hooks/use-playlist-data";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function PlaylistsPage() {
   const navigate = useNavigate();
+  const { data: tenantId } = useTenant();
+  const { data: playlists, isLoading } = usePlaylists(tenantId);
+
+  if (isLoading) {
+    return (
+      <div className="h-96 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -56,100 +69,98 @@ export default function PlaylistsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {playlists.map((playlist) => (
-          <Card 
-            key={playlist.id} 
-            className="group overflow-hidden border-border/40 bg-card/40 backdrop-blur-sm hover:border-purple-500/40 hover:shadow-2xl hover:shadow-purple-500/5 transition-all duration-300"
-          >
-            <div className="aspect-video relative overflow-hidden bg-muted">
-              <div className="absolute inset-0 grid grid-cols-2 gap-1 p-1">
-                {playlist.items.slice(0, 4).map((item, idx) => {
-                  const media = getMediaById(item.mediaId);
-                  return (
-                    <div key={idx} className="relative rounded-sm overflow-hidden bg-black/20">
-                      {media?.url ? (
-                        <img 
-                          src={media.url} 
-                          alt="" 
-                          className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-500"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Layers className="h-4 w-4 text-muted-foreground/30" />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-              <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end">
-                <div className="flex gap-2">
-                  <Badge className="bg-purple-600/90 text-white border-none backdrop-blur-md">
-                    {playlist.items.length} itens
-                  </Badge>
-                  <Badge variant="secondary" className="bg-black/40 text-white border-white/10 backdrop-blur-md flex gap-1">
-                    <Clock className="h-3 w-3" />
-                    {playlist.items.reduce((acc, curr) => acc + curr.duration, 0)}s
-                  </Badge>
-                </div>
-                <Button 
-                  size="icon" 
-                  className="rounded-full bg-white/10 hover:bg-purple-600 text-white border border-white/20 backdrop-blur-md transition-all duration-300 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0"
-                  asChild
-                >
-                  <Link to={`/playlists/${playlist.id}`}>
-                    <Play className="h-4 w-4 fill-current" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
-            
-            <CardContent className="p-5">
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className="font-display text-lg font-semibold group-hover:text-purple-400 transition-colors">
-                    {playlist.name}
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Atualizada em {playlist.updatedAt}
-                  </p>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 text-muted-foreground hover:text-foreground">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onClick={() => navigate(`/playlists/${playlist.id}`)}>
-                      <Layers className="h-4 w-4 mr-2" /> Editar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Copy className="h-4 w-4 mr-2" /> Duplicar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive focus:text-destructive">
-                      <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+        {playlists?.map((playlist) => {
+          const itemsCount = playlist.playlist_items?.length || 0;
+          const updatedAt = playlist.updated_at 
+            ? format(new Date(playlist.updated_at), "dd 'de' MMMM", { locale: ptBR })
+            : "Data desconhecida";
 
-              <div className="flex items-center gap-2 mt-4">
-                <div className="flex -space-x-2">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-6 w-6 rounded-full border-2 border-background bg-muted flex items-center justify-center text-[10px] font-bold overflow-hidden">
-                      <img src={`https://i.pravatar.cc/100?u=${playlist.id}${i}`} alt="" />
-                    </div>
-                  ))}
+          return (
+            <Card 
+              key={playlist.id} 
+              className="group overflow-hidden border-border/40 bg-card/40 backdrop-blur-sm hover:border-purple-500/40 hover:shadow-2xl hover:shadow-purple-500/5 transition-all duration-300"
+            >
+              <div className="aspect-video relative overflow-hidden bg-muted">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Layers className="h-12 w-12 text-white/10 group-hover:text-purple-500/20 transition-colors" />
                 </div>
-                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                  Vinculada a 3 dispositivos
-                </span>
+                <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end">
+                  <div className="flex gap-2">
+                    <Badge className="bg-purple-600/90 text-white border-none backdrop-blur-md">
+                      {itemsCount} {itemsCount === 1 ? 'item' : 'itens'}
+                    </Badge>
+                    <Badge variant="secondary" className="bg-black/40 text-white border-white/10 backdrop-blur-md flex gap-1">
+                      <Clock className="h-3 w-3" />
+                      Status: {playlist.is_active ? 'Ativa' : 'Inativa'}
+                    </Badge>
+                  </div>
+                  <Button 
+                    size="icon" 
+                    className="rounded-full bg-white/10 hover:bg-purple-600 text-white border border-white/20 backdrop-blur-md transition-all duration-300 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0"
+                    asChild
+                  >
+                    <Link to={`/playlists/${playlist.id}`}>
+                      <Play className="h-4 w-4 fill-current" />
+                    </Link>
+                  </Button>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+              
+              <CardContent className="p-5">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h3 className="font-display text-lg font-semibold group-hover:text-purple-400 transition-colors">
+                      {playlist.name}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Atualizada em {updatedAt}
+                    </p>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 text-muted-foreground hover:text-foreground">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem onClick={() => navigate(`/playlists/${playlist.id}`)}>
+                        <Layers className="h-4 w-4 mr-2" /> Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Copy className="h-4 w-4 mr-2" /> Duplicar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive focus:text-destructive">
+                        <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                <div className="flex items-center gap-2 mt-4">
+                   <div className={`h-2 w-2 rounded-full ${playlist.is_active ? 'bg-green-500' : 'bg-red-500'}`} />
+                   <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                    {playlist.is_active ? 'Disponível para telas' : 'Rascunho'}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+        
+        {playlists?.length === 0 && (
+          <div className="col-span-full py-20 text-center border-2 border-dashed border-border/40 rounded-3xl">
+             <Layers className="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />
+             <h3 className="text-lg font-medium">Nenhuma playlist encontrada</h3>
+             <p className="text-muted-foreground text-sm mb-6">Comece criando sua primeira sequência de conteúdos.</p>
+             <Button 
+                onClick={() => navigate("/playlists/new")}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                Nova Playlist
+              </Button>
+          </div>
+        )}
       </div>
     </div>
   );
