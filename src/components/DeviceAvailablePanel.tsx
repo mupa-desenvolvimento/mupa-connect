@@ -62,10 +62,13 @@ export function DeviceItem({ device, isSelected, onToggle }: DeviceItemProps) {
           : "bg-white/5 border-white/5 hover:border-white/10 hover:bg-white/[0.07]"
       )}
     >
-      <div className="flex items-center gap-3 flex-1 min-w-0">
+      <div 
+        className="flex items-center gap-3 flex-1 min-w-0"
+        onClick={(e) => onToggle(device.id, e.shiftKey)}
+      >
         <Checkbox 
           checked={isSelected} 
-          onCheckedChange={(checked, e) => onToggle(device.id, (e as any).shiftKey)}
+          onCheckedChange={() => {}} // Controlled by div onClick for shiftKey support
           className="border-white/20 data-[state=checked]:bg-[#085CF0] data-[state=checked]:border-[#085CF0]"
         />
         
