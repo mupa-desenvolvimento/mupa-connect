@@ -8,13 +8,28 @@ import {
   SheetContent, 
   SheetHeader, 
   SheetTitle, 
-  SheetDescription 
+  SheetDescription,
+  SheetFooter
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Layers, Monitor, Edit2, History, Store } from "lucide-react";
+import { Layers, Monitor, Edit2, History, Store, Check, Search, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { usePlaylists } from "@/hooks/use-playlist-data";
+import { 
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 export default function GroupsPage() {
   const { data: tenantId } = useTenant();
