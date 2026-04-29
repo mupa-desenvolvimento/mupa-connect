@@ -3,8 +3,9 @@ import { PageHeader } from "@/components/PageHeader";
 import { GroupTreeView, TreeNode } from "@/components/GroupTreeView";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { useTenant } from "@/hooks/use-playlist-data";
+import { useTenant, usePlaylists } from "@/hooks/use-playlist-data";
 import { DeviceAvailablePanel } from "@/components/DeviceAvailablePanel";
+import { useQueryClient } from "@tanstack/react-query";
 import { 
   DndContext, 
   closestCenter, 
@@ -29,7 +30,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Layers, Monitor, Edit2, History, Store, Check, Search, X, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { usePlaylists } from "@/hooks/use-playlist-data";
 import { 
   Command,
   CommandEmpty,
@@ -42,7 +42,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+  } from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -56,6 +56,7 @@ import { Input } from "@/components/ui/input";
 
 export default function GroupsPage() {
   const { data: tenantId } = useTenant();
+  const queryClient = useQueryClient();
   const [treeData, setTreeData] = useState<TreeNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
@@ -98,7 +99,7 @@ export default function GroupsPage() {
           .filter(node => {
             // Se for store ou device_group, o parent_id é retornado como string pela query
             // Se for store_group (da tabela groups), o parent_id é UUID
-            return node.parent_id === parentId || (parentId === null && !node.parent_id);
+            return node.parent_id === parentId || (parentId === null && !node.parent_id && node.type !== 'device');
           })
           .map(node => ({
             id: node.id,
@@ -288,6 +289,7 @@ export default function GroupsPage() {
         toast.success(`${devicesToMove.length} dispositivo(s) atualizado(s) com sucesso!`);
         setSelectedDevices(new Set());
         fetchTreeData();
+        queryClient.invalidateQueries({ queryKey: ["available-devices"] });
       } catch (error: any) {
         console.error("Error moving devices:", error);
         toast.error("Erro ao atualizar dispositivos: " + error.message);
@@ -402,6 +404,7 @@ export default function GroupsPage() {
                   if (error) throw error;
                   toast.success("Dispositivo removido do grupo.");
                   fetchTreeData();
+                  queryClient.invalidateQueries({ queryKey: ["available-devices"] });
                 } catch (error: any) {
                   toast.error("Erro ao remover: " + error.message);
                 }

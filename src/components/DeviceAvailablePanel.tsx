@@ -128,17 +128,41 @@ export function DeviceAvailablePanel({
   const { data: devices, isLoading } = useQuery({
     queryKey: ["available-devices", tenantId],
     queryFn: async () => {
-      const stockCenterId = "1728965891007x215886838679286700";
-      const { data, error } = await supabase
-        .from("dispositivos")
-        .select("*")
-        .eq("empresa", stockCenterId)
-        .is("num_filial", null)
-        .is("grupo_dispositivos", null)
-        .order("apelido_interno");
+      // 1. Get the company code (Bubble ID) for this tenant
+      // We look in the users table for the current user's company or companies table
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return [];
+
+      const { data: userData } = await supabase
+        .from("users")
+        .select("company")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      const companyId = userData?.company || "1728965891007x215886838679286700";
       
-      if (error) throw error;
-      return data as Device[];
+      // 2. Fetch devices for this company
+      // 2. Fetch devices and stores for this tenant
+      const [devicesResponse, storesResponse] = await Promise.all([
+        supabase.from("dispositivos").select("*").eq("empresa", companyId),
+        supabase.from("stores").select("code").eq("tenant_id", tenantId)
+      ]);
+      
+      if (devicesResponse.error) throw devicesResponse.error;
+      if (storesResponse.error) throw storesResponse.error;
+
+      const devices = devicesResponse.data as Device[];
+      const storeCodes = new Set(storesResponse.data?.map(s => s.code) || []);
+
+      // 3. Filter devices that are NOT correctly linked to a UUID group or a valid Store
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      
+      return devices.filter(d => {
+        const hasValidGroup = d.grupo_dispositivos && uuidRegex.test(d.grupo_dispositivos);
+        const hasValidStore = d.num_filial && storeCodes.has(d.num_filial);
+        
+        return !hasValidGroup && !hasValidStore;
+      });
     },
     enabled: !!tenantId
   });
