@@ -128,9 +128,9 @@ const SortableItem = ({
 
       {/* Duration Badge */}
       <div className="absolute top-2 right-2">
-         <span className="text-[10px] font-bold text-white px-1.5 py-0.5 rounded bg-purple-600/80 backdrop-blur-sm flex items-center gap-1">
-           <Clock className="h-2.5 w-2.5" /> {item.duration}s
-         </span>
+          <span className="text-[10px] font-bold text-accent-foreground px-1.5 py-0.5 rounded bg-accent/80 backdrop-blur-sm flex items-center gap-1">
+            <Clock className="h-2.5 w-2.5" /> {item.duration}s
+          </span>
       </div>
 
       {/* Drag Handle */}
