@@ -6018,6 +6018,10 @@ export type Database = {
       }
       is_super_admin: { Args: { check_user_id?: string }; Returns: boolean }
       is_tenant_admin: { Args: { check_user_id?: string }; Returns: boolean }
+      issue_reload_command_to_affected_devices: {
+        Args: { p_device_ids: string[] }
+        Returns: undefined
+      }
       list_tenant_schemas: {
         Args: never
         Returns: {
