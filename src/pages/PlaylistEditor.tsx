@@ -297,15 +297,10 @@ export default function PlaylistEditor() {
       await queryClient.refetchQueries({ queryKey: ["playlists"] });
       await queryClient.refetchQueries({ queryKey: ["playlist", currentPlaylistId] });
       
-      // 4. Enviar comando de reload para todos os dispositivos vinculados a esta playlist
-      // (Isso garante que o player recarregue assim que você salvar)
+      // 4. Enviar sinal de atualização global (simplificado para garantir recarga)
       await supabase.from("dispositivos").update({ 
-        comando: JSON.stringify({ action: "reload_playlist", timestamp: Date.now() }) 
-      } as any).filter("id", "in", (
-          // Subquery fictícia - na prática os dispositivos buscam por id ou apelido
-          // Enviaremos um sinal global simplificado ou via canal de comando real
-          "SELECT id FROM dispositivos" 
-      ));
+        comando: `reload:${Date.now()}` 
+      } as any).eq('empresa', '1728965891007x215886838679286700');
       
       setSaveStatus("saved");
       setIsSaving(false);
