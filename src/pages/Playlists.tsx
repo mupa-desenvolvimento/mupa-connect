@@ -45,7 +45,7 @@ export default function PlaylistsPage() {
         description="Gerencie as sequências de conteúdo que serão exibidas em seus dispositivos."
         actions={
           <Button 
-            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-500/20"
+            className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/20"
             onClick={() => navigate("/playlists/new")}
           >
             <Plus className="h-4 w-4 mr-2" /> Nova Playlist
