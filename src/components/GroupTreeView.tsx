@@ -326,128 +326,58 @@ export function GroupTreeView({ data, onNodeClick, onEditPlaylist, onCreateGroup
 
   return (
     <div className="flex flex-col h-full bg-background border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
-      <div className="p-4 border-b border-white/5 bg-white/5 backdrop-blur-md">
-        <div className="relative">
+      <div className="p-4 border-b border-white/5 bg-white/5 backdrop-blur-md flex items-center justify-between gap-4">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
           <Input 
-            placeholder="Buscar grupos, lojas ou playlists..." 
+            placeholder="Buscar grupos, lojas ou dispositivos..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-black/40 border-white/10 focus:ring-[#085CF0]/50"
+            className="pl-10 bg-black/40 border-white/10 focus:ring-[#085CF0]/50 h-10"
           />
         </div>
+        <Button 
+          onClick={onCreateGroup}
+          className="bg-[#085CF0] hover:bg-[#0750d4] text-white gap-2 shrink-0 h-10 px-4"
+        >
+          <Plus className="w-4 h-4" /> Novo Grupo Pai
+        </Button>
       </div>
 
       <div className="flex-1 min-h-0">
-        <Virtuoso
-          data={flattenedData}
-          totalCount={flattenedData.length}
-          itemContent={(index, node) => (
-            <div 
-              className={cn(
-                "group relative flex items-center px-4 py-2 hover:bg-white/5 transition-colors cursor-pointer border-l-2",
-                expandedIds.has(node.id) ? "bg-white/5" : "bg-transparent",
-                node.has_conflict ? "border-red-500" : 
-                (node.playlist_id && !node.inherited_from) ? "border-green-500" :
-                node.has_override ? "border-yellow-500" :
-                node.inherited_from ? "border-blue-500" : "border-transparent"
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={(event) => {
+            const { active, over } = event;
+            if (over && active.id !== over.id) {
+              onMoveNode?.(active.id as string, over.id as string);
+            }
+          }}
+        >
+          <SortableContext
+            items={flattenedData.map(n => n.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <Virtuoso
+              data={flattenedData}
+              totalCount={flattenedData.length}
+              itemContent={(index, node) => (
+                <SortableNode 
+                  node={node}
+                  index={index}
+                  expandedIds={expandedIds}
+                  toggleExpand={toggleExpand}
+                  onNodeClick={onNodeClick}
+                  onEditPlaylist={onEditPlaylist}
+                  getNodeColor={getNodeColor}
+                  getNodeIcon={getNodeIcon}
+                  getStatusLabel={getStatusLabel}
+                />
               )}
-              style={{ paddingLeft: `${(node.level * 24) + 16}px` }}
-              onClick={() => onNodeClick?.(node)}
-            >
-              {/* Connection Lines (Simulated) */}
-              {node.level > 0 && (
-                <div className="absolute left-0 top-0 bottom-0 w-px bg-white/5" 
-                     style={{ left: `${(node.level * 24)}px` }} />
-              )}
-
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <div 
-                  onClick={(e) => node.children?.length ? toggleExpand(node.id, e) : null}
-                  className={cn(
-                    "w-6 h-6 flex items-center justify-center rounded-md hover:bg-white/10 transition-colors",
-                    !node.children?.length && "invisible"
-                  )}
-                >
-                  {node.isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                </div>
-
-                <div className={cn("p-1.5 rounded-lg", getNodeColor(node))}>
-                  {getNodeIcon(node.type)}
-                </div>
-
-                <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-semibold text-white truncate">
-                    {node.name}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-white/40 uppercase tracking-tighter">
-                      {node.type.replace('_', ' ')}
-                    </span>
-                    {node.device_count !== undefined && (
-                      <span className="text-[10px] text-white/20">
-                        • {node.device_count} dispositivos
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="ml-auto flex items-center gap-3 pr-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {node.playlist_id ? (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Badge variant="outline" className={cn("gap-1.5 py-0.5 px-2 border-white/5", getNodeColor(node))}>
-                            <div className={cn("w-1.5 h-1.5 rounded-full", 
-                              node.has_conflict ? "bg-red-500" : 
-                              (node.playlist_id && !node.inherited_from) ? "bg-green-500" :
-                              node.has_override ? "bg-yellow-500" : "bg-blue-500"
-                            )} />
-                            {node.playlist_name}
-                          </Badge>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-[#18181b] border-white/10 text-white p-3 shadow-2xl">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2 border-b border-white/5 pb-2 mb-2">
-                              <Info className="w-3 h-3 text-[#085CF0]" />
-                              <span className="text-xs font-bold uppercase tracking-widest">Detalhes da Herança</span>
-                            </div>
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
-                              <span className="text-white/40">Status:</span>
-                              <span className="font-bold">{getStatusLabel(node)}</span>
-                              <span className="text-white/40">Playlist:</span>
-                              <span className="font-bold">{node.playlist_name}</span>
-                              <span className="text-white/40">Origem:</span>
-                              <span className="font-bold text-blue-400">
-                                {node.inherited_from || "Local (Override)"}
-                              </span>
-                            </div>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  ) : (
-                    <Badge variant="outline" className="text-white/20 border-white/5">
-                      Sem Playlist
-                    </Badge>
-                  )}
-
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 text-white/40 hover:text-white hover:bg-[#085CF0]/20"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEditPlaylist?.(node);
-                    }}
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-        />
+            />
+          </SortableContext>
+        </DndContext>
       </div>
 
       {/* Legend / Footer */}
