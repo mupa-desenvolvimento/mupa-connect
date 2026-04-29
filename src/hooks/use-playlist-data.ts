@@ -41,7 +41,8 @@ export function usePlaylists(tenantId?: string) {
           name, 
           updated_at, 
           is_active, 
-          tenant_id
+          tenant_id,
+          playlist_items(id)
         `);
 
       if (error) {
