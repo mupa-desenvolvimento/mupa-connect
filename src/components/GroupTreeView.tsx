@@ -8,7 +8,8 @@ import {
   Search,
   Info,
   Edit2,
-  MoreVertical,
+  Plus,
+  GripVertical,
   AlertCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,6 +24,24 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { 
+  DndContext, 
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragOverlay,
+  defaultDropAnimationSideEffects
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 export type NodeType = 'store_group' | 'store' | 'device_group' | 'device';
 
