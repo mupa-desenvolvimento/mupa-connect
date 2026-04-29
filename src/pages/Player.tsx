@@ -1,35 +1,90 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { devices, getMediaById, getPlaylistById, mediaItems } from "@/lib/mock-data";
 import { useDeviceCommandChannel } from "@/hooks/useDeviceCommandChannel";
 import { supabase } from "@/integrations/supabase/client";
 
-/**
- * WebViewPlayer — /play/:deviceCode
- * - Loops playlist items
- * - Fallback: if device unknown OR no playlist OR media fails, plays a default rotation
- * - Receives realtime commands (reload, set_volume, play_campaign, …) and reports back
- * - Designed to NEVER stop
- */
 export default function PlayerPage() {
   const { deviceCode } = useParams();
-  const device = devices.find((d) => d.code.toLowerCase() === (deviceCode ?? "").toLowerCase());
-  const playlist = device ? getPlaylistById(device.playlistId) : undefined;
-
-  // Resolve the real device UUID from Supabase so realtime filter works
   const [deviceUuid, setDeviceUuid] = useState<string | undefined>();
-  useEffect(() => {
-    if (!deviceCode) return;
-    supabase
-      .from("devices")
-      .select("id")
-      .eq("device_code", deviceCode)
-      .maybeSingle()
-      .then(({ data }) => setDeviceUuid(data?.id));
-  }, [deviceCode]);
-
+  const [playlist, setPlaylist] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState(0);
   const [volume, setVolume] = useState(60);
+
+  // 1. Resolve Device and Hierarchy-based Playlist
+  useEffect(() => {
+    if (!deviceCode) return;
+
+    async function resolvePlaylist() {
+      setIsLoading(true);
+      try {
+        // Find device in public.dispositivos
+        const { data: device, error: devError } = await supabase
+          .from("dispositivos")
+          .select("id, num_filial, grupo_dispositivos, empresa")
+          .eq("apelido_interno", deviceCode) // Assuming deviceCode is apelido_interno for now
+          .maybeSingle();
+
+        if (devError || !device) {
+          // Try serial if apelido fails
+          const { data: deviceBySerial } = await supabase
+            .from("dispositivos")
+            .select("id, num_filial, grupo_dispositivos, empresa")
+            .eq("serial", deviceCode)
+            .maybeSingle();
+            
+          if (!deviceBySerial) {
+            console.error("Device not found:", deviceCode);
+            setIsLoading(false);
+            return;
+          }
+          setDeviceUuid(deviceBySerial.id);
+          await loadHierarchyPlaylist(deviceBySerial);
+        } else {
+          setDeviceUuid(device.id);
+          await loadHierarchyPlaylist(device);
+        }
+      } catch (err) {
+        console.error("Resolution error:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    async function loadHierarchyPlaylist(device: any) {
+      // Get the tenant UUID from Stok Center mapping
+      const tenantId = 'f822bf9d-39e9-4726-82f7-c16bf267bc39';
+      
+      // Call our recursive hierarchy function to find the resolved playlist
+      const { data: hierarchy } = await supabase.rpc('get_groups_hierarchy', { 
+        p_tenant_id: tenantId 
+      });
+
+      if (hierarchy) {
+        // Find the node that corresponds to this device
+        const nodes = hierarchy as any[];
+        const deviceNode = nodes.find(n => n.id === device.id && n.type === 'device');
+        
+        if (deviceNode?.resolved_playlist_id) {
+          const { data: playlistData } = await supabase
+            .from("playlists")
+            .select(`
+              *,
+              playlist_items (
+                *,
+                media_items (*)
+              )
+            `)
+            .eq("id", deviceNode.resolved_playlist_id)
+            .single();
+            
+          setPlaylist(playlistData);
+        }
+      }
+    }
+
+    resolvePlaylist();
+  }, [deviceCode, reloadKey]);
 
   useDeviceCommandChannel(deviceUuid, {
     reloadPlaylist: () => setReloadKey((k) => k + 1),
@@ -41,14 +96,22 @@ export default function PlayerPage() {
   });
 
   const queue = useMemo(() => {
-    const items = playlist?.items
-      .map((i) => ({ media: getMediaById(i.mediaId), duration: i.duration }))
-      .filter((x): x is { media: NonNullable<ReturnType<typeof getMediaById>>; duration: number } => !!x.media);
-    if (items && items.length) return items;
-    // Fallback rotation
-    return mediaItems.map((m) => ({ media: m, duration: m.duration }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playlist, reloadKey]);
+    if (playlist?.playlist_items?.length) {
+      return playlist.playlist_items
+        .sort((a: any, b: any) => (a.position ?? a.ordem ?? 0) - (b.position ?? b.ordem ?? 0))
+        .map((i: any) => ({ 
+          media: {
+            id: i.media_id,
+            name: i.media_items?.name || "Sem nome",
+            url: i.media_items?.file_url,
+            type: i.media_items?.type || "image"
+          }, 
+          duration: i.duracao || 10 
+        }))
+        .filter((x: any) => x.media.url);
+    }
+    return [];
+  }, [playlist]);
 
   const [index, setIndex] = useState(0);
   const [now, setNow] = useState(new Date());
