@@ -32,7 +32,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { useTenant } from "@/hooks/use-tenant";
 
 interface MediaItem {
   id: string;
@@ -43,15 +45,18 @@ interface MediaItem {
   file_size: number | null;
   folder_id: string | null;
   thumbnail_url: string | null;
+  tenant_id: string;
 }
 
 interface FolderItem {
   id: string;
   name: string;
   parent_id: string | null;
+  tenant_id: string;
 }
 
 export default function MediaPage() {
+  const { tenantId, isLoading: isTenantLoading } = useTenant();
   const [items, setItems] = useState<MediaItem[]>([]);
   const [folders, setFolders] = useState<FolderItem[]>([]);
   const [currentFolder, setCurrentFolder] = useState<string | null>(null);
@@ -61,15 +66,19 @@ export default function MediaPage() {
   const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
 
   useEffect(() => {
-    fetchMedia();
-    fetchFolders();
-  }, [currentFolder]);
+    if (tenantId) {
+      fetchMedia();
+      fetchFolders();
+    }
+  }, [currentFolder, tenantId]);
 
   const fetchMedia = async () => {
+    if (!tenantId) return;
     setIsLoading(true);
     let query = supabase
       .from("media_items")
       .select("*")
+      .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false });
 
     if (currentFolder) {
@@ -89,9 +98,11 @@ export default function MediaPage() {
   };
 
   const fetchFolders = async () => {
+    if (!tenantId) return;
     let query = supabase
       .from("folders")
       .select("*")
+      .eq("tenant_id", tenantId)
       .order("name");
 
     if (currentFolder) {
@@ -108,15 +119,16 @@ export default function MediaPage() {
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file || !tenantId) return;
 
     setIsUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+      // Prepend tenantId to the storage path to satisfy the requirement
+      const filePath = `${tenantId}/${fileName}`;
 
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('media')
         .upload(filePath, file);
 
@@ -136,6 +148,7 @@ export default function MediaPage() {
           file_url: publicUrl,
           file_size: file.size,
           folder_id: currentFolder,
+          tenant_id: tenantId,
           status: 'ready'
         });
 
@@ -147,17 +160,20 @@ export default function MediaPage() {
       toast.error("Erro no upload: " + error.message);
     } finally {
       setIsUploading(false);
+      // Reset input
+      event.target.value = '';
     }
   };
 
   const createFolder = async () => {
-    if (!newFolderName.trim()) return;
+    if (!newFolderName.trim() || !tenantId) return;
 
     const { error } = await supabase
       .from('folders')
       .insert({
         name: newFolderName,
-        parent_id: currentFolder
+        parent_id: currentFolder,
+        tenant_id: tenantId
       });
 
     if (error) {
@@ -202,7 +218,7 @@ export default function MediaPage() {
     <>
       <PageHeader
         title="Galeria de Mídias"
-        description="Organize seus conteúdos em pastas. Armazenamento seguro via Cloudflare R2 / Supabase Storage."
+        description="Organize seus conteúdos por empresa. Armazenamento particionado com segurança."
         actions={
           <div className="flex gap-2">
             <Dialog open={isFolderDialogOpen} onOpenChange={setIsFolderDialogOpen}>
