@@ -37,6 +37,8 @@ export default function GroupsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isUpdatingPlaylist, setIsUpdatingPlaylist] = useState(false);
+  const { data: playlists } = usePlaylists(tenantId || undefined);
 
   const fetchTreeData = async () => {
     if (!tenantId) return;
