@@ -240,9 +240,26 @@ export default function PlaylistEditor() {
       let currentPlaylistId = id;
 
       if (id === "new") {
+        // Obter o company_id associado ao tenant
+        const { data: companyData, error: companyError } = await supabase
+          .from("companies")
+          .select("id")
+          .eq("tenant_id", tenantId)
+          .limit(1)
+          .maybeSingle();
+
+        if (companyError || !companyData) {
+          throw new Error("Não foi possível encontrar uma empresa associada a este tenant.");
+        }
+
         const { data: newPlaylist, error: createError } = await supabase
           .from("playlists")
-          .insert({ name: updatedName, tenant_id: tenantId as any, is_active: true })
+          .insert({ 
+            name: updatedName, 
+            tenant_id: tenantId as any, 
+            company_id: companyData.id,
+            is_active: true 
+          })
           .select().single();
           
         if (createError) throw createError;
