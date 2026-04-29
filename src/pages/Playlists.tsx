@@ -31,7 +31,7 @@ import { useState, useEffect } from "react";
 export default function PlaylistsPage() {
   const navigate = useNavigate();
   const { data: tenantId, isLoading: isTenantLoading } = useTenant();
-  const { data: playlistsData, isLoading: isPlaylistsLoading } = usePlaylists(tenantId || undefined);
+  const { data: playlistsData, isLoading: isPlaylistsLoading, refetch } = usePlaylists(tenantId || undefined);
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
@@ -43,10 +43,12 @@ export default function PlaylistsPage() {
     localStorage.setItem("playlists-view-mode", viewMode);
   }, [viewMode]);
 
-  const playlists = playlistsData?.map(p => ({
-    ...p,
-    playlist_items: (p as any).playlist_items || []
-  })) || [];
+  // Forçar atualização quando o tenantId mudar
+  useEffect(() => {
+    if (tenantId) refetch();
+  }, [tenantId, refetch]);
+
+  const playlists = playlistsData || [];
   
   const filteredPlaylists = playlists.filter(playlist => {
     const playlistName = playlist.name || "";
@@ -56,6 +58,11 @@ export default function PlaylistsPage() {
       filterStatus === "active" ? playlist.is_active :
       !playlist.is_active;
     return matchesSearch && matchesStatus;
+  }).sort((a, b) => {
+    // Ordenação manual para garantir que as novas apareçam primeiro
+    const dateA = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+    const dateB = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+    return dateB - dateA;
   });
 
 
