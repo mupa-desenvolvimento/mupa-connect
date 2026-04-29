@@ -33,7 +33,7 @@ export default function PlaylistsPage() {
   if (isLoading) {
     return (
       <div className="h-96 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-accent" />
+        <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
       </div>
     );
   }
@@ -45,7 +45,7 @@ export default function PlaylistsPage() {
         description="Gerencie as sequências de conteúdo que serão exibidas em seus dispositivos."
         actions={
           <Button 
-            className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/20"
+            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-500/20"
             onClick={() => navigate("/playlists/new")}
           >
             <Plus className="h-4 w-4 mr-2" /> Nova Playlist
@@ -58,7 +58,7 @@ export default function PlaylistsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
             placeholder="Buscar playlists..." 
-            className="pl-9 bg-background/50 border-border/50 focus:border-accent/50 transition-all"
+            className="pl-9 bg-background/50 border-border/50 focus:border-purple-500/50 transition-all"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -78,12 +78,12 @@ export default function PlaylistsPage() {
           return (
             <Card 
               key={playlist.id} 
-              className="group overflow-hidden border-border/40 bg-card/40 backdrop-blur-sm hover:border-accent/40 hover:shadow-2xl hover:shadow-accent/5 transition-all duration-300"
+              className="group overflow-hidden border-border/40 bg-card/40 backdrop-blur-sm hover:border-purple-500/40 hover:shadow-2xl hover:shadow-purple-500/5 transition-all duration-300"
             >
               <div className="aspect-video relative overflow-hidden bg-muted">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Layers className="h-12 w-12 text-white/10 group-hover:text-accent/20 transition-colors" />
+                  <Layers className="h-12 w-12 text-white/10 group-hover:text-purple-500/20 transition-colors" />
                 </div>
                 <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end">
                   <div className="flex gap-2">
