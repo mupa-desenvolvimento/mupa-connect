@@ -67,7 +67,6 @@ export default function MediaPage() {
   const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
 
   useEffect(() => {
-  useEffect(() => {
     if (tenantId) {
       fetchMedia();
       fetchFolders();
@@ -79,7 +78,6 @@ export default function MediaPage() {
     } else if (!isTenantLoading) {
       setIsLoading(false);
     }
-  }, [currentFolder, tenantId, isTenantLoading]);
   }, [currentFolder, tenantId, isTenantLoading]);
 
   const updateFolderPath = async (folderId: string) => {
