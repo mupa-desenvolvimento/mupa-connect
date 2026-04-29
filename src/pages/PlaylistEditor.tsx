@@ -204,7 +204,7 @@ export default function PlaylistEditor() {
       console.log("Loading playlist data:", playlistData);
       setPlaylistName(playlistData.name);
       
-      if (playlistData.playlist_items) {
+      if (playlistData.playlist_items && playlistData.playlist_items.length > 0) {
         const mappedItems = playlistData.playlist_items.map((it: any) => ({
           id: it.id,
           dbId: it.id,
@@ -215,9 +215,11 @@ export default function PlaylistEditor() {
           media: medias?.find(m => m.id === it.media_id)
         }));
         setItems(mappedItems);
-        if (mappedItems.length > 0 && !selectedItem) {
+        if (!selectedItem) {
           setSelectedItem(mappedItems[0]);
         }
+      } else if (items.length === 0) {
+        setItems([]);
       }
     } else if (id === 'new') {
       setPlaylistName("Nova Playlist");
