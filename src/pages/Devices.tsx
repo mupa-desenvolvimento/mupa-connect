@@ -16,7 +16,8 @@ import {
   Monitor, 
   Settings, 
   Play,
-  FilterX
+  FilterX,
+  RotateCcw
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -34,6 +35,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { issueDeviceCommand } from "@/lib/device-commands";
+import { toast } from "sonner";
 
 type DeviceStatus = "online" | "unstable" | "offline";
 
@@ -129,6 +132,34 @@ export default function DevicesPage() {
     setStatusFilter("all");
   };
 
+  const handleRebootAll = async () => {
+    if (!filteredDevices.length) return;
+    
+    const confirm = window.confirm(`Deseja reiniciar ${filteredDevices.length} dispositivos filtrados?`);
+    if (!confirm) return;
+
+    try {
+      const promises = filteredDevices.map(d => 
+        issueDeviceCommand(d.id.toString(), "reboot", {})
+      );
+      await Promise.all(promises);
+      toast.success(`Comando de reiniciar enviado para ${filteredDevices.length} dispositivos`);
+    } catch (err) {
+      console.error("Error rebooting all:", err);
+      toast.error("Falha ao enviar comandos em massa");
+    }
+  };
+
+  const handleRebootDevice = async (deviceId: string, name: string) => {
+    try {
+      await issueDeviceCommand(deviceId, "reboot", {});
+      toast.success(`Reiniciando ${name}...`);
+    } catch (err) {
+      console.error("Error rebooting device:", err);
+      toast.error("Falha ao enviar comando");
+    }
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       <PageHeader
@@ -154,6 +185,16 @@ export default function DevicesPage() {
                 <LayoutGrid className="h-4 w-4" />
               </Button>
             </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRebootAll} 
+              disabled={isLoading || filteredDevices.length === 0} 
+              className="h-10 text-destructive hover:bg-destructive/10"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Reiniciar {filteredDevices.length < devices?.length ? "Filtrados" : "Todos"}
+            </Button>
             <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading} className="h-10">
               <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
               Atualizar
@@ -300,6 +341,15 @@ export default function DevicesPage() {
                                   <Settings className="h-4 w-4" />
                                 </Link>
                               </Button>
+                              <Button 
+                                size="icon" 
+                                variant="ghost" 
+                                className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                onClick={() => handleRebootDevice(d.id.toString(), d.apelido_interno)}
+                                title="Reiniciar Player"
+                              >
+                                <RotateCcw className="h-4 w-4" />
+                              </Button>
                               <Button asChild size="sm" variant="outline" className="h-8 gap-1">
                                 <Link to={`/play/${d.serial}`} target="_blank">
                                   <Play className="h-3 w-3" /> Player
@@ -361,6 +411,15 @@ export default function DevicesPage() {
                         </div>
 
                         <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                            onClick={() => handleRebootDevice(d.id.toString(), d.apelido_interno)}
+                            title="Reiniciar Player"
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </Button>
                           <Button asChild variant="outline" size="sm" className="flex-1 h-8 text-xs">
                             <Link to={`/dispositivos/${d.id}`}>Detalhes</Link>
                           </Button>
