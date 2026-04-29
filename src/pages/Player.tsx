@@ -19,7 +19,6 @@ export default function PlayerPage() {
     async function resolvePlaylist() {
       setIsLoading(true);
       try {
-        // Find device in public.dispositivos
         const { data: device, error: devError } = await supabase
           .from("dispositivos")
           .select("id, num_filial, grupo_dispositivos, empresa, apelido_interno")
@@ -29,7 +28,6 @@ export default function PlayerPage() {
         let targetDevice = device;
 
         if (devError || !device) {
-          // Try serial if apelido fails
           const { data: deviceBySerial } = await supabase
             .from("dispositivos")
             .select("id, num_filial, grupo_dispositivos, empresa, apelido_interno")
@@ -79,6 +77,8 @@ export default function PlayerPage() {
             .single();
             
           setPlaylist(playlistData);
+        } else {
+          setPlaylist(null);
         }
       }
     }
@@ -87,15 +87,15 @@ export default function PlayerPage() {
   }, [deviceCode, reloadKey]);
 
   useDeviceCommandChannel(deviceUuid, {
-    reloadPlaylist: () => {
+    reloadPlaylist: async () => {
       console.log("[Player] Reload command received");
       setReloadKey(k => k + 1);
     },
     playCampaign:   (id) => console.info("[player] play_campaign", id),
     setVolume:      (v) => setVolume(v),
-    screenshot:     () => undefined,
+    screenshot:     () => Promise.resolve(),
     clearCache:     async () => { try { await caches.keys().then(ks => Promise.all(ks.map(k => caches.delete(k)))); } catch {} },
-    reboot:         () => window.location.reload(),
+    reboot:         () => { window.location.reload(); return Promise.resolve(); },
   });
 
   // 3. Monitorar coluna 'comando' diretamente (Fallback para sinalização via DB)
