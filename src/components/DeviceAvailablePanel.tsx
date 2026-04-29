@@ -17,7 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useDraggable } from "@dnd-kit/core";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
 interface Device {
@@ -155,8 +155,21 @@ export function DeviceAvailablePanel({
     }
   };
 
+  const { setNodeRef, isOver } = useDroppable({
+    id: 'available-devices-panel',
+    data: {
+      type: 'available-panel'
+    }
+  });
+
   return (
-    <div className="flex flex-col h-full bg-[#09090b] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+    <div 
+      ref={setNodeRef}
+      className={cn(
+        "flex flex-col h-full bg-[#09090b] border transition-all duration-200 rounded-2xl overflow-hidden shadow-2xl",
+        isOver ? "border-[#085CF0] ring-2 ring-[#085CF0]/20 shadow-[0_0_30px_rgba(8,92,240,0.15)] bg-white/5" : "border-white/5"
+      )}
+    >
       {/* Header */}
       <div className="p-5 border-b border-white/5 bg-white/5 backdrop-blur-md">
         <div className="flex items-center justify-between mb-4">
