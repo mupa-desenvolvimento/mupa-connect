@@ -46,7 +46,7 @@ export function usePlaylists(tenantId?: string, isSuperAdmin?: boolean) {
           is_active, 
           tenant_id,
           company_id,
-          companies (
+          companies:companies!playlists_company_id_fkey (
             name
           ),
           playlist_items (
