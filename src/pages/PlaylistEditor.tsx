@@ -242,8 +242,8 @@ export default function PlaylistEditor() {
         await supabase.from("playlist_items").insert(itemsToInsert);
       }
 
-      setSaveStatus("saved");
-      queryClient.invalidateQueries({ queryKey: ["playlist", currentPlaylistId] });
+      // Silently invalidate to keep UI smooth without full reload state
+      queryClient.setQueryData(["playlist", currentPlaylistId], { ...playlistData, name: updatedName, playlist_items: updatedItems });
       queryClient.invalidateQueries({ queryKey: ["playlists", tenantId] });
       setTimeout(() => setSaveStatus("idle"), 2000);
     } catch (error: any) {
@@ -308,7 +308,7 @@ export default function PlaylistEditor() {
 
   const totalDuration = items.reduce((acc, curr) => acc + curr.duration, 0);
 
-  if (isLoadingPlaylist) {
+  if (isLoadingPlaylist && id !== "new") {
     return (
       <div className="h-screen flex items-center justify-center bg-[#09090b]">
         <Loader2 className="h-10 w-10 animate-spin text-purple-500" />
