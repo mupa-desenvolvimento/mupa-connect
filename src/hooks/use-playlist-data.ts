@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export function useTenant() {
@@ -12,10 +12,11 @@ export function useTenant() {
         .from("user_tenant_mappings")
         .select("tenant_id")
         .eq("user_id", user.id)
-        .single();
+        .limit(1)
+        .maybeSingle();
 
       if (error) throw error;
-      return mapping.tenant_id;
+      return mapping?.tenant_id;
     },
   });
 }
@@ -33,7 +34,7 @@ export function useMedias(tenantId?: string) {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
     enabled: !!tenantId,
   });
@@ -48,15 +49,13 @@ export function usePlaylists(tenantId?: string) {
         .from("playlists")
         .select(`
           *,
-          playlist_items (
-            *
-          )
+          playlist_items (*)
         `)
         .eq("tenant_id", tenantId)
         .order("updated_at", { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
     enabled: !!tenantId,
   });
@@ -71,22 +70,17 @@ export function usePlaylist(id: string) {
         .from("playlists")
         .select(`
           *,
-          playlist_items (
-            *,
-            media_items:media_id (*)
-          )
+          playlist_items (*)
         `)
         .eq("id", id)
         .single();
 
       if (error) throw error;
       
-      // Sort items by position or order
-      if (data.playlist_items) {
-        data.playlist_items.sort((a: any, b: any) => (a.position ?? a.ordem ?? 0) - (b.position ?? b.ordem ?? 0));
-      }
+      const items = data.playlist_items || [];
+      const sortedItems = [...items].sort((a: any, b: any) => (a.position ?? a.ordem ?? 0) - (b.position ?? b.ordem ?? 0));
       
-      return data;
+      return { ...data, playlist_items: sortedItems };
     },
     enabled: !!id && id !== "new",
   });
