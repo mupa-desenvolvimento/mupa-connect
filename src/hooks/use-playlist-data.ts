@@ -46,9 +46,8 @@ export function usePlaylists(tenantId?: string) {
           playlist_items(id, media_id, duracao, tipo, ordem, position, prioridade)
         `);
 
-      if (tenantId) {
-        query = query.or(`tenant_id.eq.${tenantId},tenant_id.is.null`);
-      }
+      // Simplificando a query para teste: remover o .or e trazer tudo
+      console.log("usePlaylists - Executing debug query (unfiltered)");
 
       const { data, error } = await query.order("updated_at", { ascending: false, nullsFirst: false });
 
