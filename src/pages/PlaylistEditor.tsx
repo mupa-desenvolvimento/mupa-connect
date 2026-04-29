@@ -566,7 +566,7 @@ export default function PlaylistEditor() {
                          <div className="space-y-4">
                             <div className="flex justify-between items-center">
                                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Duração (Segundos)</label>
-                               <span className="text-xs font-mono font-bold text-purple-400">{selectedItem.duration}s</span>
+                               <span className="text-xs font-mono font-bold text-accent">{selectedItem.duration}s</span>
                             </div>
                             <Slider 
                               value={[selectedItem.duration]} 
