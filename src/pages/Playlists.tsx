@@ -44,7 +44,7 @@ import {
 export default function PlaylistsPage() {
   const navigate = useNavigate();
   const { data: tenantId } = useTenant();
-  const { data: playlistsData, isLoading: isPlaylistsLoading, isError, refetch } = usePlaylists();
+  const { data: playlistsData, isLoading: isPlaylistsLoading, isError, refetch } = usePlaylists(tenantId || undefined);
   
   if (isError) {
     console.error("Error detected in usePlaylists within component");
