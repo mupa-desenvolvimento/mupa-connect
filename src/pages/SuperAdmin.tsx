@@ -86,7 +86,7 @@ export default function SuperAdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
           { label: "Revendas (Tenants)", value: stats.tenants, icon: ShieldCheck, color: "text-blue-500" },
-          { label: "Empresas", value: stats.companies, icon: Building2, color: "text-purple-500" },
+          { label: "Empresas", value: stats.companies, icon: Building2, color: "text-[#085CF0]" },
           { label: "Usuários", value: stats.users, icon: UserPlus, color: "text-green-500" },
           { label: "Dispositivos", value: stats.devices, icon: Store, color: "text-orange-500" },
         ].map((s) => (
