@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { useDeviceCommandChannel } from "@/hooks/useDeviceCommandChannel";
 import { supabase } from "@/integrations/supabase/client";
 import { PlayerEngine } from "@/components/PlayerEngine";
+import { ManifestManager, MediaCacheService } from "@/components/PlayerServices";
 
 export default function PlayerPage() {
   const { deviceCode } = useParams();
@@ -21,6 +22,25 @@ export default function PlayerPage() {
     async function resolvePlaylist() {
       setIsLoading(true);
       try {
+        // Try to load from manifest first for speed/offline
+        const localManifest = ManifestManager.getManifest(deviceCode);
+        if (localManifest && localManifest.items) {
+          console.log("[Player] Loading from local manifest");
+          setPlaylist({
+            id: localManifest.playlist_id,
+            playlist_items: localManifest.items.map((item: any) => ({
+              media_id: item.media_id,
+              duracao: item.duration,
+              media_items: {
+                name: item.name,
+                file_url: item.url,
+                type: item.type
+              }
+            }))
+          });
+          setIsLoading(false);
+        }
+
         const { data: device, error: devError } = await supabase
           .from("dispositivos")
           .select("id, num_filial, grupo_dispositivos, empresa, apelido_interno, serial, playlist_id")
@@ -38,7 +58,7 @@ export default function PlayerPage() {
             
           if (!deviceBySerial) {
             console.error("Device not found:", deviceCode);
-            setIsLoading(false);
+            if (!localManifest) setIsLoading(false);
             return;
           }
           targetDevice = deviceBySerial;
@@ -48,7 +68,7 @@ export default function PlayerPage() {
         setDeviceInfo(targetDevice);
         
         const playlistId = targetDevice.playlist_id || 'e8dab79a-0612-4859-94e0-5e1a6be50756';
-        await loadPlaylist(playlistId);
+        await loadPlaylist(playlistId, targetDevice.serial);
       } catch (err) {
         console.error("Resolution error:", err);
       } finally {
@@ -56,7 +76,7 @@ export default function PlayerPage() {
       }
     }
 
-    async function loadPlaylist(playlistId: string) {
+    async function loadPlaylist(playlistId: string, serial: string) {
       const { data: playlistData } = await supabase
         .from("playlists")
         .select(`
@@ -69,7 +89,22 @@ export default function PlayerPage() {
         .eq("id", playlistId)
         .single();
         
-      setPlaylist(playlistData);
+      if (playlistData) {
+        setPlaylist(playlistData);
+        // Save to offline manifest
+        const manifest = {
+          playlist_id: playlistId,
+          items: playlistData.playlist_items.map((i: any) => ({
+            media_id: i.media_id,
+            type: i.media_items?.type,
+            url: i.media_items?.file_url,
+            duration: i.duracao,
+            name: i.media_items?.name
+          }))
+        };
+        ManifestManager.saveManifest(serial, manifest);
+        ManifestManager.saveManifest(deviceCode, manifest); // Also save by deviceCode
+      }
     }
 
     resolvePlaylist();

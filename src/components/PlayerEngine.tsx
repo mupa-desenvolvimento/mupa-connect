@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
+import { MediaCacheService } from "./PlayerServices";
 
 interface MediaItem {
   id: string;
@@ -70,10 +71,16 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
     };
   }, [currentIndex, activeLayer, playlist, handleNext]);
 
-  // Preload next media
+  // Preload and Cache next media
   useEffect(() => {
     if (!playlist.length) return;
     const nextMedia = playlist[nextIndex];
+    
+    // Cache media for offline use
+    if (nextMedia?.url) {
+      MediaCacheService.cacheMedia(nextMedia.url);
+    }
+
     const nextLayerVideoRef = activeLayer === "A" ? videoBRef : videoARef;
     
     if (nextMedia?.type === "video" && nextLayerVideoRef.current) {
