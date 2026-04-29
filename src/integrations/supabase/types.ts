@@ -6114,6 +6114,14 @@ export type Database = {
         Args: { p_dispositivo_id: string }
         Returns: number
       }
+      sync_cloudflare_media: {
+        Args: {
+          p_company_folder: string
+          p_files: string[]
+          p_tenant_id: string
+        }
+        Returns: undefined
+      }
       sync_device_playlist: {
         Args: { p_device_id: string }
         Returns: undefined
