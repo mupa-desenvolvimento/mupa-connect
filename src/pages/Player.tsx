@@ -230,8 +230,8 @@ export default function PlayerPage() {
         </div>
       </div>
 
-      {/* Discrete device ID */}
-      <div className="absolute bottom-1 right-2 z-30 text-[9px] font-mono text-white/30 tracking-wider select-none pointer-events-none">
+      {/* Device ID badge */}
+      <div className="absolute bottom-3 right-3 z-30 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-sm border border-white/10 font-mono text-xs text-white/80 tracking-wider select-none pointer-events-none">
         ID: {deviceInfo?.serial || deviceUuid || deviceCode || "—"}
       </div>
 
