@@ -106,8 +106,8 @@ const SortableItem = ({
       onClick={() => onSelect(item)}
       className={`relative shrink-0 w-48 h-32 rounded-xl border transition-all cursor-pointer group overflow-hidden ${
         isSelected 
-          ? 'border-purple-500 ring-2 ring-purple-500/20 bg-purple-500/5 shadow-xl shadow-purple-500/10' 
-          : 'border-border/40 bg-card/40 hover:border-purple-500/30'
+          ? 'border-accent ring-2 ring-accent/20 bg-accent/5 shadow-xl shadow-accent/10' 
+          : 'border-border/40 bg-card/40 hover:border-accent/30'
       } ${isDragging ? 'shadow-2xl' : ''}`}
     >
       <div className="absolute inset-0">
