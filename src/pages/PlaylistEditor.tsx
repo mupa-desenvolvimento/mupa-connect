@@ -167,9 +167,11 @@ export default function PlaylistEditor() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: tenantId } = useTenant();
-  const { data: medias } = useMedias(tenantId);
-  const { data: playlistData, isLoading: isLoadingPlaylist } = usePlaylist(id!);
+  const { data: tenantId, isLoading: isTenantLoading } = useTenant();
+  const { data: medias } = useMedias(tenantId || undefined);
+  const { data: playlistData, isLoading: isPlaylistLoading } = usePlaylist(id!);
+
+  const isLoadingPlaylist = isTenantLoading || isPlaylistLoading;
 
   const [playlistName, setPlaylistName] = useState("");
   const [items, setItems] = useState<EditorPlaylistItem[]>([]);
