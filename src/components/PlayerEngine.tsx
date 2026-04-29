@@ -124,12 +124,13 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
     return () => clearInterval(watchdog);
   }, [currentIndex, activeLayer, playlist, handleNext]);
 
-  const handleError = (e: any) => {
+  const handleError = useCallback((e: any) => {
     console.error("[PlayerEngine] Media error detected:", e);
+    // If the error is likely network-related, we could try to reload the media
+    // or just skip to next to avoid black screen
     setErrorCount(prev => prev + 1);
-    // Skip to next on error
-    setTimeout(handleNext, 1000);
-  };
+    handleNext();
+  }, [handleNext]);
 
   if (!playlist.length) return null;
 
