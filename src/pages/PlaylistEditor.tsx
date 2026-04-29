@@ -39,7 +39,11 @@ import {
   RefreshCw,
   Loader2,
   Type,
-  Maximize2
+  Maximize2,
+  Bug,
+  ChevronDown,
+  ChevronUp,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -173,6 +177,8 @@ export default function PlaylistEditor() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [debugData, setDebugData] = useState<any>(null);
+  const [showDebug, setShowDebug] = useState(false);
 
   // DND Sensors
   const sensors = useSensors(
@@ -215,22 +221,55 @@ export default function PlaylistEditor() {
     setIsSaving(true);
     
     setSaveStatus("saving");
+    const startTime = Date.now();
+    let currentPayload: any = null;
+    
     try {
       let currentPlaylistId = id;
 
       if (id === "new") {
+        currentPayload = { name: updatedName, tenant_id: tenantId, is_active: true };
         const { data: newPlaylist, error: createError } = await supabase
           .from("playlists")
-          .insert({ name: updatedName, tenant_id: tenantId, is_active: true })
+          .insert(currentPayload)
           .select().single();
-        if (createError) throw createError;
+          
+        if (createError) {
+          setDebugData({ 
+            operation: "CREATE_PLAYLIST",
+            payload: currentPayload,
+            error: createError,
+            timestamp: new Date().toISOString()
+          });
+          throw createError;
+        }
         currentPlaylistId = newPlaylist.id;
         navigate(`/playlists/${currentPlaylistId}`, { replace: true });
       } else {
-        await supabase.from("playlists").update({ name: updatedName, updated_at: new Date().toISOString() }).eq("id", id!);
+        currentPayload = { name: updatedName, updated_at: new Date().toISOString() };
+        const { error: updateError } = await supabase.from("playlists").update(currentPayload).eq("id", id!);
+        if (updateError) {
+          setDebugData({ 
+            operation: "UPDATE_PLAYLIST",
+            payload: currentPayload,
+            error: updateError,
+            timestamp: new Date().toISOString()
+          });
+          throw updateError;
+        }
       }
 
-      await supabase.from("playlist_items").delete().eq("playlist_id", currentPlaylistId!);
+      // Delete items
+      const { error: deleteError } = await supabase.from("playlist_items").delete().eq("playlist_id", currentPlaylistId!);
+      if (deleteError) {
+        setDebugData({ 
+          operation: "DELETE_ITEMS",
+          playlist_id: currentPlaylistId,
+          error: deleteError,
+          timestamp: new Date().toISOString()
+        });
+        throw deleteError;
+      }
 
       if (updatedItems.length > 0) {
         const itemsToInsert = updatedItems.map((it, idx) => ({
@@ -244,9 +283,24 @@ export default function PlaylistEditor() {
           conteudo_id: it.mediaId,
           ativo: true
         }));
+        currentPayload = itemsToInsert;
         const { error: insertError } = await supabase.from("playlist_items").insert(itemsToInsert);
-        if (insertError) throw insertError;
+        if (insertError) {
+          setDebugData({ 
+            operation: "INSERT_ITEMS",
+            payload: currentPayload,
+            error: insertError,
+            timestamp: new Date().toISOString()
+          });
+          throw insertError;
+        }
       }
+
+      setDebugData({
+        operation: "FULL_SAVE_SUCCESS",
+        duration: `${Date.now() - startTime}ms`,
+        timestamp: new Date().toISOString()
+      });
 
       // Silently invalidate to keep UI smooth without full reload state
       // Don't overwrite cache shape — just mark playlists list stale
@@ -259,6 +313,14 @@ export default function PlaylistEditor() {
       }, 500);
     } catch (error: any) {
       console.error("Auto-save error:", error);
+      // Se já não foi setado um debug detalhado dentro do try, seta aqui
+      if (!debugData?.error) {
+        setDebugData({ 
+          operation: "GENERAL_SAVE_ERROR",
+          error: error,
+          timestamp: new Date().toISOString()
+        });
+      }
       toast.error(`Erro ao salvar: ${error.message || 'Erro desconhecido'}`);
       setSaveStatus("idle");
       setIsSaving(false);
@@ -345,16 +407,29 @@ export default function PlaylistEditor() {
       {/* Header */}
       <header className="h-16 border-b border-white/5 bg-card/10 backdrop-blur-xl px-6 flex items-center justify-between z-50 shrink-0">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/playlists")} className="text-white/50 hover:text-white">
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setShowDebug(!showDebug)} 
+              className={`h-8 w-8 ${debugData?.error ? 'text-red-500 animate-pulse' : 'text-white/20'}`}
+              title="Debug Mode"
+            >
+              <Bug className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => navigate("/playlists")} className="text-white/50 hover:text-white">
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <div className="flex flex-col">
+              <input 
+                value={playlistName}
+                onChange={(e) => setPlaylistName(e.target.value)}
+                onBlur={() => triggerAutoSave(items, playlistName)}
+                className="bg-transparent border-none focus:ring-0 text-lg font-display font-semibold text-white p-0 h-7"
+              />
+            </div>
+          </div>
           <div className="flex flex-col">
-            <input 
-              value={playlistName}
-              onChange={(e) => setPlaylistName(e.target.value)}
-              onBlur={() => triggerAutoSave(items, playlistName)}
-              className="bg-transparent border-none focus:ring-0 text-lg font-display font-semibold text-white p-0 h-7"
-            />
             <div className="flex items-center gap-2 text-[10px] text-white/40 font-medium uppercase tracking-wider">
               <span>{items.length} ITENS</span>
               <span className="w-1 h-1 rounded-full bg-white/10" />
@@ -664,6 +739,69 @@ export default function PlaylistEditor() {
            </ScrollArea>
         </aside>
       </div>
+
+      {/* Debug Overlay */}
+      <AnimatePresence>
+        {showDebug && debugData && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-6 right-6 w-[500px] max-h-[80vh] bg-black/95 border border-white/10 rounded-2xl shadow-2xl z-[100] flex flex-col overflow-hidden backdrop-blur-xl"
+          >
+            <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
+              <div className="flex items-center gap-2">
+                <Bug className="h-4 w-4 text-[#085CF0]" />
+                <h4 className="text-xs font-bold uppercase tracking-widest">Supabase Debug Console</h4>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => setShowDebug(false)} className="h-8 w-8">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <ScrollArea className="flex-1 p-4">
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Status da Operação</p>
+                  <div className={`p-3 rounded-lg border flex items-center gap-3 ${debugData.error ? 'bg-red-500/10 border-red-500/50' : 'bg-green-500/10 border-green-500/50'}`}>
+                    <div className={`h-2 w-2 rounded-full ${debugData.error ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`} />
+                    <span className="text-xs font-mono font-bold uppercase">
+                      {debugData.operation} - {debugData.error ? 'FAILED' : 'SUCCESS'}
+                    </span>
+                  </div>
+                </div>
+
+                {debugData.error && (
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-bold text-red-400/60 uppercase tracking-widest">Mensagem de Erro</p>
+                    <div className="p-4 bg-red-950/30 border border-red-500/20 rounded-lg">
+                      <pre className="text-[11px] text-red-300 font-mono whitespace-pre-wrap">
+                        {JSON.stringify(debugData.error, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+
+                {debugData.payload && (
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-bold text-[#085CF0]/60 uppercase tracking-widest">Payload Enviado</p>
+                    <div className="p-4 bg-white/5 border border-white/10 rounded-lg">
+                      <pre className="text-[11px] text-white/60 font-mono whitespace-pre-wrap">
+                        {JSON.stringify(debugData.payload, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-4 border-t border-white/5 flex justify-between items-center text-[10px] text-white/20">
+                  <span>Last Try: {debugData.timestamp}</span>
+                  {debugData.duration && <span>Duration: {debugData.duration}</span>}
+                </div>
+              </div>
+            </ScrollArea>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
