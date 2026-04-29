@@ -58,7 +58,7 @@ export default function PlaylistsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
             placeholder="Buscar playlists..." 
-            className="pl-9 bg-background/50 border-border/50 focus:border-purple-500/50 transition-all"
+            className="pl-9 bg-background/50 border-border/50 focus:border-accent/50 transition-all"
           />
         </div>
         <div className="flex items-center gap-2">
