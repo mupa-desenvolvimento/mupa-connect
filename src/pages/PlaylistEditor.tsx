@@ -221,22 +221,55 @@ export default function PlaylistEditor() {
     setIsSaving(true);
     
     setSaveStatus("saving");
+    const startTime = Date.now();
+    let currentPayload: any = null;
+    
     try {
       let currentPlaylistId = id;
 
       if (id === "new") {
+        currentPayload = { name: updatedName, tenant_id: tenantId, is_active: true };
         const { data: newPlaylist, error: createError } = await supabase
           .from("playlists")
-          .insert({ name: updatedName, tenant_id: tenantId, is_active: true })
+          .insert(currentPayload)
           .select().single();
-        if (createError) throw createError;
+          
+        if (createError) {
+          setDebugData({ 
+            operation: "CREATE_PLAYLIST",
+            payload: currentPayload,
+            error: createError,
+            timestamp: new Date().toISOString()
+          });
+          throw createError;
+        }
         currentPlaylistId = newPlaylist.id;
         navigate(`/playlists/${currentPlaylistId}`, { replace: true });
       } else {
-        await supabase.from("playlists").update({ name: updatedName, updated_at: new Date().toISOString() }).eq("id", id!);
+        currentPayload = { name: updatedName, updated_at: new Date().toISOString() };
+        const { error: updateError } = await supabase.from("playlists").update(currentPayload).eq("id", id!);
+        if (updateError) {
+          setDebugData({ 
+            operation: "UPDATE_PLAYLIST",
+            payload: currentPayload,
+            error: updateError,
+            timestamp: new Date().toISOString()
+          });
+          throw updateError;
+        }
       }
 
-      await supabase.from("playlist_items").delete().eq("playlist_id", currentPlaylistId!);
+      // Delete items
+      const { error: deleteError } = await supabase.from("playlist_items").delete().eq("playlist_id", currentPlaylistId!);
+      if (deleteError) {
+        setDebugData({ 
+          operation: "DELETE_ITEMS",
+          playlist_id: currentPlaylistId,
+          error: deleteError,
+          timestamp: new Date().toISOString()
+        });
+        throw deleteError;
+      }
 
       if (updatedItems.length > 0) {
         const itemsToInsert = updatedItems.map((it, idx) => ({
@@ -250,9 +283,24 @@ export default function PlaylistEditor() {
           conteudo_id: it.mediaId,
           ativo: true
         }));
+        currentPayload = itemsToInsert;
         const { error: insertError } = await supabase.from("playlist_items").insert(itemsToInsert);
-        if (insertError) throw insertError;
+        if (insertError) {
+          setDebugData({ 
+            operation: "INSERT_ITEMS",
+            payload: currentPayload,
+            error: insertError,
+            timestamp: new Date().toISOString()
+          });
+          throw insertError;
+        }
       }
+
+      setDebugData({
+        operation: "FULL_SAVE_SUCCESS",
+        duration: `${Date.now() - startTime}ms`,
+        timestamp: new Date().toISOString()
+      });
 
       // Silently invalidate to keep UI smooth without full reload state
       // Don't overwrite cache shape — just mark playlists list stale
