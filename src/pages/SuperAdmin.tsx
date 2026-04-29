@@ -23,6 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { CreateUserModal } from "@/components/CreateUserModal";
 
 export default function SuperAdminDashboard() {
   const [stats, setStats] = useState({
@@ -32,6 +33,7 @@ export default function SuperAdminDashboard() {
     devices: 0
   });
   const [loading, setLoading] = useState(true);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchStats() {
