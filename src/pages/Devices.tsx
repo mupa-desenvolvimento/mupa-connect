@@ -53,12 +53,13 @@ export default function DevicesPage() {
       const { data, error } = await supabase
         .from("dispositivos")
         .select("*")
+        .eq("empresa", "1728965891007x215886838679286700") // Filtrar por Stok Center
         .order("apelido_interno");
       
       if (error) throw error;
       return data;
     },
-    refetchInterval: 30000, // Refetch every 30s for real-time status updates
+    refetchInterval: 30000,
   });
 
   const { data: stores } = useQuery({
