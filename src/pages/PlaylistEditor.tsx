@@ -317,13 +317,14 @@ export default function PlaylistEditor() {
       queryClient.invalidateQueries({ queryKey: ["playlists"] });
       queryClient.invalidateQueries({ queryKey: ["playlist", currentPlaylistId] });
       // Forçar refetch imediato
-      queryClient.refetchQueries({ queryKey: ["playlists"] });
-      queryClient.refetchQueries({ queryKey: ["playlist", currentPlaylistId] });
-      setTimeout(() => {
-        setSaveStatus("saved");
-        setIsSaving(false);
-        setTimeout(() => setSaveStatus("idle"), 2000);
-      }, 500);
+      await queryClient.refetchQueries({ queryKey: ["playlists"] });
+      await queryClient.refetchQueries({ queryKey: ["playlist", currentPlaylistId] });
+      
+      console.log("Full save completed successfully");
+      
+      setSaveStatus("saved");
+      setIsSaving(false);
+      setTimeout(() => setSaveStatus("idle"), 2000);
     } catch (error: any) {
       console.error("Auto-save error:", error);
       // Se já não foi setado um debug detalhado dentro do try, seta aqui
