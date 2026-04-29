@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 export default function PlayerPage() {
   const { deviceCode } = useParams();
   const [deviceUuid, setDeviceUuid] = useState<string | undefined>();
+  const [deviceInfo, setDeviceInfo] = useState<any>(null);
   const [playlist, setPlaylist] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState(0);
@@ -21,15 +22,17 @@ export default function PlayerPage() {
         // Find device in public.dispositivos
         const { data: device, error: devError } = await supabase
           .from("dispositivos")
-          .select("id, num_filial, grupo_dispositivos, empresa")
-          .eq("apelido_interno", deviceCode) // Assuming deviceCode is apelido_interno for now
+          .select("id, num_filial, grupo_dispositivos, empresa, apelido_interno")
+          .eq("apelido_interno", deviceCode)
           .maybeSingle();
+
+        let targetDevice = device;
 
         if (devError || !device) {
           // Try serial if apelido fails
           const { data: deviceBySerial } = await supabase
             .from("dispositivos")
-            .select("id, num_filial, grupo_dispositivos, empresa")
+            .select("id, num_filial, grupo_dispositivos, empresa, apelido_interno")
             .eq("serial", deviceCode)
             .maybeSingle();
             
@@ -38,12 +41,12 @@ export default function PlayerPage() {
             setIsLoading(false);
             return;
           }
-          setDeviceUuid(deviceBySerial.id);
-          await loadHierarchyPlaylist(deviceBySerial);
-        } else {
-          setDeviceUuid(device.id);
-          await loadHierarchyPlaylist(device);
+          targetDevice = deviceBySerial;
         }
+
+        setDeviceUuid(targetDevice.id);
+        setDeviceInfo(targetDevice);
+        await loadHierarchyPlaylist(targetDevice);
       } catch (err) {
         console.error("Resolution error:", err);
       } finally {
@@ -52,16 +55,13 @@ export default function PlayerPage() {
     }
 
     async function loadHierarchyPlaylist(device: any) {
-      // Get the tenant UUID from Stok Center mapping
       const tenantId = 'f822bf9d-39e9-4726-82f7-c16bf267bc39';
       
-      // Call our recursive hierarchy function to find the resolved playlist
       const { data: hierarchy } = await supabase.rpc('get_groups_hierarchy', { 
         p_tenant_id: tenantId 
       });
 
       if (hierarchy) {
-        // Find the node that corresponds to this device
         const nodes = hierarchy as any[];
         const deviceNode = nodes.find(n => n.id === device.id && n.type === 'device');
         
@@ -134,9 +134,13 @@ export default function PlayerPage() {
     if (timerRef.current) window.clearTimeout(timerRef.current);
     const current = queue[index];
     const ms = (current?.duration ?? 8) * 1000;
-    timerRef.current = window.setTimeout(() => {
-      setIndex((i) => (i + 1) % queue.length);
-    }, ms);
+    
+    if (queue.length > 0) {
+      timerRef.current = window.setTimeout(() => {
+        setIndex((i) => (i + 1) % queue.length);
+      }, ms);
+    }
+
     return () => {
       if (timerRef.current) window.clearTimeout(timerRef.current);
     };
@@ -144,11 +148,19 @@ export default function PlayerPage() {
 
   const current = queue[index];
 
+  if (isLoading) {
+    return <div className="fixed inset-0 bg-black flex items-center justify-center text-white/40 font-mono text-xs uppercase tracking-widest">Iniciando Player Mupa...</div>;
+  }
+
+  if (!current) {
+    return <div className="fixed inset-0 bg-black flex items-center justify-center text-white/40 font-mono text-xs uppercase tracking-widest">Nenhum conteúdo para exibir</div>;
+  }
+
   return (
     <div className="fixed inset-0 bg-black overflow-hidden text-white">
       {/* Media stage */}
       <div className="absolute inset-0">
-        {current?.media.type === "image" ? (
+        {current.media.type === "image" ? (
           <img
             key={current.media.id + index}
             src={current.media.url}
@@ -158,8 +170,8 @@ export default function PlayerPage() {
           />
         ) : (
           <video
-            key={(current?.media.id ?? "") + String(index)}
-            src={current?.media.url}
+            key={(current.media.id ?? "") + String(index)}
+            src={current.media.url}
             autoPlay
             muted={volume === 0}
             ref={(el) => { if (el) el.volume = Math.max(0, Math.min(1, volume / 100)); }}
@@ -176,9 +188,9 @@ export default function PlayerPage() {
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-lg bg-gradient-primary grid place-items-center font-display font-bold text-primary-foreground">M</div>
           <div className="leading-tight">
-            <div className="font-display font-semibold">{device?.name ?? "Player Mupa"}</div>
+            <div className="font-display font-semibold">{deviceInfo?.apelido_interno || "Player Mupa"}</div>
             <div className="text-[11px] uppercase tracking-widest opacity-70 font-mono">
-              {device ? `${device.code} · ${device.store}` : `Modo demo · code=${deviceCode ?? "—"}`}
+              {deviceInfo ? `Filial ${deviceInfo.num_filial}` : `Modo demo · code=${deviceCode ?? "—"}`}
             </div>
           </div>
         </div>
@@ -196,13 +208,13 @@ export default function PlayerPage() {
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
         <div className="flex items-center gap-3 mb-2">
           <span className="text-xs font-mono opacity-80">{String(index + 1).padStart(2, "0")} / {String(queue.length).padStart(2, "0")}</span>
-          <span className="text-sm truncate">{current?.media.name}</span>
+          <span className="text-sm truncate">{current.media.name}</span>
         </div>
         <div className="h-1 w-full bg-white/20 rounded-full overflow-hidden">
           <div
             key={index}
             className="h-full bg-primary"
-            style={{ animation: `mupaProgress ${current?.duration ?? 8}s linear forwards` }}
+            style={{ animation: `mupaProgress ${current.duration ?? 8}s linear forwards` }}
           />
         </div>
       </div>
