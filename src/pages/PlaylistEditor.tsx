@@ -230,6 +230,7 @@ export default function PlaylistEditor() {
   }, [playlistData, medias, id]);
 
   const triggerAutoSave = useCallback(async (updatedItems: EditorPlaylistItem[], updatedName: string) => {
+    setHasUnsavedChanges(true);
     if (!tenantId || isSaving) return;
     setIsSaving(true);
     
