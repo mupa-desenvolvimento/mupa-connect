@@ -349,7 +349,7 @@ export default function PlaylistEditor() {
           <Button variant="outline" className="border-white/10 hover:bg-white/5 gap-2 h-9 px-4 text-white">
             <Play className="h-4 w-4 fill-current" /> Preview
           </Button>
-          <Button className="bg-purple-600 hover:bg-purple-700 text-white h-9 px-4 gap-2">
+          <Button className="bg-accent hover:bg-accent/90 text-accent-foreground h-9 px-4 gap-2">
             <RefreshCw className="h-4 w-4" /> Atualizar Telas
           </Button>
         </div>
