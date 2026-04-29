@@ -31,23 +31,29 @@ export function usePlaylists(tenantId?: string) {
   return useQuery({
     queryKey: ["playlists", tenantId],
     queryFn: async () => {
-      console.log("usePlaylists Hook - Starting fetch...");
-      try {
-        const { data, error } = await supabase
-          .from("playlists")
-          .select("id, name, updated_at, is_active, tenant_id");
+      let query = supabase
+        .from("playlists")
+        .select(`
+          id, 
+          name, 
+          updated_at, 
+          is_active, 
+          tenant_id,
+          playlist_items(id, media_id, duracao, tipo, ordem, position, prioridade)
+        `);
 
-        if (error) {
-          console.error("Supabase Query Error:", error);
-          throw error;
-        }
-
-        console.log("usePlaylists Hook - Success! Found:", data?.length);
-        return data || [];
-      } catch (err) {
-        console.error("usePlaylists Hook - Catch Block:", err);
-        throw err;
+      if (tenantId) {
+        query = query.or(`tenant_id.eq.${tenantId},tenant_id.is.null`);
       }
+
+      const { data, error } = await query.order("updated_at", { ascending: false, nullsFirst: false });
+
+      if (error) {
+        console.error("Error fetching playlists:", error);
+        throw error;
+      }
+      
+      return data || [];
     },
     enabled: true,
   });
