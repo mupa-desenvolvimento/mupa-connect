@@ -44,7 +44,11 @@ export default function PlayerPage() {
 
         setDeviceUuid(targetDevice.id.toString());
         setDeviceInfo(targetDevice);
-        await loadHierarchyPlaylist(targetDevice);
+        if (targetDevice.playlist_id) {
+          await loadDirectPlaylist(targetDevice.playlist_id);
+        } else {
+          await loadHierarchyPlaylist(targetDevice);
+        }
       } catch (err) {
         console.error("Resolution error:", err);
       } finally {
