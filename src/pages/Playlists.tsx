@@ -82,6 +82,77 @@ export default function PlaylistsPage() {
 
   const isLoading = isPlaylistsLoading;
 
+  const handleDelete = async () => {
+    if (!playlistToDelete) return;
+    setIsDeleting(true);
+    try {
+      // 1. Delete items first due to FK
+      await supabase.from("playlist_items").delete().eq("playlist_id", playlistToDelete);
+      
+      // 2. Delete playlist
+      const { error } = await supabase.from("playlists").delete().eq("id", playlistToDelete);
+      
+      if (error) throw error;
+      
+      toast.success("Playlist excluída com sucesso");
+      refetch();
+    } catch (error: any) {
+      console.error("Error deleting playlist:", error);
+      toast.error("Erro ao excluir playlist: " + error.message);
+    } finally {
+      setIsDeleting(false);
+      setPlaylistToDelete(null);
+    }
+  };
+
+  const handleDuplicate = async (playlist: any) => {
+    try {
+      toast.loading("Duplicando playlist...");
+      
+      // 1. Create new playlist record
+      const { data: newPlaylist, error: pError } = await supabase
+        .from("playlists")
+        .insert({
+          name: `${playlist.name} (Cópia)`,
+          tenant_id: playlist.tenant_id,
+          is_active: playlist.is_active
+        })
+        .select()
+        .single();
+        
+      if (pError) throw pError;
+
+      // 2. Fetch original items
+      const { data: items, error: iError } = await supabase
+        .from("playlist_items")
+        .select("*")
+        .eq("playlist_id", playlist.id);
+        
+      if (iError) throw iError;
+
+      // 3. Insert duplicated items
+      if (items && items.length > 0) {
+        const duplicatedItems = items.map(item => ({
+          ...item,
+          id: undefined, // Let DB generate new UUID
+          playlist_id: newPlaylist.id,
+          created_at: undefined
+        }));
+        
+        const { error: insError } = await supabase.from("playlist_items").insert(duplicatedItems);
+        if (insError) throw insError;
+      }
+
+      toast.dismiss();
+      toast.success("Playlist duplicada com sucesso!");
+      refetch();
+    } catch (error: any) {
+      toast.dismiss();
+      console.error("Error duplicating playlist:", error);
+      toast.error("Erro ao duplicar: " + error.message);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
