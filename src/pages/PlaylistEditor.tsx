@@ -196,7 +196,9 @@ export default function PlaylistEditor() {
 
   useEffect(() => {
     if (playlistData) {
+      console.log("Loading playlist data:", playlistData);
       setPlaylistName(playlistData.name);
+      
       if (playlistData.playlist_items) {
         const mappedItems = playlistData.playlist_items.map((it: any) => ({
           id: it.id,
@@ -215,6 +217,7 @@ export default function PlaylistEditor() {
     } else if (id === 'new') {
       setPlaylistName("Nova Playlist");
       setItems([]);
+      setSelectedItem(null);
     }
   }, [playlistData, medias, id]);
 

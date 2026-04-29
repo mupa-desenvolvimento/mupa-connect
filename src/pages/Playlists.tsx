@@ -14,7 +14,8 @@ import {
   Layers,
   Loader2,
   LayoutGrid,
-  List
+  List,
+  AlertTriangle
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
@@ -24,13 +25,26 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { usePlaylists, useTenant } from "@/hooks/use-playlist-data";
+import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState, useEffect, useMemo } from "react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function PlaylistsPage() {
   const navigate = useNavigate();
-  const { data: playlistsData, isLoading: isPlaylistsLoading, isError } = usePlaylists();
+  const { data: tenantId } = useTenant();
+  const { data: playlistsData, isLoading: isPlaylistsLoading, isError, refetch } = usePlaylists();
   
   if (isError) {
     console.error("Error detected in usePlaylists within component");
@@ -38,6 +52,8 @@ export default function PlaylistsPage() {
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
+  const [playlistToDelete, setPlaylistToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
     return (localStorage.getItem("playlists-view-mode") as "grid" | "list") || "grid";
   });
@@ -65,6 +81,77 @@ export default function PlaylistsPage() {
   }, [playlists, searchQuery, filterStatus]);
 
   const isLoading = isPlaylistsLoading;
+
+  const handleDelete = async () => {
+    if (!playlistToDelete) return;
+    setIsDeleting(true);
+    try {
+      // 1. Delete items first due to FK
+      await supabase.from("playlist_items").delete().eq("playlist_id", playlistToDelete);
+      
+      // 2. Delete playlist
+      const { error } = await supabase.from("playlists").delete().eq("id", playlistToDelete);
+      
+      if (error) throw error;
+      
+      toast.success("Playlist excluída com sucesso");
+      refetch();
+    } catch (error: any) {
+      console.error("Error deleting playlist:", error);
+      toast.error("Erro ao excluir playlist: " + error.message);
+    } finally {
+      setIsDeleting(false);
+      setPlaylistToDelete(null);
+    }
+  };
+
+  const handleDuplicate = async (playlist: any) => {
+    try {
+      toast.loading("Duplicando playlist...");
+      
+      // 1. Create new playlist record
+      const { data: newPlaylist, error: pError } = await supabase
+        .from("playlists")
+        .insert({
+          name: `${playlist.name} (Cópia)`,
+          tenant_id: playlist.tenant_id,
+          is_active: playlist.is_active
+        })
+        .select()
+        .single();
+        
+      if (pError) throw pError;
+
+      // 2. Fetch original items
+      const { data: items, error: iError } = await supabase
+        .from("playlist_items")
+        .select("*")
+        .eq("playlist_id", playlist.id);
+        
+      if (iError) throw iError;
+
+      // 3. Insert duplicated items
+      if (items && items.length > 0) {
+        const duplicatedItems = items.map(item => ({
+          ...item,
+          id: undefined, // Let DB generate new UUID
+          playlist_id: newPlaylist.id,
+          created_at: undefined
+        }));
+        
+        const { error: insError } = await supabase.from("playlist_items").insert(duplicatedItems);
+        if (insError) throw insError;
+      }
+
+      toast.dismiss();
+      toast.success("Playlist duplicada com sucesso!");
+      refetch();
+    } catch (error: any) {
+      toast.dismiss();
+      console.error("Error duplicating playlist:", error);
+      toast.error("Erro ao duplicar: " + error.message);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -214,12 +301,15 @@ export default function PlaylistsPage() {
                           <DropdownMenuItem onClick={() => navigate(`/playlists/${playlist.id}`)}>
                             <Layers className="h-4 w-4 mr-2" /> Editar Conteúdo
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Copy className="h-4 w-4 mr-2" /> Duplicar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-400 focus:text-red-400">
-                            <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                          </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDuplicate(playlist)}>
+                          <Copy className="h-4 w-4 mr-2" /> Duplicar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="text-red-400 focus:text-red-400"
+                          onClick={() => setPlaylistToDelete(playlist.id)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                        </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -277,10 +367,13 @@ export default function PlaylistsPage() {
                         <DropdownMenuItem onClick={() => navigate(`/playlists/${playlist.id}`)}>
                           <Layers className="h-4 w-4 mr-2" /> Editar Conteúdo
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDuplicate(playlist)}>
                           <Copy className="h-4 w-4 mr-2" /> Duplicar
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-400 focus:text-red-400">
+                        <DropdownMenuItem 
+                          className="text-red-400 focus:text-red-400"
+                          onClick={() => setPlaylistToDelete(playlist.id)}
+                        >
                           <Trash2 className="h-4 w-4 mr-2" /> Excluir
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -319,6 +412,30 @@ export default function PlaylistsPage() {
           </div>
         )}
       </div>
+
+      <AlertDialog open={!!playlistToDelete} onOpenChange={(open) => !open && setPlaylistToDelete(null)}>
+        <AlertDialogContent className="bg-[#18181b] border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Excluir Playlist
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Tem certeza que deseja excluir esta playlist? Esta ação não pode ser desfeita e removerá o conteúdo de todos os dispositivos vinculados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              className="bg-red-500 hover:bg-red-600 text-white"
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Excluindo..." : "Excluir Definitivamente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
