@@ -87,6 +87,7 @@ const App = () => {
                 <Route path="/superadmin" element={<SuperAdmin />} />
                 <Route path="/dispositivos" element={<Devices />} />
                 <Route path="/dispositivos/:id" element={<DeviceDetail />} />
+                <Route path="/midias" element={<Media />} />
                 <Route path="/playlists" element={<Playlists />} />
                 <Route path="/playlists/:id" element={<PlaylistEditor />} />
                 <Route path="/campanhas" element={<Campaigns />} />
