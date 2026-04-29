@@ -117,7 +117,7 @@ export function DeviceAvailablePanel({
   onClearSelection
 }: { 
   selectedIds: Set<number>,
-  onToggleSelection: (id: number, isShiftKey: boolean) => void,
+  onToggleSelection: (ids: number[]) => void,
   onSelectAll: (ids: number[]) => void,
   onClearSelection: () => void
 }) {
