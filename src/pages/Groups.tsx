@@ -50,6 +50,11 @@ export default function GroupsPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isUpdatingPlaylist, setIsUpdatingPlaylist] = useState(false);
   const { data: playlists } = usePlaylists();
+  
+  // Create Group Modal State
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
 
   const fetchTreeData = async () => {
     // console.log("Fetching tree data for tenant:", tenantId);
