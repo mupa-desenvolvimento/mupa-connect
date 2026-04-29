@@ -92,7 +92,7 @@ export default function PlayerPage() {
       return playlist.playlist_items
         .sort((a: any, b: any) => (a.position ?? a.ordem ?? 0) - (b.position ?? b.ordem ?? 0))
         .map((i: any) => ({ 
-          id: i.id,
+          id: i.media_id || i.id, // Use media_id if available
           name: i.media_items?.name || "Sem nome",
           url: i.media_items?.file_url,
           type: i.media_items?.type || "image",
@@ -102,6 +102,8 @@ export default function PlayerPage() {
     }
     return [];
   }, [playlist]);
+
+  const currentMedia = useMemo(() => formattedPlaylist[currentIndex] || null, [formattedPlaylist, currentIndex]);
 
   const [now, setNow] = useState(new Date());
 
@@ -160,7 +162,7 @@ export default function PlayerPage() {
     return <div className="fixed inset-0 bg-black flex items-center justify-center text-white/40 font-mono text-xs uppercase tracking-widest">Nenhum conteúdo para exibir</div>;
   }
 
-  const currentMedia = formattedPlaylist[currentIndex];
+  // currentMedia already defined via useMemo above
 
   return (
     <div className="fixed inset-0 bg-black overflow-hidden text-white">
