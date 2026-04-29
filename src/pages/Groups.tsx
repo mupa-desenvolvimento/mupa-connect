@@ -95,7 +95,6 @@ export default function GroupsPage() {
       const tree = buildTree(nodes);
       console.log("Built tree structure:", tree);
       setTreeData(tree);
-
     } catch (error) {
       console.error("Error loading tree data:", error);
       toast.error("Erro ao carregar hierarquia de grupos");
