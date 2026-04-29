@@ -338,7 +338,7 @@ export default function PlaylistEditor() {
               <span>DURAÇÃO: {totalDuration}S</span>
               <span className="w-1 h-1 rounded-full bg-white/10" />
               <div className="flex items-center gap-1">
-                {saveStatus === "saving" && <><RefreshCw className="h-3 w-3 animate-spin text-purple-400" /> SALVANDO...</>}
+                {saveStatus === "saving" && <><RefreshCw className="h-3 w-3 animate-spin text-accent" /> SALVANDO...</>}
                 {saveStatus === "saved" && <><CheckCircle2 className="h-3 w-3 text-green-400" /> SALVO</>}
               </div>
             </div>
