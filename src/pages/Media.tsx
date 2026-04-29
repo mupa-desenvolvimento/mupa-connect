@@ -105,12 +105,10 @@ export default function MediaPage() {
 
   const fetchMedia = async () => {
     if (!tenantId) {
-      console.log("fetchMedia: No tenantId");
       setIsLoading(false);
       return;
     }
     setIsLoading(true);
-    console.log("fetchMedia: Fetching for tenant", tenantId, "folder", currentFolder);
     
     let query = supabase
       .from("media_items")
@@ -127,10 +125,8 @@ export default function MediaPage() {
     const { data, error } = await query;
 
     if (error) {
-      console.error("fetchMedia: Error", error);
       toast.error("Erro ao carregar mídias: " + error.message);
     } else {
-      console.log("fetchMedia: Success", data?.length || 0, "items");
       setItems(data || []);
     }
     setIsLoading(false);
@@ -138,7 +134,6 @@ export default function MediaPage() {
 
   const fetchFolders = async () => {
     if (!tenantId) return;
-    console.log("fetchFolders: Fetching for tenant", tenantId, "folder", currentFolder);
     
     let query = supabase
       .from("folders")
@@ -153,10 +148,7 @@ export default function MediaPage() {
     }
 
     const { data, error } = await query;
-    if (error) {
-      console.error("fetchFolders: Error", error);
-    } else {
-      console.log("fetchFolders: Success", data?.length || 0, "folders");
+    if (!error) {
       setFolders(data || []);
     }
   };
