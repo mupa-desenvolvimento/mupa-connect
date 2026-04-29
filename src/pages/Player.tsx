@@ -196,7 +196,14 @@ export default function PlayerPage() {
   }
 
   if (!formattedPlaylist.length) {
-    return <div className="fixed inset-0 bg-black flex items-center justify-center text-white/40 font-mono text-xs uppercase tracking-widest">Nenhum conteúdo para exibir</div>;
+    return (
+      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-4 text-white/40 font-mono text-xs uppercase tracking-widest">
+        <div>Nenhum conteúdo para exibir</div>
+        <div className="px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-white/70 normal-case tracking-wider">
+          ID: {deviceInfo?.serial || deviceUuid || deviceCode || "—"}
+        </div>
+      </div>
+    );
   }
 
   // currentMedia already defined via useMemo above
