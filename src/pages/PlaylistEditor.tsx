@@ -230,62 +230,41 @@ export default function PlaylistEditor() {
     }
   }, [playlistData, medias, id]);
 
-  const triggerAutoSave = useCallback(async (updatedItems: EditorPlaylistItem[], updatedName: string) => {
-    setHasUnsavedChanges(true);
+  const savePlaylist = async (updatedItems: EditorPlaylistItem[], updatedName: string) => {
     if (!tenantId || isSaving) return;
     setIsSaving(true);
-    
     setSaveStatus("saving");
     const startTime = Date.now();
-    let currentPayload: any = null;
     
     try {
       let currentPlaylistId = id;
 
       if (id === "new") {
-        currentPayload = { name: updatedName, tenant_id: tenantId, is_active: true };
         const { data: newPlaylist, error: createError } = await supabase
           .from("playlists")
-          .insert(currentPayload)
+          .insert({ name: updatedName, tenant_id: tenantId, is_active: true })
           .select().single();
           
-        if (createError) {
-          setDebugData({ 
-            operation: "CREATE_PLAYLIST",
-            payload: currentPayload,
-            error: createError,
-            timestamp: new Date().toISOString()
-          });
-          throw createError;
-        }
+        if (createError) throw createError;
         currentPlaylistId = newPlaylist.id;
         navigate(`/playlists/${currentPlaylistId}`, { replace: true });
       } else {
-        currentPayload = { name: updatedName, updated_at: new Date().toISOString() };
-        const { error: updateError } = await supabase.from("playlists").update(currentPayload).eq("id", id!);
-        if (updateError) {
-          setDebugData({ 
-            operation: "UPDATE_PLAYLIST",
-            payload: currentPayload,
-            error: updateError,
-            timestamp: new Date().toISOString()
-          });
-          throw updateError;
-        }
+        const { error: updateError } = await supabase
+          .from("playlists")
+          .update({ name: updatedName, updated_at: new Date().toISOString() })
+          .eq("id", id!);
+        if (updateError) throw updateError;
       }
 
-      // Delete items
-      const { error: deleteError } = await supabase.from("playlist_items").delete().eq("playlist_id", currentPlaylistId as string);
-      if (deleteError) {
-        setDebugData({ 
-          operation: "DELETE_ITEMS",
-          playlist_id: currentPlaylistId,
-          error: deleteError,
-          timestamp: new Date().toISOString()
-        });
-        throw deleteError;
-      }
+      // 1. Limpar itens antigos (CRITICAL: Garante que a lista seja recriada do zero)
+      const { error: deleteError } = await supabase
+        .from("playlist_items")
+        .delete()
+        .eq("playlist_id", currentPlaylistId as string);
+      
+      if (deleteError) throw deleteError;
 
+      // 2. Inserir novos itens se existirem
       if (updatedItems.length > 0) {
         const itemsToInsert = updatedItems.map((it, idx) => ({
           playlist_id: currentPlaylistId!,
@@ -298,17 +277,12 @@ export default function PlaylistEditor() {
           conteudo_id: it.mediaId,
           ativo: true
         }));
-        currentPayload = itemsToInsert;
-        const { error: insertError } = await supabase.from("playlist_items").insert(itemsToInsert);
-        if (insertError) {
-          setDebugData({ 
-            operation: "INSERT_ITEMS",
-            payload: currentPayload,
-            error: insertError,
-            timestamp: new Date().toISOString()
-          });
-          throw insertError;
-        }
+        
+        const { error: insertError } = await supabase
+          .from("playlist_items")
+          .insert(itemsToInsert);
+          
+        if (insertError) throw insertError;
       }
 
       setDebugData({
@@ -317,35 +291,47 @@ export default function PlaylistEditor() {
         timestamp: new Date().toISOString()
       });
 
-      // Silently invalidate to keep UI smooth without full reload state
-      // Don't overwrite cache shape — just mark playlists list stale
+      // 3. Atualizar Cache
       queryClient.invalidateQueries({ queryKey: ["playlists"] });
       queryClient.invalidateQueries({ queryKey: ["playlist", currentPlaylistId] });
-      // Forçar refetch imediato
       await queryClient.refetchQueries({ queryKey: ["playlists"] });
       await queryClient.refetchQueries({ queryKey: ["playlist", currentPlaylistId] });
-      
-      console.log("Full save completed successfully");
       
       setSaveStatus("saved");
       setIsSaving(false);
       setHasUnsavedChanges(false);
+      toast.success("Playlist salva com sucesso!");
       setTimeout(() => setSaveStatus("idle"), 2000);
     } catch (error: any) {
-      console.error("Auto-save error:", error);
-      // Se já não foi setado um debug detalhado dentro do try, seta aqui
-      if (!debugData?.error) {
-        setDebugData({ 
-          operation: "GENERAL_SAVE_ERROR",
-          error: error,
-          timestamp: new Date().toISOString()
-        });
-      }
+      console.error("Save error:", error);
+      setDebugData({ 
+        operation: "GENERAL_SAVE_ERROR",
+        error: error,
+        timestamp: new Date().toISOString()
+      });
       toast.error(`Erro ao salvar: ${error.message || 'Erro desconhecido'}`);
       setSaveStatus("idle");
       setIsSaving(false);
     }
-  }, [tenantId, id, navigate, queryClient]);
+  };
+
+  // Browser level prevent exit
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  // Wrapper para auto-marcar mudanças
+  const triggerAutoSave = useCallback((updatedItems: EditorPlaylistItem[], updatedName: string) => {
+    setHasUnsavedChanges(true);
+    // Aqui não chamamos o save automático para dar controle ao botão de salvar
+  }, []);
 
   const handleDragStart = (event: any) => {
     setActiveId(event.active.id);
@@ -449,7 +435,7 @@ export default function PlaylistEditor() {
               <input 
                 value={playlistName}
                 onChange={(e) => setPlaylistName(e.target.value)}
-                onBlur={() => triggerAutoSave(items, playlistName)}
+                onBlur={() => setHasUnsavedChanges(true)}
                 className="bg-transparent border-none focus:ring-0 text-lg font-display font-semibold text-white p-0 h-7"
               />
             </div>
@@ -475,7 +461,7 @@ export default function PlaylistEditor() {
             </span>
           )}
           <Button 
-            onClick={() => triggerAutoSave(items, playlistName)}
+            onClick={() => savePlaylist(items, playlistName)}
             disabled={isSaving}
             className={cn(
               "h-9 px-4 gap-2 font-bold text-xs transition-all",
