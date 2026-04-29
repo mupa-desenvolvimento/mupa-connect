@@ -106,8 +106,8 @@ const SortableItem = ({
       onClick={() => onSelect(item)}
       className={`relative shrink-0 w-48 h-32 rounded-xl border transition-all cursor-pointer group overflow-hidden ${
         isSelected 
-          ? 'border-purple-500 ring-2 ring-purple-500/20 bg-purple-500/5 shadow-xl shadow-purple-500/10' 
-          : 'border-border/40 bg-card/40 hover:border-purple-500/30'
+          ? 'border-accent ring-2 ring-accent/20 bg-accent/5 shadow-xl shadow-accent/10' 
+          : 'border-border/40 bg-card/40 hover:border-accent/30'
       } ${isDragging ? 'shadow-2xl' : ''}`}
     >
       <div className="absolute inset-0">
@@ -128,16 +128,16 @@ const SortableItem = ({
 
       {/* Duration Badge */}
       <div className="absolute top-2 right-2">
-         <span className="text-[10px] font-bold text-white px-1.5 py-0.5 rounded bg-purple-600/80 backdrop-blur-sm flex items-center gap-1">
-           <Clock className="h-2.5 w-2.5" /> {item.duration}s
-         </span>
+          <span className="text-[10px] font-bold text-accent-foreground px-1.5 py-0.5 rounded bg-accent/80 backdrop-blur-sm flex items-center gap-1">
+            <Clock className="h-2.5 w-2.5" /> {item.duration}s
+          </span>
       </div>
 
       {/* Drag Handle */}
       <div 
         {...attributes} 
         {...listeners} 
-        className="absolute bottom-2 left-2 p-1 rounded bg-black/40 hover:bg-purple-600/60 text-white/50 hover:text-white transition-colors cursor-grab active:cursor-grabbing"
+        className="absolute bottom-2 left-2 p-1 rounded bg-black/40 hover:bg-accent/60 text-white/50 hover:text-accent-foreground transition-colors cursor-grab active:cursor-grabbing"
       >
         <GripVertical className="h-4 w-4" />
       </div>
@@ -151,7 +151,7 @@ const SortableItem = ({
 
       {/* Selected Indicator */}
       {isSelected && (
-        <div className="absolute inset-0 border-2 border-purple-500 pointer-events-none rounded-xl" />
+        <div className="absolute inset-0 border-2 border-accent pointer-events-none rounded-xl" />
       )}
     </div>
   );
@@ -312,7 +312,7 @@ export default function PlaylistEditor() {
   if (isLoadingPlaylist && id !== "new") {
     return (
       <div className="h-screen flex items-center justify-center bg-[#09090b]">
-        <Loader2 className="h-10 w-10 animate-spin text-purple-500" />
+        <Loader2 className="h-10 w-10 animate-spin text-accent" />
       </div>
     );
   }
@@ -338,7 +338,7 @@ export default function PlaylistEditor() {
               <span>DURAÇÃO: {totalDuration}S</span>
               <span className="w-1 h-1 rounded-full bg-white/10" />
               <div className="flex items-center gap-1">
-                {saveStatus === "saving" && <><RefreshCw className="h-3 w-3 animate-spin text-purple-400" /> SALVANDO...</>}
+                {saveStatus === "saving" && <><RefreshCw className="h-3 w-3 animate-spin text-accent" /> SALVANDO...</>}
                 {saveStatus === "saved" && <><CheckCircle2 className="h-3 w-3 text-green-400" /> SALVO</>}
               </div>
             </div>
@@ -349,7 +349,7 @@ export default function PlaylistEditor() {
           <Button variant="outline" className="border-white/10 hover:bg-white/5 gap-2 h-9 px-4 text-white">
             <Play className="h-4 w-4 fill-current" /> Preview
           </Button>
-          <Button className="bg-purple-600 hover:bg-purple-700 text-white h-9 px-4 gap-2">
+          <Button className="bg-accent hover:bg-accent/90 text-accent-foreground h-9 px-4 gap-2">
             <RefreshCw className="h-4 w-4" /> Atualizar Telas
           </Button>
         </div>
@@ -361,16 +361,16 @@ export default function PlaylistEditor() {
           <Tabs defaultValue="media" className="flex-1 flex flex-col">
             <div className="p-4 border-b border-white/5">
               <TabsList className="grid w-full grid-cols-2 bg-black/40 p-1 border border-white/5 h-10">
-                <TabsTrigger value="media" className="data-[state=active]:bg-purple-600 text-xs gap-2">
+                <TabsTrigger value="media" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground text-xs gap-2">
                   <ImageIcon className="h-3.5 w-3.5" /> Mídias
                 </TabsTrigger>
-                <TabsTrigger value="campaigns" className="data-[state=active]:bg-purple-600 text-xs gap-2">
+                <TabsTrigger value="campaigns" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground text-xs gap-2">
                   <Layers className="h-3.5 w-3.5" /> Campanhas
                 </TabsTrigger>
               </TabsList>
               <div className="relative mt-4">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-                <Input placeholder="Pesquisar..." className="pl-9 h-9 bg-black/20 border-white/10 focus:border-purple-500/50 text-white" />
+                <Input placeholder="Pesquisar..." className="pl-9 h-9 bg-black/20 border-white/10 focus:border-accent/50 text-white" />
               </div>
             </div>
             <ScrollArea className="flex-1">
@@ -380,14 +380,14 @@ export default function PlaylistEditor() {
                     key={media.id}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer group border border-white/10 hover:border-purple-500/50 transition-colors"
+                    className="relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer group border border-white/10 hover:border-accent/50 transition-colors"
                     onClick={() => addItem(media.id)}
                   >
                     <img src={media.thumbnail_url || media.file_url} alt={media.name} className="w-full h-full object-cover opacity-80 group-hover:opacity-100" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100" />
                     <div className="absolute bottom-1.5 left-1.5 right-1.5 opacity-0 group-hover:opacity-100 flex justify-between items-center">
                       <span className="text-[10px] text-white font-medium truncate">{media.name}</span>
-                      <Plus className="h-3 w-3 text-purple-400 shrink-0" />
+                      <Plus className="h-3 w-3 text-accent shrink-0" />
                     </div>
                   </motion.div>
                 ))}
@@ -411,7 +411,7 @@ export default function PlaylistEditor() {
                       className="w-full h-full object-contain"
                     />
                     <div className="absolute top-4 left-4 flex gap-2">
-                       <Badge className="bg-purple-600/90 text-white border-none backdrop-blur-md">LIVE PREVIEW</Badge>
+                       <Badge className="bg-accent/90 text-accent-foreground border-none backdrop-blur-md">LIVE PREVIEW</Badge>
                        <Badge variant="secondary" className="bg-black/40 text-white border-white/10 backdrop-blur-md">
                          Item {items.indexOf(selectedItem) + 1} de {items.length}
                        </Badge>
@@ -431,7 +431,7 @@ export default function PlaylistEditor() {
                          <Play className="h-5 w-5 fill-current" />
                       </Button>
                       <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
-                         <div className="h-full bg-purple-500 w-1/3" />
+                         <div className="h-full bg-accent w-1/3" />
                       </div>
                       <span className="text-xs font-mono font-bold">03:20 / {totalDuration}S</span>
                       <Button size="icon" variant="ghost" className="text-white hover:bg-white/10">
@@ -504,7 +504,7 @@ export default function PlaylistEditor() {
                   {/* Quick Add Button at the end of timeline */}
                   <Button 
                     variant="outline" 
-                    className="shrink-0 w-48 h-32 rounded-xl border-2 border-dashed border-white/5 bg-white/5 hover:bg-white/10 hover:border-purple-500/30 transition-all flex flex-col items-center justify-center gap-2"
+                    className="shrink-0 w-48 h-32 rounded-xl border-2 border-dashed border-white/5 bg-white/5 hover:bg-white/10 hover:border-accent/30 transition-all flex flex-col items-center justify-center gap-2"
                   >
                     <Plus className="h-6 w-6 text-white/20" />
                     <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">Adicionar</span>
@@ -545,7 +545,7 @@ export default function PlaylistEditor() {
                          <div className="flex gap-4">
                             <div className="flex-1 space-y-2">
                                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Tipo</label>
-                               <div className="h-9 flex items-center px-3 bg-black/40 border border-white/10 rounded-md text-xs font-medium text-purple-400">
+                               <div className="h-9 flex items-center px-3 bg-black/40 border border-white/10 rounded-md text-xs font-medium text-accent">
                                   {selectedItem.type === 'video' ? <Video className="h-3.5 w-3.5 mr-2" /> : <ImageIcon className="h-3.5 w-3.5 mr-2" />}
                                   {(selectedItem.type || 'image').toUpperCase()}
                                </div>
@@ -566,7 +566,7 @@ export default function PlaylistEditor() {
                          <div className="space-y-4">
                             <div className="flex justify-between items-center">
                                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Duração (Segundos)</label>
-                               <span className="text-xs font-mono font-bold text-purple-400">{selectedItem.duration}s</span>
+                               <span className="text-xs font-mono font-bold text-accent">{selectedItem.duration}s</span>
                             </div>
                             <Slider 
                               value={[selectedItem.duration]} 
@@ -585,7 +585,7 @@ export default function PlaylistEditor() {
                          <div className="space-y-3">
                             <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Ajuste de Escala</label>
                             <div className="grid grid-cols-2 gap-2">
-                               <Button variant="outline" className="h-9 text-[10px] border-purple-500/50 bg-purple-500/10 text-purple-400 font-bold">PREENCHER</Button>
+                               <Button variant="outline" className="h-9 text-[10px] border-accent/50 bg-accent/10 text-accent font-bold">PREENCHER</Button>
                                <Button variant="outline" className="h-9 text-[10px] border-white/10 text-white/40 font-bold">AJUSTAR</Button>
                             </div>
                          </div>
