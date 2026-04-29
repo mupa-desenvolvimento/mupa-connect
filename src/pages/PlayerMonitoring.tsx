@@ -23,10 +23,12 @@ import {
   Search, 
   Clock, 
   Play,
-  Filter
+  Filter,
+  ShieldAlert
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 type DeviceStatus = "ativo" | "online" | "offline";
 
