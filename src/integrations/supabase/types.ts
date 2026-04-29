@@ -1457,15 +1457,7 @@ export type Database = {
           status?: string
           tenant_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "device_commands_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "devices"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       device_detection_logs: {
         Row: {
@@ -1598,13 +1590,6 @@ export type Database = {
             columns: ["command_id"]
             isOneToOne: false
             referencedRelation: "device_commands"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "device_execution_logs_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "devices"
             referencedColumns: ["id"]
           },
         ]
