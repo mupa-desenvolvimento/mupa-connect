@@ -21,7 +21,8 @@ serve(async (req) => {
     const url = new URL(req.url)
     const path = url.pathname.split('/').pop()
 
-    const { serial } = await req.json()
+    const body = await req.json()
+    const { serial, playlist_id, media_id, payload } = body
 
     if (!serial) {
       return new Response(JSON.stringify({ error: 'Serial is required' }), {
@@ -30,11 +31,36 @@ serve(async (req) => {
       })
     }
 
-    let updateData = {}
+    // Buscar o dispositivo_id pelo serial
+    const { data: device, error: deviceError } = await supabaseClient
+      .from('dispositivos')
+      .select('id')
+      .eq('serial', serial)
+      .maybeSingle()
+
+    if (deviceError || !device) {
+      console.error('Device not found for serial:', serial)
+      return new Response(JSON.stringify({ error: 'Device not found' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 404,
+      })
+    }
+
+    let updateData: any = {}
+    let eventType = ''
+
     if (path === 'heartbeat') {
-      updateData = { last_heartbeat_at: new Date().toISOString() }
+      eventType = 'heartbeat'
+      updateData = { 
+        last_heartbeat_at: new Date().toISOString() 
+      }
     } else if (path === 'proof') {
-      updateData = { last_proof_at: new Date().toISOString() }
+      eventType = 'proof'
+      updateData = { 
+        last_proof_at: new Date().toISOString(),
+        current_playlist_id: playlist_id,
+        current_media_id: media_id
+      }
     } else {
       return new Response(JSON.stringify({ error: 'Invalid endpoint' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -42,14 +68,26 @@ serve(async (req) => {
       })
     }
 
-    const { error } = await supabaseClient
+    // Atualizar tabela dispositivos
+    const { error: updateError } = await supabaseClient
       .from('dispositivos')
       .update(updateData)
-      .eq('serial', serial)
+      .eq('id', device.id)
 
-    if (error) {
-      console.error('Error updating device:', error)
-      return new Response(JSON.stringify({ error: error.message }), {
+    // Registrar log na tabela device_logs
+    await supabaseClient
+      .from('device_logs')
+      .insert({
+        dispositivo_id: device.id,
+        serial: serial,
+        event_type: eventType,
+        payload: payload || body,
+        created_at: new Date().toISOString()
+      })
+
+    if (updateError) {
+      console.error('Error updating device:', updateError)
+      return new Response(JSON.stringify({ error: updateError.message }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       })

@@ -29,6 +29,7 @@ import { supabase } from "@/integrations/supabase/client";
 const main = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Dispositivos", url: "/dispositivos", icon: MonitorPlay },
+  { title: "Monitoramento", url: "/admin/player-logs", icon: LayoutDashboard },
   { title: "Playlists", url: "/playlists", icon: ListVideo },
   { title: "Campanhas", url: "/campanhas", icon: Megaphone },
   { title: "Mídias", url: "/midias", icon: ImageIcon },
