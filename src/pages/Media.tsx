@@ -184,7 +184,7 @@ export default function MediaPage() {
       const { data: empresaData } = await supabase
         .from('companies')
         .select('name')
-        .eq('id', tenantId)
+        .eq('id', tenantId as any)
         .single();
 
       const companyName = empresaData?.name || 'company';
