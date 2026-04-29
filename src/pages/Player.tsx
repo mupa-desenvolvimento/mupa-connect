@@ -157,12 +157,40 @@ export default function PlayerPage() {
     return () => clearInterval(t);
   }, []);
 
+  // Heartbeat logic
+  useEffect(() => {
+    if (!deviceInfo?.serial) return;
+
+    const sendHeartbeat = async () => {
+      try {
+        await supabase.functions.invoke('device-api/heartbeat', {
+          body: { serial: deviceInfo.serial }
+        });
+      } catch (err) {
+        console.error("Heartbeat error:", err);
+      }
+    };
+
+    sendHeartbeat();
+    const t = window.setInterval(sendHeartbeat, 30000); // 30s
+    return () => clearInterval(t);
+  }, [deviceInfo?.serial]);
+
+  // Proof of Play logic
   useEffect(() => {
     if (timerRef.current) window.clearTimeout(timerRef.current);
-    const current = queue[index];
-    const ms = (current?.duration ?? 8) * 1000;
     
     if (queue.length > 0) {
+      const current = queue[index];
+      const ms = (current?.duration ?? 8) * 1000;
+
+      // Send Proof of Play
+      if (deviceInfo?.serial) {
+        supabase.functions.invoke('device-api/proof', {
+          body: { serial: deviceInfo.serial }
+        }).catch(err => console.error("Proof error:", err));
+      }
+      
       timerRef.current = window.setTimeout(() => {
         setIndex((i) => (i + 1) % queue.length);
       }, ms);
@@ -171,7 +199,7 @@ export default function PlayerPage() {
     return () => {
       if (timerRef.current) window.clearTimeout(timerRef.current);
     };
-  }, [index, queue]);
+  }, [index, queue, deviceInfo?.serial]);
 
   const current = queue[index];
 
