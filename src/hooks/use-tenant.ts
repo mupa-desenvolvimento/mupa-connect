@@ -52,8 +52,12 @@ export function useTenant() {
               
               if (empresaData) {
                 setTenantId(empresaData.id);
+              } else {
+                console.warn("No tenant found for company code:", userData.company);
               }
             }
+          } else {
+            console.warn("No company/tenant associated with user:", session.user.id);
           }
         }
       } catch (error) {
