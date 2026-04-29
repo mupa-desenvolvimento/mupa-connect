@@ -228,21 +228,6 @@ export default function PlayerPage() {
         </div>
       </div>
 
-      {/* Bottom progress */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent z-20">
-        <div className="flex items-center gap-3 mb-2">
-          <span className="text-xs font-mono opacity-80">{String(currentIndex + 1).padStart(2, "0")} / {String(formattedPlaylist.length).padStart(2, "0")}</span>
-          <span className="text-sm truncate">{currentMedia.name}</span>
-        </div>
-        <div className="h-1 w-full bg-white/20 rounded-full overflow-hidden">
-          <div
-            key={currentIndex}
-            className="h-full bg-primary"
-            style={{ animation: `mupaProgress ${currentMedia.duration || 8}s linear forwards` }}
-          />
-        </div>
-      </div>
-
       {/* Discrete device ID */}
       <div className="absolute bottom-1 right-2 z-30 text-[9px] font-mono text-white/30 tracking-wider select-none pointer-events-none">
         ID: {deviceInfo?.serial || deviceUuid || deviceCode || "—"}
