@@ -31,6 +31,7 @@ export function usePlaylists(tenantId?: string) {
   return useQuery({
     queryKey: ["playlists", tenantId],
     queryFn: async () => {
+      console.log("usePlaylists Hook - Fetching with tenantId:", tenantId);
       // console.log("Fetching playlists for tenant:", tenantId);
       
       let query = supabase
