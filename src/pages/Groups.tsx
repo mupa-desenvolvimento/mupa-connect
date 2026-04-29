@@ -28,134 +28,31 @@ export default function GroupsPage() {
     setLoading(true);
     
     try {
-      // 1. Fetch Store Groups (assuming groups table for now based on exploration)
-      const { data: groups, error: groupsError } = await supabase
-        .from("groups")
-        .select(`
-          id, 
-          name, 
-          parent_id, 
-          playlist_id,
-          playlists:playlist_id (name)
-        `)
-        .eq("tenant_id", tenantId);
-
-      if (groupsError) throw groupsError;
-
-      // 2. Fetch Stores
-      const { data: stores, error: storesError } = await supabase
-        .from("stores")
-        .select(`
-          id, 
-          name, 
-          playlist_id,
-          playlists:playlist_id (name),
-          tenant_id
-        `)
-        .eq("tenant_id", tenantId);
-
-      if (storesError) throw storesError;
-
-      // 3. Fetch Device Groups
-      const { data: deviceGroups, error: dgError } = await supabase
-        .from("device_groups")
-        .select(`
-          id, 
-          name, 
-          store_id,
-          tenant_id
-        `)
-        .eq("tenant_id", tenantId);
-
-      if (dgError) throw dgError;
-
-      // 4. Fetch Devices to count
-      const { data: devices, error: devError } = await supabase
-        .from("devices")
-        .select("id, group_id, store_id");
-
-      if (devError) throw devError;
-
-      // Map to Tree Structure
-      // Note: This is a simplified resolution for the V1 component.
-      // In a production environment, this resolution would happen recursively or in the backend.
-      
-      const resolveNode = (node: any, type: any, parent: any = null): TreeNode => {
-        const playlist = node.playlists || (parent?.playlist_id ? { name: parent.playlist_name, id: parent.playlist_id } : null);
-        const inherited = !node.playlist_id && parent?.playlist_id;
-        
-        return {
-          id: node.id,
-          name: node.name,
-          type,
-          playlist_id: node.playlist_id || parent?.playlist_id,
-          playlist_name: (node.playlists as any)?.name || (inherited ? parent.playlist_name : null),
-          inherited_from: inherited ? parent.name : null,
-          has_override: !!node.playlist_id && !!parent?.playlist_id,
-          device_count: devices.filter(d => (type === 'store' ? d.store_id === node.id : d.group_id === node.id)).length,
-          children: []
-        };
-      };
-
-      // Transform raw data into the tree (Mocking hierarchy for visual impact if tables are flat)
-      // Real implementation would use the parent_id / store_id relationships
-      const rootGroups = groups.filter(g => !g.parent_id).map(g => {
-        const node = resolveNode(g, 'store_group');
-        // Filter stores by store_group association if available, or by tenant
-        node.children = stores.map(s => resolveNode(s, 'store', node));
-        
-        // Add device groups to stores
-        node.children.forEach(storeNode => {
-          storeNode.children = deviceGroups
-            .filter(dg => dg.store_id === storeNode.id)
-            .map(dg => resolveNode(dg, 'device_group', storeNode));
-        });
-        
-        return node;
+      const { data, error } = await supabase.rpc('get_groups_hierarchy', { 
+        p_tenant_id: tenantId 
       });
 
-      setTreeData(rootGroups.length > 0 ? rootGroups : [
-        // Fallback for demo if DB is empty
-        {
-          id: 'root-1',
-          name: 'Nacional - Lojas Próprias',
-          type: 'store_group',
-          playlist_id: 'p1',
-          playlist_name: 'Campanha de Verão 2026',
-          device_count: 145,
-          children: [
-            {
-              id: 's-1',
-              name: 'Loja Conceito - São Paulo',
-              type: 'store',
-              playlist_id: 'p1',
-              playlist_name: 'Campanha de Verão 2026',
-              inherited_from: 'Nacional - Lojas Próprias',
-              device_count: 12,
-              children: [
-                {
-                  id: 'dg-1',
-                  name: 'Vitrine Principal',
-                  type: 'device_group',
-                  playlist_id: 'p2',
-                  playlist_name: 'Ofertas Relâmpago SP',
-                  has_override: true,
-                  device_count: 4
-                }
-              ]
-            },
-            {
-              id: 's-2',
-              name: 'Loja Litoral - Santos',
-              type: 'store',
-              playlist_id: 'p3',
-              playlist_name: 'Promoção Praia & Sol',
-              has_override: true,
-              device_count: 8
-            }
-          ]
-        }
-      ]);
+      if (error) throw error;
+
+      // Transform recursive flat list into tree structure
+      const buildTree = (nodes: any[], parentId: string | null = null): TreeNode[] => {
+        return nodes
+          .filter(node => node.parent_id === parentId)
+          .map(node => ({
+            id: node.id,
+            name: node.name,
+            type: node.type as TreeNode['type'],
+            playlist_id: node.resolved_playlist_id,
+            playlist_name: node.playlist_name,
+            inherited_from: node.inherited_from_name,
+            has_override: node.playlist_id !== null && node.inherited_from_name !== null,
+            device_count: node.device_count,
+            children: buildTree(nodes, node.id)
+          }));
+      };
+
+      const tree = buildTree(data || []);
+      setTreeData(tree);
 
     } catch (error) {
       console.error("Error loading tree data:", error);
