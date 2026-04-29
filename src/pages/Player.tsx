@@ -1,38 +1,96 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { devices, getMediaById, getPlaylistById, mediaItems } from "@/lib/mock-data";
 import { useDeviceCommandChannel } from "@/hooks/useDeviceCommandChannel";
 import { supabase } from "@/integrations/supabase/client";
 
-/**
- * WebViewPlayer — /play/:deviceCode
- * - Loops playlist items
- * - Fallback: if device unknown OR no playlist OR media fails, plays a default rotation
- * - Receives realtime commands (reload, set_volume, play_campaign, …) and reports back
- * - Designed to NEVER stop
- */
 export default function PlayerPage() {
   const { deviceCode } = useParams();
-  const device = devices.find((d) => d.code.toLowerCase() === (deviceCode ?? "").toLowerCase());
-  const playlist = device ? getPlaylistById(device.playlistId) : undefined;
-
-  // Resolve the real device UUID from Supabase so realtime filter works
   const [deviceUuid, setDeviceUuid] = useState<string | undefined>();
-  useEffect(() => {
-    if (!deviceCode) return;
-    supabase
-      .from("devices")
-      .select("id")
-      .eq("device_code", deviceCode)
-      .maybeSingle()
-      .then(({ data }) => setDeviceUuid(data?.id));
-  }, [deviceCode]);
-
-  const [reloadKey, setReloadKey] = useState(0);
+  const [deviceInfo, setDeviceInfo] = useState<any>(null);
+  const [playlist, setPlaylist] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [reloadKey, setReloadKey] = useState<number>(0);
   const [volume, setVolume] = useState(60);
 
+  // 1. Resolve Device and Hierarchy-based Playlist
+  useEffect(() => {
+    if (!deviceCode) return;
+
+    async function resolvePlaylist() {
+      setIsLoading(true);
+      try {
+        // Find device in public.dispositivos
+        const { data: device, error: devError } = await supabase
+          .from("dispositivos")
+          .select("id, num_filial, grupo_dispositivos, empresa, apelido_interno")
+          .eq("apelido_interno", deviceCode)
+          .maybeSingle();
+
+        let targetDevice = device;
+
+        if (devError || !device) {
+          // Try serial if apelido fails
+          const { data: deviceBySerial } = await supabase
+            .from("dispositivos")
+            .select("id, num_filial, grupo_dispositivos, empresa, apelido_interno")
+            .eq("serial", deviceCode)
+            .maybeSingle();
+            
+          if (!deviceBySerial) {
+            console.error("Device not found:", deviceCode);
+            setIsLoading(false);
+            return;
+          }
+          targetDevice = deviceBySerial;
+        }
+
+        setDeviceUuid(targetDevice.id.toString());
+        setDeviceInfo(targetDevice);
+        await loadHierarchyPlaylist(targetDevice);
+      } catch (err) {
+        console.error("Resolution error:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    async function loadHierarchyPlaylist(device: any) {
+      const tenantId = 'f822bf9d-39e9-4726-82f7-c16bf267bc39';
+      
+      const { data: hierarchy } = await supabase.rpc('get_groups_hierarchy', { 
+        p_tenant_id: tenantId 
+      });
+
+      if (hierarchy) {
+        const nodes = hierarchy as any[];
+        const deviceNode = nodes.find(n => n.id === device.id && n.type === 'device');
+        
+        if (deviceNode?.resolved_playlist_id) {
+          const { data: playlistData } = await supabase
+            .from("playlists")
+            .select(`
+              *,
+              playlist_items (
+                *,
+                media_items (*)
+              )
+            `)
+            .eq("id", deviceNode.resolved_playlist_id)
+            .single();
+            
+          setPlaylist(playlistData);
+        }
+      }
+    }
+
+    resolvePlaylist();
+  }, [deviceCode, reloadKey]);
+
   useDeviceCommandChannel(deviceUuid, {
-    reloadPlaylist: () => setReloadKey((k) => k + 1),
+    reloadPlaylist: () => {
+      console.log("[Player] Reload command received");
+      setReloadKey(k => k + 1);
+    },
     playCampaign:   (id) => console.info("[player] play_campaign", id),
     setVolume:      (v) => setVolume(v),
     screenshot:     () => undefined,
@@ -40,15 +98,47 @@ export default function PlayerPage() {
     reboot:         () => window.location.reload(),
   });
 
+  // 3. Monitorar coluna 'comando' diretamente (Fallback para sinalização via DB)
+  useEffect(() => {
+    if (!deviceUuid) return;
+    
+    const channel = supabase
+      .channel(`device-commands-${deviceUuid}`)
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'dispositivos',
+        filter: `id=eq.${deviceUuid}`
+      }, (payload: any) => {
+        if (payload.new.comando && payload.new.comando.startsWith('reload')) {
+          console.log("[Player] Manual reload triggered via DB");
+          setReloadKey((k: number) => k + 1);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [deviceUuid]);
+
   const queue = useMemo(() => {
-    const items = playlist?.items
-      .map((i) => ({ media: getMediaById(i.mediaId), duration: i.duration }))
-      .filter((x): x is { media: NonNullable<ReturnType<typeof getMediaById>>; duration: number } => !!x.media);
-    if (items && items.length) return items;
-    // Fallback rotation
-    return mediaItems.map((m) => ({ media: m, duration: m.duration }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playlist, reloadKey]);
+    if (playlist?.playlist_items?.length) {
+      return playlist.playlist_items
+        .sort((a: any, b: any) => (a.position ?? a.ordem ?? 0) - (b.position ?? b.ordem ?? 0))
+        .map((i: any) => ({ 
+          media: {
+            id: i.media_id,
+            name: i.media_items?.name || "Sem nome",
+            url: i.media_items?.file_url,
+            type: i.media_items?.type || "image"
+          }, 
+          duration: i.duracao || 10 
+        }))
+        .filter((x: any) => x.media.url);
+    }
+    return [];
+  }, [playlist]);
 
   const [index, setIndex] = useState(0);
   const [now, setNow] = useState(new Date());
@@ -71,9 +161,13 @@ export default function PlayerPage() {
     if (timerRef.current) window.clearTimeout(timerRef.current);
     const current = queue[index];
     const ms = (current?.duration ?? 8) * 1000;
-    timerRef.current = window.setTimeout(() => {
-      setIndex((i) => (i + 1) % queue.length);
-    }, ms);
+    
+    if (queue.length > 0) {
+      timerRef.current = window.setTimeout(() => {
+        setIndex((i) => (i + 1) % queue.length);
+      }, ms);
+    }
+
     return () => {
       if (timerRef.current) window.clearTimeout(timerRef.current);
     };
@@ -81,11 +175,19 @@ export default function PlayerPage() {
 
   const current = queue[index];
 
+  if (isLoading) {
+    return <div className="fixed inset-0 bg-black flex items-center justify-center text-white/40 font-mono text-xs uppercase tracking-widest">Iniciando Player Mupa...</div>;
+  }
+
+  if (!current) {
+    return <div className="fixed inset-0 bg-black flex items-center justify-center text-white/40 font-mono text-xs uppercase tracking-widest">Nenhum conteúdo para exibir</div>;
+  }
+
   return (
     <div className="fixed inset-0 bg-black overflow-hidden text-white">
       {/* Media stage */}
       <div className="absolute inset-0">
-        {current?.media.type === "image" ? (
+        {current.media.type === "image" ? (
           <img
             key={current.media.id + index}
             src={current.media.url}
@@ -95,8 +197,8 @@ export default function PlayerPage() {
           />
         ) : (
           <video
-            key={(current?.media.id ?? "") + String(index)}
-            src={current?.media.url}
+            key={(current.media.id ?? "") + String(index)}
+            src={current.media.url}
             autoPlay
             muted={volume === 0}
             ref={(el) => { if (el) el.volume = Math.max(0, Math.min(1, volume / 100)); }}
@@ -113,9 +215,9 @@ export default function PlayerPage() {
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-lg bg-gradient-primary grid place-items-center font-display font-bold text-primary-foreground">M</div>
           <div className="leading-tight">
-            <div className="font-display font-semibold">{device?.name ?? "Player Mupa"}</div>
+            <div className="font-display font-semibold">{deviceInfo?.apelido_interno || "Player Mupa"}</div>
             <div className="text-[11px] uppercase tracking-widest opacity-70 font-mono">
-              {device ? `${device.code} · ${device.store}` : `Modo demo · code=${deviceCode ?? "—"}`}
+              {deviceInfo ? `Filial ${deviceInfo.num_filial}` : `Modo demo · code=${deviceCode ?? "—"}`}
             </div>
           </div>
         </div>
@@ -133,13 +235,13 @@ export default function PlayerPage() {
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
         <div className="flex items-center gap-3 mb-2">
           <span className="text-xs font-mono opacity-80">{String(index + 1).padStart(2, "0")} / {String(queue.length).padStart(2, "0")}</span>
-          <span className="text-sm truncate">{current?.media.name}</span>
+          <span className="text-sm truncate">{current.media.name}</span>
         </div>
         <div className="h-1 w-full bg-white/20 rounded-full overflow-hidden">
           <div
             key={index}
             className="h-full bg-primary"
-            style={{ animation: `mupaProgress ${current?.duration ?? 8}s linear forwards` }}
+            style={{ animation: `mupaProgress ${current.duration ?? 8}s linear forwards` }}
           />
         </div>
       </div>

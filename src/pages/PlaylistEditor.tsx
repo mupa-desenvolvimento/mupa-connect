@@ -297,6 +297,11 @@ export default function PlaylistEditor() {
       await queryClient.refetchQueries({ queryKey: ["playlists"] });
       await queryClient.refetchQueries({ queryKey: ["playlist", currentPlaylistId] });
       
+      // 4. Enviar sinal de atualização global (simplificado para garantir recarga)
+      await supabase.from("dispositivos").update({ 
+        comando: `reload:${Date.now()}` 
+      } as any).eq('empresa', '1728965891007x215886838679286700');
+      
       setSaveStatus("saved");
       setIsSaving(false);
       setHasUnsavedChanges(false);
