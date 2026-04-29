@@ -117,7 +117,7 @@ const SortableNode = ({
   return (
     <div 
       ref={setNodeRef}
-      style={style}
+      style={{ ...style, paddingLeft: `${(node.level * 24) + 16}px` }}
       className={cn(
         "group relative flex items-center px-4 py-2 hover:bg-white/5 transition-colors cursor-pointer border-l-2",
         expandedIds.has(node.id) ? "bg-white/5" : "bg-transparent",
@@ -126,7 +126,6 @@ const SortableNode = ({
         node.has_override ? "border-yellow-500" :
         node.inherited_from ? "border-blue-500" : "border-transparent"
       )}
-      style={{ ...style, paddingLeft: `${(node.level * 24) + 16}px` }}
       onClick={() => onNodeClick?.(node)}
     >
       {/* Connection Lines */}
