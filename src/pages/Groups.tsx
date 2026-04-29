@@ -124,7 +124,88 @@ export default function GroupsPage() {
     setIsSidebarOpen(true);
   };
 
-  const handleUpdatePlaylist = async (playlistId: string | null) => {
+  const handleMoveNode = async (nodeId: string, newParentId: string) => {
+    if (!tenantId) return;
+    
+    try {
+      // Identificar o tipo do nó e do destino para decidir como mover
+      const allNodes = (treeData: TreeNode[]): TreeNode[] => {
+        let nodes: TreeNode[] = [];
+        treeData.forEach(n => {
+          nodes.push(n);
+          if (n.children) nodes.push(...allNodes(n.children));
+        });
+        return nodes;
+      };
+      
+      const flatNodes = allNodes(treeData);
+      const movingNode = flatNodes.find(n => n.id === nodeId);
+      const targetNode = flatNodes.find(n => n.id === newParentId);
+      
+      if (!movingNode || !targetNode) return;
+      
+      // Regras de negócio para o Drag & Drop
+      // 1. Loja (store) pode ir para dentro de Store Group (group)
+      if (movingNode.type === 'store' && targetNode.type === 'store_group') {
+        const { error } = await supabase
+          .from("group_stores")
+          .upsert({ group_id: targetNode.id, store_id: movingNode.id });
+        if (error) throw error;
+      } 
+      // 2. Grupo de Dispositivos pode ir para outra Loja
+      else if (movingNode.type === 'device_group' && targetNode.type === 'store') {
+        const { error } = await supabase
+          .from("device_groups")
+          .update({ store_id: targetNode.id } as any)
+          .eq("id", movingNode.id);
+        if (error) throw error;
+      }
+      // 3. Store Group pode ir para dentro de outro Store Group
+      else if (movingNode.type === 'store_group' && targetNode.type === 'store_group' && movingNode.id !== targetNode.id) {
+        const { error } = await supabase
+          .from("groups")
+          .update({ parent_id: targetNode.id } as any)
+          .eq("id", movingNode.id);
+        if (error) throw error;
+      } else {
+        toast.info("Movimentação não permitida para estes tipos de grupos.");
+        return;
+      }
+
+      toast.success("Hierarquia atualizada!");
+      fetchTreeData();
+    } catch (error: any) {
+      console.error("Error moving node:", error);
+      toast.error("Erro ao mover grupo: " + error.message);
+    }
+  };
+
+  const handleCreateGroup = async () => {
+    if (!newGroupName.trim() || !tenantId) return;
+    
+    setIsCreatingGroup(true);
+    try {
+      const { error } = await supabase
+        .from("groups")
+        .insert({
+          name: newGroupName,
+          tenant_id: tenantId,
+          parent_id: null
+        } as any);
+
+      if (error) throw error;
+
+      toast.success("Novo grupo pai criado!");
+      setIsCreateDialogOpen(false);
+      setNewGroupName("");
+      fetchTreeData();
+    } catch (error: any) {
+      console.error("Error creating group:", error);
+      toast.error("Erro ao criar grupo: " + error.message);
+    } finally {
+      setIsCreatingGroup(false);
+    }
+  };
     if (!selectedNode || !tenantId) return;
     
     setIsUpdatingPlaylist(true);
