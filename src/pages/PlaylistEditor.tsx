@@ -435,7 +435,7 @@ export default function PlaylistEditor() {
               <input 
                 value={playlistName}
                 onChange={(e) => setPlaylistName(e.target.value)}
-                onBlur={() => triggerAutoSave(items, playlistName)}
+                onBlur={() => setHasUnsavedChanges(true)}
                 className="bg-transparent border-none focus:ring-0 text-lg font-display font-semibold text-white p-0 h-7"
               />
             </div>
