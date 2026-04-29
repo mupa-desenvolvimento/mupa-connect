@@ -285,7 +285,7 @@ export default function PlaylistsPage() {
               <div className="absolute -inset-x-20 -top-20 h-40 w-40 bg-[#085CF0]/10 blur-[100px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
             </Card>
           );
-        })}
+        }) : null}
         
         {filteredPlaylists.length === 0 && (
           <div className="col-span-full py-24 text-center border-2 border-dashed border-white/5 rounded-3xl bg-card/10">
