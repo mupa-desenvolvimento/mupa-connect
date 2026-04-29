@@ -98,7 +98,7 @@ export default function GroupsPage() {
           .filter(node => {
             // Se for store ou device_group, o parent_id é retornado como string pela query
             // Se for store_group (da tabela groups), o parent_id é UUID
-            return node.parent_id === parentId || (parentId === null && !node.parent_id);
+            return node.parent_id === parentId || (parentId === null && !node.parent_id && node.type !== 'device');
           })
           .map(node => ({
             id: node.id,
