@@ -24,7 +24,6 @@ interface Device {
   id: number;
   apelido_interno: string;
   serial: string;
-  pin: string;
   online: boolean;
   num_filial: string | null;
   grupo_dispositivos: string | null;
@@ -95,8 +94,6 @@ export function DeviceItem({ device, isSelected, onToggle }: DeviceItemProps) {
           </div>
           <div className="flex items-center gap-2 text-[10px] text-white/40 font-mono">
             <span>SN: {device.serial || "---"}</span>
-            <span>•</span>
-            <span>PIN: {device.pin || "---"}</span>
           </div>
         </div>
       </div>
@@ -123,6 +120,7 @@ export function DeviceAvailablePanel({
 }) {
   const [lastSelectedId, setLastSelectedId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"devices" | "stores">("devices");
   const { data: tenantId } = useTenant();
 
   const { data: devices, isLoading } = useQuery({
@@ -166,6 +164,28 @@ export function DeviceAvailablePanel({
     },
     enabled: !!tenantId
   });
+  
+  const { data: stores, isLoading: isLoadingStores } = useQuery({
+    queryKey: ["available-stores", tenantId],
+    queryFn: async () => {
+      const { data: allStores, error: storesError } = await supabase
+        .from("stores")
+        .select("*")
+        .eq("tenant_id", tenantId);
+      
+      if (storesError) throw storesError;
+
+      const { data: groupStores, error: gsError } = await supabase
+        .from("group_stores")
+        .select("store_id");
+      
+      if (gsError) throw gsError;
+
+      const linkedStoreIds = new Set(groupStores.map(gs => gs.store_id));
+      return allStores.filter(s => !linkedStoreIds.has(s.id));
+    },
+    enabled: !!tenantId && viewMode === "stores"
+  });
 
   const filteredDevices = useMemo(() => {
     if (!devices) return [];
@@ -175,32 +195,44 @@ export function DeviceAvailablePanel({
     );
   }, [devices, searchQuery]);
 
+  const filteredStores = useMemo(() => {
+    if (!stores) return [];
+    return stores.filter(s => 
+      s.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.code?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [stores, searchQuery]);
+
   const handleSelectAll = () => {
-    if (selectedIds.size === filteredDevices.length) {
-      onClearSelection();
-    } else {
-      onSelectAll(filteredDevices.map(d => d.id));
+    if (viewMode === "devices") {
+      if (selectedIds.size === filteredDevices.length) {
+        onClearSelection();
+      } else {
+        onSelectAll(filteredDevices.map(d => d.id));
+      }
     }
   };
 
   const handleToggle = (id: number, isShiftKey: boolean) => {
-    if (isShiftKey && lastSelectedId !== null) {
-      const lastIndex = filteredDevices.findIndex(d => d.id === lastSelectedId);
-      const currentIndex = filteredDevices.findIndex(d => d.id === id);
-      
-      if (lastIndex !== -1 && currentIndex !== -1) {
-        const start = Math.min(lastIndex, currentIndex);
-        const end = Math.max(lastIndex, currentIndex);
-        const idsInRange = filteredDevices.slice(start, end + 1).map(d => d.id);
+    if (viewMode === "devices") {
+      if (isShiftKey && lastSelectedId !== null) {
+        const lastIndex = filteredDevices.findIndex(d => d.id === lastSelectedId);
+        const currentIndex = filteredDevices.findIndex(d => d.id === id);
         
-        onToggleSelection(idsInRange);
-        setLastSelectedId(id);
-        return;
+        if (lastIndex !== -1 && currentIndex !== -1) {
+          const start = Math.min(lastIndex, currentIndex);
+          const end = Math.max(lastIndex, currentIndex);
+          const idsInRange = filteredDevices.slice(start, end + 1).map(d => d.id);
+          
+          onToggleSelection(idsInRange);
+          setLastSelectedId(id);
+          return;
+        }
       }
+      
+      onToggleSelection([id]);
+      setLastSelectedId(id);
     }
-    
-    onToggleSelection([id]);
-    setLastSelectedId(id);
   };
 
   const { setNodeRef, isOver } = useDroppable({
@@ -223,10 +255,12 @@ export function DeviceAvailablePanel({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-[#085CF0]/10 text-[#085CF0]">
-              <Monitor className="w-5 h-5" />
+              {viewMode === "devices" ? <Monitor className="w-5 h-5" /> : <Store className="w-5 h-5" />}
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white uppercase tracking-widest">Dispositivos</h3>
+              <h3 className="text-sm font-bold text-white uppercase tracking-widest">
+                {viewMode === "devices" ? "Dispositivos" : "Lojas"}
+              </h3>
               <p className="text-[10px] text-white/40 font-medium">Não vinculados a grupos</p>
             </div>
           </div>
@@ -238,10 +272,33 @@ export function DeviceAvailablePanel({
         </div>
 
         <div className="flex flex-col gap-3">
+          <div className="flex p-1 bg-black/20 rounded-lg">
+            <button
+              onClick={() => setViewMode("devices")}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 py-1.5 text-[10px] font-bold uppercase tracking-tighter rounded-md transition-all",
+                viewMode === "devices" ? "bg-[#085CF0] text-white shadow-lg" : "text-white/40 hover:text-white/60"
+              )}
+            >
+              <Monitor className="w-3 h-3" />
+              Dispositivos
+            </button>
+            <button
+              onClick={() => setViewMode("stores")}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 py-1.5 text-[10px] font-bold uppercase tracking-tighter rounded-md transition-all",
+                viewMode === "stores" ? "bg-[#085CF0] text-white shadow-lg" : "text-white/40 hover:text-white/60"
+              )}
+            >
+              <Store className="w-3 h-3" />
+              Lojas
+            </button>
+          </div>
+
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
             <Input 
-              placeholder="Buscar por nome ou serial..." 
+              placeholder={viewMode === "devices" ? "Buscar por nome ou serial..." : "Buscar por nome ou código..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 bg-black/40 border-white/10 focus:ring-[#085CF0]/50 h-10 rounded-xl"
@@ -303,6 +360,66 @@ export function DeviceAvailablePanel({
         <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">
           Arraste para vincular a um grupo
         </span>
+      </div>
+    </div>
+  );
+}
+
+function StoreItem({ store }: { store: any }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `store-${store.id}`,
+    data: {
+      type: 'store',
+      store
+    }
+  });
+
+  const style = transform ? {
+    transform: CSS.Translate.toString(transform),
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: 50
+  } : undefined;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={cn(
+        "group relative flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 cursor-grab active:cursor-grabbing",
+        "bg-white/5 border-white/5 hover:border-[#085CF0]/30 hover:bg-[#085CF0]/5"
+      )}
+    >
+      <div className="p-2 rounded-lg bg-black/20 text-[#085CF0]">
+        <Store className="w-4 h-4" />
+      </div>
+
+      <div className="flex flex-col min-w-0 flex-1">
+        <span className="text-sm font-bold text-white/80 truncate">
+          {store.name || "Sem nome"}
+        </span>
+        <span className="text-[10px] text-white/40 font-mono">
+          Cód: {store.code || "---"}
+        </span>
+      </div>
+
+      <div className="p-1 text-white/20 group-hover:text-white/60 transition-colors">
+        <GripVertical className="w-3.5 h-3.5" />
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({ type }: { type: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+      <div className="p-4 rounded-full bg-white/5">
+        <Search className="w-8 h-8 text-white/10" />
+      </div>
+      <div className="space-y-1">
+        <p className="text-sm font-medium text-white/60">Nenhuma {type} encontrada</p>
+        <p className="text-xs text-white/20">Tente ajustar sua busca ou verifique se todos já estão organizados.</p>
       </div>
     </div>
   );
