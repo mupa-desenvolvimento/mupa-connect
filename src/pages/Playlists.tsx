@@ -251,7 +251,7 @@ export default function PlaylistsPage() {
 
                 <div className="absolute bottom-3 left-3 z-20 flex gap-2">
                   <span className="flex items-center gap-1.5 text-[10px] font-bold text-white/80 bg-black/40 backdrop-blur-md px-2 py-1 rounded-md border border-white/5">
-                    <Layers className="h-3 w-3" /> {itemsCount} Mídias
+                    <Layers className="h-3 w-3" /> {(playlist as any).playlist_items?.length || 0} Mídias
                   </span>
                 </div>
               </div>
