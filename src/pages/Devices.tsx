@@ -132,6 +132,34 @@ export default function DevicesPage() {
     setStatusFilter("all");
   };
 
+  const handleRebootAll = async () => {
+    if (!filteredDevices.length) return;
+    
+    const confirm = window.confirm(`Deseja reiniciar ${filteredDevices.length} dispositivos filtrados?`);
+    if (!confirm) return;
+
+    try {
+      const promises = filteredDevices.map(d => 
+        issueDeviceCommand(d.id.toString(), "reboot", {})
+      );
+      await Promise.all(promises);
+      toast.success(`Comando de reiniciar enviado para ${filteredDevices.length} dispositivos`);
+    } catch (err) {
+      console.error("Error rebooting all:", err);
+      toast.error("Falha ao enviar comandos em massa");
+    }
+  };
+
+  const handleRebootDevice = async (deviceId: string, name: string) => {
+    try {
+      await issueDeviceCommand(deviceId, "reboot", {});
+      toast.success(`Reiniciando ${name}...`);
+    } catch (err) {
+      console.error("Error rebooting device:", err);
+      toast.error("Falha ao enviar comando");
+    }
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       <PageHeader
