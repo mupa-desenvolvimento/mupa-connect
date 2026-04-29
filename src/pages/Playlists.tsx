@@ -32,17 +32,6 @@ export default function PlaylistsPage() {
   const navigate = useNavigate();
   const { data: tenantId, isLoading: isTenantLoading } = useTenant();
   const { data: playlistsData, isLoading: isPlaylistsLoading } = usePlaylists(tenantId || undefined);
-
-  if (true) {
-    return (
-      <div className="p-20 text-white bg-red-900">
-        <h1>DEBUG: SE VOCÊ ESTÁ VENDO ISSO, A PÁGINA CARREGOU</h1>
-        <p>Tenant: {tenantId || 'null'}</p>
-        <p>Loading: {isPlaylistsLoading ? 'Sim' : 'Não'}</p>
-        <p>Count: {playlistsData?.length || 0}</p>
-      </div>
-    );
-  }
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
