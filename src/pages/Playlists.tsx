@@ -12,7 +12,9 @@ import {
   MoreHorizontal,
   Clock,
   Layers,
-  Loader2
+  Loader2,
+  LayoutGrid,
+  List
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
@@ -24,7 +26,7 @@ import {
 import { usePlaylists, useTenant } from "@/hooks/use-playlist-data";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function PlaylistsPage() {
   const navigate = useNavigate();
