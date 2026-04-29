@@ -100,7 +100,10 @@ export default function MediaPage() {
   };
 
   const fetchMedia = async () => {
-    if (!tenantId) return;
+    if (!tenantId) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     let query = supabase
       .from("media_items")
