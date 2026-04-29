@@ -14,7 +14,8 @@ import {
   Layers,
   Loader2,
   LayoutGrid,
-  List
+  List,
+  AlertTriangle
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
@@ -24,9 +25,21 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { usePlaylists, useTenant } from "@/hooks/use-playlist-data";
+import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState, useEffect, useMemo } from "react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function PlaylistsPage() {
   const navigate = useNavigate();
