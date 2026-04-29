@@ -1,24 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+import { useTenant as useTenantHook } from "@/hooks/use-tenant";
+
 export function useTenant() {
-  return useQuery({
-    queryKey: ["current-tenant"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
-
-      const { data: mapping, error } = await supabase
-        .from("user_tenant_mappings")
-        .select("tenant_id")
-        .eq("user_id", user.id)
-        .limit(1)
-        .maybeSingle();
-
-      if (error) throw error;
-      return mapping?.tenant_id;
-    },
-  });
+  const { tenantId, isLoading } = useTenantHook();
+  return { data: tenantId, isLoading };
 }
 
 export function useMedias(tenantId?: string) {
