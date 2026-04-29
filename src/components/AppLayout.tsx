@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -21,6 +21,7 @@ import { Session } from "@supabase/supabase-js";
 
 
 export default function AppLayout() {
+  const location = useLocation();
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
 
@@ -43,6 +44,16 @@ export default function AppLayout() {
 
   const userEmail = session?.user?.email || "";
   const userInitials = userEmail.substring(0, 2).toUpperCase() || "US";
+
+  const isEditor = location.pathname.startsWith("/playlists/") && location.pathname !== "/playlists";
+
+  if (isEditor) {
+    return (
+      <div className="min-h-screen w-full bg-[#09090b]">
+        <Outlet />
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider>
