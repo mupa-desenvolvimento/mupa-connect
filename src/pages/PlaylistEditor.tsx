@@ -62,6 +62,7 @@ import { toast } from "sonner";
 import { usePlaylist, useMedias, useTenant } from "@/hooks/use-playlist-data";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 
 // --- Types ---
 interface EditorPlaylistItem {
@@ -177,6 +178,7 @@ export default function PlaylistEditor() {
   const [items, setItems] = useState<EditorPlaylistItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<EditorPlaylistItem | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [debugData, setDebugData] = useState<any>(null);
@@ -229,6 +231,7 @@ export default function PlaylistEditor() {
   }, [playlistData, medias, id]);
 
   const triggerAutoSave = useCallback(async (updatedItems: EditorPlaylistItem[], updatedName: string) => {
+    setHasUnsavedChanges(true);
     if (!tenantId || isSaving) return;
     setIsSaving(true);
     
@@ -326,6 +329,7 @@ export default function PlaylistEditor() {
       
       setSaveStatus("saved");
       setIsSaving(false);
+      setHasUnsavedChanges(false);
       setTimeout(() => setSaveStatus("idle"), 2000);
     } catch (error: any) {
       console.error("Auto-save error:", error);
@@ -465,6 +469,29 @@ export default function PlaylistEditor() {
         </div>
 
         <div className="flex items-center gap-3">
+          {hasUnsavedChanges && (
+            <span className="text-[10px] font-bold text-yellow-500 animate-pulse uppercase tracking-widest mr-2">
+              Alterações pendentes
+            </span>
+          )}
+          <Button 
+            onClick={() => triggerAutoSave(items, playlistName)}
+            disabled={isSaving}
+            className={cn(
+              "h-9 px-4 gap-2 font-bold text-xs transition-all",
+              hasUnsavedChanges 
+                ? "bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-900/20 scale-105" 
+                : "bg-white/5 hover:bg-white/10 text-white/40"
+            )}
+          >
+            {isSaving ? (
+              <RefreshCw className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className={cn("h-4 w-4", hasUnsavedChanges ? "animate-bounce" : "")} />
+            )}
+            {isSaving ? "SALVANDO..." : "SALVAR AGORA"}
+          </Button>
+          <Separator orientation="vertical" className="h-6 bg-white/10 mx-1" />
           <Button variant="outline" className="border-white/10 hover:bg-white/5 gap-2 h-9 px-4 text-white">
             <Play className="h-4 w-4 fill-current" /> Preview
           </Button>
