@@ -24,6 +24,7 @@ import {
 import { usePlaylists, useTenant } from "@/hooks/use-playlist-data";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useState } from "react";
 
 export default function PlaylistsPage() {
   const navigate = useNavigate();
@@ -216,9 +217,6 @@ export default function PlaylistsPage() {
              )}
           </div>
         )}
-      </div>
-    </div>
-  );
       </div>
     </div>
   );
