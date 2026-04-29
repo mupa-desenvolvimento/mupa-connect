@@ -240,7 +240,8 @@ export default function PlaylistEditor() {
           tipo: it.type,
           ordem: idx + 1,
           position: idx + 1,
-          conteudo_id: it.mediaId
+          conteudo_id: it.mediaId,
+          ativo: true
         }));
         await supabase.from("playlist_items").insert(itemsToInsert);
       }
