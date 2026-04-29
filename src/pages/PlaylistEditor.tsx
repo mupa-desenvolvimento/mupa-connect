@@ -411,7 +411,7 @@ export default function PlaylistEditor() {
                       className="w-full h-full object-contain"
                     />
                     <div className="absolute top-4 left-4 flex gap-2">
-                       <Badge className="bg-purple-600/90 text-white border-none backdrop-blur-md">LIVE PREVIEW</Badge>
+                       <Badge className="bg-accent/90 text-accent-foreground border-none backdrop-blur-md">LIVE PREVIEW</Badge>
                        <Badge variant="secondary" className="bg-black/40 text-white border-white/10 backdrop-blur-md">
                          Item {items.indexOf(selectedItem) + 1} de {items.length}
                        </Badge>
