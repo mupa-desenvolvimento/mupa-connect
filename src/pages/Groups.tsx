@@ -42,6 +42,7 @@ export default function GroupsPage() {
   const { data: playlists } = usePlaylists();
 
   const fetchTreeData = async () => {
+    // console.log("Fetching tree data for tenant:", tenantId);
     if (!tenantId) return;
     setLoading(true);
     
@@ -53,11 +54,16 @@ export default function GroupsPage() {
       if (error) throw error;
 
       const nodes = (data as any[]) || [];
+      console.log("Raw hierarchy nodes from DB:", nodes);
 
       // Transform recursive flat list into tree structure
       const buildTree = (allNodes: any[], parentId: string | null = null): TreeNode[] => {
         return allNodes
-          .filter(node => node.parent_id === parentId)
+          .filter(node => {
+            // Se for store ou device_group, o parent_id é retornado como string pela query
+            // Se for store_group (da tabela groups), o parent_id é UUID
+            return node.parent_id === parentId || (parentId === null && !node.parent_id);
+          })
           .map(node => ({
             id: node.id,
             name: node.name,
@@ -66,12 +72,13 @@ export default function GroupsPage() {
             playlist_name: node.playlist_name,
             inherited_from: node.inherited_from_name,
             has_override: node.playlist_id !== null && node.inherited_from_name !== null,
-            device_count: node.device_count,
+            device_count: parseInt(node.device_count || "0"),
             children: buildTree(allNodes, node.id)
           }));
       };
 
       const tree = buildTree(nodes);
+      console.log("Built tree structure:", tree);
       setTreeData(tree);
 
     } catch (error) {
