@@ -585,7 +585,7 @@ export default function PlaylistEditor() {
                          <div className="space-y-3">
                             <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Ajuste de Escala</label>
                             <div className="grid grid-cols-2 gap-2">
-                               <Button variant="outline" className="h-9 text-[10px] border-purple-500/50 bg-purple-500/10 text-purple-400 font-bold">PREENCHER</Button>
+                               <Button variant="outline" className="h-9 text-[10px] border-accent/50 bg-accent/10 text-accent font-bold">PREENCHER</Button>
                                <Button variant="outline" className="h-9 text-[10px] border-white/10 text-white/40 font-bold">AJUSTAR</Button>
                             </div>
                          </div>
