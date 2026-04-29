@@ -512,7 +512,7 @@ export default function PlaylistEditor() {
               </section>
             </div>
           </ScrollArea>
-        </main>
+        </aside>
       </div>
     </div>
   );
