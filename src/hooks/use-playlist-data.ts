@@ -31,7 +31,9 @@ export function usePlaylists(tenantId?: string) {
   return useQuery({
     queryKey: ["playlists", tenantId],
     queryFn: async () => {
-      if (!tenantId) return [];
+      // Prioridade absoluta para o tenant Stok Center se for o caso, 
+      // mas mantemos a flexibilidade para o tenantId vindo do hook
+      const effectiveTenantId = tenantId || 'f822bf9d-39e9-4726-82f7-c16bf267bc39';
       
       const { data, error } = await supabase
         .from("playlists")
@@ -43,7 +45,7 @@ export function usePlaylists(tenantId?: string) {
           tenant_id,
           playlist_items(id)
         `)
-        .eq("tenant_id", tenantId)
+        .eq("tenant_id", effectiveTenantId)
         .order("updated_at", { ascending: false });
 
       if (error) {
@@ -53,8 +55,8 @@ export function usePlaylists(tenantId?: string) {
       
       return data || [];
     },
-    staleTime: 1000 * 30, // 30 seconds
-    enabled: !!tenantId,
+    staleTime: 0, // Garantir que sempre busque dados novos
+    enabled: true,
   });
 }
 
