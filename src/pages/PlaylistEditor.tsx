@@ -262,7 +262,7 @@ export default function PlaylistEditor() {
       }
 
       // Delete items
-      const { error: deleteError } = await supabase.from("playlist_items").delete().eq("playlist_id", currentPlaylistId!);
+      const { error: deleteError } = await supabase.from("playlist_items").delete().eq("playlist_id", currentPlaylistId as string);
       if (deleteError) {
         setDebugData({ 
           operation: "DELETE_ITEMS",
