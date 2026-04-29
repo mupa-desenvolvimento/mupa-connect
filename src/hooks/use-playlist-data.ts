@@ -31,8 +31,6 @@ export function usePlaylists(tenantId?: string) {
   return useQuery({
     queryKey: ["playlists", tenantId],
     queryFn: async () => {
-      console.log("Fetching playlists for tenant:", tenantId);
-      
       let query = supabase
         .from("playlists")
         .select(`
@@ -53,7 +51,6 @@ export function usePlaylists(tenantId?: string) {
         throw error;
       }
       
-      console.log(`Found ${data?.length || 0} playlists:`, data);
       return data || [];
     },
     enabled: true,
