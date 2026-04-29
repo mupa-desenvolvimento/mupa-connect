@@ -231,7 +231,18 @@ export default function PlaylistEditor() {
   }, [playlistData, medias, id]);
 
   const savePlaylist = async (updatedItems: EditorPlaylistItem[], updatedName: string) => {
-    if (!tenantId || isSaving) return;
+    if (isSaving) return;
+    
+    if (!tenantId) {
+      toast.error("Erro: Não foi possível identificar seu Tenant (ID de cliente). Tente recarregar a página.");
+      return;
+    }
+
+    if (!updatedName || updatedName.trim() === "" || updatedName === "...") {
+      toast.error("Por favor, dê um nome à sua playlist.");
+      return;
+    }
+
     setIsSaving(true);
     setSaveStatus("saving");
     const startTime = Date.now();
@@ -240,6 +251,7 @@ export default function PlaylistEditor() {
       let currentPlaylistId = id;
 
       if (id === "new") {
+        console.log("Saving new playlist. Fetching company for tenant:", tenantId);
         // Obter o company_id associado ao tenant
         const { data: companyData, error: companyError } = await supabase
           .from("companies")
@@ -248,9 +260,17 @@ export default function PlaylistEditor() {
           .limit(1)
           .maybeSingle();
 
-        if (companyError || !companyData) {
-          throw new Error("Não foi possível encontrar uma empresa associada a este tenant.");
+        if (companyError) {
+          console.error("Error fetching company:", companyError);
+          throw new Error("Erro ao validar empresa vinculada ao seu usuário.");
         }
+
+        if (!companyData) {
+          console.error("No company found for tenant:", tenantId);
+          throw new Error("Sua conta não possui uma empresa vinculada. Entre em contato com o suporte.");
+        }
+
+        console.log("Found company:", companyData.id);
 
         const { data: newPlaylist, error: createError } = await supabase
           .from("playlists")
@@ -262,7 +282,13 @@ export default function PlaylistEditor() {
           })
           .select().single();
           
-        if (createError) throw createError;
+        if (createError) {
+          console.error("Error creating playlist:", createError);
+          if (createError.code === '23502' && createError.message.includes('company_id')) {
+            throw new Error("Erro de integridade: A empresa (company_id) não foi identificada corretamente.");
+          }
+          throw createError;
+        }
         currentPlaylistId = newPlaylist.id;
         navigate(`/playlists/${currentPlaylistId}`, { replace: true });
       } else {

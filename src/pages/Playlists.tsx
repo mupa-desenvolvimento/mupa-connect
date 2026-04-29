@@ -109,19 +109,43 @@ export default function PlaylistsPage() {
     try {
       toast.loading("Duplicando playlist...");
       
-      // 1. Create new playlist record
+      // 1. Ensure we have a company_id
+      let companyId = playlist.company_id;
+      
+      if (!companyId) {
+        console.log("Playlist source missing company_id, fetching from tenant:", playlist.tenant_id);
+        const { data: companyData } = await supabase
+          .from("companies")
+          .select("id")
+          .eq("tenant_id", playlist.tenant_id)
+          .limit(1)
+          .maybeSingle();
+        
+        if (companyData) {
+          companyId = companyData.id;
+        } else {
+          throw new Error("Não foi possível identificar a empresa para duplicar a playlist.");
+        }
+      }
+
+      // 2. Create new playlist record
       const { data: newPlaylist, error: pError } = await supabase
         .from("playlists")
         .insert({
           name: `${playlist.name} (Cópia)`,
           tenant_id: playlist.tenant_id,
-          company_id: playlist.company_id,
+          company_id: companyId,
           is_active: playlist.is_active
         })
         .select()
         .single();
         
-      if (pError) throw pError;
+      if (pError) {
+        if (pError.code === '23502' && pError.message.includes('company_id')) {
+          throw new Error("Erro de integridade: A empresa (company_id) é obrigatória e não foi encontrada.");
+        }
+        throw pError;
+      }
 
       // 2. Fetch original items
       const { data: items, error: iError } = await supabase
