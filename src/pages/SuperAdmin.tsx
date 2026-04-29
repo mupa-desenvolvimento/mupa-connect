@@ -23,6 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { CreateUserModal } from "@/components/CreateUserModal";
 
 export default function SuperAdminDashboard() {
   const [stats, setStats] = useState({
@@ -32,6 +33,7 @@ export default function SuperAdminDashboard() {
     devices: 0
   });
   const [loading, setLoading] = useState(true);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchStats() {
@@ -110,7 +112,11 @@ export default function SuperAdminDashboard() {
             <CardTitle className="text-lg font-display">Ações Rápidas</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Button variant="outline" className="h-24 flex flex-col gap-2 border-dashed">
+            <Button 
+              variant="outline" 
+              className="h-24 flex flex-col gap-2 border-dashed"
+              onClick={() => setIsUserModalOpen(true)}
+            >
               <UserPlus className="h-6 w-6" />
               <span>Cadastrar Usuário</span>
             </Button>
@@ -155,6 +161,14 @@ export default function SuperAdminDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <CreateUserModal 
+        isOpen={isUserModalOpen} 
+        onClose={() => setIsUserModalOpen(false)} 
+        onSuccess={() => {
+          // Refresh logic can be added here
+        }}
+      />
     </>
   );
 }
