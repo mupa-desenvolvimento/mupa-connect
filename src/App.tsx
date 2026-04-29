@@ -27,7 +27,16 @@ import { Session } from "@supabase/supabase-js";
 import { Loader2 } from "lucide-react";
 
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 30, // 30 minutes
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => {
   const [session, setSession] = useState<Session | null>(null);
