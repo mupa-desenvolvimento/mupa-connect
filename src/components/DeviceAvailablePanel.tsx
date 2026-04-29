@@ -33,7 +33,7 @@ interface Device {
 interface DeviceItemProps {
   device: Device;
   isSelected: boolean;
-  onToggle: (id: number) => void;
+  onToggle: (id: number, isShiftKey: boolean) => void;
 }
 
 export function DeviceItem({ device, isSelected, onToggle }: DeviceItemProps) {
@@ -65,7 +65,7 @@ export function DeviceItem({ device, isSelected, onToggle }: DeviceItemProps) {
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <Checkbox 
           checked={isSelected} 
-          onCheckedChange={() => onToggle(device.id)}
+          onCheckedChange={(checked, e) => onToggle(device.id, (e as any).shiftKey)}
           className="border-white/20 data-[state=checked]:bg-[#085CF0] data-[state=checked]:border-[#085CF0]"
         />
         
@@ -114,7 +114,7 @@ export function DeviceAvailablePanel({
   onClearSelection
 }: { 
   selectedIds: Set<number>,
-  onToggleSelection: (id: number) => void,
+  onToggleSelection: (id: number, isShiftKey: boolean) => void,
   onSelectAll: (ids: number[]) => void,
   onClearSelection: () => void
 }) {
