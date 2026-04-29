@@ -34,6 +34,13 @@ export default function PlaylistsPage() {
   const { data: playlistsData, isLoading: isPlaylistsLoading } = usePlaylists(tenantId || undefined);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
+    return (localStorage.getItem("playlists-view-mode") as "grid" | "list") || "grid";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("playlists-view-mode", viewMode);
+  }, [viewMode]);
 
   const playlists = playlistsData?.map(p => ({
     ...p,
