@@ -101,6 +101,7 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {renderItem({ title: "SuperAdmin", url: "/superadmin", icon: ShieldCheck })}
+                {renderItem({ title: "Monitoramento", url: "/admin/player-logs", icon: LayoutDashboard })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
