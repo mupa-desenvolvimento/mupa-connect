@@ -32,6 +32,7 @@ export default function PlaylistsPage() {
   const navigate = useNavigate();
   const { data: tenantId, isLoading: isTenantLoading } = useTenant();
   const { data: playlistsData, isLoading: isPlaylistsLoading } = usePlaylists(tenantId || undefined);
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
@@ -47,8 +48,6 @@ export default function PlaylistsPage() {
     playlist_items: (p as any).playlist_items || []
   })) || [];
   
-  // console.log("Playlists processing:", { raw: playlistsData, processed: playlists });
-
   const filteredPlaylists = playlists.filter(playlist => {
     const playlistName = playlist.name || "";
     const matchesSearch = playlistName.toLowerCase().includes(searchQuery.toLowerCase());
@@ -58,6 +57,7 @@ export default function PlaylistsPage() {
       !playlist.is_active;
     return matchesSearch && matchesStatus;
   });
+
 
   const isLoading = isTenantLoading || isPlaylistsLoading;
 
@@ -79,6 +79,8 @@ export default function PlaylistsPage() {
       </div>
     );
   }
+
+  
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
