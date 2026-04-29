@@ -134,28 +134,33 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
 
   if (!playlist.length) return null;
 
+  const layerAIndex = activeLayer === "A" ? currentIndex : nextIndex;
+  const layerBIndex = activeLayer === "B" ? currentIndex : nextIndex;
+  const layerAMedia = playlist[layerAIndex];
+  const layerBMedia = playlist[layerBIndex];
+
   return (
     <div className="relative w-full h-full bg-black overflow-hidden" key={errorCount}>
       {/* Layer A */}
       <div 
         className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${activeLayer === "A" ? "opacity-100 z-10" : "opacity-0 z-0"}`}
       >
-        {playlist[activeLayer === "A" ? currentIndex : nextIndex]?.type === "video" ? (
+        {layerAMedia?.type === "video" ? (
           <video
             ref={videoARef}
-            src={activeLayer === "A" ? playlist[currentIndex].url : playlist[nextIndex].url}
+            src={layerAMedia.url}
             muted={volume === 0}
-            autoPlay
+            autoPlay={activeLayer === "A"}
             playsInline
             preload="auto"
             onError={handleError}
-            onEnded={handleNext}
-            className={`w-full h-full object-cover transition-opacity duration-300 ${activeLayer === "A" ? "opacity-100" : "opacity-0"}`}
+            onEnded={() => { if (activeLayer === "A") handleNext(); }}
+            className="w-full h-full object-cover"
           />
         ) : (
           <img
-            src={activeLayer === "A" ? playlist[currentIndex].url : playlist[nextIndex].url}
-            className={`w-full h-full object-cover transition-opacity duration-300 ${activeLayer === "A" ? "opacity-100" : "opacity-0"}`}
+            src={layerAMedia?.url}
+            className="w-full h-full object-cover"
             alt="media"
             onError={handleError}
           />
@@ -166,22 +171,22 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
       <div 
         className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${activeLayer === "B" ? "opacity-100 z-10" : "opacity-0 z-0"}`}
       >
-        {playlist[activeLayer === "B" ? currentIndex : nextIndex]?.type === "video" ? (
+        {layerBMedia?.type === "video" ? (
           <video
             ref={videoBRef}
-            src={activeLayer === "B" ? playlist[currentIndex].url : playlist[nextIndex].url}
+            src={layerBMedia.url}
             muted={volume === 0}
-            autoPlay
+            autoPlay={activeLayer === "B"}
             playsInline
             preload="auto"
             onError={handleError}
-            onEnded={handleNext}
-            className={`w-full h-full object-cover transition-opacity duration-300 ${activeLayer === "B" ? "opacity-100" : "opacity-0"}`}
+            onEnded={() => { if (activeLayer === "B") handleNext(); }}
+            className="w-full h-full object-cover"
           />
         ) : (
           <img
-            src={activeLayer === "B" ? playlist[currentIndex].url : playlist[nextIndex].url}
-            className={`w-full h-full object-cover transition-opacity duration-300 ${activeLayer === "B" ? "opacity-100" : "opacity-0"}`}
+            src={layerBMedia?.url}
+            className="w-full h-full object-cover"
             alt="media"
             onError={handleError}
           />
