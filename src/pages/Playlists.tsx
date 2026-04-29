@@ -29,15 +29,9 @@ import { ptBR } from "date-fns/locale";
 import { useState, useEffect } from "react";
 
 export default function PlaylistsPage() {
-  console.log("PlaylistsPage COMPONENT EXECUTING");
   const navigate = useNavigate();
   const { data: tenantId, isLoading: isTenantLoading } = useTenant();
-  console.log("PlaylistsPage - Current Tenant ID:", tenantId);
-  const { data: playlistsData, isLoading: isPlaylistsLoading, error: queryError } = usePlaylists(tenantId || undefined);
-  
-  if (queryError) {
-    console.error("PlaylistsPage - Query Error:", queryError);
-  }
+  const { data: playlistsData, isLoading: isPlaylistsLoading } = usePlaylists(tenantId || undefined);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
