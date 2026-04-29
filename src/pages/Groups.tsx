@@ -416,7 +416,7 @@ export default function GroupsPage() {
               selectedIds={selectedDevices}
               onToggleSelection={(ids: number[]) => {
                 const next = new Set(selectedDevices);
-                ids.forEach(id => {
+                ids.forEach((id: number) => {
                   if (next.has(id)) next.delete(id);
                   else next.add(id);
                 });
