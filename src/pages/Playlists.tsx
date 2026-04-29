@@ -47,7 +47,7 @@ export default function PlaylistsPage() {
     playlist_items: (p as any).playlist_items || []
   })) || [];
   
-  console.log("Playlists processing:", { raw: playlistsData, processed: playlists });
+  // console.log("Playlists processing:", { raw: playlistsData, processed: playlists });
 
   const filteredPlaylists = playlists.filter(playlist => {
     const matchesSearch = playlist.name?.toLowerCase().includes(searchQuery.toLowerCase());
