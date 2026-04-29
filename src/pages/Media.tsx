@@ -128,8 +128,11 @@ export default function MediaPage() {
     let query = supabase
       .from("media_items")
       .select("*")
-      .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false });
+
+    if (tenantId) {
+      query = query.eq("tenant_id", tenantId);
+    }
 
     if (currentFolder) {
       query = query.eq("folder_id", currentFolder);
