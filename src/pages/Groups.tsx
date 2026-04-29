@@ -205,6 +205,8 @@ export default function GroupsPage() {
     } finally {
       setIsCreatingGroup(false);
     }
+  };
+
   const handleUpdatePlaylist = async (playlistId: string | null) => {
     if (!selectedNode || !tenantId) return;
     
