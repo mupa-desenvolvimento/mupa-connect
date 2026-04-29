@@ -242,8 +242,8 @@ export default function PlaylistEditor() {
         await supabase.from("playlist_items").insert(itemsToInsert);
       }
 
-      setSaveStatus("saved");
-      queryClient.invalidateQueries({ queryKey: ["playlist", currentPlaylistId] });
+      // Silently invalidate to keep UI smooth without full reload state
+      queryClient.setQueryData(["playlist", currentPlaylistId], { ...playlistData, name: updatedName, playlist_items: updatedItems });
       queryClient.invalidateQueries({ queryKey: ["playlists", tenantId] });
       setTimeout(() => setSaveStatus("idle"), 2000);
     } catch (error: any) {
