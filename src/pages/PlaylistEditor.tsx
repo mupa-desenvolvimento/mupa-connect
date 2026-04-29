@@ -504,7 +504,7 @@ export default function PlaylistEditor() {
                   {/* Quick Add Button at the end of timeline */}
                   <Button 
                     variant="outline" 
-                    className="shrink-0 w-48 h-32 rounded-xl border-2 border-dashed border-white/5 bg-white/5 hover:bg-white/10 hover:border-purple-500/30 transition-all flex flex-col items-center justify-center gap-2"
+                    className="shrink-0 w-48 h-32 rounded-xl border-2 border-dashed border-white/5 bg-white/5 hover:bg-white/10 hover:border-accent/30 transition-all flex flex-col items-center justify-center gap-2"
                   >
                     <Plus className="h-6 w-6 text-white/20" />
                     <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">Adicionar</span>
