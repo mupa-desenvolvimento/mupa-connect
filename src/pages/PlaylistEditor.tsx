@@ -361,10 +361,10 @@ export default function PlaylistEditor() {
           <Tabs defaultValue="media" className="flex-1 flex flex-col">
             <div className="p-4 border-b border-white/5">
               <TabsList className="grid w-full grid-cols-2 bg-black/40 p-1 border border-white/5 h-10">
-                <TabsTrigger value="media" className="data-[state=active]:bg-purple-600 text-xs gap-2">
+                <TabsTrigger value="media" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground text-xs gap-2">
                   <ImageIcon className="h-3.5 w-3.5" /> Mídias
                 </TabsTrigger>
-                <TabsTrigger value="campaigns" className="data-[state=active]:bg-purple-600 text-xs gap-2">
+                <TabsTrigger value="campaigns" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground text-xs gap-2">
                   <Layers className="h-3.5 w-3.5" /> Campanhas
                 </TabsTrigger>
               </TabsList>
