@@ -174,7 +174,7 @@ export default function PlaylistEditor() {
 
   const isLoadingPlaylist = isTenantLoading || isPlaylistLoading;
 
-  const [playlistName, setPlaylistName] = useState("");
+  const [playlistName, setPlaylistName] = useState("...");
   const [items, setItems] = useState<EditorPlaylistItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<EditorPlaylistItem | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -434,8 +434,10 @@ export default function PlaylistEditor() {
             <div className="flex flex-col">
               <input 
                 value={playlistName}
-                onChange={(e) => setPlaylistName(e.target.value)}
-                onBlur={() => setHasUnsavedChanges(true)}
+                onChange={(e) => {
+                  setPlaylistName(e.target.value);
+                  setHasUnsavedChanges(true);
+                }}
                 className="bg-transparent border-none focus:ring-0 text-lg font-display font-semibold text-white p-0 h-7"
               />
             </div>
