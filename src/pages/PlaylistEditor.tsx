@@ -242,7 +242,7 @@ export default function PlaylistEditor() {
       if (id === "new") {
         const { data: newPlaylist, error: createError } = await supabase
           .from("playlists")
-          .insert({ name: updatedName, tenant_id: tenantId, is_active: true })
+          .insert({ name: updatedName, tenant_id: tenantId as any, is_active: true })
           .select().single();
           
         if (createError) throw createError;
@@ -267,7 +267,7 @@ export default function PlaylistEditor() {
       // 2. Inserir novos itens se existirem
       if (updatedItems.length > 0) {
         const itemsToInsert = updatedItems.map((it, idx) => ({
-          playlist_id: currentPlaylistId!,
+          playlist_id: currentPlaylistId! as any,
           media_id: it.mediaId,
           duracao: it.duration,
           prioridade: it.priority,
