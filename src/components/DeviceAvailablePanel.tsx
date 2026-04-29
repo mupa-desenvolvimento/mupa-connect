@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useTenant } from "@/hooks/use-tenant";
+import { useTenant } from "@/hooks/use-playlist-data";
 import { 
   Search, 
   Monitor, 
