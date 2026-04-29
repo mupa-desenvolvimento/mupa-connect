@@ -69,22 +69,19 @@ export default function PlaylistsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center mb-8">
-          <div className="space-y-2">
-            <div className="h-8 w-48 bg-muted animate-pulse rounded" />
-            <div className="h-4 w-64 bg-muted animate-pulse rounded" />
-          </div>
-          <div className="h-10 w-32 bg-muted animate-pulse rounded" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="flex flex-col items-center justify-center py-20">
+        <Loader2 className="h-10 w-10 animate-spin text-[#085CF0] mb-4" />
+        <p className="text-white/40 animate-pulse">Carregando suas playlists...</p>
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl px-4">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-64 bg-card/40 border border-border/40 rounded-xl animate-pulse" />
+            <div key={i} className="h-48 bg-white/5 border border-white/10 rounded-2xl animate-pulse" />
           ))}
         </div>
       </div>
     );
   }
+
+  console.log("PlaylistsPage - Final playlists count:", filteredPlaylists.length);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
