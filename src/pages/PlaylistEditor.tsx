@@ -185,6 +185,7 @@ export default function PlaylistEditor() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [debugData, setDebugData] = useState<any>(null);
   const [showDebug, setShowDebug] = useState(false);
+  const [mediaSearch, setMediaSearch] = useState("");
 
   // Monitorar mudanças no estado de itens
   useEffect(() => {
