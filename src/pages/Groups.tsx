@@ -4,6 +4,18 @@ import { GroupTreeView, TreeNode } from "@/components/GroupTreeView";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/use-playlist-data";
+import { DeviceAvailablePanel } from "@/components/DeviceAvailablePanel";
+import { 
+  DndContext, 
+  closestCenter, 
+  KeyboardSensor, 
+  PointerSensor, 
+  useSensor, 
+  useSensors,
+  DragOverlay,
+  defaultDropAnimationSideEffects
+} from "@dnd-kit/core";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { 
   Sheet, 
   SheetContent, 
@@ -55,6 +67,15 @@ export default function GroupsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
+
+  const [selectedDevices, setSelectedDevices] = useState<Set<number>>(new Set());
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeDevice, setActiveDevice] = useState<any>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const fetchTreeData = async () => {
     // console.log("Fetching tree data for tenant:", tenantId);
@@ -138,8 +159,8 @@ export default function GroupsPage() {
       };
       
       const flatNodes = allNodes(treeData);
-      const movingNode = flatNodes.find(n => n.id === nodeId);
-      const targetNode = flatNodes.find(n => n.id === newParentId);
+      const movingNode = flatNodes.find(n => String(n.id) === String(nodeId));
+      const targetNode = flatNodes.find(n => String(n.id) === String(newParentId));
       
       if (!movingNode || !targetNode) return;
       
@@ -176,6 +197,101 @@ export default function GroupsPage() {
     } catch (error: any) {
       console.error("Error moving node:", error);
       toast.error("Erro ao mover grupo: " + error.message);
+    }
+  };
+
+  const handleDragStart = (event: any) => {
+    const { active } = event;
+    setActiveId(active.id);
+    if (active.data.current?.type === 'device') {
+      setActiveDevice(active.data.current.device);
+    }
+  };
+
+  const handleDragEnd = async (event: any) => {
+    const { active, over } = event;
+    setActiveId(null);
+    setActiveDevice(null);
+
+    if (!over) return;
+
+    const activeType = active.data.current?.type;
+    const overType = over.data.current?.type;
+
+    // Se estiver movendo um grupo (comportamento original)
+    if (activeType !== 'device') {
+      if (active.id !== over.id) {
+        handleMoveNode(active.id, over.id);
+      }
+      return;
+    }
+
+    // Se estiver soltando um dispositivo em um grupo
+    if (activeType === 'device') {
+      const targetNode = over.data.current?.node;
+      const isDroppingInPanel = over.data.current?.type === 'available-panel';
+
+      const getDeviceId = (id: string) => {
+        if (typeof id === 'string' && id.startsWith('device-')) {
+          return parseInt(id.replace('device-', ''));
+        }
+        return parseInt(id);
+      };
+
+      const activeDeviceId = active.data.current?.device?.id || getDeviceId(active.id as string);
+
+      const devicesToMove = selectedDevices.has(activeDeviceId)
+        ? Array.from(selectedDevices)
+        : [activeDeviceId];
+
+      try {
+        let updateData: any = {};
+        
+        if (isDroppingInPanel) {
+          // Remover do grupo/loja
+          updateData = { num_filial: null, grupo_dispositivos: null };
+        } else if (targetNode?.type === 'store') {
+          const { data: store } = await supabase
+            .from("stores")
+            .select("code")
+            .eq("id", targetNode.id)
+            .single();
+          
+          if (store) {
+            updateData = { num_filial: store.code, grupo_dispositivos: null };
+          }
+        } else if (targetNode?.type === 'device_group') {
+          const { data: dg } = await supabase
+            .from("device_groups")
+            .select("id, store_id, stores(code)")
+            .eq("id", targetNode.id)
+            .single();
+          
+          if (dg) {
+            updateData = { 
+              grupo_dispositivos: dg.id, 
+              num_filial: (dg.stores as any)?.code || null 
+            };
+          }
+        } else {
+          toast.info("Por favor, solte o dispositivo em uma Loja, Grupo de Dispositivos ou no painel lateral.");
+          return;
+        }
+
+        const { error } = await supabase
+          .from("dispositivos")
+          .update(updateData)
+          .in("id", devicesToMove);
+
+        if (error) throw error;
+
+        toast.success(`${devicesToMove.length} dispositivo(s) atualizado(s) com sucesso!`);
+        setSelectedDevices(new Set());
+        fetchTreeData();
+      } catch (error: any) {
+        console.error("Error moving devices:", error);
+        toast.error("Erro ao atualizar dispositivos: " + error.message);
+      }
     }
   };
 
@@ -259,18 +375,80 @@ export default function GroupsPage() {
         description="Visualize e gerencie a distribuição de conteúdos através da árvore de herança."
       />
 
-      <div className="flex-1 min-h-0">
-        <GroupTreeView 
-          data={treeData} 
-          onNodeClick={handleNodeClick}
-          onEditPlaylist={(node) => {
-            setSelectedNode(node);
-            setIsSidebarOpen(true);
-          }}
-          onCreateGroup={() => setIsCreateDialogOpen(true)}
-          onMoveNode={handleMoveNode}
-        />
-      </div>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="flex-1 min-h-0 flex gap-6 overflow-hidden">
+          {/* Main Tree View */}
+          <div className="flex-[3] min-w-0 h-full">
+            <GroupTreeView 
+              data={treeData} 
+              onNodeClick={handleNodeClick}
+              onEditPlaylist={(node) => {
+                setSelectedNode(node);
+                setIsSidebarOpen(true);
+              }}
+              onCreateGroup={() => setIsCreateDialogOpen(true)}
+              onMoveNode={handleMoveNode}
+              onRemoveDevice={async (id) => {
+                try {
+                  const { error } = await supabase
+                    .from("dispositivos")
+                    .update({ num_filial: null, grupo_dispositivos: null })
+                    .eq("id", parseInt(id));
+                  if (error) throw error;
+                  toast.success("Dispositivo removido do grupo.");
+                  fetchTreeData();
+                } catch (error: any) {
+                  toast.error("Erro ao remover: " + error.message);
+                }
+              }}
+              activeId={activeId}
+            />
+          </div>
+
+          {/* Available Devices Side Panel */}
+          <div className="flex-1 min-w-[320px] max-w-[400px] h-full">
+            <DeviceAvailablePanel 
+              selectedIds={selectedDevices}
+              onToggleSelection={(ids: number[]) => {
+                const next = new Set(selectedDevices);
+                ids.forEach((id: number) => {
+                  if (next.has(id)) next.delete(id);
+                  else next.add(id);
+                });
+                setSelectedDevices(next);
+              }}
+              onSelectAll={(ids) => setSelectedDevices(new Set(ids))}
+              onClearSelection={() => setSelectedDevices(new Set())}
+            />
+          </div>
+        </div>
+
+        <DragOverlay dropAnimation={{
+          sideEffects: defaultDropAnimationSideEffects({
+            styles: {
+              active: {
+                opacity: '0.5',
+              },
+            },
+          }),
+        }}>
+          {activeDevice ? (
+            <div className="bg-[#085CF0] text-white px-4 py-2 rounded-xl shadow-2xl flex items-center gap-2 border border-white/10">
+              <Monitor className="w-4 h-4" />
+              <span className="text-sm font-bold">
+                {selectedDevices.has(activeDevice.id) && selectedDevices.size > 1 
+                  ? `${selectedDevices.size} dispositivos` 
+                  : activeDevice.apelido_interno}
+              </span>
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="bg-[#09090b] border-white/5 text-white">

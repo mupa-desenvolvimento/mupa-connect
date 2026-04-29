@@ -10,7 +10,8 @@ import {
   Edit2,
   Plus,
   GripVertical,
-  AlertCircle
+  AlertCircle,
+  XCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Virtuoso } from "react-virtuoso";
@@ -72,6 +73,8 @@ interface GroupTreeViewProps {
   onEditPlaylist?: (node: TreeNode) => void;
   onCreateGroup?: () => void;
   onMoveNode?: (nodeId: string, newParentId: string | null) => void;
+  onRemoveDevice?: (deviceId: string) => void;
+  activeId?: string | null;
 }
 
 const SortableNode = ({ 
@@ -83,7 +86,8 @@ const SortableNode = ({
   onEditPlaylist,
   getNodeColor,
   getNodeIcon,
-  getStatusLabel
+  getStatusLabel,
+  onRemoveDevice
 }: { 
   node: FlattenedNode, 
   index: number,
@@ -93,7 +97,8 @@ const SortableNode = ({
   onEditPlaylist?: (node: TreeNode) => void,
   getNodeColor: (node: TreeNode) => string,
   getNodeIcon: (type: NodeType) => JSX.Element,
-  getStatusLabel: (node: TreeNode) => string
+  getStatusLabel: (node: TreeNode) => string,
+  onRemoveDevice?: (deviceId: string) => void
 }) => {
   const {
     attributes,
@@ -101,10 +106,15 @@ const SortableNode = ({
     setNodeRef,
     transform,
     transition,
-    isDragging
+    isDragging,
+    isOver
   } = useSortable({ 
     id: node.id,
-    disabled: node.type === 'device' // Dispositivos individuais não são arrastáveis por enquanto
+    disabled: false, // Todos os nós agora são arrastáveis, incluindo dispositivos
+    data: {
+      type: node.type,
+      node
+    }
   });
 
   const style = {
@@ -121,6 +131,7 @@ const SortableNode = ({
       className={cn(
         "group relative flex items-center px-4 py-2 hover:bg-white/5 transition-colors cursor-pointer border-l-2",
         expandedIds.has(node.id) ? "bg-white/5" : "bg-transparent",
+        isOver && "bg-[#085CF0]/10 ring-2 ring-[#085CF0]/50 ring-inset",
         node.has_conflict ? "border-red-500" : 
         (node.playlist_id && !node.inherited_from) ? "border-green-500" :
         node.has_override ? "border-yellow-500" :
@@ -222,20 +233,40 @@ const SortableNode = ({
           >
             <Edit2 className="w-3.5 h-3.5" />
           </Button>
+
+          {node.type === 'device' && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-red-500/40 hover:text-red-500 hover:bg-red-500/10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveDevice?.(node.id);
+                    }}
+                  >
+                    <XCircle className="w-3.5 h-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-red-900 border-red-500/20 text-white">
+                  <p className="text-xs font-bold">Remover do Grupo</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-export function GroupTreeView({ data, onNodeClick, onEditPlaylist, onCreateGroup, onMoveNode }: GroupTreeViewProps) {
+export function GroupTreeView({ data, onNodeClick, onEditPlaylist, onCreateGroup, onMoveNode, onRemoveDevice, activeId }: GroupTreeViewProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
+  // Sensors and DndContext moved to parent (GroupsPage) to allow dragging from Available Devices panel
 
   const toggleExpand = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -345,16 +376,7 @@ export function GroupTreeView({ data, onNodeClick, onEditPlaylist, onCreateGroup
       </div>
 
       <div className="flex-1 min-h-0">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={(event) => {
-            const { active, over } = event;
-            if (over && active.id !== over.id) {
-              onMoveNode?.(active.id as string, over.id as string);
-            }
-          }}
-        >
+        <div className="h-full">
           <SortableContext
             items={flattenedData.map(n => n.id)}
             strategy={verticalListSortingStrategy}
@@ -373,11 +395,12 @@ export function GroupTreeView({ data, onNodeClick, onEditPlaylist, onCreateGroup
                   getNodeColor={getNodeColor}
                   getNodeIcon={getNodeIcon}
                   getStatusLabel={getStatusLabel}
+                  onRemoveDevice={onRemoveDevice}
                 />
               )}
             />
           </SortableContext>
-        </DndContext>
+        </div>
       </div>
 
       {/* Legend / Footer */}
