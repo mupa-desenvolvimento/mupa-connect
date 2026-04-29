@@ -306,8 +306,8 @@ export default function PlaylistEditor() {
 
       // Silently invalidate to keep UI smooth without full reload state
       // Don't overwrite cache shape — just mark playlists list stale
-      queryClient.invalidateQueries({ queryKey: ["playlists", tenantId] });
-      queryClient.invalidateQueries({ queryKey: ["playlists", tenantId] });
+      queryClient.invalidateQueries({ queryKey: ["playlists"] });
+      queryClient.invalidateQueries({ queryKey: ["playlist", currentPlaylistId] });
       setTimeout(() => {
         setSaveStatus("saved");
         setIsSaving(false);
