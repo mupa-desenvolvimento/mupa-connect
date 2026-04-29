@@ -27,10 +27,12 @@ export function useMedias(tenantId?: string) {
   });
 }
 
-export function usePlaylists(tenantId?: string) {
+export function usePlaylists() {
   return useQuery({
-    queryKey: ["playlists", tenantId],
+    queryKey: ["playlists"],
     queryFn: async () => {
+      const targetTenantId = 'f822bf9d-39e9-4726-82f7-c16bf267bc39';
+      
       const { data, error } = await supabase
         .from("playlists")
         .select(`
@@ -39,18 +41,19 @@ export function usePlaylists(tenantId?: string) {
           updated_at, 
           is_active, 
           tenant_id
-        `);
+        `)
+        .eq("tenant_id", targetTenantId);
 
       if (error) {
         console.error("Critical error fetching playlists:", error);
         throw error;
       }
       
-      const targetTenantId = 'f822bf9d-39e9-4726-82f7-c16bf267bc39';
-      return (data || []).filter(p => p.tenant_id === targetTenantId);
+      return data || [];
     },
     staleTime: 0,
     gcTime: 0,
+    refetchOnMount: "always",
   });
 }
 
