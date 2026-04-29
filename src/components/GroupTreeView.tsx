@@ -10,7 +10,8 @@ import {
   Edit2,
   Plus,
   GripVertical,
-  AlertCircle
+  AlertCircle,
+  XCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Virtuoso } from "react-virtuoso";
@@ -72,6 +73,7 @@ interface GroupTreeViewProps {
   onEditPlaylist?: (node: TreeNode) => void;
   onCreateGroup?: () => void;
   onMoveNode?: (nodeId: string, newParentId: string | null) => void;
+  onRemoveDevice?: (deviceId: string) => void;
   activeId?: string | null;
 }
 
@@ -229,13 +231,36 @@ const SortableNode = ({
           >
             <Edit2 className="w-3.5 h-3.5" />
           </Button>
+
+          {node.type === 'device' && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-red-500/40 hover:text-red-500 hover:bg-red-500/10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveDevice?.(node.id);
+                    }}
+                  >
+                    <XCircle className="w-3.5 h-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-red-900 border-red-500/20 text-white">
+                  <p className="text-xs font-bold">Remover do Grupo</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-export function GroupTreeView({ data, onNodeClick, onEditPlaylist, onCreateGroup, onMoveNode, activeId }: GroupTreeViewProps) {
+export function GroupTreeView({ data, onNodeClick, onEditPlaylist, onCreateGroup, onMoveNode, onRemoveDevice, activeId }: GroupTreeViewProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -368,6 +393,7 @@ export function GroupTreeView({ data, onNodeClick, onEditPlaylist, onCreateGroup
                   getNodeColor={getNodeColor}
                   getNodeIcon={getNodeIcon}
                   getStatusLabel={getStatusLabel}
+                  onRemoveDevice={onRemoveDevice}
                 />
               )}
             />
