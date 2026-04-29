@@ -44,7 +44,7 @@ export default function PlayerPage() {
           targetDevice = deviceBySerial;
         }
 
-        setDeviceUuid(targetDevice.id);
+        setDeviceUuid(targetDevice.id.toString());
         setDeviceInfo(targetDevice);
         await loadHierarchyPlaylist(targetDevice);
       } catch (err) {
