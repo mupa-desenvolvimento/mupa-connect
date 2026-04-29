@@ -115,6 +115,7 @@ export default function PlaylistsPage() {
         .insert({
           name: `${playlist.name} (Cópia)`,
           tenant_id: playlist.tenant_id,
+          company_id: playlist.company_id,
           is_active: playlist.is_active
         })
         .select()
