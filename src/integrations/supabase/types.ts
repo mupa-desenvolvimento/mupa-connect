@@ -1384,34 +1384,46 @@ export type Database = {
       }
       device_commands: {
         Row: {
+          acknowledged_at: string | null
           command: string
           created_at: string
           device_id: string
           error_message: string | null
           executed_at: string | null
           id: string
+          issued_by: string | null
           metadata: Json | null
+          payload: Json
           status: string
+          tenant_id: string | null
         }
         Insert: {
+          acknowledged_at?: string | null
           command: string
           created_at?: string
           device_id: string
           error_message?: string | null
           executed_at?: string | null
           id?: string
+          issued_by?: string | null
           metadata?: Json | null
+          payload?: Json
           status?: string
+          tenant_id?: string | null
         }
         Update: {
+          acknowledged_at?: string | null
           command?: string
           created_at?: string
           device_id?: string
           error_message?: string | null
           executed_at?: string | null
           id?: string
+          issued_by?: string | null
           metadata?: Json | null
+          payload?: Json
           status?: string
+          tenant_id?: string | null
         }
         Relationships: [
           {
@@ -1507,6 +1519,60 @@ export type Database = {
             columns: ["playlist_id"]
             isOneToOne: false
             referencedRelation: "playlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      device_execution_logs: {
+        Row: {
+          command: string
+          command_id: string | null
+          created_at: string
+          device_id: string
+          duration_ms: number | null
+          id: string
+          message: string | null
+          payload: Json
+          result: string
+          tenant_id: string | null
+        }
+        Insert: {
+          command: string
+          command_id?: string | null
+          created_at?: string
+          device_id: string
+          duration_ms?: number | null
+          id?: string
+          message?: string | null
+          payload?: Json
+          result: string
+          tenant_id?: string | null
+        }
+        Update: {
+          command?: string
+          command_id?: string | null
+          created_at?: string
+          device_id?: string
+          duration_ms?: number | null
+          id?: string
+          message?: string | null
+          payload?: Json
+          result?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_execution_logs_command_id_fkey"
+            columns: ["command_id"]
+            isOneToOne: false
+            referencedRelation: "device_commands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_execution_logs_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
             referencedColumns: ["id"]
           },
         ]

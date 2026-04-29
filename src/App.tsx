@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import AppLayout from "@/components/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Devices from "./pages/Devices";
+import DeviceDetail from "./pages/DeviceDetail";
 import Media from "./pages/Media";
 import Playlists from "./pages/Playlists";
 import Campaigns from "./pages/Campaigns";
@@ -33,6 +34,7 @@ const App = () => (
             <Route element={<AppLayout />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/dispositivos" element={<Devices />} />
+              <Route path="/dispositivos/:id" element={<DeviceDetail />} />
               <Route path="/midias" element={<Media />} />
               <Route path="/playlists" element={<Playlists />} />
               <Route path="/campanhas" element={<Campaigns />} />
