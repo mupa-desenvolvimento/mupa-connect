@@ -53,20 +53,29 @@ export default function DevicesPage() {
       const { data, error } = await supabase
         .from("dispositivos")
         .select("*")
+        .eq("empresa", "1728965891007x215886838679286700") // Filtrar por Stok Center
         .order("apelido_interno");
       
       if (error) throw error;
       return data;
     },
-    refetchInterval: 30000, // Refetch every 30s for real-time status updates
+    refetchInterval: 30000,
   });
 
   const { data: stores } = useQuery({
     queryKey: ["stores-list"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("stores").select("id, name, code");
+      // Buscar lojas que têm dispositivos da Stok Center
+      const { data, error } = await supabase
+        .from("dispositivos")
+        .select("num_filial")
+        .eq("empresa", "1728965891007x215886838679286700")
+        .not("num_filial", "is", null);
+
       if (error) return [];
-      return data;
+      
+      const uniqueFiliais = Array.from(new Set(data.map(d => d.num_filial))).sort();
+      return uniqueFiliais.map(f => ({ id: f, name: `Loja ${f}`, code: f }));
     }
   });
 
