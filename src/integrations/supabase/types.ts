@@ -1382,6 +1382,38 @@ export type Database = {
         }
         Relationships: []
       }
+      device_check_logs: {
+        Row: {
+          created_at: string
+          device_id: string
+          ean: string | null
+          response: Json | null
+          status_code: number | null
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          ean?: string | null
+          response?: Json | null
+          status_code?: number | null
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          ean?: string | null
+          response?: Json | null
+          status_code?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_check_logs_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: true
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       device_commands: {
         Row: {
           acknowledged_at: string | null
@@ -1712,6 +1744,41 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      device_logs: {
+        Row: {
+          created_at: string | null
+          dispositivo_id: number | null
+          event_type: string
+          id: string
+          payload: Json | null
+          serial: string
+        }
+        Insert: {
+          created_at?: string | null
+          dispositivo_id?: number | null
+          event_type: string
+          id?: string
+          payload?: Json | null
+          serial: string
+        }
+        Update: {
+          created_at?: string | null
+          dispositivo_id?: number | null
+          event_type?: string
+          id?: string
+          payload?: Json | null
+          serial?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_logs_dispositivo_id_fkey"
+            columns: ["dispositivo_id"]
+            isOneToOne: false
+            referencedRelation: "dispositivos"
             referencedColumns: ["id"]
           },
         ]
@@ -2091,6 +2158,8 @@ export type Database = {
           atualizado: string | null
           campanhas: string[] | null
           comando: string | null
+          current_media_id: string | null
+          current_playlist_id: string | null
           empresa: string | null
           grupo_dispositivos: string | null
           id: number
@@ -2111,6 +2180,8 @@ export type Database = {
           atualizado?: string | null
           campanhas?: string[] | null
           comando?: string | null
+          current_media_id?: string | null
+          current_playlist_id?: string | null
           empresa?: string | null
           grupo_dispositivos?: string | null
           id?: number
@@ -2131,6 +2202,8 @@ export type Database = {
           atualizado?: string | null
           campanhas?: string[] | null
           comando?: string | null
+          current_media_id?: string | null
+          current_playlist_id?: string | null
           empresa?: string | null
           grupo_dispositivos?: string | null
           id?: number
@@ -6082,6 +6155,8 @@ export type Database = {
           atualizado: string | null
           campanhas: string[] | null
           comando: string | null
+          current_media_id: string | null
+          current_playlist_id: string | null
           empresa: string | null
           grupo_dispositivos: string | null
           id: number
