@@ -195,7 +195,7 @@ export default function PlaylistsPage() {
                         <Clock className="h-3 w-3" /> {updatedAt}
                       </span>
                       <span className="text-[10px] text-white/40 uppercase tracking-wider font-semibold flex items-center gap-1">
-                        <Layers className="h-3 w-3" /> {itemsCount} Mídias
+                        <Layers className="h-3 w-3" /> {(playlist as any).playlist_items?.length || 0} Mídias
                       </span>
                     </div>
                   </div>
