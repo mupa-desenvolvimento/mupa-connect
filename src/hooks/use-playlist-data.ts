@@ -82,7 +82,7 @@ export function usePlaylist(id: string) {
           *,
           playlist_items (*)
         `)
-        .eq("id", id)
+        .filter("id", "eq", id)
         .single();
 
       if (error) throw error;
