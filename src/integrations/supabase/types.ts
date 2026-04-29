@@ -2188,6 +2188,7 @@ export type Database = {
       }
       empresas: {
         Row: {
+          _id: string | null
           ativo: boolean | null
           cep: string | null
           cidade: string | null
@@ -2198,12 +2199,14 @@ export type Database = {
           estado: string | null
           id: string
           logo_url: string | null
+          logotipo: string | null
           nome: string
           responsavel: string | null
           telefone: string | null
           updated_at: string
         }
         Insert: {
+          _id?: string | null
           ativo?: boolean | null
           cep?: string | null
           cidade?: string | null
@@ -2214,12 +2217,14 @@ export type Database = {
           estado?: string | null
           id?: string
           logo_url?: string | null
+          logotipo?: string | null
           nome: string
           responsavel?: string | null
           telefone?: string | null
           updated_at?: string
         }
         Update: {
+          _id?: string | null
           ativo?: boolean | null
           cep?: string | null
           cidade?: string | null
@@ -2230,6 +2235,7 @@ export type Database = {
           estado?: string | null
           id?: string
           logo_url?: string | null
+          logotipo?: string | null
           nome?: string
           responsavel?: string | null
           telefone?: string | null
