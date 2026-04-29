@@ -9,7 +9,8 @@ import {
   Check, 
   GripVertical,
   MousePointer2,
-  ListFilter
+  ListFilter,
+  Store
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -126,8 +127,6 @@ export function DeviceAvailablePanel({
   const { data: devices, isLoading } = useQuery({
     queryKey: ["available-devices", tenantId],
     queryFn: async () => {
-      // 1. Get the company code (Bubble ID) for this tenant
-      // We look in the users table for the current user's company or companies table
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) return [];
 
@@ -139,8 +138,6 @@ export function DeviceAvailablePanel({
 
       const companyId = userData?.company || "1728965891007x215886838679286700";
       
-      // 2. Fetch devices for this company
-      // 2. Fetch devices and stores for this tenant
       const [devicesResponse, storesResponse] = await Promise.all([
         supabase.from("dispositivos").select("*").eq("empresa", companyId),
         supabase.from("stores").select("code").eq("tenant_id", tenantId)
@@ -151,20 +148,17 @@ export function DeviceAvailablePanel({
 
       const devices = devicesResponse.data as Device[];
       const storeCodes = new Set(storesResponse.data?.map(s => s.code) || []);
-
-      // 3. Filter devices that are NOT correctly linked to a UUID group or a valid Store
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       
       return devices.filter(d => {
         const hasValidGroup = d.grupo_dispositivos && uuidRegex.test(d.grupo_dispositivos);
         const hasValidStore = d.num_filial && storeCodes.has(d.num_filial);
-        
         return !hasValidGroup && !hasValidStore;
       });
     },
     enabled: !!tenantId
   });
-  
+
   const { data: stores, isLoading: isLoadingStores } = useQuery({
     queryKey: ["available-stores", tenantId],
     queryFn: async () => {
@@ -250,7 +244,6 @@ export function DeviceAvailablePanel({
         isOver ? "border-[#085CF0] ring-2 ring-[#085CF0]/20 shadow-[0_0_30px_rgba(8,92,240,0.15)] bg-white/5" : "border-white/5"
       )}
     >
-      {/* Header */}
       <div className="p-5 border-b border-white/5 bg-white/5 backdrop-blur-md">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -264,7 +257,7 @@ export function DeviceAvailablePanel({
               <p className="text-[10px] text-white/40 font-medium">Não vinculados a grupos</p>
             </div>
           </div>
-          {selectedIds.size > 0 && (
+          {viewMode === "devices" && selectedIds.size > 0 && (
             <Badge className="bg-[#085CF0] text-white border-none animate-in zoom-in-95">
               {selectedIds.size} selecionados
             </Badge>
@@ -306,55 +299,61 @@ export function DeviceAvailablePanel({
           </div>
           
           <div className="flex items-center justify-between">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleSelectAll}
-              className="text-[10px] uppercase font-bold tracking-widest text-white/40 hover:text-white gap-2"
-            >
-              <Check className={cn("w-3 h-3", selectedIds.size === filteredDevices.length && "text-[#085CF0]")} />
-              {selectedIds.size === filteredDevices.length ? "Desmarcar Todos" : "Selecionar Todos"}
-            </Button>
+            {viewMode === "devices" && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleSelectAll}
+                className="text-[10px] uppercase font-bold tracking-widest text-white/40 hover:text-white gap-2"
+              >
+                <Check className={cn("w-3 h-3", selectedIds.size === filteredDevices.length && "text-[#085CF0]")} />
+                {selectedIds.size === filteredDevices.length ? "Desmarcar Todos" : "Selecionar Todos"}
+              </Button>
+            )}
             
-            <div className="flex items-center gap-1 text-[10px] text-white/20 font-bold uppercase tracking-widest">
+            <div className="flex items-center gap-1 text-[10px] text-white/20 font-bold uppercase tracking-widest ml-auto">
               <ListFilter className="w-3 h-3" />
-              {filteredDevices.length} Total
+              {viewMode === "devices" ? filteredDevices.length : filteredStores.length} Total
             </div>
           </div>
         </div>
       </div>
 
-      {/* List */}
       <ScrollArea className="flex-1 px-4 py-4">
         <div className="space-y-2">
-          {isLoading ? (
-            Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-16 rounded-xl bg-white/5 animate-pulse border border-white/5" />
-            ))
-          ) : filteredDevices.length > 0 ? (
-            filteredDevices.map(device => (
-              <DeviceItem 
-                key={device.id} 
-                device={device} 
-                isSelected={selectedIds.has(device.id)}
-              onToggle={handleToggle}
-            />
-            ))
+          {viewMode === "devices" ? (
+            isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="h-16 rounded-xl bg-white/5 animate-pulse border border-white/5" />
+              ))
+            ) : filteredDevices.length > 0 ? (
+              filteredDevices.map(device => (
+                <DeviceItem 
+                  key={device.id} 
+                  device={device} 
+                  isSelected={selectedIds.has(device.id)}
+                  onToggle={handleToggle}
+                />
+              ))
+            ) : (
+              <EmptyState type="dispositivo" />
+            )
           ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
-              <div className="p-4 rounded-full bg-white/5">
-                <Search className="w-8 h-8 text-white/10" />
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-white/60">Nenhum dispositivo</p>
-                <p className="text-xs text-white/20">Tente ajustar sua busca ou verifique se todos já estão em grupos.</p>
-              </div>
-            </div>
+            isLoadingStores ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="h-16 rounded-xl bg-white/5 animate-pulse border border-white/5" />
+              ))
+            ) : filteredStores.length > 0 ? (
+              filteredStores.map(store => (
+                <StoreItem key={store.id} store={store} />
+              ))
+            ) : (
+              <EmptyState type="loja" />
+            )
           )}
         </div>
       </ScrollArea>
 
-      {/* Footer / Hint */}
       <div className="p-4 bg-black/40 border-t border-white/5 flex items-center justify-center gap-2">
         <MousePointer2 className="w-3 h-3 text-[#085CF0]" />
         <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">
