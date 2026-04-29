@@ -46,8 +46,8 @@ import {
 
 export default function PlaylistsPage() {
   const navigate = useNavigate();
-  const { data: tenantId } = useTenant();
-  const { data: playlistsData, isLoading: isPlaylistsLoading, isError, refetch } = usePlaylists(tenantId || undefined);
+  const { data: tenantId, isSuperAdmin, isLoading: isTenantLoading } = useTenant();
+  const { data: playlistsData, isLoading: isPlaylistsLoading, isError, refetch } = usePlaylists(tenantId || undefined, isSuperAdmin);
   
   if (isError) {
     console.error("Error detected in usePlaylists within component");
@@ -83,7 +83,7 @@ export default function PlaylistsPage() {
     });
   }, [playlists, searchQuery, filterStatus]);
 
-  const isLoading = isPlaylistsLoading;
+  const isLoading = isTenantLoading || (isPlaylistsLoading && (!!tenantId || isSuperAdmin));
 
   const handleDelete = async () => {
     if (!playlistToDelete) return;

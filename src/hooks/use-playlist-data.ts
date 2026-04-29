@@ -4,36 +4,40 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTenant as useTenantHook } from "@/hooks/use-tenant";
 
 export function useTenant() {
-  const { tenantId, isLoading } = useTenantHook();
-  return { data: tenantId, isLoading };
+  const { tenantId, isSuperAdmin, isLoading } = useTenantHook();
+  return { data: tenantId, isSuperAdmin, isLoading };
 }
 
 export function useMedias(tenantId?: string) {
   return useQuery({
     queryKey: ["medias", tenantId],
     queryFn: async () => {
-      if (!tenantId) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("media_items")
         .select("id, name, thumbnail_url, file_url, type, duration, tenant_id")
-        .eq("tenant_id", tenantId)
-        .eq("status", "active")
+        .eq("status", "ready")
         .order("created_at", { ascending: false });
+
+      if (tenantId) {
+        query = query.eq("tenant_id", tenantId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data || [];
     },
-    enabled: !!tenantId,
+    // Removido enabled: !!tenantId para permitir que super admins vejam sem tenant_id
+    // Mas mantemos para usuários comuns via RLS e UI
+    staleTime: 1000 * 60 * 5,
   });
 }
 
-export function usePlaylists(tenantId?: string) {
+export function usePlaylists(tenantId?: string, isSuperAdmin?: boolean) {
   return useQuery({
-    queryKey: ["playlists", tenantId],
+    queryKey: ["playlists", tenantId, isSuperAdmin],
     queryFn: async () => {
-      if (!tenantId) return [];
-      
-      const { data, error } = await supabase
+      let query = supabase
         .from("playlists")
         .select(`
           id, 
@@ -59,8 +63,17 @@ export function usePlaylists(tenantId?: string) {
               type
             )
           )
-        `)
-        .eq("tenant_id", tenantId);
+        `);
+
+      if (tenantId) {
+        query = query.eq("tenant_id", tenantId);
+      } else if (!isSuperAdmin) {
+        // Se não é super admin e não tem tenantId, não deve ver nada
+        // (RLS também cuida disso, mas economizamos uma query)
+        return [];
+      }
+      
+      const { data, error } = await query;
 
       if (error) {
         console.error("Error fetching playlists:", error);
@@ -69,8 +82,9 @@ export function usePlaylists(tenantId?: string) {
       
       return data || [];
     },
-    enabled: !!tenantId,
-    staleTime: 0,
+    // Habilitado se tiver tenantId OU se for super admin
+    enabled: !!tenantId || isSuperAdmin,
+    staleTime: 1000 * 60 * 2,
     refetchOnMount: true,
   });
 }

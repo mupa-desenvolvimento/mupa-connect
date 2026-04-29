@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export function useTenant() {
   const [tenantId, setTenantId] = useState<string | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -10,6 +11,18 @@ export function useTenant() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
+          // Check for Super Admin role
+          const { data: roleData } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", session.user.id)
+            .eq("role", "admin_global")
+            .maybeSingle();
+          
+          if (roleData) {
+            setIsSuperAdmin(true);
+          }
+
           // Rule: antunes+zaffari@mupa.app always inherits Stock Center tenant
           if (session.user.email === 'antunes+zaffari@mupa.app') {
             setTenantId('f822bf9d-39e9-4726-82f7-c16bf267bc39'); // Stock Center UUID
@@ -70,5 +83,5 @@ export function useTenant() {
     getTenant();
   }, []);
 
-  return { tenantId, isLoading };
+  return { tenantId, isSuperAdmin, isLoading };
 }
