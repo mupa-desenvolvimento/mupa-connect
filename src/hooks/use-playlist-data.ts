@@ -1,24 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+import { useTenant as useTenantHook } from "@/hooks/use-tenant";
+
 export function useTenant() {
-  return useQuery({
-    queryKey: ["current-tenant"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
-
-      const { data: mapping, error } = await supabase
-        .from("user_tenant_mappings")
-        .select("tenant_id")
-        .eq("user_id", user.id)
-        .limit(1)
-        .maybeSingle();
-
-      if (error) throw error;
-      return mapping?.tenant_id;
-    },
-  });
+  const { tenantId, isLoading } = useTenantHook();
+  return { data: tenantId, isLoading };
 }
 
 export function useMedias(tenantId?: string) {
@@ -28,7 +15,7 @@ export function useMedias(tenantId?: string) {
       if (!tenantId) return [];
       const { data, error } = await supabase
         .from("media_items")
-        .select("*")
+        .select("id, name, thumbnail_url, file_url, type, duration, tenant_id")
         .eq("tenant_id", tenantId)
         .eq("status", "active")
         .order("created_at", { ascending: false });
@@ -48,8 +35,8 @@ export function usePlaylists(tenantId?: string) {
       const { data, error } = await supabase
         .from("playlists")
         .select(`
-          *,
-          playlist_items (*)
+          id, name, updated_at, is_active, tenant_id,
+          playlist_items (id, media_id, duracao, tipo, ordem, position, prioridade)
         `)
         .eq("tenant_id", tenantId)
         .order("updated_at", { ascending: false });
