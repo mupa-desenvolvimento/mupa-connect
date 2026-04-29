@@ -28,7 +28,13 @@ import { ptBR } from "date-fns/locale";
 export default function PlaylistsPage() {
   const navigate = useNavigate();
   const { data: tenantId, isLoading: isTenantLoading } = useTenant();
-  const { data: playlists, isLoading: isPlaylistsLoading } = usePlaylists(tenantId || undefined);
+  const { data: playlistsData, isLoading: isPlaylistsLoading } = usePlaylists(tenantId || undefined);
+  
+  // Transform data to ensure playlist_items is always an array if it was expected
+  const playlists = playlistsData?.map(p => ({
+    ...p,
+    playlist_items: (p as any).playlist_items || []
+  }));
 
   const isLoading = isTenantLoading || isPlaylistsLoading;
 
