@@ -31,20 +31,27 @@ export function usePlaylists(tenantId?: string) {
   return useQuery({
     queryKey: ["playlists", tenantId],
     queryFn: async () => {
-      if (!tenantId) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("playlists")
         .select(`
           id, name, updated_at, is_active, tenant_id,
           playlist_items (id, media_id, duracao, tipo, ordem, position, prioridade)
         `)
-        .eq("tenant_id", tenantId)
         .order("updated_at", { ascending: false });
+
+      if (tenantId) {
+        query = query.eq("tenant_id", tenantId);
+      } else {
+        // Fallback para playlists sem tenant_id se estivermos em modo superadmin ou desenvolvimento
+        query = query.is("tenant_id", null);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data || [];
     },
-    enabled: !!tenantId,
+    enabled: true, // Sempre habilitado para permitir busca mesmo sem tenantId (fallback)
   });
 }
 
