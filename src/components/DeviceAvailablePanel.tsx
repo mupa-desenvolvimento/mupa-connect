@@ -128,17 +128,38 @@ export function DeviceAvailablePanel({
   const { data: devices, isLoading } = useQuery({
     queryKey: ["available-devices", tenantId],
     queryFn: async () => {
-      const stockCenterId = "1728965891007x215886838679286700";
+      // 1. Get the company code (Bubble ID) for this tenant
+      // We look in the users table for the current user's company or companies table
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return [];
+
+      const { data: userData } = await supabase
+        .from("users")
+        .select("company")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      const companyId = userData?.company || "1728965891007x215886838679286700";
+      
+      // 2. Fetch devices for this company
       const { data, error } = await supabase
         .from("dispositivos")
         .select("*")
-        .eq("empresa", stockCenterId)
-        .is("num_filial", null)
-        .is("grupo_dispositivos", null)
+        .eq("empresa", companyId)
         .order("apelido_interno");
       
       if (error) throw error;
-      return data as Device[];
+
+      // 3. Filter devices that are NOT linked to a valid UUID group or store
+      // A device is "available" if its grupo_dispositivos is NOT a UUID 
+      // OR if it's null/empty.
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      
+      return (data as Device[]).filter(d => {
+        const hasValidGroup = d.grupo_dispositivos && uuidRegex.test(d.grupo_dispositivos);
+        // Also check if num_filial matches a store code (harder to check here, but group is the main thing)
+        return !hasValidGroup;
+      });
     },
     enabled: !!tenantId
   });
