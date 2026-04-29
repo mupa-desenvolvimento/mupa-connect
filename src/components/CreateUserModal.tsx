@@ -36,12 +36,12 @@ export function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalP
 
   // Fetch companies for the select dropdown
   const { data: companies } = useQuery({
-    queryKey: ["empresas-list"],
+    queryKey: ["companies-list"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("empresas")
-        .select("_id, nome")
-        .order("nome");
+        .from("companies")
+        .select("code, name")
+        .order("name");
       if (error) throw error;
       return data;
     },
@@ -151,8 +151,8 @@ export function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalP
               </SelectTrigger>
               <SelectContent>
                 {companies?.map((company) => (
-                  <SelectItem key={company._id} value={company._id || ""}>
-                    {company.nome}
+                  <SelectItem key={company.code} value={company.code || ""}>
+                    {company.name}
                   </SelectItem>
                 ))}
               </SelectContent>

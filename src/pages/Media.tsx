@@ -182,12 +182,12 @@ export default function MediaPage() {
     try {
       // Get company name for the folder structure
       const { data: empresaData } = await supabase
-        .from('empresas')
-        .select('nome')
+        .from('companies')
+        .select('name')
         .eq('id', tenantId)
         .single();
 
-      const companyName = empresaData?.nome || 'empresa';
+      const companyName = empresaData?.name || 'company';
       // Sanitize company name: lowercase and replace non-alphanumeric with underscore
       const sanitizedName = companyName.toLowerCase().replace(/[^a-z0-9]/g, '_');
       

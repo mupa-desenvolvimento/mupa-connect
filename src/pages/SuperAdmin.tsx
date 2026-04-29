@@ -45,7 +45,7 @@ export default function SuperAdminDashboard() {
           { count: deviceCount }
         ] = await Promise.all([
           supabase.from("tenants").select("*", { count: "exact", head: true }),
-          supabase.from("empresas").select("*", { count: "exact", head: true }),
+          supabase.from("companies").select("*", { count: "exact", head: true }),
           supabase.from("users").select("*", { count: "exact", head: true }),
           supabase.from("dispositivos").select("*", { count: "exact", head: true })
         ]);

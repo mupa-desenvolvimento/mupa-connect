@@ -43,11 +43,11 @@ export function useTenant() {
             if (uuidRegex.test(userData.company)) {
               setTenantId(userData.company);
             } else {
-              // It's likely a Bubble-style _id, look up the UUID in empresas
+              // It's likely a Bubble-style _id, look up the UUID in companies
               const { data: empresaData } = await supabase
-                .from("empresas")
+                .from("companies")
                 .select("id")
-                .eq("_id", userData.company)
+                .eq("code", userData.company)
                 .maybeSingle();
               
               if (empresaData) {
