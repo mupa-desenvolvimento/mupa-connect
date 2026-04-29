@@ -157,20 +157,32 @@ export default function MediaPage() {
 
     setIsUploading(true);
     try {
+      // Get company name for the folder structure
+      const { data: empresaData } = await supabase
+        .from('empresas')
+        .select('nome')
+        .eq('id', tenantId)
+        .single();
+
+      const companyName = empresaData?.nome || 'empresa';
+      // Sanitize company name: lowercase and replace non-alphanumeric with underscore
+      const sanitizedName = companyName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      
       const fileExt = file.name.split('.').pop();
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
-      // Prepend tenantId to the storage path to satisfy the requirement
-      const filePath = `${tenantId}/${fileName}`;
+      
+      // Pattern: {nome}_{uuid}/{fileName}
+      const storagePath = `${sanitizedName}_${tenantId}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('media')
-        .upload(filePath, file);
+        .upload(storagePath, file);
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
         .from('media')
-        .getPublicUrl(filePath);
+        .getPublicUrl(storagePath);
 
       const type = file.type.startsWith('video') ? 'video' : 'image';
 
@@ -194,7 +206,6 @@ export default function MediaPage() {
       toast.error("Erro no upload: " + error.message);
     } finally {
       setIsUploading(false);
-      // Reset input
       event.target.value = '';
     }
   };
