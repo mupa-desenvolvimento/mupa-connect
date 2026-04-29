@@ -35,14 +35,14 @@ import {
   Calendar,
   Layers,
   CheckCircle2,
-  RefreshCw
+  RefreshCw,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
 import { 
   Tooltip,
   TooltipContent,
@@ -51,14 +51,18 @@ import {
 } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { playlists, mediaItems, getMediaById } from "@/lib/mock-data";
+import { usePlaylist, useMedias, useTenant } from "@/hooks/use-playlist-data";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 // --- Types ---
 interface EditorPlaylistItem {
   id: string; // Unique ID for DND
+  dbId?: string; // DB ID
   mediaId: string;
   duration: number;
-  type: 'media' | 'campaign';
+  type: string;
+  media?: any;
 }
 
 // --- Sortable Item Component ---
@@ -72,7 +76,7 @@ const SortableItem = ({ item, index, onRemove }: { item: EditorPlaylistItem, ind
     isDragging
   } = useSortable({ id: item.id });
 
-  const media = getMediaById(item.mediaId);
+  const media = item.media;
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -93,7 +97,7 @@ const SortableItem = ({ item, index, onRemove }: { item: EditorPlaylistItem, ind
       
       <div className="relative h-16 w-28 rounded-lg overflow-hidden bg-black/20 shrink-0 border border-border/20">
         <img 
-          src={media?.url} 
+          src={media?.thumbnail_url || media?.file_url} 
           alt={media?.name} 
           className="w-full h-full object-cover"
         />
@@ -110,7 +114,7 @@ const SortableItem = ({ item, index, onRemove }: { item: EditorPlaylistItem, ind
       </div>
 
       <div className="flex-1 min-w-0">
-        <h4 className="font-medium text-sm truncate group-hover:text-purple-400 transition-colors">{media?.name}</h4>
+        <h4 className="font-medium text-sm truncate group-hover:text-purple-400 transition-colors">{media?.name || 'Carregando...'}</h4>
         <div className="flex items-center gap-3 mt-1.5">
           <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
             <Clock className="h-3 w-3" />
@@ -118,7 +122,7 @@ const SortableItem = ({ item, index, onRemove }: { item: EditorPlaylistItem, ind
           </div>
           <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
             <Layers className="h-3 w-3" />
-            <span className="capitalize">{item.type === 'media' ? 'Mídia Direta' : 'Campanha'}</span>
+            <span className="capitalize">{item.type}</span>
           </div>
         </div>
       </div>
@@ -150,8 +154,13 @@ const SortableItem = ({ item, index, onRemove }: { item: EditorPlaylistItem, ind
 
 // --- Main Component ---
 export default function PlaylistEditor() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { data: tenantId } = useTenant();
+  const { data: medias } = useMedias(tenantId);
+  const { data: playlistData, isLoading: isLoadingPlaylist } = usePlaylist(id!);
+
   const [playlistName, setPlaylistName] = useState("");
   const [items, setItems] = useState<EditorPlaylistItem[]>([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -171,20 +180,92 @@ export default function PlaylistEditor() {
   );
 
   useEffect(() => {
-    const playlist = playlists.find(p => p.id === id);
-    if (playlist) {
-      setPlaylistName(playlist.name);
-      setItems(playlist.items.map((it, idx) => ({
-        id: `item-${idx}-${Date.now()}`,
-        mediaId: it.mediaId,
-        duration: it.duration,
-        type: 'media'
-      })));
+    if (playlistData) {
+      setPlaylistName(playlistData.name);
+      if (playlistData.playlist_items) {
+        setItems(playlistData.playlist_items.map((it: any) => ({
+          id: it.id,
+          dbId: it.id,
+          mediaId: it.media_id,
+          duration: it.duracao,
+          type: it.tipo,
+          media: medias?.find(m => m.id === it.media_id)
+        })));
+      }
     } else if (id === 'new') {
       setPlaylistName("Nova Playlist");
       setItems([]);
     }
-  }, [id]);
+  }, [playlistData, medias, id]);
+
+  const triggerAutoSave = useCallback(async (updatedItems: EditorPlaylistItem[], updatedName: string) => {
+    if (!tenantId || isSaving) return;
+    
+    setSaveStatus("saving");
+    try {
+      let currentPlaylistId = id;
+
+      // 1. Ensure playlist exists
+      if (id === "new") {
+        const { data: newPlaylist, error: createError } = await supabase
+          .from("playlists")
+          .insert({
+            name: updatedName,
+            tenant_id: tenantId,
+            is_active: true
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        currentPlaylistId = newPlaylist.id;
+        navigate(`/playlists/${currentPlaylistId}`, { replace: true });
+      } else {
+        await supabase
+          .from("playlists")
+          .update({ name: updatedName, updated_at: new Date().toISOString() })
+          .eq("id", id!);
+      }
+
+      // 2. Sync items
+      // Simple strategy: delete existing items and insert new ones to maintain order and structure
+      // In a real app, you might want a more sophisticated diffing algorithm
+      const { error: deleteError } = await supabase
+        .from("playlist_items")
+        .delete()
+        .eq("playlist_id", currentPlaylistId!);
+
+      if (deleteError) throw deleteError;
+
+      if (updatedItems.length > 0) {
+        const itemsToInsert = updatedItems.map((it, idx) => ({
+          playlist_id: currentPlaylistId!,
+          media_id: it.mediaId,
+          duracao: it.duration,
+          tipo: it.type,
+          ordem: idx + 1,
+          position: idx + 1,
+          conteudo_id: it.mediaId // Assuming this is needed
+        }));
+
+        const { error: insertError } = await supabase
+          .from("playlist_items")
+          .insert(itemsToInsert);
+
+        if (insertError) throw insertError;
+      }
+
+      setSaveStatus("saved");
+      queryClient.invalidateQueries({ queryKey: ["playlist", currentPlaylistId] });
+      queryClient.invalidateQueries({ queryKey: ["playlists", tenantId] });
+      
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    } catch (error: any) {
+      console.error("Auto-save error:", error);
+      toast.error("Erro ao salvar automaticamente");
+      setSaveStatus("idle");
+    }
+  }, [tenantId, id, navigate, queryClient]);
 
   const handleDragStart = (event: any) => {
     setActiveId(event.active.id);
@@ -195,59 +276,59 @@ export default function PlaylistEditor() {
     setActiveId(null);
 
     if (over && active.id !== over.id) {
-      setItems((items) => {
-        const oldIndex = items.findIndex((i) => i.id === active.id);
-        const newIndex = items.findIndex((i) => i.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-      triggerAutoSave();
+      const oldIndex = items.findIndex((i) => i.id === active.id);
+      const newIndex = items.findIndex((i) => i.id === over.id);
+      const newItems = arrayMove(items, oldIndex, newIndex);
+      setItems(newItems);
+      triggerAutoSave(newItems, playlistName);
     }
   };
 
   const addItem = (mediaId: string) => {
-    const media = mediaItems.find(m => m.id === mediaId);
+    const media = medias?.find(m => m.id === mediaId);
     if (!media) return;
 
     const newItem: EditorPlaylistItem = {
-      id: `item-${Date.now()}-${Math.random()}`,
+      id: `temp-${Date.now()}-${Math.random()}`,
       mediaId: media.id,
-      duration: media.duration,
-      type: 'media'
+      duration: media.duration || 10,
+      type: media.type === 'video' ? 'video' : 'image',
+      media: media
     };
 
-    setItems([...items, newItem]);
-    triggerAutoSave();
-    toast.success(`${media.name} adicionado à playlist`);
+    const newItems = [...items, newItem];
+    setItems(newItems);
+    triggerAutoSave(newItems, playlistName);
+    toast.success(`${media.name} adicionado`);
   };
 
-  const removeItem = (id: string) => {
-    setItems(items.filter(item => item.id !== id));
-    triggerAutoSave();
+  const removeItem = (idToRemove: string) => {
+    const newItems = items.filter(item => item.id !== idToRemove);
+    setItems(newItems);
+    triggerAutoSave(newItems, playlistName);
   };
 
-  const triggerAutoSave = useCallback(() => {
-    setSaveStatus("saving");
-    // Simulate auto-save debounce
-    setTimeout(() => {
-      setSaveStatus("saved");
-      setTimeout(() => setSaveStatus("idle"), 2000);
-    }, 1500);
-  }, []);
-
-  const handleSave = () => {
+  const handleManualSave = async () => {
     setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
-      toast.success("Playlist salva com sucesso!");
-    }, 1000);
+    await triggerAutoSave(items, playlistName);
+    setIsSaving(false);
+    toast.success("Salvo manualmente");
   };
 
   const totalDuration = items.reduce((acc, curr) => acc + curr.duration, 0);
 
+  if (isLoadingPlaylist) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-[#09090b]">
+        <Loader2 className="h-10 w-10 animate-spin text-purple-500" />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] -m-6 bg-[#09090b]">
+    <div className="flex flex-col h-screen bg-[#09090b]">
       {/* Header */}
-      <header className="h-16 border-b border-border/40 bg-card/30 backdrop-blur-xl px-6 flex items-center justify-between z-50">
+      <header className="h-16 border-b border-border/40 bg-card/30 backdrop-blur-xl px-6 flex items-center justify-between z-50 shrink-0">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate("/playlists")} className="text-muted-foreground hover:text-white">
             <ChevronLeft className="h-5 w-5" />
@@ -256,6 +337,7 @@ export default function PlaylistEditor() {
             <input 
               value={playlistName}
               onChange={(e) => setPlaylistName(e.target.value)}
+              onBlur={() => triggerAutoSave(items, playlistName)}
               className="bg-transparent border-none focus:ring-0 text-lg font-display font-semibold text-white p-0 h-7"
             />
             <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
@@ -277,10 +359,10 @@ export default function PlaylistEditor() {
           </Button>
           <Button 
             className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-500/20 h-9 px-4 gap-2"
-            onClick={handleSave}
+            onClick={handleManualSave}
             disabled={isSaving}
           >
-            <Save className="h-4 w-4" /> {isSaving ? "Salvando..." : "Salvar Playlist"}
+            <Save className="h-4 w-4" /> {isSaving ? "Salvando..." : "Salvar"}
           </Button>
           <Separator orientation="vertical" className="h-6 mx-1" />
           <Button className="bg-emerald-600 hover:bg-emerald-700 text-white h-9 px-4 gap-2">
@@ -314,7 +396,7 @@ export default function PlaylistEditor() {
 
             <ScrollArea className="flex-1">
               <TabsContent value="media" className="p-4 m-0 grid grid-cols-2 gap-3">
-                {mediaItems.map((media) => (
+                {medias?.map((media) => (
                   <motion.div
                     key={media.id}
                     whileHover={{ scale: 1.02 }}
@@ -323,7 +405,7 @@ export default function PlaylistEditor() {
                     onClick={() => addItem(media.id)}
                   >
                     <img 
-                      src={media.url} 
+                      src={media.thumbnail_url || media.file_url} 
                       alt={media.name} 
                       className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
                     />
@@ -338,8 +420,7 @@ export default function PlaylistEditor() {
               <TabsContent value="campaigns" className="p-4 m-0">
                  <div className="flex flex-col items-center justify-center py-12 text-center">
                     <Layers className="h-10 w-10 text-muted-foreground/20 mb-3" />
-                    <p className="text-sm text-muted-foreground">Nenhuma campanha disponível</p>
-                    <Button variant="link" className="text-purple-400 text-xs mt-2">Criar nova campanha</Button>
+                    <p className="text-sm text-muted-foreground">Em breve</p>
                  </div>
               </TabsContent>
             </ScrollArea>
@@ -347,15 +428,20 @@ export default function PlaylistEditor() {
         </aside>
 
         {/* Center - Timeline Area */}
-        <main className="flex-1 bg-[#09090b] flex flex-col relative">
+        <main className="flex-1 bg-[#09090b] flex flex-col relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-purple-500/5 via-transparent to-transparent pointer-events-none" />
           
-          <div className="p-6 flex items-center justify-between border-b border-border/20 bg-card/10 backdrop-blur-sm sticky top-0 z-30">
+          <div className="p-6 flex items-center justify-between border-b border-border/20 bg-card/10 backdrop-blur-sm z-30 shrink-0">
             <h2 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
               ORDEM DE EXIBIÇÃO <Badge variant="secondary" className="bg-white/5 border-white/10 text-[10px]">{items.length}</Badge>
             </h2>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5 text-muted-foreground">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-8 text-xs gap-1.5 text-muted-foreground"
+                onClick={() => { setItems([]); triggerAutoSave([], playlistName); }}
+              >
                 <Trash2 className="h-3.5 w-3.5" /> Limpar tudo
               </Button>
               <div className="h-4 w-px bg-border/40 mx-1" />
@@ -442,7 +528,7 @@ export default function PlaylistEditor() {
               {items.length > 0 ? (
                 <>
                   <img 
-                    src={getMediaById(items[0].mediaId)?.url} 
+                    src={items[0].media?.thumbnail_url || items[0].media?.file_url} 
                     className="w-full h-full object-cover opacity-60"
                   />
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -494,20 +580,7 @@ export default function PlaylistEditor() {
               <section>
                 <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-4">Dispositivos Vinculados</h4>
                 <div className="space-y-3">
-                  {[1, 2].map((i) => (
-                    <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-white/5 border border-white/5">
-                      <div className="h-8 w-8 rounded bg-purple-500/10 flex items-center justify-center">
-                        <Monitor className="h-4 w-4 text-purple-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-white truncate">MUPA-STORE-00{i}</p>
-                        <p className="text-[10px] text-muted-foreground">Online · SP-00{i}</p>
-                      </div>
-                    </div>
-                  ))}
-                  <Button variant="ghost" className="w-full text-[10px] h-8 text-purple-400 hover:text-purple-300 hover:bg-purple-400/5 uppercase tracking-wider">
-                    Gerenciar Vínculos
-                  </Button>
+                  <p className="text-[10px] text-muted-foreground italic">Funcionalidade em desenvolvimento</p>
                 </div>
               </section>
             </div>
