@@ -31,7 +31,7 @@ import { useState, useEffect } from "react";
 export default function PlaylistsPage() {
   const navigate = useNavigate();
   const { data: tenantId, isLoading: isTenantLoading } = useTenant();
-  const { data: playlistsData, isLoading: isPlaylistsLoading } = usePlaylists(tenantId || undefined);
+  const { data: playlistsData, isLoading: isPlaylistsLoading, refetch } = usePlaylists(tenantId || undefined);
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
@@ -43,10 +43,12 @@ export default function PlaylistsPage() {
     localStorage.setItem("playlists-view-mode", viewMode);
   }, [viewMode]);
 
-  const playlists = playlistsData?.map(p => ({
-    ...p,
-    playlist_items: (p as any).playlist_items || []
-  })) || [];
+  // Forçar atualização quando o tenantId mudar
+  useEffect(() => {
+    if (tenantId) refetch();
+  }, [tenantId, refetch]);
+
+  const playlists = playlistsData || [];
   
   const filteredPlaylists = playlists.filter(playlist => {
     const playlistName = playlist.name || "";
@@ -56,6 +58,11 @@ export default function PlaylistsPage() {
       filterStatus === "active" ? playlist.is_active :
       !playlist.is_active;
     return matchesSearch && matchesStatus;
+  }).sort((a, b) => {
+    // Ordenação manual para garantir que as novas apareçam primeiro
+    const dateA = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+    const dateB = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+    return dateB - dateA;
   });
 
 
@@ -162,7 +169,7 @@ export default function PlaylistsPage() {
         : "flex flex-col gap-3"
       }>
         {filteredPlaylists.length > 0 ? filteredPlaylists.map((playlist) => {
-          const itemsCount = playlist.playlist_items?.length || 0;
+          const itemsCount = (playlist as any).playlist_items?.length || 0;
           const updatedAt = playlist.updated_at 
             ? format(new Date(playlist.updated_at), "dd 'de' MMM, HH:mm", { locale: ptBR })
             : "Recém criada";
@@ -188,7 +195,7 @@ export default function PlaylistsPage() {
                         <Clock className="h-3 w-3" /> {updatedAt}
                       </span>
                       <span className="text-[10px] text-white/40 uppercase tracking-wider font-semibold flex items-center gap-1">
-                        <Layers className="h-3 w-3" /> {itemsCount} Mídias
+                        <Layers className="h-3 w-3" /> {(playlist as any).playlist_items?.length || 0} Mídias
                       </span>
                     </div>
                   </div>
@@ -244,7 +251,7 @@ export default function PlaylistsPage() {
 
                 <div className="absolute bottom-3 left-3 z-20 flex gap-2">
                   <span className="flex items-center gap-1.5 text-[10px] font-bold text-white/80 bg-black/40 backdrop-blur-md px-2 py-1 rounded-md border border-white/5">
-                    <Layers className="h-3 w-3" /> {itemsCount} Mídias
+                    <Layers className="h-3 w-3" /> {(playlist as any).playlist_items?.length || 0} Mídias
                   </span>
                 </div>
               </div>
