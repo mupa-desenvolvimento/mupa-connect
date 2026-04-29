@@ -393,6 +393,19 @@ export default function GroupsPage() {
               }}
               onCreateGroup={() => setIsCreateDialogOpen(true)}
               onMoveNode={handleMoveNode}
+              onRemoveDevice={async (id) => {
+                try {
+                  const { error } = await supabase
+                    .from("dispositivos")
+                    .update({ num_filial: null, grupo_dispositivos: null })
+                    .eq("id", id);
+                  if (error) throw error;
+                  toast.success("Dispositivo removido do grupo.");
+                  fetchTreeData();
+                } catch (error: any) {
+                  toast.error("Erro ao remover: " + error.message);
+                }
+              }}
               activeId={activeId}
             />
           </div>
