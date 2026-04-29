@@ -300,7 +300,13 @@ export default function MediaPage() {
         }
       />
 
-      <div className="mb-6 flex items-center text-sm text-muted-foreground bg-muted/30 p-2 rounded-lg overflow-x-auto whitespace-nowrap">
+      {isTenantLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : (
+        <>
+          <div className="mb-6 flex items-center text-sm text-muted-foreground bg-muted/30 p-2 rounded-lg overflow-x-auto whitespace-nowrap">
         <Button 
           variant="ghost" 
           size="sm" 
@@ -431,6 +437,8 @@ export default function MediaPage() {
           </div>
         )}
       </div>
+      </>
+      )}
     </>
   );
 }
