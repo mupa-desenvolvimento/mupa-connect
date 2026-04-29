@@ -93,9 +93,7 @@ export function DeviceItem({ device, isSelected, onToggle }: DeviceItemProps) {
               device.online ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" : "bg-red-500"
             )} />
           </div>
-          <div className="flex items-center gap-2 text-[10px] text-white/40 font-mono">
-            <span>SN: {device.serial || "---"}</span>
-          </div>
+          {/* Removido SN/PIN a pedido do usuário */}
         </div>
       </div>
 
@@ -136,24 +134,37 @@ export function DeviceAvailablePanel({
         .eq("id", session.user.id)
         .maybeSingle();
 
-      const companyId = userData?.company || "1728965891007x215886838679286700";
+      const companyId = userData?.company;
+      if (!companyId) return [];
       
-      const [devicesResponse, storesResponse] = await Promise.all([
-        supabase.from("dispositivos").select("*").eq("empresa", companyId),
-        supabase.from("stores").select("code").eq("tenant_id", tenantId)
-      ]);
+      const { data: devices, error: devicesError } = await supabase
+        .from("dispositivos")
+        .select("*")
+        .eq("empresa", companyId);
       
-      if (devicesResponse.error) throw devicesResponse.error;
-      if (storesResponse.error) throw storesResponse.error;
+      if (devicesError) throw devicesError;
 
-      const devices = devicesResponse.data as Device[];
-      const storeCodes = new Set(storesResponse.data?.map(s => s.code) || []);
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      // Pegar todas as lojas do tenant para verificar vínculo por num_filial
+      const { data: tenantStores } = await supabase
+        .from("stores")
+        .select("code")
+        .eq("tenant_id", tenantId);
       
-      return devices.filter(d => {
-        const hasValidGroup = d.grupo_dispositivos && uuidRegex.test(d.grupo_dispositivos);
-        const hasValidStore = d.num_filial && storeCodes.has(d.num_filial);
-        return !hasValidGroup && !hasValidStore;
+      const tenantStoreCodes = new Set(tenantStores?.map(s => s.code) || []);
+      
+      // Filtrar dispositivos que NÃO estão em nenhuma loja do tenant E NÃO têm grupo_dispositivos vinculado
+      return (devices as Device[]).filter(d => {
+        // Se tem grupo_dispositivos (UUID), já está organizado
+        if (d.grupo_dispositivos && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(d.grupo_dispositivos)) {
+          return false;
+        }
+        
+        // Se num_filial aponta para uma loja que pertence a este tenant, já está organizado
+        if (d.num_filial && tenantStoreCodes.has(d.num_filial)) {
+          return false;
+        }
+
+        return true;
       });
     },
     enabled: !!tenantId
@@ -162,6 +173,7 @@ export function DeviceAvailablePanel({
   const { data: stores, isLoading: isLoadingStores } = useQuery({
     queryKey: ["available-stores", tenantId],
     queryFn: async () => {
+      // 1. Buscar todas as lojas do tenant
       const { data: allStores, error: storesError } = await supabase
         .from("stores")
         .select("*")
@@ -169,13 +181,20 @@ export function DeviceAvailablePanel({
       
       if (storesError) throw storesError;
 
-      const { data: groupStores, error: gsError } = await supabase
+      // 2. Buscar IDs de lojas que já estão vinculadas a algum grupo do tenant
+      const { data: linkedStores, error: linkedError } = await supabase
         .from("group_stores")
-        .select("store_id");
+        .select(`
+          store_id,
+          groups!inner(tenant_id)
+        `)
+        .eq("groups.tenant_id", tenantId);
       
-      if (gsError) throw gsError;
+      if (linkedError) throw linkedError;
 
-      const linkedStoreIds = new Set(groupStores.map(gs => gs.store_id));
+      const linkedStoreIds = new Set(linkedStores.map(ls => ls.store_id));
+      
+      // Retornar apenas as que não estão vinculadas
       return allStores.filter(s => !linkedStoreIds.has(s.id));
     },
     enabled: !!tenantId && viewMode === "stores"
@@ -398,9 +417,7 @@ function StoreItem({ store }: { store: any }) {
         <span className="text-sm font-bold text-white/80 truncate">
           {store.name || "Sem nome"}
         </span>
-        <span className="text-[10px] text-white/40 font-mono">
-          Cód: {store.code || "---"}
-        </span>
+        {/* Removido Cód/PIN a pedido do usuário */}
       </div>
 
       <div className="p-1 text-white/20 group-hover:text-white/60 transition-colors">
