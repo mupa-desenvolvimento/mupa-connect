@@ -174,7 +174,7 @@ export default function PlaylistEditor() {
 
   const isLoadingPlaylist = isTenantLoading || isPlaylistLoading;
 
-  const [playlistName, setPlaylistName] = useState("");
+  const [playlistName, setPlaylistName] = useState("...");
   const [items, setItems] = useState<EditorPlaylistItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<EditorPlaylistItem | null>(null);
   const [isSaving, setIsSaving] = useState(false);
