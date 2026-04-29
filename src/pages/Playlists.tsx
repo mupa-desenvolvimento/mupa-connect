@@ -31,7 +31,9 @@ import { useState, useEffect, useMemo } from "react";
 export default function PlaylistsPage() {
   const navigate = useNavigate();
   const { data: tenantId, isLoading: isTenantLoading } = useTenant();
-  const { data: playlistsData, isLoading: isPlaylistsLoading, refetch } = usePlaylists(tenantId || undefined);
+  // Forçamos o ID do Stok Center se não houver um tenantId detectado
+  const effectiveId = tenantId || 'f822bf9d-39e9-4726-82f7-c16bf267bc39';
+  const { data: playlistsData, isLoading: isPlaylistsLoading, refetch } = usePlaylists(effectiveId);
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
