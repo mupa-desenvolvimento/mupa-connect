@@ -3629,6 +3629,7 @@ export type Database = {
           ordem: number
           playlist_id: string
           position: number | null
+          prioridade: number | null
           start_date: string | null
           start_time: string | null
           tipo: string
@@ -3648,6 +3649,7 @@ export type Database = {
           ordem: number
           playlist_id: string
           position?: number | null
+          prioridade?: number | null
           start_date?: string | null
           start_time?: string | null
           tipo: string
@@ -3667,6 +3669,7 @@ export type Database = {
           ordem?: number
           playlist_id?: string
           position?: number | null
+          prioridade?: number | null
           start_date?: string | null
           start_time?: string | null
           tipo?: string
@@ -5642,6 +5645,7 @@ export type Database = {
           ordem: number
           playlist_id: string
           position: number | null
+          prioridade: number | null
           start_date: string | null
           start_time: string | null
           tipo: string
@@ -5882,6 +5886,7 @@ export type Database = {
           ordem: number
           playlist_id: string
           position: number | null
+          prioridade: number | null
           start_date: string | null
           start_time: string | null
           tipo: string
@@ -6213,6 +6218,7 @@ export type Database = {
           ordem: number
           playlist_id: string
           position: number | null
+          prioridade: number | null
           start_date: string | null
           start_time: string | null
           tipo: string
@@ -6241,6 +6247,7 @@ export type Database = {
           ordem: number
           playlist_id: string
           position: number | null
+          prioridade: number | null
           start_date: string | null
           start_time: string | null
           tipo: string
