@@ -80,7 +80,7 @@ export default function PlaylistsPage() {
     );
   }
 
-  console.log("PlaylistsPage - Final playlists count:", filteredPlaylists.length);
+  
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
