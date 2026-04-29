@@ -47,7 +47,8 @@ export default function PlayerPage() {
     if (items && items.length) return items;
     // Fallback rotation
     return mediaItems.map((m) => ({ media: m, duration: m.duration }));
-  }, [playlist]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playlist, reloadKey]);
 
   const [index, setIndex] = useState(0);
   const [now, setNow] = useState(new Date());
