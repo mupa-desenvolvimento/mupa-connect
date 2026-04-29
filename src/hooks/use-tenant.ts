@@ -10,6 +10,13 @@ export function useTenant() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
+          // Rule: antunes+zaffari@mupa.app always inherits Stock Center tenant
+          if (session.user.email === 'antunes+zaffari@mupa.app') {
+            setTenantId('f822bf9d-39e9-4726-82f7-c16bf267bc39'); // Stock Center UUID
+            setIsLoading(false);
+            return;
+          }
+
           // 1. Check user_tenant_mappings (New system)
           const { data: mappingData } = await supabase
             .from("user_tenant_mappings")
