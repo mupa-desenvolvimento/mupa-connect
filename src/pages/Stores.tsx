@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function StoresPage() {
-  const stockCenterId = "1728965891007x215886838679286700";
+  const stockCenterId = "003ZAF";
 
   const { data: storesData, isLoading, refetch } = useQuery({
     queryKey: ["stores-stock-center"],
