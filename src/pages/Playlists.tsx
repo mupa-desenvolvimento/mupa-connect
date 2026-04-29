@@ -58,13 +58,6 @@ export default function PlaylistsPage() {
     return matchesSearch && matchesStatus;
   });
 
-  console.log("Playlists debug:", { 
-    isTenantLoading, 
-    isPlaylistsLoading, 
-    tenantId, 
-    rawCount: playlistsData?.length, 
-    filteredCount: filteredPlaylists.length 
-  });
 
   const isLoading = isTenantLoading || isPlaylistsLoading;
 
