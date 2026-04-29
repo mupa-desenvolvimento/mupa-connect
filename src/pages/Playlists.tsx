@@ -83,7 +83,7 @@ export default function PlaylistsPage() {
               <div className="aspect-video relative overflow-hidden bg-muted">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Layers className="h-12 w-12 text-white/10 group-hover:text-purple-500/20 transition-colors" />
+                  <Layers className="h-12 w-12 text-white/10 group-hover:text-accent/20 transition-colors" />
                 </div>
                 <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end">
                   <div className="flex gap-2">
