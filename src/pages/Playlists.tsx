@@ -303,6 +303,11 @@ export default function PlaylistsPage() {
                     <h3 className="font-display font-bold text-white group-hover:text-[#085CF0] transition-colors truncate">
                       {playlist.name}
                     </h3>
+                    {(playlist as any).companies?.name && (
+                      <p className="text-[10px] text-[#085CF0] font-semibold uppercase tracking-wider mb-1">
+                        {(playlist as any).companies.name}
+                      </p>
+                    )}
                     <div className="flex items-center gap-3 mt-0.5">
                       <span className="text-[10px] text-white/40 uppercase tracking-wider font-semibold flex items-center gap-1">
                         <Clock className="h-3 w-3" /> {updatedAt}
@@ -378,6 +383,11 @@ export default function PlaylistsPage() {
                     <h3 className="font-display text-lg font-bold text-white group-hover:text-[#085CF0] transition-colors truncate">
                       {playlist.name}
                     </h3>
+                    {(playlist as any).companies?.name && (
+                      <p className="text-[10px] text-[#085CF0] font-bold uppercase tracking-widest mt-0.5">
+                        {(playlist as any).companies.name}
+                      </p>
+                    )}
                     <div className="flex items-center gap-2 text-white/40 text-[10px] uppercase tracking-wider font-semibold">
                       <Clock className="h-3 w-3" />
                       {updatedAt}

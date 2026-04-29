@@ -41,6 +41,10 @@ export function usePlaylists(tenantId?: string) {
           updated_at, 
           is_active, 
           tenant_id,
+          company_id,
+          companies (
+            name
+          ),
           playlist_items (
             id,
             media_id,
