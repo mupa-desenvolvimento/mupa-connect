@@ -328,6 +328,7 @@ export default function PlaylistEditor() {
       
       setSaveStatus("saved");
       setIsSaving(false);
+      setHasUnsavedChanges(false);
       setTimeout(() => setSaveStatus("idle"), 2000);
     } catch (error: any) {
       console.error("Auto-save error:", error);
