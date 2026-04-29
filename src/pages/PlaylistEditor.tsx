@@ -371,6 +371,9 @@ export default function PlaylistEditor() {
                 onBlur={() => triggerAutoSave(items, playlistName)}
                 className="bg-transparent border-none focus:ring-0 text-lg font-display font-semibold text-white p-0 h-7"
               />
+            </div>
+          </div>
+          <div className="flex flex-col">
             <div className="flex items-center gap-2 text-[10px] text-white/40 font-medium uppercase tracking-wider">
               <span>{items.length} ITENS</span>
               <span className="w-1 h-1 rounded-full bg-white/10" />
