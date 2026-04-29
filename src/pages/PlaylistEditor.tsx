@@ -345,7 +345,7 @@ export default function PlaylistEditor() {
       // 4. Enviar sinal de atualização global
       await supabase.from("dispositivos").update({ 
         comando: `reload:${Date.now()}` 
-      } as any).eq('empresa', '1728965891007x215886838679286700');
+      } as any).eq('empresa', '003ZAF');
       
       setSaveStatus("saved");
       setIsSaving(false);
