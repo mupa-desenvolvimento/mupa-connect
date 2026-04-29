@@ -1,17 +1,44 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { devices, getMediaById, getPlaylistById, mediaItems } from "@/lib/mock-data";
+import { useDeviceCommandChannel } from "@/hooks/useDeviceCommandChannel";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * WebViewPlayer — /play/:deviceCode
  * - Loops playlist items
  * - Fallback: if device unknown OR no playlist OR media fails, plays a default rotation
+ * - Receives realtime commands (reload, set_volume, play_campaign, …) and reports back
  * - Designed to NEVER stop
  */
 export default function PlayerPage() {
   const { deviceCode } = useParams();
   const device = devices.find((d) => d.code.toLowerCase() === (deviceCode ?? "").toLowerCase());
   const playlist = device ? getPlaylistById(device.playlistId) : undefined;
+
+  // Resolve the real device UUID from Supabase so realtime filter works
+  const [deviceUuid, setDeviceUuid] = useState<string | undefined>();
+  useEffect(() => {
+    if (!deviceCode) return;
+    supabase
+      .from("devices")
+      .select("id")
+      .eq("device_code", deviceCode)
+      .maybeSingle()
+      .then(({ data }) => setDeviceUuid(data?.id));
+  }, [deviceCode]);
+
+  const [reloadKey, setReloadKey] = useState(0);
+  const [volume, setVolume] = useState(60);
+
+  useDeviceCommandChannel(deviceUuid, {
+    reloadPlaylist: () => setReloadKey((k) => k + 1),
+    playCampaign:   (id) => console.info("[player] play_campaign", id),
+    setVolume:      (v) => setVolume(v),
+    screenshot:     () => undefined,
+    clearCache:     async () => { try { await caches.keys().then(ks => Promise.all(ks.map(k => caches.delete(k)))); } catch {} },
+    reboot:         () => window.location.reload(),
+  });
 
   const queue = useMemo(() => {
     const items = playlist?.items
