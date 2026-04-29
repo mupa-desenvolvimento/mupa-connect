@@ -171,8 +171,8 @@ export default function MediaPage() {
       const fileExt = file.name.split('.').pop();
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
       
-      // Pattern: {nome}_{uuid}/{fileName}
-      const storagePath = `${sanitizedName}_${tenantId}/${fileName}`;
+      // Pattern: Stok_Center_f822bf9d... (Nome_Empresa_UUID)
+      const storagePath = `${companyName.replace(/ /g, '_')}_${tenantId}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('media')
