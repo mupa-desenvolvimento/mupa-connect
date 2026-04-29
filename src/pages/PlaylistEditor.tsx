@@ -380,7 +380,7 @@ export default function PlaylistEditor() {
                     key={media.id}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer group border border-white/10 hover:border-purple-500/50 transition-colors"
+                    className="relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer group border border-white/10 hover:border-accent/50 transition-colors"
                     onClick={() => addItem(media.id)}
                   >
                     <img src={media.thumbnail_url || media.file_url} alt={media.name} className="w-full h-full object-cover opacity-80 group-hover:opacity-100" />
