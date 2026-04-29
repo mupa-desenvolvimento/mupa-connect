@@ -231,7 +231,18 @@ export default function PlaylistEditor() {
   }, [playlistData, medias, id]);
 
   const savePlaylist = async (updatedItems: EditorPlaylistItem[], updatedName: string) => {
-    if (!tenantId || isSaving) return;
+    if (isSaving) return;
+    
+    if (!tenantId) {
+      toast.error("Erro: Não foi possível identificar seu Tenant (ID de cliente). Tente recarregar a página.");
+      return;
+    }
+
+    if (!updatedName || updatedName.trim() === "" || updatedName === "...") {
+      toast.error("Por favor, dê um nome à sua playlist.");
+      return;
+    }
+
     setIsSaving(true);
     setSaveStatus("saving");
     const startTime = Date.now();
