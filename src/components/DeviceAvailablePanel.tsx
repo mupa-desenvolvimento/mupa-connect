@@ -93,9 +93,7 @@ export function DeviceItem({ device, isSelected, onToggle }: DeviceItemProps) {
               device.online ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" : "bg-red-500"
             )} />
           </div>
-          <div className="flex items-center gap-2 text-[10px] text-white/40 font-mono">
-            <span>SN: {device.serial || "---"}</span>
-          </div>
+          {/* Removido SN/PIN a pedido do usuário */}
         </div>
       </div>
 
@@ -419,9 +417,7 @@ function StoreItem({ store }: { store: any }) {
         <span className="text-sm font-bold text-white/80 truncate">
           {store.name || "Sem nome"}
         </span>
-        <span className="text-[10px] text-white/40 font-mono">
-          Cód: {store.code || "---"}
-        </span>
+        {/* Removido Cód/PIN a pedido do usuário */}
       </div>
 
       <div className="p-1 text-white/20 group-hover:text-white/60 transition-colors">
