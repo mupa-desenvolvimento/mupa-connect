@@ -31,7 +31,7 @@ export function usePlaylists(tenantId?: string) {
   return useQuery({
     queryKey: ["playlists", tenantId],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from("playlists")
         .select(`
           id, 
@@ -40,17 +40,17 @@ export function usePlaylists(tenantId?: string) {
           is_active, 
           tenant_id,
           playlist_items(id, media_id, duracao, tipo, ordem, position, prioridade)
-        `);
-
-      if (tenantId) {
-        query = query.or(`tenant_id.eq.${tenantId},tenant_id.is.null`);
-      }
-
-      const { data, error } = await query.order("updated_at", { ascending: false, nullsFirst: false });
+        `)
+        .order("updated_at", { ascending: false, nullsFirst: false });
 
       if (error) {
         console.error("Error fetching playlists:", error);
         throw error;
+      }
+      
+      // Filtro manual para garantir que mostramos playlists do tenant ou globais
+      if (tenantId) {
+        return (data || []).filter(p => !p.tenant_id || p.tenant_id === tenantId);
       }
       
       return data || [];
