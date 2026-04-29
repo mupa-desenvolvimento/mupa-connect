@@ -159,8 +159,8 @@ export default function GroupsPage() {
       };
       
       const flatNodes = allNodes(treeData);
-      const movingNode = flatNodes.find(n => n.id === nodeId);
-      const targetNode = flatNodes.find(n => n.id === newParentId);
+      const movingNode = flatNodes.find(n => String(n.id) === String(nodeId));
+      const targetNode = flatNodes.find(n => String(n.id) === String(newParentId));
       
       if (!movingNode || !targetNode) return;
       
