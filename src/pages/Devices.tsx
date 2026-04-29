@@ -35,6 +35,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { issueDeviceCommand } from "@/lib/device-commands";
+import { toast } from "sonner";
 
 type DeviceStatus = "online" | "unstable" | "offline";
 
