@@ -43,7 +43,8 @@ import {
 
 export default function PlaylistsPage() {
   const navigate = useNavigate();
-  const { data: playlistsData, isLoading: isPlaylistsLoading, isError } = usePlaylists();
+  const { data: tenantId } = useTenant();
+  const { data: playlistsData, isLoading: isPlaylistsLoading, isError, refetch } = usePlaylists();
   
   if (isError) {
     console.error("Error detected in usePlaylists within component");
@@ -51,6 +52,8 @@ export default function PlaylistsPage() {
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
+  const [playlistToDelete, setPlaylistToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
     return (localStorage.getItem("playlists-view-mode") as "grid" | "list") || "grid";
   });
