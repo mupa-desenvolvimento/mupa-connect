@@ -27,8 +27,10 @@ import { ptBR } from "date-fns/locale";
 
 export default function PlaylistsPage() {
   const navigate = useNavigate();
-  const { data: tenantId } = useTenant();
-  const { data: playlists, isLoading } = usePlaylists(tenantId);
+  const { data: tenantId, isLoading: isTenantLoading } = useTenant();
+  const { data: playlists, isLoading: isPlaylistsLoading } = usePlaylists(tenantId || undefined);
+
+  const isLoading = isTenantLoading || isPlaylistsLoading;
 
   if (isLoading) {
     return (
