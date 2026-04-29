@@ -151,7 +151,7 @@ const SortableItem = ({
 
       {/* Selected Indicator */}
       {isSelected && (
-        <div className="absolute inset-0 border-2 border-purple-500 pointer-events-none rounded-xl" />
+        <div className="absolute inset-0 border-2 border-accent pointer-events-none rounded-xl" />
       )}
     </div>
   );
