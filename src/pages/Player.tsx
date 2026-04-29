@@ -87,13 +87,40 @@ export default function PlayerPage() {
   }, [deviceCode, reloadKey]);
 
   useDeviceCommandChannel(deviceUuid, {
-    reloadPlaylist: () => setReloadKey((k: number) => k + 1),
+    reloadPlaylist: () => {
+      console.log("[Player] Reload command received");
+      setReloadKey((k: number) => k + 1);
+    },
     playCampaign:   (id) => console.info("[player] play_campaign", id),
     setVolume:      (v) => setVolume(v),
     screenshot:     () => undefined,
     clearCache:     async () => { try { await caches.keys().then(ks => Promise.all(ks.map(k => caches.delete(k)))); } catch {} },
     reboot:         () => window.location.reload(),
   });
+
+  // 3. Monitorar coluna 'comando' diretamente (Fallback para sinalização via DB)
+  useEffect(() => {
+    if (!deviceUuid) return;
+    
+    const channel = supabase
+      .channel(`device-commands-${deviceUuid}`)
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'dispositivos',
+        filter: `id=eq.${deviceUuid}`
+      }, (payload: any) => {
+        if (payload.new.comando && payload.new.comando.startsWith('reload')) {
+          console.log("[Player] Manual reload triggered via DB");
+          setReloadKey(k => k + 1);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [deviceUuid]);
 
   const queue = useMemo(() => {
     if (playlist?.playlist_items?.length) {
