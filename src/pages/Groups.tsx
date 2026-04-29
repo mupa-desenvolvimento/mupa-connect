@@ -404,6 +404,7 @@ export default function GroupsPage() {
                   if (error) throw error;
                   toast.success("Dispositivo removido do grupo.");
                   fetchTreeData();
+                  queryClient.invalidateQueries({ queryKey: ["available-devices"] });
                 } catch (error: any) {
                   toast.error("Erro ao remover: " + error.message);
                 }
