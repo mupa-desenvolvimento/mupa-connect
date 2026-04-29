@@ -229,17 +229,19 @@ export default function GroupsPage() {
     // Se estiver soltando um dispositivo em um grupo
     if (activeType === 'device') {
       const targetNode = over.data.current?.node;
-      if (!targetNode) return;
+      const isDroppingInPanel = over.data.current?.type === 'available-panel';
 
-      const devicesToMove = selectedDevices.has(active.data.current.device.id)
+      const devicesToMove = selectedDevices.has(active.data.current.device?.id || active.id)
         ? Array.from(selectedDevices)
-        : [active.data.current.device.id];
+        : [active.data.current.device?.id || active.id];
 
       try {
         let updateData: any = {};
         
-        if (targetNode.type === 'store') {
-          // Pegar o código da loja para o num_filial
+        if (isDroppingInPanel) {
+          // Remover do grupo/loja
+          updateData = { num_filial: null, grupo_dispositivos: null };
+        } else if (targetNode?.type === 'store') {
           const { data: store } = await supabase
             .from("stores")
             .select("code")
@@ -249,8 +251,7 @@ export default function GroupsPage() {
           if (store) {
             updateData = { num_filial: store.code, grupo_dispositivos: null };
           }
-        } else if (targetNode.type === 'device_group') {
-          // Para device_group, precisamos vincular também à loja dele se existir
+        } else if (targetNode?.type === 'device_group') {
           const { data: dg } = await supabase
             .from("device_groups")
             .select("id, store_id, stores(code)")
@@ -264,7 +265,7 @@ export default function GroupsPage() {
             };
           }
         } else {
-          toast.info("Por favor, solte o dispositivo em uma Loja ou Grupo de Dispositivos.");
+          toast.info("Por favor, solte o dispositivo em uma Loja, Grupo de Dispositivos ou no painel lateral.");
           return;
         }
 
@@ -275,12 +276,12 @@ export default function GroupsPage() {
 
         if (error) throw error;
 
-        toast.success(`${devicesToMove.length} dispositivo(s) vinculado(s) com sucesso!`);
+        toast.success(`${devicesToMove.length} dispositivo(s) atualizado(s) com sucesso!`);
         setSelectedDevices(new Set());
         fetchTreeData();
       } catch (error: any) {
         console.error("Error moving devices:", error);
-        toast.error("Erro ao vincular dispositivos: " + error.message);
+        toast.error("Erro ao atualizar dispositivos: " + error.message);
       }
     }
   };
