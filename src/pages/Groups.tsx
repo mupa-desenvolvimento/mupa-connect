@@ -101,6 +101,51 @@ export default function GroupsPage() {
     setIsSidebarOpen(true);
   };
 
+  const handleUpdatePlaylist = async (playlistId: string | null) => {
+    if (!selectedNode || !tenantId) return;
+    
+    setIsUpdatingPlaylist(true);
+    try {
+      let table = "";
+      if (selectedNode.type === "store_group") table = "groups";
+      else if (selectedNode.type === "store") table = "stores";
+      else if (selectedNode.type === "device_group") table = "device_groups";
+
+      if (!table) throw new Error("Tipo de nó desconhecido");
+
+      const { error } = await supabase
+        .from(table)
+        .update({ playlist_id: playlistId })
+        .eq("id", selectedNode.id);
+
+      if (error) throw error;
+
+      toast.success("Playlist atualizada com sucesso!");
+      
+      // Update local state for immediate feedback
+      const playlistName = playlistId 
+        ? playlists?.find(p => p.id === playlistId)?.name || "Nova Playlist" 
+        : null;
+        
+      setSelectedNode({
+        ...selectedNode,
+        playlist_id: playlistId,
+        playlist_name: playlistName,
+        // When updating directly, it becomes a local override unless we clear it
+        inherited_from: null, 
+        has_override: playlistId !== null
+      });
+
+      // Refetch full tree to resolve cascading inheritance
+      fetchTreeData();
+    } catch (error: any) {
+      console.error("Error updating playlist:", error);
+      toast.error("Erro ao atualizar playlist: " + error.message);
+    } finally {
+      setIsUpdatingPlaylist(false);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col space-y-6">
       <PageHeader
