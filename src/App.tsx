@@ -16,6 +16,7 @@ import Groups from "./pages/Groups";
 import Settings from "./pages/Settings";
 import Player from "./pages/Player";
 import Login from "./pages/Login";
+import SuperAdmin from "./pages/SuperAdmin";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound.tsx";
@@ -73,6 +74,7 @@ const App = () => {
               {/* Painel Empresa - Protegido */}
               <Route element={session ? <AppLayout /> : <Login />}>
                 <Route path="/" element={<Dashboard />} />
+                <Route path="/superadmin" element={<SuperAdmin />} />
                 <Route path="/dispositivos" element={<Devices />} />
                 <Route path="/dispositivos/:id" element={<DeviceDetail />} />
                 <Route path="/midias" element={<Media />} />

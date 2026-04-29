@@ -8,6 +8,7 @@ import {
   Store,
   Network,
   Settings,
+  ShieldCheck,
 } from "lucide-react";
 import {
   Sidebar,
@@ -22,6 +23,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const main = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -41,9 +44,30 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { pathname } = useLocation();
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  
+  useEffect(() => {
+    async function checkRole() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("role", "admin_global")
+          .single();
+        
+        if (roleData) {
+          setIsSuperAdmin(true);
+        }
+      }
+    }
+    checkRole();
+  }, []);
+
   const isActive = (path: string) => (path === "/" ? pathname === "/" : pathname.startsWith(path));
 
-  const renderItem = (item: { title: string; url: string; icon: typeof LayoutDashboard }) => (
+  const renderItem = (item: { title: string; url: string; icon: any }) => (
     <SidebarMenuItem key={item.title}>
       <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
         <NavLink to={item.url} end={item.url === "/"} className="flex items-center gap-3">
@@ -71,6 +95,17 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
+        {isSuperAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Administração Global</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {renderItem({ title: "SuperAdmin", url: "/superadmin", icon: ShieldCheck })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         <SidebarGroup>
           <SidebarGroupLabel>Operação</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -89,8 +124,8 @@ export function AppSidebar() {
       <SidebarFooter>
         {!collapsed && (
           <div className="rounded-lg border border-sidebar-border bg-sidebar-accent/40 p-3 text-xs text-sidebar-foreground/80">
-            <div className="font-semibold text-sidebar-foreground">Acme Retail</div>
-            <div className="opacity-70">Plano Empresa · 24 dispositivos</div>
+            <div className="font-semibold text-sidebar-foreground">Mupa Cloud</div>
+            <div className="opacity-70">Sistema Multitenant</div>
           </div>
         )}
       </SidebarFooter>
