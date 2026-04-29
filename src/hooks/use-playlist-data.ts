@@ -37,11 +37,13 @@ export function usePlaylists(tenantId?: string) {
         .from("playlists")
         .select(`
           id, name, updated_at, is_active, tenant_id,
-          playlist_items (id, media_id, duracao, tipo, ordem, position, prioridade)
+          playlist_items(id, media_id, duracao, tipo, ordem, position, prioridade)
         `);
 
       if (tenantId) {
         query = query.or(`tenant_id.eq.${tenantId},tenant_id.is.null`);
+      } else {
+        query = query.is("tenant_id", null);
       }
 
       const { data, error } = await query.order("updated_at", { ascending: false, nullsFirst: false });
@@ -51,7 +53,7 @@ export function usePlaylists(tenantId?: string) {
         throw error;
       }
       
-      console.log(`Found ${data?.length || 0} playlists`);
+      console.log(`Found ${data?.length || 0} playlists:`, data);
       return data || [];
     },
     enabled: true,
