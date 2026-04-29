@@ -212,6 +212,7 @@ export default function PlaylistEditor() {
 
   const triggerAutoSave = useCallback(async (updatedItems: EditorPlaylistItem[], updatedName: string) => {
     if (!tenantId || isSaving) return;
+    setIsSaving(true);
     
     setSaveStatus("saving");
     try {
@@ -243,18 +244,24 @@ export default function PlaylistEditor() {
           conteudo_id: it.mediaId,
           ativo: true
         }));
-        await supabase.from("playlist_items").insert(itemsToInsert);
+        const { error: insertError } = await supabase.from("playlist_items").insert(itemsToInsert);
+        if (insertError) throw insertError;
       }
 
       // Silently invalidate to keep UI smooth without full reload state
       // Don't overwrite cache shape — just mark playlists list stale
       queryClient.invalidateQueries({ queryKey: ["playlists", tenantId] });
       queryClient.invalidateQueries({ queryKey: ["playlists", tenantId] });
-      setTimeout(() => setSaveStatus("idle"), 2000);
+      setTimeout(() => {
+        setSaveStatus("saved");
+        setIsSaving(false);
+        setTimeout(() => setSaveStatus("idle"), 2000);
+      }, 500);
     } catch (error: any) {
       console.error("Auto-save error:", error);
-      toast.error("Erro ao salvar automaticamente");
+      toast.error(`Erro ao salvar: ${error.message || 'Erro desconhecido'}`);
       setSaveStatus("idle");
+      setIsSaving(false);
     }
   }, [tenantId, id, navigate, queryClient]);
 
