@@ -12,7 +12,9 @@ import {
   MoreHorizontal,
   Clock,
   Layers,
-  Loader2
+  Loader2,
+  LayoutGrid,
+  List
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
@@ -24,7 +26,7 @@ import {
 import { usePlaylists, useTenant } from "@/hooks/use-playlist-data";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function PlaylistsPage() {
   const navigate = useNavigate();
@@ -32,6 +34,13 @@ export default function PlaylistsPage() {
   const { data: playlistsData, isLoading: isPlaylistsLoading } = usePlaylists(tenantId || undefined);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
+    return (localStorage.getItem("playlists-view-mode") as "grid" | "list") || "grid";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("playlists-view-mode", viewMode);
+  }, [viewMode]);
 
   const playlists = playlistsData?.map(p => ({
     ...p,
@@ -93,40 +102,122 @@ export default function PlaylistsPage() {
             className="pl-9 bg-black/20 border-white/10 focus:border-[#085CF0]/50 transition-all text-white placeholder:text-white/20"
           />
         </div>
-        <div className="flex items-center gap-2 bg-black/20 p-1 rounded-lg border border-white/5">
-          <Button 
-            variant={filterStatus === "all" ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => setFilterStatus("all")}
-            className={`text-xs h-8 ${filterStatus === "all" ? 'bg-[#085CF0] text-white' : 'text-white/60'}`}
-          >
-            Todas
-          </Button>
-          <Button 
-            variant={filterStatus === "active" ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => setFilterStatus("active")}
-            className={`text-xs h-8 ${filterStatus === "active" ? 'bg-[#085CF0] text-white' : 'text-white/60'}`}
-          >
-            Ativas
-          </Button>
-          <Button 
-            variant={filterStatus === "inactive" ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => setFilterStatus("inactive")}
-            className={`text-xs h-8 ${filterStatus === "inactive" ? 'bg-[#085CF0] text-white' : 'text-white/60'}`}
-          >
-            Inativas
-          </Button>
+        
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1 bg-black/20 p-1 rounded-lg border border-white/5">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => setViewMode("grid")}
+              className={`h-8 w-8 ${viewMode === "grid" ? 'bg-[#085CF0] text-white' : 'text-white/40'}`}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => setViewMode("list")}
+              className={`h-8 w-8 ${viewMode === "list" ? 'bg-[#085CF0] text-white' : 'text-white/40'}`}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-2 bg-black/20 p-1 rounded-lg border border-white/5">
+            <Button 
+              variant={filterStatus === "all" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setFilterStatus("all")}
+              className={`text-xs h-8 ${filterStatus === "all" ? 'bg-[#085CF0] text-white' : 'text-white/60'}`}
+            >
+              Todas
+            </Button>
+            <Button 
+              variant={filterStatus === "active" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setFilterStatus("active")}
+              className={`text-xs h-8 ${filterStatus === "active" ? 'bg-[#085CF0] text-white' : 'text-white/60'}`}
+            >
+              Ativas
+            </Button>
+            <Button 
+              variant={filterStatus === "inactive" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setFilterStatus("inactive")}
+              className={`text-xs h-8 ${filterStatus === "inactive" ? 'bg-[#085CF0] text-white' : 'text-white/60'}`}
+            >
+              Inativas
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className={viewMode === "grid" 
+        ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" 
+        : "flex flex-col gap-3"
+      }>
         {filteredPlaylists.map((playlist) => {
           const itemsCount = playlist.playlist_items?.length || 0;
           const updatedAt = playlist.updated_at 
             ? format(new Date(playlist.updated_at), "dd 'de' MMM, HH:mm", { locale: ptBR })
             : "Recém criada";
+
+          if (viewMode === "list") {
+            return (
+              <Card 
+                key={playlist.id} 
+                className="group relative overflow-hidden border-white/5 bg-card/20 backdrop-blur-xl hover:border-[#085CF0]/40 hover:bg-card/30 transition-all duration-300 cursor-pointer"
+                onClick={() => navigate(`/playlists/${playlist.id}`)}
+              >
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-lg bg-[#085CF0]/10 flex items-center justify-center flex-shrink-0 group-hover:bg-[#085CF0]/20 transition-colors">
+                    <Layers className="h-6 w-6 text-[#085CF0]" />
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-display font-bold text-white group-hover:text-[#085CF0] transition-colors truncate">
+                      {playlist.name}
+                    </h3>
+                    <div className="flex items-center gap-3 mt-0.5">
+                      <span className="text-[10px] text-white/40 uppercase tracking-wider font-semibold flex items-center gap-1">
+                        <Clock className="h-3 w-3" /> {updatedAt}
+                      </span>
+                      <span className="text-[10px] text-white/40 uppercase tracking-wider font-semibold flex items-center gap-1">
+                        <Layers className="h-3 w-3" /> {itemsCount} Mídias
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <Badge className={`${playlist.is_active ? 'bg-green-500/20 text-green-400 border-green-500/20' : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/20'} backdrop-blur-md px-2 py-0.5 text-[10px]`}>
+                      {playlist.is_active ? 'ATIVA' : 'RASCUNHO'}
+                    </Badge>
+                    
+                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-white/40 hover:text-white hover:bg-white/5">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48 bg-[#18181b] border-white/5 text-white">
+                          <DropdownMenuItem onClick={() => navigate(`/playlists/${playlist.id}`)}>
+                            <Layers className="h-4 w-4 mr-2" /> Editar Conteúdo
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Copy className="h-4 w-4 mr-2" /> Duplicar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-red-400 focus:text-red-400">
+                            <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          }
 
           return (
             <Card 
