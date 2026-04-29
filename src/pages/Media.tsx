@@ -67,6 +67,7 @@ export default function MediaPage() {
   const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
 
   useEffect(() => {
+    console.log("MediaPage: useEffect triggered", { tenantId, currentFolder });
     if (tenantId) {
       fetchMedia();
       fetchFolders();
@@ -75,8 +76,11 @@ export default function MediaPage() {
       } else {
         setFolderPath([]);
       }
+    } else if (!isTenantLoading) {
+      console.log("MediaPage: No tenantId found after loading");
+      setIsLoading(false);
     }
-  }, [currentFolder, tenantId]);
+  }, [currentFolder, tenantId, isTenantLoading]);
 
   const updateFolderPath = async (folderId: string) => {
     const path: FolderItem[] = [];
