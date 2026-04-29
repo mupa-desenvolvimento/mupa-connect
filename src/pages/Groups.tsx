@@ -34,9 +34,11 @@ export default function GroupsPage() {
 
       if (error) throw error;
 
+      const nodes = (data as any[]) || [];
+
       // Transform recursive flat list into tree structure
-      const buildTree = (nodes: any[], parentId: string | null = null): TreeNode[] => {
-        return nodes
+      const buildTree = (allNodes: any[], parentId: string | null = null): TreeNode[] => {
+        return allNodes
           .filter(node => node.parent_id === parentId)
           .map(node => ({
             id: node.id,
@@ -47,11 +49,11 @@ export default function GroupsPage() {
             inherited_from: node.inherited_from_name,
             has_override: node.playlist_id !== null && node.inherited_from_name !== null,
             device_count: node.device_count,
-            children: buildTree(nodes, node.id)
+            children: buildTree(allNodes, node.id)
           }));
       };
 
-      const tree = buildTree(data || []);
+      const tree = buildTree(nodes);
       setTreeData(tree);
 
     } catch (error) {
