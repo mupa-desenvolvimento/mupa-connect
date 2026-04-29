@@ -60,6 +60,7 @@ export default function MediaPage() {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [folders, setFolders] = useState<FolderItem[]>([]);
   const [currentFolder, setCurrentFolder] = useState<string | null>(null);
+  const [folderPath, setFolderPath] = useState<FolderItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
@@ -69,8 +70,34 @@ export default function MediaPage() {
     if (tenantId) {
       fetchMedia();
       fetchFolders();
+      if (currentFolder) {
+        updateFolderPath(currentFolder);
+      } else {
+        setFolderPath([]);
+      }
     }
   }, [currentFolder, tenantId]);
+
+  const updateFolderPath = async (folderId: string) => {
+    const path: FolderItem[] = [];
+    let currentId: string | null = folderId;
+    
+    while (currentId) {
+      const { data, error } = await supabase
+        .from('folders')
+        .select('*')
+        .eq('id', currentId)
+        .single();
+      
+      if (data && !error) {
+        path.unshift(data);
+        currentId = data.parent_id;
+      } else {
+        currentId = null;
+      }
+    }
+    setFolderPath(path);
+  };
 
   const fetchMedia = async () => {
     if (!tenantId) return;
@@ -273,21 +300,28 @@ export default function MediaPage() {
         }
       />
 
-      <div className="mb-6 flex items-center text-sm text-muted-foreground bg-muted/30 p-2 rounded-lg">
+      <div className="mb-6 flex items-center text-sm text-muted-foreground bg-muted/30 p-2 rounded-lg overflow-x-auto whitespace-nowrap">
         <Button 
           variant="ghost" 
           size="sm" 
           onClick={() => setCurrentFolder(null)}
           className={!currentFolder ? "font-bold text-foreground" : ""}
         >
-          Raiz
+          <Folder className="h-4 w-4 mr-1" /> Galeria
         </Button>
-        {currentFolder && (
-          <>
-            <ChevronRight className="h-4 w-4" />
-            <span className="font-bold text-foreground">Pasta Atual</span>
-          </>
-        )}
+        {folderPath.map((folder, index) => (
+          <div key={folder.id} className="flex items-center">
+            <ChevronRight className="h-4 w-4 mx-1 flex-shrink-0" />
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setCurrentFolder(folder.id)}
+              className={index === folderPath.length - 1 ? "font-bold text-foreground" : ""}
+            >
+              {folder.name}
+            </Button>
+          </div>
+        ))}
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
