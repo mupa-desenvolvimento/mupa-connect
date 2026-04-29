@@ -243,7 +243,8 @@ export default function PlaylistEditor() {
       }
 
       // Silently invalidate to keep UI smooth without full reload state
-      queryClient.setQueryData(["playlist", currentPlaylistId], { ...playlistData, name: updatedName, playlist_items: updatedItems });
+      // Don't overwrite cache shape — just mark playlists list stale
+      queryClient.invalidateQueries({ queryKey: ["playlists", tenantId] });
       queryClient.invalidateQueries({ queryKey: ["playlists", tenantId] });
       setTimeout(() => setSaveStatus("idle"), 2000);
     } catch (error: any) {
@@ -546,7 +547,7 @@ export default function PlaylistEditor() {
                                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Tipo</label>
                                <div className="h-9 flex items-center px-3 bg-black/40 border border-white/10 rounded-md text-xs font-medium text-purple-400">
                                   {selectedItem.type === 'video' ? <Video className="h-3.5 w-3.5 mr-2" /> : <ImageIcon className="h-3.5 w-3.5 mr-2" />}
-                                  {selectedItem.type.toUpperCase()}
+                                  {(selectedItem.type || 'image').toUpperCase()}
                                </div>
                             </div>
                             <div className="flex-1 space-y-2">
