@@ -239,10 +239,7 @@ export function GroupTreeView({ data, onNodeClick, onEditPlaylist, onCreateGroup
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
+  // Sensors and DndContext moved to parent (GroupsPage) to allow dragging from Available Devices panel
 
   const toggleExpand = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -352,16 +349,7 @@ export function GroupTreeView({ data, onNodeClick, onEditPlaylist, onCreateGroup
       </div>
 
       <div className="flex-1 min-h-0">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={(event) => {
-            const { active, over } = event;
-            if (over && active.id !== over.id) {
-              onMoveNode?.(active.id as string, over.id as string);
-            }
-          }}
-        >
+        <div className="h-full">
           <SortableContext
             items={flattenedData.map(n => n.id)}
             strategy={verticalListSortingStrategy}
@@ -384,7 +372,7 @@ export function GroupTreeView({ data, onNodeClick, onEditPlaylist, onCreateGroup
               )}
             />
           </SortableContext>
-        </DndContext>
+        </div>
       </div>
 
       {/* Legend / Footer */}
