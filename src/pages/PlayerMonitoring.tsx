@@ -154,6 +154,27 @@ export default function PlayerMonitoring() {
     }
   };
 
+  if (isSuperAdmin === false) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+        <ShieldAlert className="h-16 w-16 text-destructive opacity-50" />
+        <h2 className="text-2xl font-bold">Acesso Restrito</h2>
+        <p className="text-muted-foreground text-center max-w-md">
+          Esta página é reservada apenas para administradores globais do sistema.
+        </p>
+        <Button onClick={() => navigate("/")}>Voltar ao Dashboard</Button>
+      </div>
+    );
+  }
+
+  if (isSuperAdmin === null) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <Activity className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
