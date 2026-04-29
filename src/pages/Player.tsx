@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useDeviceCommandChannel } from "@/hooks/useDeviceCommandChannel";
 import { supabase } from "@/integrations/supabase/client";
@@ -140,6 +140,8 @@ export default function PlayerPage() {
 
   const currentMedia = useMemo(() => formattedPlaylist[currentIndex] || null, [formattedPlaylist, currentIndex]);
 
+  const handleMediaChange = useCallback((idx: number) => setCurrentIndex(idx), []);
+
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -204,7 +206,7 @@ export default function PlayerPage() {
       <PlayerEngine 
         playlist={formattedPlaylist} 
         volume={volume}
-        onMediaChange={(idx) => setCurrentIndex(idx)}
+        onMediaChange={handleMediaChange}
       />
 
       {/* HUD overlay */}
