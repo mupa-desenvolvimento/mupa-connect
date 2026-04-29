@@ -101,8 +101,16 @@ export default function GroupsPage() {
       // Real implementation would use the parent_id / store_id relationships
       const rootGroups = groups.filter(g => !g.parent_id).map(g => {
         const node = resolveNode(g, 'store_group');
-        // Add stores that belong to this group (if there's a mapping table, otherwise mock)
-        node.children = stores.slice(0, 2).map(s => resolveNode(s, 'store', node));
+        // Filter stores by store_group association if available, or by tenant
+        node.children = stores.map(s => resolveNode(s, 'store', node));
+        
+        // Add device groups to stores
+        node.children.forEach(storeNode => {
+          storeNode.children = deviceGroups
+            .filter(dg => dg.store_id === storeNode.id)
+            .map(dg => resolveNode(dg, 'device_group', storeNode));
+        });
+        
         return node;
       });
 
