@@ -73,17 +73,23 @@ export default function ProductQueriesAnalytics() {
 
 
   const { data: logs, isLoading, refetch } = useQuery({
-    queryKey: ["product-queries-logs", period, selectedStore, selectedDevice],
+    queryKey: ["product-queries-logs", period, selectedStore, selectedDevice, dateRange],
     queryFn: async () => {
       let query = supabase
         .from("product_queries_log")
         .select("*");
 
-      if (period !== "all") {
+      if (period === "custom" && dateRange?.from) {
+        query = query.gte("created_at", startOfDay(dateRange.from).toISOString());
+        if (dateRange.to) {
+          query = query.lte("created_at", endOfDay(dateRange.to).toISOString());
+        }
+      } else if (period !== "all") {
         const days = parseInt(period);
         const date = subDays(new Date(), days);
         query = query.gte("created_at", date.toISOString());
       }
+
 
       if (selectedStore !== "all") {
         query = query.eq("loja", selectedStore);
