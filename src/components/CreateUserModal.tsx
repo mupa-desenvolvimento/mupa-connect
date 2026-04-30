@@ -41,7 +41,7 @@ export function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalP
   const { data: companies } = useQuery({
     queryKey: ["companies-list", isSuperAdmin, tenantId],
     queryFn: async () => {
-      let query = supabase.from("companies").select("id, name");
+      let query = supabase.from("companies").select("id, name, tenant_id");
       
       if (!isSuperAdmin && tenantId) {
         query = query.eq("tenant_id", tenantId);
@@ -57,7 +57,10 @@ export function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalP
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const targetCompanyId = (isSuperAdmin || tenantId) ? (companyId || currentCompanyId) : currentCompanyId;
-    const targetTenantId = tenantId;
+    
+    // Find the tenant_id for the selected company
+    const selectedCompany = companies?.find(c => c.id === targetCompanyId);
+    const targetTenantId = selectedCompany?.tenant_id || tenantId;
 
     if (!email || !password || !name || !targetCompanyId || !role) {
       toast.error("Preencha todos os campos");
