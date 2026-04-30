@@ -205,7 +205,7 @@ export default function ProductQueriesAnalytics() {
     doc.text("Inteligência de Consultas — Logs EAN", 14, 14);
     doc.setFontSize(9);
     doc.text(
-      `Gerado em ${format(new Date(), "dd/MM/yyyy HH:mm")} • ${logs.length} registros • Período: ${period === "1" ? "Hoje" : `Últimos ${period} dias`}`,
+      `Gerado em ${format(new Date(), "dd/MM/yyyy HH:mm")} • ${logs.length} registros • Período: ${period === "all" ? "Todo o tempo" : period === "1" ? "Hoje" : `Últimos ${period} dias`}`,
       14,
       20
     );
