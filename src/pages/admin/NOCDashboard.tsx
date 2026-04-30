@@ -36,7 +36,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
-type PanelType = "status" | "metrics" | "alerts" | "charts" | "store_view";
+type PanelType = "status" | "metrics" | "alerts" | "charts" | "store_view" | "queries_feed";
 type LayoutType = "1" | "2h" | "2v" | "4" | "6";
 
 interface PanelConfig {
