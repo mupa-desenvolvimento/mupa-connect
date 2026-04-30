@@ -23,11 +23,11 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound.tsx";
 import PlayerMonitoring from "./pages/PlayerMonitoring";
 import ProductQueriesAnalytics from "./pages/ProductQueriesAnalytics";
+import UsersPage from "./pages/Users";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { Loader2 } from "lucide-react";
-
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -87,6 +87,7 @@ const App = () => {
               <Route element={session ? <AppLayout /> : <Login />}>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/superadmin" element={<SuperAdmin />} />
+                <Route path="/usuarios" element={<UsersPage />} />
                 <Route path="/dispositivos" element={<Devices />} />
                 <Route path="/admin/player-logs" element={<PlayerMonitoring />} />
                 <Route path="/admin/analytics/consultas" element={<ProductQueriesAnalytics />} />
@@ -108,6 +109,5 @@ const App = () => {
     </ThemeProvider>
   );
 };
-
 
 export default App;
