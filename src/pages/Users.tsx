@@ -23,29 +23,38 @@ export default function UsersPage() {
   const { companyId, isAdmin } = useUserRole();
 
   const { data: users, isLoading, refetch } = useQuery({
-    queryKey: ["company-users", companyId],
+    queryKey: ["users-list", companyId, tenantId, isSuperAdmin],
     queryFn: async () => {
-      if (!companyId) return [];
-
-      const { data, error } = await supabase
+      let query = supabase
         .from("user_profiles")
         .select(`
           id,
           role,
-          created_at
-        `)
-        .eq("company_id", companyId);
+          created_at,
+          company_id,
+          tenant_id
+        `);
 
+      if (!isSuperAdmin) {
+        if (companyId) {
+          query = query.eq("company_id", companyId);
+        } else if (tenantId) {
+          query = query.eq("tenant_id", tenantId);
+        } else {
+          return [];
+        }
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
 
-      // Map roles and fetch email (simplified for this demo, usually join or use a view)
       return data.map(u => ({
         ...u,
-        email: "usuario@empresa.com", // Em um cenário real, buscaríamos da tabela profiles ou auth.users via Edge Function
-        name: "Usuário da Empresa"
+        email: "usuario@mupa.app",
+        name: "Colaborador"
       }));
     },
-    enabled: !!companyId,
+    enabled: !!companyId || !!tenantId || isSuperAdmin,
   });
 
   const handleDeleteUser = async (id: string) => {
