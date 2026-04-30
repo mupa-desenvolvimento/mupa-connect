@@ -170,6 +170,22 @@ export function MediaUpload({ tenantId, currentFolderId, onUploadComplete, onClo
         } catch (error: any) {
           console.error('Upload error details:', error);
           const errorMessage = error.message || 'Erro desconhecido no upload';
+          
+          // Telemetria: Logar erro geral de upload
+          const { data: { user } } = await supabase.auth.getUser();
+          await supabase.from('platform_logs').insert({
+            level: 'error',
+            category: 'media_upload',
+            message: `Falha no upload de mídia: ${upload.file.name}`,
+            user_id: user?.id,
+            tenant_id: tenantId || undefined,
+            metadata: {
+              error: errorMessage,
+              file_name: upload.file.name,
+              stack: error.stack
+            }
+          });
+
           toast.error(`Falha ao enviar ${upload.file.name}: ${errorMessage}`);
           updateUploadStatus(upload.id, { status: 'error', error: errorMessage });
         }
