@@ -120,7 +120,7 @@ export default function ProductQueriesAnalytics() {
   // KPI Calculations
   const totalConsultas = logs?.length || 0;
   const uniqueDevicesCount = new Set(logs?.map(l => l.device_id)).size;
-  const errorLogs = logs?.filter(l => l.status_code !== 200 && l.status_code !== "200") || [];
+  const errorLogs = logs?.filter(l => l.status_code !== 200) || [];
   const erroRate = totalConsultas > 0 ? (errorLogs.length / totalConsultas) * 100 : 0;
   
   const productCounts = logs?.reduce((acc: any, log) => {
