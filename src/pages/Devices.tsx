@@ -40,6 +40,7 @@ import { toast } from "sonner";
 import { DeviceFirebaseCommandDrawer } from "@/components/DeviceFirebaseCommandDrawer";
 import { BulkCommandDialog } from "@/components/BulkCommandDialog";
 import { Megaphone } from "lucide-react";
+import { useUserRole } from "@/hooks/use-user-role";
 
 type DeviceStatus = "online" | "unstable" | "offline";
 
@@ -52,6 +53,7 @@ export default function DevicesPage() {
   const [selectedDevice, setSelectedDevice] = useState<any | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const { companyId, isSuperAdmin, isTecnico } = useUserRole();
 
   const openDeviceDrawer = (device: any) => {
     setSelectedDevice(device);
@@ -59,13 +61,15 @@ export default function DevicesPage() {
   };
 
   const { data: devices, isLoading, refetch } = useQuery({
-    queryKey: ["dispositivos-full"],
+    queryKey: ["dispositivos-full", companyId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("dispositivos")
-        .select("*")
-        .ilike("empresa", "003ZAF") // Filtrar por Stok Center (case-insensitive)
-        .order("apelido_interno");
+      let query = supabase.from("dispositivos").select("*");
+      
+      if (!isSuperAdmin && companyId) {
+        query = query.eq("company_id", companyId);
+      }
+      
+      const { data, error } = await query.order("apelido_interno");
       
       if (error) throw error;
       return data;
