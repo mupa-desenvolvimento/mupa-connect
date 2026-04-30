@@ -497,6 +497,14 @@ export default function DevicesPage() {
         onOpenChange={setDrawerOpen}
         formatDate={formatDate}
       />
+
+      <BulkCommandDialog
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        devices={devices ?? []}
+        stores={(stores ?? []).map((s) => ({ code: String(s.code ?? s.id), name: s.name }))}
+        groups={groups}
+      />
     </div>
   );
 }
