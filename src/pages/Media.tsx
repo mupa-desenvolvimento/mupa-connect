@@ -501,7 +501,7 @@ export default function MediaPage() {
                           className="text-destructive cursor-pointer"
                           onClick={() => deleteItem(m.id)}
                         >
-                          <Trash2 className="h-4 w-4 mr-2" /> Excluir permanentemente
+                          <Trash2 className="h-4 w-4 mr-2" /> Mover para lixeira
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
