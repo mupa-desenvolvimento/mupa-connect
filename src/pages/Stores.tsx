@@ -1,12 +1,17 @@
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { MapPin, MonitorPlay, Plus, Loader2, RefreshCw, Store } from "lucide-react";
+import { MapPin, MonitorPlay, Plus, Loader2, RefreshCw, Store, Smartphone } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { QuickAccessModal } from "@/components/QuickAccessModal";
+import { useState } from "react";
+import { useUserRole } from "@/hooks/use-user-role";
 
 export default function StoresPage() {
   const stockCenterId = "003ZAF";
+  const [selectedStore, setSelectedStore] = useState<{id: string, name: string} | null>(null);
+  const { companyId, tenantId } = useUserRole();
 
   const { data: storesData, isLoading, refetch } = useQuery({
     queryKey: ["stores-stock-center"],
