@@ -167,13 +167,7 @@ export function BulkCommandDialog({
       return;
     }
     let value = "";
-    
-    // Novas regras de EAN automático para comandos específicos
-    if (commandKey === "fecha_app") {
-      value = "040816";
-    } else if (commandKey === "img_delete") {
-      value = "050223";
-    } else if (selectedCmd.field) {
+    if (selectedCmd.field) {
       value = inputValue.trim();
       if (!value) {
         toast.error("Informe o valor do comando.");
@@ -387,7 +381,7 @@ export function BulkCommandDialog({
                 })}
               </div>
 
-              {selectedCmd.field && commandKey !== "fecha_app" && commandKey !== "img_delete" && (
+              {selectedCmd.field && (
                 <div className="space-y-1.5">
                   <Label className="text-xs">{selectedCmd.label}</Label>
                   <Input
