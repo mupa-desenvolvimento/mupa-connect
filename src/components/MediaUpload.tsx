@@ -133,6 +133,22 @@ export function MediaUpload({ tenantId, currentFolderId, onUploadComplete, onClo
 
           // Validação crítica: garantir que tenant_id existe antes do insert
           if (!tenantId) {
+            const { data: { user } } = await supabase.auth.getUser();
+            
+            // Telemetria: Logar erro de tenant ausente para diagnóstico
+            await supabase.from('platform_logs').insert({
+              level: 'error',
+              category: 'media_upload',
+              message: `Tenant ID ausente durante upload de mídia: ${upload.file.name}`,
+              user_id: user?.id,
+              metadata: {
+                file_name: upload.file.name,
+                file_type: upload.file.type,
+                file_size: upload.file.size,
+                browser: navigator.userAgent
+              }
+            });
+
             throw new Error('Tenant ID não encontrado. Por favor, recarregue a página.');
           }
 
@@ -154,6 +170,22 @@ export function MediaUpload({ tenantId, currentFolderId, onUploadComplete, onClo
         } catch (error: any) {
           console.error('Upload error details:', error);
           const errorMessage = error.message || 'Erro desconhecido no upload';
+          
+          // Telemetria: Logar erro geral de upload
+          const { data: { user } } = await supabase.auth.getUser();
+          await supabase.from('platform_logs').insert({
+            level: 'error',
+            category: 'media_upload',
+            message: `Falha no upload de mídia: ${upload.file.name}`,
+            user_id: user?.id,
+            tenant_id: tenantId || undefined,
+            metadata: {
+              error: errorMessage,
+              file_name: upload.file.name,
+              stack: error.stack
+            }
+          });
+
           toast.error(`Falha ao enviar ${upload.file.name}: ${errorMessage}`);
           updateUploadStatus(upload.id, { status: 'error', error: errorMessage });
         }
