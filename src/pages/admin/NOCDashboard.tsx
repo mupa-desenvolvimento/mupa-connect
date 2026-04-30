@@ -325,7 +325,7 @@ export default function NOCDashboard() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.5, ease: "easeInOut" }}
-                  className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2 p-1 h-full content-start overflow-y-auto scrollbar-none"
+                  className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2 p-1 h-full content-start overflow-y-auto"
                 >
                   {paginatedItems.map((item: any) => (
                     <ItemComponent 
