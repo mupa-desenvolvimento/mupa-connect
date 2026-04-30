@@ -111,10 +111,16 @@ export default function NOCDashboard() {
   }
 
   async function fetchStores() {
-    let query = supabase.from("stores").select("id, name, code, tenant_id");
-    if (!isSuperAdmin && tenantId) {
-      query = query.eq("tenant_id", tenantId);
+    let query = supabase.from("stores").select("id, name, code, tenant_id, company_id");
+    
+    if (!isSuperAdmin) {
+      if (companyId) {
+        query = query.eq("company_id", companyId);
+      } else if (tenantId) {
+        query = query.eq("tenant_id", tenantId);
+      }
     }
+    
     const { data } = await query;
     if (data) setStores(data);
   }
