@@ -2211,6 +2211,13 @@ export type Database = {
             referencedRelation: "folders"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "folders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vw_user_creation_status"
+            referencedColumns: ["auth_user_id"]
+          },
         ]
       }
       global_group_targets: {
@@ -4388,7 +4395,15 @@ export type Database = {
           id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "vw_user_creation_status"
+            referencedColumns: ["auth_user_id"]
+          },
+        ]
       }
       qrcode_campaigns: {
         Row: {
@@ -5044,6 +5059,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "tenant_admin_logs_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "vw_user_creation_status"
+            referencedColumns: ["auth_user_id"]
+          },
+          {
             foreignKeyName: "tenant_admin_logs_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -5256,7 +5278,15 @@ export type Database = {
           id?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_permissions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vw_user_creation_status"
+            referencedColumns: ["auth_user_id"]
+          },
+        ]
       }
       user_profiles: {
         Row: {
@@ -5292,6 +5322,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "user_profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "vw_user_creation_status"
+            referencedColumns: ["auth_user_id"]
+          },
+          {
             foreignKeyName: "user_profiles_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -5319,7 +5356,15 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vw_user_creation_status"
+            referencedColumns: ["auth_user_id"]
+          },
+        ]
       }
       user_tenant_mappings: {
         Row: {
@@ -5351,6 +5396,13 @@ export type Database = {
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_tenant_mappings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vw_user_creation_status"
+            referencedColumns: ["auth_user_id"]
+          },
         ]
       }
       users: {
@@ -5381,7 +5433,15 @@ export type Database = {
           name?: string | null
           role?: Database["public"]["Enums"]["user_role_type"]
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "users_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "vw_user_creation_status"
+            referencedColumns: ["auth_user_id"]
+          },
+        ]
       }
       weather_locations: {
         Row: {
@@ -5653,6 +5713,42 @@ export type Database = {
           status?: string | null
         }
         Relationships: []
+      }
+      vw_user_creation_status: {
+        Row: {
+          auth_created_at: string | null
+          auth_user_id: string | null
+          company_id: string | null
+          email: string | null
+          profile_created_at: string | null
+          profile_id: string | null
+          profile_role: string | null
+          status: string | null
+          tenant_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_profiles_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "vw_user_creation_status"
+            referencedColumns: ["auth_user_id"]
+          },
+          {
+            foreignKeyName: "user_profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
