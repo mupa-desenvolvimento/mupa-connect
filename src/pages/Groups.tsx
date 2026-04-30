@@ -394,7 +394,7 @@ export default function GroupsPage() {
   };
 
   return (
-    <div className="h-full flex flex-col space-y-6">
+    <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
       <PageHeader
         title="Hierarquia de Grupos"
         description="Visualize e gerencie a distribuição de conteúdos através da árvore de herança."

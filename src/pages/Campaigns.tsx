@@ -28,64 +28,73 @@ export default function CampaignsPage() {
   });
 
   return (
-    <>
+    <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
       <PageHeader
         title="Campanhas"
         description="Agendamento por data, horário e prioridade. Sobrescreve playlists base."
         actions={
           isMarketing && (
-            <Button className="bg-gradient-primary text-primary-foreground shadow-glow">
-              <Plus className="h-4 w-4 mr-1" /> Nova campanha
+            <Button className="bg-gradient-primary text-primary-foreground shadow-glow h-9" size="sm">
+              <Plus className="h-4 w-4 mr-2" /> Nova campanha
             </Button>
           )
         }
       />
-      <Card>
-        {isLoading ? (
-          <div className="h-64 flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Campanha</TableHead>
-                <TableHead>Início</TableHead>
-                <TableHead>Fim</TableHead>
-                <TableHead>Prioridade</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {campaigns?.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
-                    Nenhuma campanha encontrada.
-                  </TableCell>
+      
+      <div className="flex-1 overflow-hidden border border-border/60 rounded-xl bg-card shadow-sm flex flex-col">
+        <div className="flex-1 overflow-y-auto">
+          {isLoading ? (
+            <div className="h-64 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary opacity-50" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader className="sticky top-0 bg-card z-10 border-b border-border/60">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-[35%]">Nome da Campanha</TableHead>
+                  <TableHead>Período</TableHead>
+                  <TableHead>Prioridade</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
-              ) : (
-                campaigns?.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-medium">{c.name}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {c.start_date ? new Date(c.start_date).toLocaleDateString("pt-BR") : "-"}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {c.end_date ? new Date(c.end_date).toLocaleDateString("pt-BR") : "-"}
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-mono text-xs">P{c.priority}</span>
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={c.is_active ? "online" : "offline"} />
+              </TableHeader>
+              <TableBody>
+                {!campaigns || campaigns.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-64 text-center">
+                      <div className="flex flex-col items-center justify-center text-muted-foreground gap-2">
+                        <Plus className="h-10 w-10 opacity-20" />
+                        <p>Nenhuma campanha agendada.</p>
+                      </div>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        )}
-      </Card>
-    </>
+                ) : (
+                  campaigns.map((c) => (
+                    <TableRow key={c.id} className="group hover:bg-muted/30 transition-colors">
+                      <TableCell className="font-semibold text-foreground/90">
+                        {c.name}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col text-xs font-mono text-muted-foreground">
+                          <span>De: {c.start_date ? new Date(c.start_date).toLocaleDateString("pt-BR") : "-"}</span>
+                          <span>Até: {c.end_date ? new Date(c.end_date).toLocaleDateString("pt-BR") : "-"}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-primary/5 text-primary border border-primary/10">
+                          PRIORIDADE {c.priority}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={c.is_active ? "online" : "offline"} />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

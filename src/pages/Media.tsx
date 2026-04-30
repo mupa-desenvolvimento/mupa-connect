@@ -15,6 +15,7 @@ import {
   FileIcon,
   Video
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Dialog, 
@@ -283,7 +284,7 @@ export default function MediaPage() {
   };
 
   return (
-    <>
+    <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
       <PageHeader
         title="Galeria de Mídias"
         description="Organize seus conteúdos por empresa. Armazenamento particionado com segurança."
@@ -291,8 +292,8 @@ export default function MediaPage() {
           <div className="flex gap-2">
             <Dialog open={isFolderDialogOpen} onOpenChange={setIsFolderDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline">
-                  <FolderPlus className="h-4 w-4 mr-1" /> Nova Pasta
+                <Button variant="outline" size="sm" className="h-9">
+                  <FolderPlus className="h-4 w-4 mr-2" /> Nova Pasta
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -306,6 +307,7 @@ export default function MediaPage() {
                     value={newFolderName} 
                     onChange={(e) => setNewFolderName(e.target.value)}
                     placeholder="Ex: Promoções de Maio"
+                    className="mt-2"
                   />
                 </div>
                 <DialogFooter>
@@ -325,13 +327,14 @@ export default function MediaPage() {
               <Button
                 type="button"
                 onClick={() => document.getElementById('file-upload')?.click()}
-                className="bg-gradient-primary text-primary-foreground shadow-glow"
+                className="bg-gradient-primary text-primary-foreground shadow-glow h-9"
                 disabled={isUploading}
+                size="sm"
               >
                 {isUploading ? (
-                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
-                  <Upload className="h-4 w-4 mr-1" />
+                  <Upload className="h-4 w-4 mr-2" />
                 )}
                 {isUploading ? "Enviando..." : "Enviar mídia"}
               </Button>
@@ -341,144 +344,150 @@ export default function MediaPage() {
       />
 
       {isTenantLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary opacity-50" />
         </div>
       ) : (
         <>
-          <div className="mb-6 flex items-center text-sm text-muted-foreground bg-muted/30 p-2 rounded-lg overflow-x-auto whitespace-nowrap">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={() => setCurrentFolder(null)}
-          className={!currentFolder ? "font-bold text-foreground" : ""}
-        >
-          <Folder className="h-4 w-4 mr-1" /> Galeria
-        </Button>
-        {folderPath.map((folder, index) => (
-          <div key={folder.id} className="flex items-center">
-            <ChevronRight className="h-4 w-4 mx-1 flex-shrink-0" />
+          <div className="flex items-center text-xs font-medium text-muted-foreground bg-muted/20 p-2 rounded-xl border border-border/40 overflow-x-auto whitespace-nowrap sticky top-0 z-10 backdrop-blur-md">
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => setCurrentFolder(folder.id)}
-              className={index === folderPath.length - 1 ? "font-bold text-foreground" : ""}
+              onClick={() => setCurrentFolder(null)}
+              className={cn("h-7 text-[11px]", !currentFolder ? "bg-background shadow-sm text-foreground" : "")}
             >
-              {folder.name}
+              <Folder className="h-3.5 w-3.5 mr-1.5 opacity-70" /> Galeria
             </Button>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {/* Folders */}
-        {folders.map((folder) => (
-          <Card 
-            key={folder.id} 
-            className="overflow-hidden group hover:shadow-elegant transition-shadow cursor-pointer"
-            onClick={() => setCurrentFolder(folder.id)}
-          >
-            <CardContent className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                  <Folder className="h-6 w-6 fill-current" />
-                </div>
-                <span className="font-medium truncate max-w-[120px]">{folder.name}</span>
+            {folderPath.map((folder, index) => (
+              <div key={folder.id} className="flex items-center">
+                <ChevronRight className="h-3.5 w-3.5 mx-1 opacity-40 flex-shrink-0" />
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setCurrentFolder(folder.id)}
+                  className={cn("h-7 text-[11px]", index === folderPath.length - 1 ? "bg-background shadow-sm text-foreground" : "")}
+                >
+                  {folder.name}
+                </Button>
               </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem 
-                    className="text-destructive"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteFolder(folder.id);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </CardContent>
-          </Card>
-        ))}
+            ))}
+          </div>
 
-        {/* Media Items */}
-        {items.map((m) => (
-          <Card key={m.id} className="overflow-hidden group hover:shadow-elegant transition-shadow">
-            <div className="aspect-video bg-muted relative overflow-hidden flex items-center justify-center">
-              {m.type === "image" ? (
-                <img 
-                  src={m.file_url} 
-                  alt={m.name} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
-                  loading="lazy" 
-                />
-              ) : (
-                <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                  <Video className="h-10 w-10" />
-                  <span className="text-xs">Vídeo</span>
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 pb-4">
+              {/* Folders */}
+              {folders.map((folder) => (
+                <Card 
+                  key={folder.id} 
+                  className="overflow-hidden group hover:border-primary/40 hover:bg-muted/30 transition-all cursor-pointer border-border/60 shadow-sm"
+                  onClick={() => setCurrentFolder(folder.id)}
+                >
+                  <CardContent className="p-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="p-2 bg-primary/5 rounded-lg text-primary border border-primary/10">
+                        <Folder className="h-5 w-5 fill-current opacity-70" />
+                      </div>
+                      <span className="font-semibold text-sm truncate text-foreground/80">{folder.name}</span>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 shrink-0">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem 
+                          className="text-destructive cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteFolder(folder.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </CardContent>
+                </Card>
+              ))}
+
+              {/* Media Items */}
+              {items.map((m) => (
+                <Card key={m.id} className="overflow-hidden group hover:border-primary/40 hover:shadow-md transition-all border-border/60 bg-background/50 flex flex-col">
+                  <div className="aspect-video bg-muted/30 relative overflow-hidden flex items-center justify-center border-b border-border/40">
+                    {m.type === "image" ? (
+                      <img 
+                        src={m.file_url} 
+                        alt={m.name} 
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                        loading="lazy" 
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center gap-2 text-muted-foreground opacity-40">
+                        <Video className="h-8 w-8" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">Vídeo</span>
+                      </div>
+                    )}
+                    
+                    <div className="absolute top-2 right-2 flex gap-1 z-20">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="secondary" size="icon" className="h-7 w-7 backdrop-blur bg-background/80 border-border/40 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                            <MoreVertical className="h-3.5 w-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild className="cursor-pointer">
+                            <a href={m.file_url} target="_blank" rel="noopener noreferrer">
+                              <Play className="h-4 w-4 mr-2" /> Visualizar
+                            </a>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-destructive cursor-pointer"
+                            onClick={() => deleteItem(m.id)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    {m.type === "video" && (
+                      <div className="absolute bottom-2 left-2 z-20">
+                        <Badge variant="secondary" className="backdrop-blur bg-background/80 text-[9px] font-mono border-border/40 py-0 h-5">
+                          {m.duration || 0}s
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                  <CardContent className="p-3">
+                    <div className="font-semibold text-xs truncate text-foreground/80" title={m.name}>{m.name}</div>
+                    <div className="text-[10px] text-muted-foreground flex items-center justify-between mt-1 font-mono uppercase tracking-tighter">
+                      <span>{formatSize(m.file_size)}</span>
+                      <span className="bg-muted px-1 rounded">{m.type}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              {items.length === 0 && folders.length === 0 && !isLoading && (
+                <div className="col-span-full py-32 flex flex-col items-center justify-center text-muted-foreground gap-3">
+                  <div className="h-16 w-16 rounded-full bg-muted/30 flex items-center justify-center">
+                    <FileIcon className="h-8 w-8 opacity-20" />
+                  </div>
+                  <p className="text-sm">Pasta vazia ou nenhum conteúdo encontrado.</p>
                 </div>
               )}
-              
-              <div className="absolute top-2 right-2 flex gap-1">
-                {m.type === "video" && (
-                  <Badge variant="secondary" className="backdrop-blur bg-card/80 text-xs">
-                    <Play className="h-3 w-3 mr-1" />
-                    {m.duration || 0}s
-                  </Badge>
-                )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="secondary" size="icon" className="h-7 w-7 backdrop-blur bg-card/80">
-                      <MoreVertical className="h-3 w-3" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <a href={m.file_url} target="_blank" rel="noopener noreferrer">
-                        Visualizar
-                      </a>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      className="text-destructive"
-                      onClick={() => deleteItem(m.id)}
-                    >
-                      Excluir
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+
+              {isLoading && (
+                <div className="col-span-full py-20 flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" />
+                </div>
+              )}
             </div>
-            <CardContent className="p-3">
-              <div className="font-medium text-sm truncate" title={m.name}>{m.name}</div>
-              <div className="text-xs text-muted-foreground flex items-center justify-between mt-1">
-                <span>{formatSize(m.file_size)}</span>
-                <span className="uppercase">{m.type}</span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-
-        {items.length === 0 && folders.length === 0 && !isLoading && (
-          <div className="col-span-full py-20 text-center text-muted-foreground">
-            <FileIcon className="h-12 w-12 mx-auto mb-4 opacity-20" />
-            <p>Nenhum arquivo ou pasta encontrado aqui.</p>
           </div>
-        )}
-
-        {isLoading && (
-          <div className="col-span-full py-20 text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          </div>
-        )}
-      </div>
-      </>
+        </>
       )}
-    </>
+    </div>
   );
 }

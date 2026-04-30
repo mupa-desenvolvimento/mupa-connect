@@ -179,35 +179,14 @@ export default function PlaylistsPage() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center mb-8">
-          <div className="space-y-2">
-            <div className="h-8 w-48 bg-muted animate-pulse rounded" />
-            <div className="h-4 w-64 bg-muted animate-pulse rounded" />
-          </div>
-          <div className="h-10 w-32 bg-muted animate-pulse rounded" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="h-64 bg-card/40 border border-border/40 rounded-xl animate-pulse" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  
-
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
       <PageHeader
         title="Playlists"
         description="Gerencie as sequências de conteúdo que serão exibidas em seus dispositivos."
         actions={
           <Button 
-            className="bg-[#085CF0] hover:bg-[#0750d4] text-white shadow-lg shadow-[#085CF0]/20 transition-all hover:scale-105"
+            className="bg-gradient-primary shadow-glow h-9"
             onClick={() => navigate("/playlists/new")}
           >
             <Plus className="h-4 w-4 mr-2" /> Nova Playlist
@@ -215,45 +194,45 @@ export default function PlaylistsPage() {
         }
       />
 
-      <PlaylistErrorBanner error={isError ? "Ocorreu um erro ao carregar as playlists. Verifique sua conexão ou permissões." : null} onRetry={refetch} className="mb-6" />
+      <PlaylistErrorBanner error={isError ? "Erro ao carregar playlists. Verifique sua conexão." : null} onRetry={refetch} className="mb-0" />
 
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-card/30 backdrop-blur-md p-4 rounded-2xl border border-white/5 shadow-inner">
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-card p-4 rounded-xl border border-border/60 shadow-sm sticky top-0 z-10">
+        <div className="relative flex-1 w-full md:max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
             placeholder="Buscar por nome..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 bg-black/20 border-white/10 focus:border-[#085CF0]/50 transition-all text-white placeholder:text-white/20"
+            className="pl-10 h-10 bg-background/50 border-border/40 focus:bg-background"
           />
         </div>
         
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1 bg-black/20 p-1 rounded-lg border border-white/5">
+        <div className="flex flex-wrap gap-2 w-full md:w-auto">
+          <div className="flex border rounded-lg p-1 bg-muted/30">
             <Button 
-              variant="ghost" 
-              size="icon"
+              variant={viewMode === "grid" ? "secondary" : "ghost"} 
+              size="sm" 
+              className="h-7 w-7 p-0"
               onClick={() => setViewMode("grid")}
-              className={`h-8 w-8 ${viewMode === "grid" ? 'bg-[#085CF0] text-white' : 'text-white/40'}`}
             >
               <LayoutGrid className="h-4 w-4" />
             </Button>
             <Button 
-              variant="ghost" 
-              size="icon"
+              variant={viewMode === "list" ? "secondary" : "ghost"} 
+              size="sm" 
+              className="h-7 w-7 p-0"
               onClick={() => setViewMode("list")}
-              className={`h-8 w-8 ${viewMode === "list" ? 'bg-[#085CF0] text-white' : 'text-white/40'}`}
             >
               <List className="h-4 w-4" />
             </Button>
           </div>
 
-          <div className="flex items-center gap-2 bg-black/20 p-1 rounded-lg border border-white/5">
+          <div className="flex gap-1 bg-muted/30 p-1 rounded-lg border border-border/40">
             <Button 
               variant={filterStatus === "all" ? "secondary" : "ghost"}
               size="sm"
               onClick={() => setFilterStatus("all")}
-              className={`text-xs h-8 ${filterStatus === "all" ? 'bg-[#085CF0] text-white' : 'text-white/60'}`}
+              className="text-xs h-7 px-2"
             >
               Todas
             </Button>
@@ -261,215 +240,117 @@ export default function PlaylistsPage() {
               variant={filterStatus === "active" ? "secondary" : "ghost"}
               size="sm"
               onClick={() => setFilterStatus("active")}
-              className={`text-xs h-8 ${filterStatus === "active" ? 'bg-[#085CF0] text-white' : 'text-white/60'}`}
+              className="text-xs h-7 px-2"
             >
               Ativas
-            </Button>
-            <Button 
-              variant={filterStatus === "inactive" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setFilterStatus("inactive")}
-              className={`text-xs h-8 ${filterStatus === "inactive" ? 'bg-[#085CF0] text-white' : 'text-white/60'}`}
-            >
-              Inativas
             </Button>
           </div>
         </div>
       </div>
 
-      <div className={viewMode === "grid" 
-        ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" 
-        : "flex flex-col gap-3"
-      }>
-        {filteredPlaylists.length > 0 ? filteredPlaylists.map((playlist) => {
-          const itemsCount = (playlist as any).playlist_items?.length || 0;
-          const updatedAt = playlist.updated_at 
-            ? format(new Date(playlist.updated_at), "dd 'de' MMM, HH:mm", { locale: ptBR })
-            : "Recém criada";
+      <div className="flex-1 overflow-hidden border border-border/60 rounded-xl bg-card shadow-sm flex flex-col">
+        <div className="flex-1 overflow-y-auto p-4">
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="h-48 bg-muted/40 animate-pulse rounded-xl border border-border/40" />
+              ))}
+            </div>
+          ) : filteredPlaylists.length > 0 ? (
+            <div className={viewMode === "grid" 
+              ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-4" 
+              : "flex flex-col gap-3 pb-4"
+            }>
+              {filteredPlaylists.map((playlist) => {
+                const itemsCount = (playlist as any).playlist_items?.length || 0;
+                const updatedAt = playlist.updated_at 
+                  ? format(new Date(playlist.updated_at), "dd 'de' MMM, HH:mm", { locale: ptBR })
+                  : "Recém criada";
 
-          if (viewMode === "list") {
-            return (
-              <Card 
-                key={playlist.id} 
-                className="group relative overflow-hidden border-white/5 bg-card/20 backdrop-blur-xl hover:border-[#085CF0]/40 hover:bg-card/30 transition-all duration-300 cursor-pointer"
-                onClick={() => navigate(`/playlists/${playlist.id}`)}
-              >
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-lg bg-[#085CF0]/10 flex items-center justify-center flex-shrink-0 group-hover:bg-[#085CF0]/20 transition-colors">
-                    <Layers className="h-6 w-6 text-[#085CF0]" />
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-display font-bold text-white group-hover:text-[#085CF0] transition-colors truncate">
-                      {playlist.name}
-                    </h3>
-                    {(playlist as any).companies?.name && (
-                      <p className="text-[10px] text-[#085CF0] font-semibold uppercase tracking-wider mb-1">
-                        {(playlist as any).companies.name}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-3 mt-0.5">
-                      <span className="text-[10px] text-white/40 uppercase tracking-wider font-semibold flex items-center gap-1">
-                        <Clock className="h-3 w-3" /> {updatedAt}
-                      </span>
-                      <span className="text-[10px] text-white/40 uppercase tracking-wider font-semibold flex items-center gap-1">
-                        <Layers className="h-3 w-3" /> {(playlist as any).playlist_items?.length || 0} Mídias
-                      </span>
-                    </div>
-                  </div>
+                return (
+                  <Card 
+                    key={playlist.id} 
+                    className="group relative overflow-hidden border-border/60 bg-background/50 hover:border-primary/40 hover:bg-background/80 transition-all duration-300 cursor-pointer"
+                    onClick={() => navigate(`/playlists/${playlist.id}`)}
+                  >
+                    <CardContent className="p-4 flex flex-col gap-3">
+                      <div className="flex items-start justify-between">
+                        <div className="h-10 w-10 rounded-lg bg-primary/5 flex items-center justify-center flex-shrink-0 border border-primary/10">
+                          <Layers className="h-5 w-5 text-primary opacity-70" />
+                        </div>
+                        <Badge variant={playlist.is_active ? "default" : "secondary"} className="text-[10px]">
+                          {playlist.is_active ? 'ATIVA' : 'RASCUNHO'}
+                        </Badge>
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-foreground/90 group-hover:text-primary transition-colors truncate">
+                          {playlist.name}
+                        </h3>
+                        {(playlist as any).companies?.name && (
+                          <p className="text-[10px] text-primary/70 font-bold uppercase tracking-wider">
+                            {(playlist as any).companies.name}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-3 mt-2">
+                          <span className="text-[10px] text-muted-foreground flex items-center gap-1 font-mono">
+                            <Clock className="h-3 w-3" /> {updatedAt}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground flex items-center gap-1 font-mono">
+                            <Layers className="h-3 w-3" /> {itemsCount} Itens
+                          </span>
+                        </div>
+                      </div>
 
-                  <div className="flex items-center gap-3">
-                    <Badge className={`${playlist.is_active ? 'bg-green-500/20 text-green-400 border-green-500/20' : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/20'} backdrop-blur-md px-2 py-0.5 text-[10px]`}>
-                      {playlist.is_active ? 'ATIVA' : 'RASCUNHO'}
-                    </Badge>
-                    
-                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-white/40 hover:text-white hover:bg-white/5">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48 bg-[#18181b] border-white/5 text-white">
-                          <DropdownMenuItem onClick={() => navigate(`/playlists/${playlist.id}`)}>
-                            <Layers className="h-4 w-4 mr-2" /> Editar Conteúdo
-                          </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDuplicate(playlist)}>
-                          <Copy className="h-4 w-4 mr-2" /> Duplicar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          className="text-red-400 focus:text-red-400"
-                          onClick={() => setPlaylistToDelete(playlist.id)}
+                      <div className="flex justify-end gap-1 mt-2" onClick={(e) => e.stopPropagation()}>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-primary hover:bg-primary/10"
+                          onClick={() => handleDuplicate(playlist)}
+                          title="Duplicar"
                         >
-                          <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                        </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          }
-
-          return (
-            <Card 
-              key={playlist.id} 
-              className="group relative overflow-hidden border-white/5 bg-card/20 backdrop-blur-xl hover:border-[#085CF0]/40 hover:bg-card/30 transition-all duration-500 cursor-pointer"
-              onClick={() => navigate(`/playlists/${playlist.id}`)}
-            >
-              <div className="aspect-video relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-transparent to-transparent z-10" />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40 group-hover:bg-black/20 transition-all">
-                  <Layers className="h-10 w-10 text-white/5 group-hover:text-[#085CF0]/30 transition-all transform group-hover:scale-110" />
-                </div>
-                
-                <div className="absolute top-3 left-3 z-20">
-                  <Badge className={`${playlist.is_active ? 'bg-green-500/20 text-green-400 border-green-500/20' : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/20'} backdrop-blur-md px-2 py-0.5 text-[10px]`}>
-                    {playlist.is_active ? 'ATIVA' : 'RASCUNHO'}
-                  </Badge>
-                </div>
-
-                <div className="absolute bottom-3 left-3 z-20 flex gap-2">
-                  <span className="flex items-center gap-1.5 text-[10px] font-bold text-white/80 bg-black/40 backdrop-blur-md px-2 py-1 rounded-md border border-white/5">
-                    <Layers className="h-3 w-3" /> {(playlist as any).playlist_items?.length || 0} Mídias
-                  </span>
-                </div>
-              </div>
-              
-              <CardContent className="p-5 relative z-20">
-                <div className="flex justify-between items-start">
-                  <div className="space-y-1 flex-1 min-w-0">
-                    <h3 className="font-display text-lg font-bold text-white group-hover:text-[#085CF0] transition-colors truncate">
-                      {playlist.name}
-                    </h3>
-                    {(playlist as any).companies?.name && (
-                      <p className="text-[10px] text-[#085CF0] font-bold uppercase tracking-widest mt-0.5">
-                        {(playlist as any).companies.name}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-2 text-white/40 text-[10px] uppercase tracking-wider font-semibold">
-                      <Clock className="h-3 w-3" />
-                      {updatedAt}
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-white/40 hover:text-white hover:bg-white/5">
-                          <MoreHorizontal className="h-4 w-4" />
+                          <Copy className="h-4 w-4" />
                         </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48 bg-[#18181b] border-white/5 text-white">
-                        <DropdownMenuItem onClick={() => navigate(`/playlists/${playlist.id}`)}>
-                          <Layers className="h-4 w-4 mr-2" /> Editar Conteúdo
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDuplicate(playlist)}>
-                          <Copy className="h-4 w-4 mr-2" /> Duplicar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          className="text-red-400 focus:text-red-400"
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
                           onClick={() => setPlaylistToDelete(playlist.id)}
+                          title="Excluir"
                         >
-                          <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              </CardContent>
-
-              {/* Hover Effect Light */}
-              <div className="absolute -inset-x-20 -top-20 h-40 w-40 bg-[#085CF0]/10 blur-[100px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-            </Card>
-          );
-        }) : null}
-        
-        {filteredPlaylists.length === 0 && (
-          <div className="col-span-full py-24 text-center border-2 border-dashed border-white/5 rounded-3xl bg-card/10">
-             <div className="bg-[#085CF0]/10 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-6">
-               <Search className="h-8 w-8 text-[#085CF0]" />
-             </div>
-             <h3 className="text-xl font-bold text-white mb-2">
-               {searchQuery ? 'Nenhum resultado encontrado' : 'Nenhuma playlist criada'}
-             </h3>
-             <p className="text-white/40 text-sm mb-8 max-w-xs mx-auto">
-               {searchQuery 
-                ? `Não encontramos nada para "${searchQuery}". Tente outro termo.` 
-                : 'Você ainda não possui sequências de conteúdo. Crie sua primeira agora!'}
-             </p>
-             {!searchQuery && (
-               <Button 
-                  onClick={() => navigate("/playlists/new")}
-                  className="bg-[#085CF0] hover:bg-[#0750d4] text-white px-8"
-                >
-                  Criar Playlist
-                </Button>
-             )}
-          </div>
-        )}
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="h-64 flex flex-col items-center justify-center text-muted-foreground gap-2">
+              <Layers className="h-10 w-10 opacity-20" />
+              <p>Nenhuma playlist encontrada.</p>
+              <Button variant="link" onClick={() => { setSearchQuery(""); setFilterStatus("all"); }}>
+                Limpar filtros
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       <AlertDialog open={!!playlistToDelete} onOpenChange={(open) => !open && setPlaylistToDelete(null)}>
-        <AlertDialogContent className="bg-[#18181b] border-white/10 text-white">
+        <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
-              Excluir Playlist
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-white/60">
-              Tem certeza que deseja excluir esta playlist? Esta ação não pode ser desfeita e removerá o conteúdo de todos os dispositivos vinculados.
+            <AlertDialogTitle>Excluir Playlist</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta playlist? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Cancelar</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDelete}
-              className="bg-red-500 hover:bg-red-600 text-white"
-              disabled={isDeleting}
-            >
-              {isDeleting ? "Excluindo..." : "Excluir Definitivamente"}
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90" disabled={isDeleting}>
+              {isDeleting ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
