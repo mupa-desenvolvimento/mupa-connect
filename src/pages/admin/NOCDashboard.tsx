@@ -111,14 +111,12 @@ export default function NOCDashboard() {
   }
 
   async function fetchStores() {
-    let query = supabase.from("stores").select("id, name, code, tenant_id, company_id");
+    // Como stores não tem company_id diretamente, filtramos pelo tenant_id
+    // que é único por empresa no nosso modelo atual
+    let query = supabase.from("stores").select("id, name, code, tenant_id");
     
-    if (!isSuperAdmin) {
-      if (companyId) {
-        query = query.eq("company_id", companyId);
-      } else if (tenantId) {
-        query = query.eq("tenant_id", tenantId);
-      }
+    if (!isSuperAdmin && tenantId) {
+      query = query.eq("tenant_id", tenantId);
     }
     
     const { data } = await query;
