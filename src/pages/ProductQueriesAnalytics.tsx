@@ -289,8 +289,18 @@ export default function ProductQueriesAnalytics() {
               </SelectContent>
             </Select>
 
-            <Button variant="outline" size="icon" onClick={() => refetch()}>
+            <Button variant="outline" size="icon" onClick={() => refetch()} title="Atualizar">
               <RefreshCw className="h-4 w-4" />
+            </Button>
+
+            <Button variant="outline" onClick={handleExportCSV} title="Exportar CSV">
+              <Download className="mr-2 h-4 w-4" />
+              CSV
+            </Button>
+
+            <Button variant="outline" onClick={handleExportPDF} title="Exportar PDF">
+              <FileText className="mr-2 h-4 w-4" />
+              PDF
             </Button>
           </div>
         }
