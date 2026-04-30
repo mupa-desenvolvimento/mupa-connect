@@ -60,7 +60,26 @@ export default function QuickAccessPage() {
           
           if (storeData) {
             const cleanCode = storeData.code?.replace(/[^0-9]/g, '');
-            query = query.or(`num_filial.eq.${storeData.code}${cleanCode ? `,num_filial.eq.${cleanCode}` : ''}`);
+            const conditions = [];
+            
+            if (storeData.code) {
+              conditions.push(`num_filial.eq.${storeData.code}`);
+              // Também tenta com o código preenchido com zeros à esquerda se for numérico
+              if (/^\d+$/.test(storeData.code)) {
+                conditions.push(`num_filial.eq.${storeData.code.padStart(3, '0')}`);
+                conditions.push(`num_filial.eq.${storeData.code.padStart(4, '0')}`);
+              }
+            }
+            
+            if (cleanCode && cleanCode !== storeData.code) {
+              conditions.push(`num_filial.eq.${cleanCode}`);
+              conditions.push(`num_filial.eq.${cleanCode.padStart(3, '0')}`);
+              conditions.push(`num_filial.eq.${cleanCode.padStart(4, '0')}`);
+            }
+
+            if (conditions.length > 0) {
+              query = query.or(conditions.join(','));
+            }
           }
         }
 
