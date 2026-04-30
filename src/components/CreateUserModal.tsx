@@ -56,7 +56,7 @@ export function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const targetCompanyId = isSuperAdmin ? companyId : currentCompanyId;
+    const targetCompanyId = (isSuperAdmin || tenantId) ? companyId : currentCompanyId;
 
     if (!email || !password || !name || !targetCompanyId || !role) {
       toast.error("Preencha todos os campos");
