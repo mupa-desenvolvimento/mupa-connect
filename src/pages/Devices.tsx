@@ -205,6 +205,16 @@ export default function DevicesPage() {
                 <LayoutGrid className="h-4 w-4" />
               </Button>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setBulkOpen(true)}
+              disabled={isLoading}
+              className="h-10 border-primary/40 text-primary hover:bg-primary/10"
+            >
+              <Megaphone className="h-4 w-4 mr-2" />
+              Enviar comando em massa
+            </Button>
             <Button 
               variant="outline" 
               size="sm" 
