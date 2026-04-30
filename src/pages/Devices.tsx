@@ -37,6 +37,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { issueDeviceCommand } from "@/lib/device-commands";
 import { toast } from "sonner";
+import { DeviceFirebaseCommandDrawer } from "@/components/DeviceFirebaseCommandDrawer";
 
 type DeviceStatus = "online" | "unstable" | "offline";
 
@@ -46,6 +47,13 @@ export default function DevicesPage() {
   const [storeFilter, setStoreFilter] = useState("all");
   const [groupFilter, setGroupFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedDevice, setSelectedDevice] = useState<any | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const openDeviceDrawer = (device: any) => {
+    setSelectedDevice(device);
+    setDrawerOpen(true);
+  };
 
   const { data: devices, isLoading, refetch } = useQuery({
     queryKey: ["dispositivos-full"],
