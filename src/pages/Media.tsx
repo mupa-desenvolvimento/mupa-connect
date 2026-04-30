@@ -76,7 +76,7 @@ interface FolderItem {
 }
 
 export default function MediaPage() {
-  const { tenantId, isLoading: isTenantLoading } = useTenant();
+  const { tenantId, companyId, isLoading: isTenantLoading } = useTenant();
   const navigate = useNavigate();
   const [items, setItems] = useState<MediaItem[]>([]);
   const [folders, setFolders] = useState<FolderItem[]>([]);
@@ -326,6 +326,7 @@ export default function MediaPage() {
                 </DialogHeader>
                 <MediaUpload 
                   tenantId={tenantId} 
+                  companyId={companyId}
                   currentFolderId={currentFolder} 
                   onUploadComplete={fetchMedia}
                   onClose={() => setIsUploadDialogOpen(false)}

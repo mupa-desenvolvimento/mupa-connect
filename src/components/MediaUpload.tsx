@@ -18,12 +18,13 @@ interface FileUpload {
 
 interface MediaUploadProps {
   tenantId: string | null;
+  companyId: string | null;
   currentFolderId: string | null;
   onUploadComplete: () => void;
   onClose: () => void;
 }
 
-export function MediaUpload({ tenantId, currentFolderId, onUploadComplete, onClose }: MediaUploadProps) {
+export function MediaUpload({ tenantId, companyId, currentFolderId, onUploadComplete, onClose }: MediaUploadProps) {
   const [uploads, setUploads] = useState<FileUpload[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
