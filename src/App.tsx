@@ -26,6 +26,7 @@ import ProductQueriesAnalytics from "./pages/ProductQueriesAnalytics";
 import UsersPage from "./pages/Users";
 import QuickAccessPage from "./pages/QuickAccess";
 import NOCDashboard from "./pages/admin/NOCDashboard";
+import MediaTrash from "./pages/MediaTrash";
 import SharedMonitoringPage from "./pages/monitoring/SharedMonitoring";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
