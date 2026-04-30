@@ -15,7 +15,8 @@ import {
   RefreshCw,
   Store,
   Warehouse,
-  X
+  X,
+  MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,6 +36,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { ProductQueriesFeed } from "@/components/admin/monitoring/ProductQueriesFeed";
 
 type PanelType = "status" | "metrics" | "alerts" | "charts" | "store_view" | "queries_feed";
 type LayoutType = "1" | "2h" | "2v" | "4" | "6";
