@@ -24,12 +24,22 @@ export default function DeviceDetailPage() {
     if (!id) return;
     setLoading(true);
     supabase
-      .from("devices")
-      .select("id,name,device_code,status,resolution")
-      .eq("id", id)
+      .from("dispositivos")
+      .select("id, apelido_interno, serial, online, resolucao")
+      .eq("id", Number(id))
       .maybeSingle()
       .then(({ data }) => {
-        setDevice(data as DeviceRow | null);
+        if (data) {
+          setDevice({
+            id: String(data.id),
+            name: data.apelido_interno ?? "Dispositivo",
+            device_code: data.serial ?? null,
+            status: data.online ? "online" : "offline",
+            resolution: data.resolucao ?? null,
+          });
+        } else {
+          setDevice(null);
+        }
         setLoading(false);
       });
   }, [id]);
