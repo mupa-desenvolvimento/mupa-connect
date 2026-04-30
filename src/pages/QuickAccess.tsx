@@ -102,7 +102,8 @@ export default function QuickAccessPage() {
     if (!lastHeartbeat) return "offline";
     const now = new Date().getTime();
     const heartbeatTime = new Date(lastHeartbeat).getTime();
-    const isHeartbeatRecent = (now - heartbeatTime) < 60000;
+    // Aumentado para 5 minutos para ser mais tolerante a variações de conexão
+    const isHeartbeatRecent = (now - heartbeatTime) < 300000;
     return isHeartbeatRecent ? "online" : "offline";
   };
 
