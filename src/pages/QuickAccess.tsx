@@ -174,11 +174,12 @@ export default function QuickAccessPage() {
     <div className="min-h-screen bg-slate-50 pb-12">
       <header className="bg-white border-b px-6 py-4 sticky top-0 z-10 shadow-sm">
         <div className="max-w-md mx-auto flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-gradient-primary grid place-items-center shrink-0">
-            <span className="font-display font-bold text-white">M</span>
-          </div>
+          <img 
+            src="/logo.svg" 
+            alt="MupaMídias" 
+            className="h-10 w-auto"
+          />
           <div className="min-w-0">
-            <h1 className="font-display font-bold text-lg leading-tight truncate">Mupa 3.0</h1>
             <p className="text-xs text-muted-foreground uppercase tracking-wider">Acesso Rápido</p>
           </div>
         </div>

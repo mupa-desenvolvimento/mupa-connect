@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,6 +17,7 @@ import Groups from "./pages/Groups";
 import Settings from "./pages/Settings";
 import Player from "./pages/Player";
 import Login from "./pages/Login";
+import Landing from "./pages/Landing";
 import SuperAdmin from "./pages/SuperAdmin";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -81,7 +82,9 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               {/* Rotas Públicas */}
-              <Route path="/login" element={<Login />} />
+              <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <Landing />} />
+              <Route path="/landing" element={session ? <Navigate to="/dashboard" replace /> : <Landing />} />
+              <Route path="/login" element={session ? <Navigate to="/dashboard" replace /> : <Login />} />
               <Route path="/recuperar-senha" element={<ForgotPassword />} />
               <Route path="/redefinir-senha" element={<ResetPassword />} />
               
@@ -96,7 +99,7 @@ const App = () => {
 
               {/* Painel Empresa - Protegido */}
               <Route element={session ? <AppLayout /> : <Login />}>
-                <Route path="/" element={<Dashboard />} />
+                <Route path="/dashboard" element={<Dashboard />} />
                 
                 {/* ADMIN GLOBAL ONLY */}
                 <Route path="/superadmin" element={

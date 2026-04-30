@@ -71,14 +71,18 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-3">
-          <div className="h-8 w-8 rounded-lg bg-gradient-primary shadow-glow grid place-items-center">
-            <span className="font-display font-bold text-primary-foreground text-sm">M</span>
-          </div>
-          {!collapsed && (
-            <div className="leading-tight">
-              <div className="font-display font-bold tracking-tight">Mupa <span className="text-primary">3.0</span></div>
-              <div className="text-[10px] uppercase tracking-widest text-sidebar-foreground/60">Signage Cloud</div>
-            </div>
+          {collapsed ? (
+            <img 
+              src="/Artboard 15.svg" 
+              alt="MupaMídias" 
+              className="h-8 w-8"
+            />
+          ) : (
+            <img 
+              src="/logo.svg" 
+              alt="MupaMídias" 
+              className="h-8 w-auto"
+            />
           )}
         </div>
       </SidebarHeader>

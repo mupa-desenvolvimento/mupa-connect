@@ -5,9 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, Monitor } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -40,10 +40,13 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 flex flex-col items-center">
-          <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mb-4">
-            <Monitor className="text-primary-foreground h-8 w-8" />
+          <div className="h-16 flex items-center justify-center mb-4">
+            <img 
+              src="/logo.svg" 
+              alt="MupaMídias" 
+              className="h-12 w-auto"
+            />
           </div>
-          <CardTitle className="text-2xl text-center">Mupa 3.0</CardTitle>
           <CardDescription className="text-center">
             Entre com suas credenciais para acessar o painel
           </CardDescription>
