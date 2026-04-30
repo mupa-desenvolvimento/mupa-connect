@@ -47,7 +47,7 @@ export function AppSidebar() {
 
   const orgItems = [
     { title: "Usuários", url: "/usuarios", icon: Users, visible: isAdmin },
-    { title: "Lojas", url: "/lojas", icon: Store, visible: isAdmin },
+    { title: "Lojas", url: "/lojas", icon: Store, visible: isAdmin || !!tenantId },
     { title: "Grupos", url: "/grupos", icon: Network, visible: isAdmin },
     { title: "Configurações", url: "/configuracoes", icon: Settings, visible: isAdmin },
   ].filter((i) => i.visible);
