@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { FileText, Download, Loader2, BarChart3, Package, Monitor, Info } from "lucide-react";
 import { format } from "date-fns";
+import { DateRange } from "react-day-picker";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -27,10 +28,12 @@ interface ReportGeneratorModalProps {
   logs: any[];
   filters: {
     period: string;
+    dateRange?: DateRange;
     store: string;
     device: string;
   };
 }
+
 
 export function ReportGeneratorModal({ isOpen, onClose, logs, filters }: ReportGeneratorModalProps) {
   const [reportType, setReportType] = useState<"general" | "products" | "devices">("general");
@@ -64,7 +67,14 @@ export function ReportGeneratorModal({ isOpen, onClose, logs, filters }: ReportG
     await new Promise(resolve => setTimeout(resolve, 800));
 
     const timestamp = format(new Date(), "yyyyMMdd-HHmm");
-    const periodLabel = filters.period === "all" ? "Todo o tempo" : filters.period === "1" ? "Hoje" : `Últimos ${filters.period} dias`;
+    let periodLabel = "";
+    
+    if (filters.period === "custom" && filters.dateRange?.from) {
+      periodLabel = `${format(filters.dateRange.from, "dd/MM/yy")}${filters.dateRange.to ? ` - ${format(filters.dateRange.to, "dd/MM/yy")}` : ""}`;
+    } else {
+      periodLabel = filters.period === "all" ? "Todo o tempo" : filters.period === "1" ? "Hoje" : `Últimos ${filters.period} dias`;
+    }
+
 
     try {
       if (reportType === "products") {
