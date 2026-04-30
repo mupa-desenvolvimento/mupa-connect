@@ -288,7 +288,7 @@ export function DeviceFirebaseCommandDrawer({
                         </div>
                       </div>
 
-                      {cfg.field && (
+                      {cfg.field && cfg.key !== "fechar" && cfg.key !== "deletar_imagem" && (
                         <div>
                           <Label className="sr-only">{cfg.label}</Label>
                           <Input
