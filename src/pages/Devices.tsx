@@ -38,6 +38,8 @@ import { cn } from "@/lib/utils";
 import { issueDeviceCommand } from "@/lib/device-commands";
 import { toast } from "sonner";
 import { DeviceFirebaseCommandDrawer } from "@/components/DeviceFirebaseCommandDrawer";
+import { BulkCommandDialog } from "@/components/BulkCommandDialog";
+import { Megaphone } from "lucide-react";
 
 type DeviceStatus = "online" | "unstable" | "offline";
 
