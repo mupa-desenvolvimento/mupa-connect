@@ -120,11 +120,7 @@ export function MediaUpload({ tenantId, currentFolderId, onUploadComplete, onClo
             .from('media')
             .upload(storagePath, fileToUpload, {
               cacheControl: '3600',
-              upsert: false,
-              onUploadProgress: (progress) => {
-                const percent = (progress.loaded / progress.total) * 50 + 40; // 40% a 90%
-                updateUploadStatus(upload.id, { progress: Math.round(percent) });
-              }
+              upsert: false
             });
 
           if (uploadError) throw uploadError;
