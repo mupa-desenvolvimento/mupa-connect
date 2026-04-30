@@ -282,44 +282,81 @@ export default function NOCDashboard() {
         );
       case "status":
       case "store_view":
-        let displayDevices = devices;
-        if (panel.type === "store_view" && panel.storeId) {
-          const store = stores.find(s => s.id === panel.storeId);
-          if (store) {
-            const cleanCode = store.code?.replace(/^0+/, '');
-            displayDevices = devices.filter(d => {
-              const deviceCode = d.num_filial?.replace(/^0+/, '');
-              return (deviceCode && cleanCode && deviceCode === cleanCode) || 
-                     d.num_filial === store.code || 
-                     d.empresa === store.name;
-            });
+        const isStoreView = panel.type === "store_view";
+        const hasSelectedStore = !!panel.storeId;
+        
+        let items = [];
+        let ItemComponent: any;
+
+        if (isStoreView && !hasSelectedStore) {
+          // Visão Geral de Lojas (Gid de Lojas)
+          items = storeStats;
+          ItemComponent = StoreCard;
+        } else {
+          // Status de Dispositivos ou Loja Específica
+          let displayDevices = devices;
+          if (hasSelectedStore) {
+            const store = stores.find(s => s.id === panel.storeId);
+            if (store) {
+              const cleanCode = store.code?.replace(/^0+/, '');
+              displayDevices = devices.filter(d => {
+                const deviceCode = d.num_filial?.replace(/^0+/, '');
+                return (deviceCode && cleanCode && deviceCode === cleanCode) || 
+                       d.num_filial === store.code || 
+                       d.empresa === store.name;
+              });
+            }
           }
+          items = displayDevices;
+          ItemComponent = DeviceCard;
         }
+
+        const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
+        const currentPage = rotationIndex % (totalPages || 1);
+        const paginatedItems = items.slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE);
+
         return (
-          <ScrollArea className="h-full pr-4">
-            <div className="grid grid-cols-1 gap-1 p-1">
-              {displayDevices.map(d => {
-                const status = getDeviceStatus(d);
-                return (
-                  <div key={d.id} className="flex items-center justify-between p-2 rounded border bg-background/30 text-xs">
-                    <div className="flex items-center gap-2">
-                      <div className={cn(
-                        "h-2 w-2 rounded-full",
-                        status === "online" ? "bg-green-500" : status === "unstable" ? "bg-yellow-500" : "bg-red-500"
-                      )} />
-                      <div className="flex flex-col">
-                        <span className="font-bold uppercase truncate max-w-[120px]">{d.apelido_interno || d.serial}</span>
-                        <span className="text-[9px] opacity-60 uppercase">{d.num_filial || '—'}</span>
-                      </div>
+          <div className="h-full flex flex-col overflow-hidden">
+            <div className="flex-1 overflow-hidden relative">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`${panel.id}-${currentPage}`}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.5, ease: "easeInOut" }}
+                  className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 p-1 h-full content-start overflow-y-auto custom-scrollbar"
+                >
+                  {paginatedItems.map((item: any) => (
+                    <ItemComponent 
+                      key={item.id} 
+                      item={item} 
+                      status={panel.type === "status" ? getDeviceStatus(item) : item.status} 
+                    />
+                  ))}
+                  {items.length === 0 && (
+                    <div className="col-span-full flex items-center justify-center h-40 text-muted-foreground italic">
+                      Nenhum item encontrado
                     </div>
-                    <span className="text-[10px] opacity-60">
-                      {d.last_heartbeat_at ? formatDistanceToNow(new Date(d.last_heartbeat_at), { addSuffix: true, locale: ptBR }) : 'Nunca'}
-                    </span>
-                  </div>
-                );
-              })}
+                  )}
+                </motion.div>
+              </AnimatePresence>
             </div>
-          </ScrollArea>
+            
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-1 mt-2 pb-1">
+                {Array.from({ length: totalPages }).map((_, i) => (
+                  <div 
+                    key={i} 
+                    className={cn(
+                      "h-1 rounded-full transition-all duration-300",
+                      i === currentPage ? "w-6 bg-primary" : "w-1.5 bg-border"
+                    )}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         );
       default:
         return <div className="flex items-center justify-center h-full text-muted-foreground italic">Em desenvolvimento...</div>;
