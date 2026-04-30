@@ -147,8 +147,10 @@ export function MediaUpload({ tenantId, currentFolderId, onUploadComplete, onClo
 
           updateUploadStatus(upload.id, { status: 'completed', progress: 100 });
         } catch (error: any) {
-          console.error(error);
-          updateUploadStatus(upload.id, { status: 'error', error: error.message });
+          console.error('Upload error details:', error);
+          const errorMessage = error.message || 'Erro desconhecido no upload';
+          toast.error(`Falha ao enviar ${upload.file.name}: ${errorMessage}`);
+          updateUploadStatus(upload.id, { status: 'error', error: errorMessage });
         }
       }));
     }
