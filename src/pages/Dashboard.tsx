@@ -3,8 +3,12 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { devices, mediaItems, playlists, stores } from "@/lib/mock-data";
-import { Activity, MonitorPlay, Image as ImageIcon, Store, ArrowUpRight } from "lucide-react";
+import { Activity, MonitorPlay, Image as ImageIcon, Store, ArrowUpRight, Search, AlertTriangle, Package } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { format, subHours, startOfDay, endOfDay } from "date-fns";
+import { LineChart, Line, ResponsiveContainer } from "recharts";
 
 const stats = [
   { label: "Dispositivos online", value: devices.filter(d => d.status === "online").length, total: devices.length, icon: MonitorPlay, accent: "text-success" },
@@ -12,6 +16,7 @@ const stats = [
   { label: "Mídias publicadas",   value: mediaItems.length, icon: ImageIcon,  accent: "text-accent" },
   { label: "Playlists em uso",    value: playlists.length, icon: Activity,    accent: "text-warning" },
 ];
+
 
 export default function DashboardPage() {
   return (
