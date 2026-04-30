@@ -51,6 +51,7 @@ export default function DevicesPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedDevice, setSelectedDevice] = useState<any | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const openDeviceDrawer = (device: any) => {
     setSelectedDevice(device);
