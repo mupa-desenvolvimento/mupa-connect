@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/use-user-role";
+import { AnimatePresence, motion } from "framer-motion";
 import { 
   Monitor, 
   LayoutGrid, 
@@ -19,7 +20,9 @@ import {
   Share2,
   ExternalLink,
   Copy,
-  Clock
+  Clock,
+  ChevronRight,
+  ChevronLeft
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -68,6 +71,46 @@ export default function NOCDashboard() {
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [sharing, setSharing] = useState(false);
+  const [rotationIndex, setRotationIndex] = useState(0);
+  const ROTATION_INTERVAL = 10000; // 10 segundos para leitura confortável
+  const ITEMS_PER_PAGE = 12;
+
+  const storeStats = useMemo(() => {
+    return stores.map(store => {
+      const cleanCode = store.code?.replace(/^0+/, '');
+      const storeDevices = devices.filter(d => {
+        const deviceCode = d.num_filial?.replace(/^0+/, '');
+        return (deviceCode && cleanCode && deviceCode === cleanCode) || 
+               d.num_filial === store.code || 
+               d.empresa === store.name;
+      });
+      
+      const online = storeDevices.filter(d => getDeviceStatus(d) === "online").length;
+      const offline = storeDevices.filter(d => getDeviceStatus(d) === "offline").length;
+      const unstable = storeDevices.filter(d => getDeviceStatus(d) === "unstable").length;
+      
+      let status: "online" | "offline" | "unstable" = "online";
+      if (offline > 0) status = "offline";
+      else if (unstable > 0) status = "unstable";
+      
+      return {
+        ...store,
+        deviceCount: storeDevices.length,
+        online,
+        offline,
+        unstable,
+        status,
+        lastActivity: storeDevices.length > 0 ? storeDevices[0].last_heartbeat_at : null
+      };
+    });
+  }, [stores, devices]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRotationIndex(prev => prev + 1);
+    }, ROTATION_INTERVAL);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     fetchInitialData();
@@ -239,44 +282,81 @@ export default function NOCDashboard() {
         );
       case "status":
       case "store_view":
-        let displayDevices = devices;
-        if (panel.type === "store_view" && panel.storeId) {
-          const store = stores.find(s => s.id === panel.storeId);
-          if (store) {
-            const cleanCode = store.code?.replace(/^0+/, '');
-            displayDevices = devices.filter(d => {
-              const deviceCode = d.num_filial?.replace(/^0+/, '');
-              return (deviceCode && cleanCode && deviceCode === cleanCode) || 
-                     d.num_filial === store.code || 
-                     d.empresa === store.name;
-            });
+        const isStoreView = panel.type === "store_view";
+        const hasSelectedStore = !!panel.storeId;
+        
+        let items = [];
+        let ItemComponent: any;
+
+        if (isStoreView && !hasSelectedStore) {
+          // Visão Geral de Lojas (Gid de Lojas)
+          items = storeStats;
+          ItemComponent = StoreCard;
+        } else {
+          // Status de Dispositivos ou Loja Específica
+          let displayDevices = devices;
+          if (hasSelectedStore) {
+            const store = stores.find(s => s.id === panel.storeId);
+            if (store) {
+              const cleanCode = store.code?.replace(/^0+/, '');
+              displayDevices = devices.filter(d => {
+                const deviceCode = d.num_filial?.replace(/^0+/, '');
+                return (deviceCode && cleanCode && deviceCode === cleanCode) || 
+                       d.num_filial === store.code || 
+                       d.empresa === store.name;
+              });
+            }
           }
+          items = displayDevices;
+          ItemComponent = DeviceCard;
         }
+
+        const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
+        const currentPage = rotationIndex % (totalPages || 1);
+        const paginatedItems = items.slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE);
+
         return (
-          <ScrollArea className="h-full pr-4">
-            <div className="grid grid-cols-1 gap-1 p-1">
-              {displayDevices.map(d => {
-                const status = getDeviceStatus(d);
-                return (
-                  <div key={d.id} className="flex items-center justify-between p-2 rounded border bg-background/30 text-xs">
-                    <div className="flex items-center gap-2">
-                      <div className={cn(
-                        "h-2 w-2 rounded-full",
-                        status === "online" ? "bg-green-500" : status === "unstable" ? "bg-yellow-500" : "bg-red-500"
-                      )} />
-                      <div className="flex flex-col">
-                        <span className="font-bold uppercase truncate max-w-[120px]">{d.apelido_interno || d.serial}</span>
-                        <span className="text-[9px] opacity-60 uppercase">{d.num_filial || '—'}</span>
-                      </div>
+          <div className="h-full flex flex-col overflow-hidden">
+            <div className="flex-1 overflow-hidden relative">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`${panel.id}-${currentPage}`}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.5, ease: "easeInOut" }}
+                  className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2 p-1 h-full content-start overflow-y-auto"
+                >
+                  {paginatedItems.map((item: any) => (
+                    <ItemComponent 
+                      key={item.id} 
+                      item={item} 
+                      status={panel.type === "status" ? getDeviceStatus(item) : item.status} 
+                    />
+                  ))}
+                  {items.length === 0 && (
+                    <div className="col-span-full flex items-center justify-center h-40 text-muted-foreground italic">
+                      Nenhum item encontrado
                     </div>
-                    <span className="text-[10px] opacity-60">
-                      {d.last_heartbeat_at ? formatDistanceToNow(new Date(d.last_heartbeat_at), { addSuffix: true, locale: ptBR }) : 'Nunca'}
-                    </span>
-                  </div>
-                );
-              })}
+                  )}
+                </motion.div>
+              </AnimatePresence>
             </div>
-          </ScrollArea>
+            
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-1 mt-2 pb-1">
+                {Array.from({ length: totalPages }).map((_, i) => (
+                  <div 
+                    key={i} 
+                    className={cn(
+                      "h-1 rounded-full transition-all duration-300",
+                      i === currentPage ? "w-6 bg-primary" : "w-1.5 bg-border"
+                    )}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         );
       default:
         return <div className="flex items-center justify-center h-full text-muted-foreground italic">Em desenvolvimento...</div>;
@@ -452,6 +532,72 @@ function MetricCard({ label, value, color, icon: Icon }: any) {
       <Icon className={cn("h-8 w-8 mb-2 opacity-80", color)} />
       <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">{label}</span>
       <span className={cn("text-3xl font-black mt-1", color)}>{value}</span>
+    </div>
+  );
+}
+
+function StoreCard({ item, status }: any) {
+  const statusColor = status === "online" ? "bg-green-500" : status === "unstable" ? "bg-yellow-500" : "bg-red-500";
+  const borderColor = status === "online" ? "border-green-500/20" : status === "unstable" ? "border-yellow-500/20" : "border-red-500/20";
+  const textColor = status === "online" ? "text-green-500" : status === "unstable" ? "text-yellow-500" : "text-red-500";
+
+  return (
+    <div className={cn(
+      "flex flex-col justify-between p-3 rounded-lg border-2 bg-[#09090b] transition-all hover:scale-[1.02]",
+      borderColor
+    )}>
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex flex-col overflow-hidden">
+          <span className="text-xs font-black uppercase truncate text-white leading-tight">{item.name}</span>
+          <span className="text-[10px] opacity-50 font-bold uppercase tracking-wider">{item.code}</span>
+        </div>
+        <div className={cn("h-3 w-3 rounded-full shrink-0 mt-1 shadow-[0_0_10px_rgba(0,0,0,0.5)]", statusColor)} />
+      </div>
+      
+      <div className="flex items-end justify-between mt-1">
+        <div className="flex flex-col">
+          <span className="text-[9px] uppercase font-bold opacity-40">Dispositivos</span>
+          <span className="text-lg font-black leading-none">{item.deviceCount}</span>
+        </div>
+        <div className="flex gap-1 text-[8px] font-black">
+          {item.offline > 0 && <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-500">{item.offline} OFF</span>}
+          {item.unstable > 0 && <span className="px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-500">{item.unstable} WARN</span>}
+          {item.online > 0 && <span className="px-1.5 py-0.5 rounded bg-green-500/20 text-green-500">{item.online} ON</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DeviceCard({ item, status }: any) {
+  const statusColor = status === "online" ? "bg-green-500" : status === "unstable" ? "bg-yellow-500" : "bg-red-500";
+  const borderColor = status === "online" ? "border-green-500/20" : status === "unstable" ? "border-yellow-500/20" : "border-red-500/20";
+  const textColor = status === "online" ? "text-green-500" : status === "unstable" ? "text-yellow-500" : "text-red-500";
+
+  return (
+    <div className={cn(
+      "flex flex-col justify-between p-3 rounded-lg border-2 bg-[#09090b] transition-all hover:scale-[1.02]",
+      borderColor
+    )}>
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex flex-col overflow-hidden">
+          <span className="text-xs font-black uppercase truncate text-white leading-tight">{item.apelido_interno || item.serial}</span>
+          <span className="text-[10px] opacity-50 font-bold uppercase tracking-wider">{item.num_filial || 'Sem Filial'}</span>
+        </div>
+        <div className={cn("h-3 w-3 rounded-full shrink-0 mt-1 shadow-[0_0_10px_rgba(0,0,0,0.5)]", statusColor, status !== 'offline' && "animate-pulse")} />
+      </div>
+      
+      <div className="flex items-end justify-between mt-1">
+        <div className="flex flex-col">
+          <span className="text-[9px] uppercase font-bold opacity-40">Visto por último</span>
+          <span className="text-[10px] font-bold truncate">
+            {item.last_heartbeat_at ? formatDistanceToNow(new Date(item.last_heartbeat_at), { addSuffix: true, locale: ptBR }) : 'Nunca'}
+          </span>
+        </div>
+        <Badge variant="outline" className={cn("text-[8px] h-4 px-1 border-0 bg-background/50 uppercase font-black", textColor)}>
+          {status}
+        </Badge>
+      </div>
     </div>
   );
 }
