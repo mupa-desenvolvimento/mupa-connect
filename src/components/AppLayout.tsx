@@ -1,4 +1,5 @@
 import { Outlet, useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -46,11 +47,18 @@ export default function AppLayout() {
   const userInitials = userEmail.substring(0, 2).toUpperCase() || "US";
 
   const isEditor = location.pathname.startsWith("/playlists/") && location.pathname !== "/playlists";
+  const isNOC = location.pathname === "/admin/monitoring";
 
-  if (isEditor) {
+  if (isEditor || isNOC) {
     return (
-      <div className="min-h-screen w-full bg-[#09090b]">
-        <Outlet />
+      <div className={cn("min-h-screen w-full", isEditor ? "bg-[#09090b]" : "bg-background")}>
+        {isNOC ? (
+          <div className="h-screen w-screen p-4">
+            <Outlet />
+          </div>
+        ) : (
+          <Outlet />
+        )}
       </div>
     );
   }
