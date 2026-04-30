@@ -5830,6 +5830,7 @@ export type Database = {
           nome: string
         }[]
       }
+      get_current_user_company_id: { Args: never; Returns: string }
       get_device_config: { Args: { p_device_token: string }; Returns: Json }
       get_device_weather_settings: {
         Args: { p_device_code: string }
