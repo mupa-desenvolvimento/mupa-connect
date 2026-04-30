@@ -140,7 +140,10 @@ export function ProductQueriesFeed({ storeId, storeCode, tenantId, isSuperAdmin 
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
+      {viewMode === 'feed' && (
+        <div className="absolute top-10 left-0 right-0 h-[2px] bg-primary/20 z-10 animate-scan pointer-events-none" />
+      )}
       <div className="flex items-center justify-between mb-2 px-1">
         <div className="flex gap-1">
           <Button 
