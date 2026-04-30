@@ -11,6 +11,7 @@ import {
   MoreVertical, 
   Trash2, 
   ChevronRight,
+  Recycle,
   Loader2,
   FileIcon,
   Video,
