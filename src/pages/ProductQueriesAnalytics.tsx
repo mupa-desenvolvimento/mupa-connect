@@ -66,9 +66,11 @@ const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#0088FE", "#00C49F"
 
 export default function ProductQueriesAnalytics() {
   const [period, setPeriod] = useState("all");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [selectedStore, setSelectedStore] = useState("all");
   const [selectedDevice, setSelectedDevice] = useState("all");
   const [reportModalOpen, setReportModalOpen] = useState(false);
+
 
   const { data: logs, isLoading, refetch } = useQuery({
     queryKey: ["product-queries-logs", period, selectedStore, selectedDevice],
