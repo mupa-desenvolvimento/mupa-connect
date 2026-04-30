@@ -107,66 +107,19 @@ export function MediaUpload({ tenantId, companyId, currentFolderId, onUploadComp
           const fileExt = fileToUpload.name.split('.').pop() || (fileToUpload.type === 'image/webp' ? 'webp' : 'jpg');
           const fileName = `${crypto.randomUUID()}.${fileExt}`;
           
-          // Tentar buscar nome da empresa, mas não travar se falhar
-          const { data: empresaData } = await supabase
-            .from('companies')
-            .select('name')
-            .eq('id', tenantId as any)
-            .maybeSingle();
+          // Usar Edge Function para upload seguro com validação de Tenant/Company no servidor
+          const formData = new FormData();
+          formData.append('file', fileToUpload);
+          formData.append('tenantId', tenantId);
+          formData.append('companyId', companyId || '');
+          if (currentFolderId) formData.append('folderId', currentFolderId);
 
-          const companyName = (empresaData?.name || 'company').replace(/[^a-zA-Z0-9]/g, '_');
-          const storagePath = `${companyName}_${tenantId}/${fileName}`;
-
-          const { error: uploadError } = await supabase.storage
-            .from('media')
-            .upload(storagePath, fileToUpload, {
-              cacheControl: '3600',
-              upsert: false
-            });
+          const { data, error: uploadError } = await supabase.functions.invoke('media-upload', {
+            body: formData,
+          });
 
           if (uploadError) throw uploadError;
 
-          const { data: { publicUrl } } = supabase.storage
-            .from('media')
-            .getPublicUrl(storagePath);
-
-          const type = upload.file.type.startsWith('video') ? 'video' : 'image';
-
-          // Validação crítica: garantir que tenant_id e company_id existem antes do insert
-          if (!tenantId || !companyId) {
-            const { data: { user } } = await supabase.auth.getUser();
-            
-            // Telemetria: Logar erro de identificadores ausentes para diagnóstico
-            await supabase.from('platform_logs').insert({
-              level: 'error',
-              category: 'media_upload',
-              message: `Identificadores ausentes durante upload de mídia (Tenant: ${tenantId}, Company: ${companyId}): ${upload.file.name}`,
-              user_id: user?.id,
-              metadata: {
-                file_name: upload.file.name,
-                tenant_id: tenantId,
-                company_id: companyId,
-                browser: navigator.userAgent
-              }
-            });
-
-            throw new Error('Empresa não identificada. Por favor, recarregue a página.');
-          }
-
-          const { error: dbError } = await supabase
-            .from('media_items')
-            .insert({
-              name: upload.file.name,
-              type: type,
-              file_url: publicUrl,
-              file_size: fileToUpload.size,
-              folder_id: currentFolderId,
-              tenant_id: tenantId,
-              company_id: companyId,
-              status: 'ready'
-            });
-
-          if (dbError) throw dbError;
 
           updateUploadStatus(upload.id, { status: 'completed', progress: 100 });
         } catch (error: any) {
