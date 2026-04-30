@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useUserRole } from "@/hooks/use-user-role";
 
 interface CreateUserModalProps {
   isOpen: boolean;
@@ -32,63 +33,66 @@ export function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalP
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [companyId, setCompanyId] = useState("");
+  const [role, setRole] = useState("tecnico");
   const [loading, setLoading] = useState(false);
+  const { companyId: currentCompanyId, isSuperAdmin } = useUserRole();
 
-  // Fetch companies for the select dropdown
+  // Fetch companies for the select dropdown (only for SuperAdmins)
   const { data: companies } = useQuery({
     queryKey: ["companies-list"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("companies")
-        .select("code, name")
+        .select("id, name")
         .order("name");
       if (error) throw error;
       return data;
     },
-    enabled: isOpen,
+    enabled: isOpen && isSuperAdmin,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password || !name || !companyId) {
+    const targetCompanyId = isSuperAdmin ? companyId : currentCompanyId;
+
+    if (!email || !password || !name || !targetCompanyId || !role) {
       toast.error("Preencha todos os campos");
       return;
     }
 
     setLoading(true);
     try {
-      // In a real multi-tenant app with admin privileges, we'd use a service role or edge function
-      // Since we want to bypass email confirmation, we use signUp with auto-confirm (if configured in Supabase)
-      // or we use an Edge Function. For now, we'll try standard signup.
-      
+      // 1. Sign up the user
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: name,
-            company_id: companyId,
           },
         },
       });
 
       if (error) throw error;
 
-      // Update the public.users table (trigger might handle this, but we ensure company mapping)
-      // Note: In your schema, 'company' is a text field in public.users
       if (data.user) {
-        const { error: updateError } = await supabase
-          .from("users")
-          .update({ 
-            name: name,
-            company: companyId 
-          })
-          .eq("id", data.user.id);
+        // 2. Create the user profile
+        const { error: profileError } = await supabase
+          .from("user_profiles")
+          .insert({
+            id: data.user.id,
+            company_id: targetCompanyId,
+            role: role,
+          });
         
-        if (updateError) console.error("Error updating user profile:", updateError);
+        if (profileError) {
+          console.error("Error creating user profile:", profileError);
+          toast.error("Usuário criado, mas houve erro ao definir perfil.");
+        } else {
+          toast.success("Usuário cadastrado com sucesso!");
+        }
       }
 
-      toast.success("Usuário cadastrado com sucesso!");
       onSuccess?.();
       onClose();
       // Reset form
@@ -96,6 +100,7 @@ export function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalP
       setPassword("");
       setName("");
       setCompanyId("");
+      setRole("tecnico");
     } catch (error: any) {
       toast.error(error.message || "Erro ao cadastrar usuário");
     } finally {
@@ -143,21 +148,39 @@ export function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalP
               minLength={6}
             />
           </div>
+          
           <div className="space-y-2">
-            <Label htmlFor="company">Empresa Vinculada</Label>
-            <Select value={companyId} onValueChange={setCompanyId} required>
+            <Label htmlFor="role">Perfil de Acesso</Label>
+            <Select value={role} onValueChange={setRole} required>
               <SelectTrigger>
-                <SelectValue placeholder="Selecione uma empresa" />
+                <SelectValue placeholder="Selecione um perfil" />
               </SelectTrigger>
               <SelectContent>
-                {companies?.map((company) => (
-                  <SelectItem key={company.code} value={company.code || ""}>
-                    {company.name}
-                  </SelectItem>
-                ))}
+                <SelectItem value="admin">Administrador</SelectItem>
+                <SelectItem value="tecnico">Técnico</SelectItem>
+                <SelectItem value="marketing">Marketing</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {isSuperAdmin && (
+            <div className="space-y-2">
+              <Label htmlFor="company">Empresa Vinculada</Label>
+              <Select value={companyId} onValueChange={setCompanyId} required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma empresa" />
+                </SelectTrigger>
+                <SelectContent>
+                  {companies?.map((company) => (
+                    <SelectItem key={company.id} value={company.id}>
+                      {company.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <DialogFooter className="pt-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
               Cancelar
