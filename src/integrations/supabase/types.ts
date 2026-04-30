@@ -2790,6 +2790,7 @@ export type Database = {
       }
       media_items: {
         Row: {
+          auto_delete: boolean | null
           created_at: string | null
           duration: number | null
           file_size: number | null
@@ -2806,6 +2807,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          auto_delete?: boolean | null
           created_at?: string | null
           duration?: number | null
           file_size?: number | null
@@ -2822,6 +2824,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          auto_delete?: boolean | null
           created_at?: string | null
           duration?: number | null
           file_size?: number | null
@@ -5882,6 +5885,7 @@ export type Database = {
         Args: { check_tenant_id: string; check_user_id: string }
         Returns: boolean
       }
+      check_media_in_use: { Args: { media_id: string }; Returns: boolean }
       check_tenant_limit: {
         Args: {
           p_current_count: number

@@ -63,6 +63,7 @@ interface MediaItem {
   thumbnail_url: string | null;
   tenant_id: string;
   created_at: string;
+  auto_delete: boolean;
 }
 
 interface FolderItem {
@@ -205,7 +206,35 @@ export default function MediaPage() {
     }
   };
 
+  const toggleAutoDelete = async (id: string, currentStatus: boolean) => {
+    const { error } = await supabase
+      .from('media_items')
+      .update({ auto_delete: !currentStatus })
+      .eq('id', id);
+
+    if (error) {
+      toast.error("Erro ao atualizar auto exclusão: " + error.message);
+    } else {
+      toast.success(currentStatus ? "Auto exclusão desativada" : "Auto exclusão ativada");
+      fetchMedia();
+    }
+  };
+
   const deleteItem = async (id: string) => {
+    // Check if media is in use via the new RPC function
+    const { data: isInUse, error: checkError } = await supabase
+      .rpc('check_media_in_use', { media_id: id });
+
+    if (checkError) {
+      toast.error("Erro ao verificar uso da mídia: " + checkError.message);
+      return;
+    }
+
+    if (isInUse) {
+      toast.error("Esta mídia está em uso em uma playlist ou campanha e não pode ser excluída.");
+      return;
+    }
+
     const { error } = await supabase.from('media_items').delete().eq('id', id);
     if (error) {
       toast.error("Erro ao excluir: " + error.message);
