@@ -1066,7 +1066,7 @@ export type Database = {
           name: string
           settings: Json | null
           slug: string
-          tenant_id: string | null
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -1079,7 +1079,7 @@ export type Database = {
           name: string
           settings?: Json | null
           slug: string
-          tenant_id?: string | null
+          tenant_id: string
           updated_at?: string
         }
         Update: {
@@ -1092,7 +1092,7 @@ export type Database = {
           name?: string
           settings?: Json | null
           slug?: string
-          tenant_id?: string | null
+          tenant_id?: string
           updated_at?: string
         }
         Relationships: [
@@ -4845,7 +4845,7 @@ export type Database = {
           phone: string | null
           playlist_id: string | null
           regional_responsavel: string | null
-          tenant_id: string | null
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -4864,7 +4864,7 @@ export type Database = {
           phone?: string | null
           playlist_id?: string | null
           regional_responsavel?: string | null
-          tenant_id?: string | null
+          tenant_id: string
           updated_at?: string
         }
         Update: {
@@ -4883,7 +4883,7 @@ export type Database = {
           phone?: string | null
           playlist_id?: string | null
           regional_responsavel?: string | null
-          tenant_id?: string | null
+          tenant_id?: string
           updated_at?: string
         }
         Relationships: [
