@@ -476,6 +476,14 @@ export default function DevicesPage() {
           )}
         </div>
       </ScrollArea>
+
+      <DeviceFirebaseCommandDrawer
+        device={selectedDevice}
+        status={selectedDevice ? getStatus(selectedDevice.last_heartbeat_at, selectedDevice.last_proof_at) : "offline"}
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        formatDate={formatDate}
+      />
     </div>
   );
 }
