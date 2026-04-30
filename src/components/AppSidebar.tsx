@@ -9,6 +9,7 @@ import {
   Network,
   Settings,
   ShieldCheck,
+  BarChart3,
 } from "lucide-react";
 import {
   Sidebar,
@@ -32,6 +33,7 @@ const main = [
   { title: "Playlists", url: "/playlists", icon: ListVideo },
   { title: "Campanhas", url: "/campanhas", icon: Megaphone },
   { title: "Mídias", url: "/midias", icon: ImageIcon },
+  { title: "Inteligência EAN", url: "/admin/analytics/consultas", icon: BarChart3 },
 ];
 
 const org = [
@@ -102,7 +104,6 @@ export function AppSidebar() {
               <SidebarMenu>
                 {renderItem({ title: "SuperAdmin", url: "/superadmin", icon: ShieldCheck })}
                 {renderItem({ title: "Monitoramento", url: "/admin/player-logs", icon: LayoutDashboard })}
-                {renderItem({ title: "Inteligência EAN", url: "/admin/analytics/consultas", icon: LayoutDashboard })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
