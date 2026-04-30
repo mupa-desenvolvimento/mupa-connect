@@ -63,6 +63,7 @@ export default function ProductQueriesAnalytics() {
   const [period, setPeriod] = useState("all");
   const [selectedStore, setSelectedStore] = useState("all");
   const [selectedDevice, setSelectedDevice] = useState("all");
+  const [reportModalOpen, setReportModalOpen] = useState(false);
 
   const { data: logs, isLoading, refetch } = useQuery({
     queryKey: ["product-queries-logs", period, selectedStore, selectedDevice],
