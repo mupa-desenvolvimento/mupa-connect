@@ -114,11 +114,17 @@ export function MediaUpload({ tenantId, companyId, currentFolderId, onUploadComp
           formData.append('companyId', companyId || '');
           if (currentFolderId) formData.append('folderId', currentFolderId);
 
+          console.log('Iniciando invoke da função media-upload...');
           const { data, error: uploadError } = await supabase.functions.invoke('media-upload', {
             body: formData,
           });
 
-          if (uploadError) throw uploadError;
+          if (uploadError) {
+            console.error('Erro no invoke da função:', uploadError);
+            throw uploadError;
+          }
+          console.log('Upload concluído com sucesso:', data);
+
 
 
           updateUploadStatus(upload.id, { status: 'completed', progress: 100 });
