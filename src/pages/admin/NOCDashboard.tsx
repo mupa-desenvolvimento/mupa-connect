@@ -131,6 +131,47 @@ export default function NOCDashboard() {
     }
   };
 
+  const handleShare = async () => {
+    if (!companyId || !tenantId) {
+      toast.error("Erro ao identificar empresa/tenant.");
+      return;
+    }
+
+    setSharing(true);
+    try {
+      const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      
+      const { data, error } = await supabase
+        .from("monitoring_views" as any)
+        .insert({
+          token,
+          company_id: companyId,
+          tenant_id: tenantId,
+          config: {
+            layout,
+            panels
+          },
+          expires_at: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString() // 7 dias
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const url = `${window.location.origin}/monitoring/view/${token}`;
+      await navigator.clipboard.writeText(url);
+      toast.success("Link de monitoramento copiado para a área de transferência! Válido por 7 dias.");
+      
+      // Opcional: abrir em nova aba
+      window.open(url, '_blank');
+    } catch (err) {
+      console.error("Error sharing monitoring:", err);
+      toast.error("Falha ao gerar link compartilhado.");
+    } finally {
+      setSharing(false);
+    }
+  };
+
   const getDeviceStatus = (device: any) => {
     if (!device.last_heartbeat_at) return "offline";
     const now = new Date();
