@@ -59,7 +59,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
 export default function ProductQueriesAnalytics() {
-  const [period, setPeriod] = useState("7");
+  const [period, setPeriod] = useState("all");
   const [selectedStore, setSelectedStore] = useState("all");
   const [selectedDevice, setSelectedDevice] = useState("all");
 
