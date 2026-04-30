@@ -389,11 +389,15 @@ export default function DevicesPage() {
                 {filteredDevices.map((d) => {
                   const status = getStatus(d.last_heartbeat_at, d.last_proof_at);
                   return (
-                    <Card key={d.id} className={cn(
-                      "hover:shadow-md transition-all border-l-4",
-                      status === "online" ? "border-l-success" : 
-                      status === "unstable" ? "border-l-warning" : "border-l-destructive"
-                    )}>
+                    <Card
+                      key={d.id}
+                      onClick={() => openDeviceDrawer(d)}
+                      className={cn(
+                        "hover:shadow-md transition-all border-l-4 cursor-pointer",
+                        status === "online" ? "border-l-success" :
+                        status === "unstable" ? "border-l-warning" : "border-l-destructive"
+                      )}
+                    >
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start mb-4">
                           <div className="flex items-center gap-2">
