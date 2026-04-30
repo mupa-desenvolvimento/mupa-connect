@@ -53,7 +53,7 @@ interface PanelConfig {
 }
 
 export default function NOCDashboard() {
-  const { isSuperAdmin, isTecnico, companyId, tenantId } = useUserRole();
+  const { isSuperAdmin, isTecnico, companyId, tenantId, role } = useUserRole();
   const navigate = useNavigate();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [layout, setLayout] = useState<LayoutType>("4");
@@ -67,6 +67,7 @@ export default function NOCDashboard() {
   const [stores, setStores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     fetchInitialData();
