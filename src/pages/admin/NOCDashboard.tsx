@@ -250,25 +250,42 @@ export default function NOCDashboard() {
           </div>
         );
       case "alerts":
-        const alerts = devices.filter(d => getDeviceStatus(d) !== "online").slice(0, 20);
+        const alerts = devices.filter(d => getDeviceStatus(d) !== "online");
+        const alertsTotalPages = Math.ceil(alerts.length / ITEMS_PER_PAGE);
+        const alertsCurrentPage = rotationIndex % (alertsTotalPages || 1);
+        const paginatedAlerts = alerts.slice(alertsCurrentPage * ITEMS_PER_PAGE, (alertsCurrentPage + 1) * ITEMS_PER_PAGE);
+
         return (
-          <ScrollArea className="h-full pr-4">
-            <div className="space-y-2 p-1">
-              {alerts.length === 0 ? (
-                <p className="text-center text-muted-foreground py-10">Nenhum alerta crítico</p>
-              ) : (
-                alerts.map(d => (
-                  <div key={d.id} className="flex items-center justify-between p-3 rounded-lg border bg-background/50 border-destructive/20">
-                    <div className="flex flex-col">
-                      <span className="font-bold text-sm uppercase">{d.apelido_interno || d.serial}</span>
-                      <span className="text-[10px] text-muted-foreground uppercase">{d.empresa || 'Sem Loja'}</span>
+          <div className="h-full flex flex-col overflow-hidden">
+            <div className="flex-1 overflow-hidden relative">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`alerts-${alertsCurrentPage}`}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.5 }}
+                  className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2 p-1 h-full content-start overflow-y-auto"
+                >
+                  {paginatedAlerts.map(d => (
+                    <DeviceCard key={d.id} item={d} status={getDeviceStatus(d)} />
+                  ))}
+                  {alerts.length === 0 && (
+                    <div className="col-span-full flex items-center justify-center h-40 text-muted-foreground italic">
+                      Nenhum alerta crítico
                     </div>
-                    <Badge variant="destructive" className="animate-pulse">OFFLINE</Badge>
-                  </div>
-                ))
-              )}
+                  )}
+                </motion.div>
+              </AnimatePresence>
             </div>
-          </ScrollArea>
+            {alertsTotalPages > 1 && (
+              <div className="flex items-center justify-center gap-1 mt-2 pb-1">
+                {Array.from({ length: alertsTotalPages }).map((_, i) => (
+                  <div key={i} className={cn("h-1 rounded-full transition-all duration-300", i === alertsCurrentPage ? "w-6 bg-destructive" : "w-1.5 bg-border")} />
+                ))}
+              </div>
+            )}
+          </div>
         );
       case "queries_feed":
         const storeForFeed = stores.find(s => s.id === panel.storeId);
