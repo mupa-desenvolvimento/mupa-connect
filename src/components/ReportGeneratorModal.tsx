@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { FileText, Download, Loader2, BarChart3, Package, Monitor, Info } from "lucide-react";
 import { format } from "date-fns";
+import { DateRange } from "react-day-picker";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -27,10 +28,12 @@ interface ReportGeneratorModalProps {
   logs: any[];
   filters: {
     period: string;
+    dateRange?: DateRange;
     store: string;
     device: string;
   };
 }
+
 
 export function ReportGeneratorModal({ isOpen, onClose, logs, filters }: ReportGeneratorModalProps) {
   const [reportType, setReportType] = useState<"general" | "products" | "devices">("general");
