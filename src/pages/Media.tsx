@@ -77,6 +77,7 @@ interface FolderItem {
 
 export default function MediaPage() {
   const { tenantId, isLoading: isTenantLoading } = useTenant();
+  const navigate = useNavigate();
   const [items, setItems] = useState<MediaItem[]>([]);
   const [folders, setFolders] = useState<FolderItem[]>([]);
   const [currentFolder, setCurrentFolder] = useState<string | null>(null);
