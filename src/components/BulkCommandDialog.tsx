@@ -167,7 +167,13 @@ export function BulkCommandDialog({
       return;
     }
     let value = "";
-    if (selectedCmd.field) {
+    
+    // Novas regras de EAN automático para comandos específicos
+    if (commandKey === "fecha_app") {
+      value = "040816";
+    } else if (commandKey === "img_delete") {
+      value = "050223";
+    } else if (selectedCmd.field) {
       value = inputValue.trim();
       if (!value) {
         toast.error("Informe o valor do comando.");
