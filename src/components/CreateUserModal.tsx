@@ -63,7 +63,13 @@ export function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalP
     const targetTenantId = selectedCompany?.tenant_id || tenantId;
 
     if (!email || !password || !name || !targetCompanyId || !role) {
-      toast.error("Preencha todos os campos");
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+
+    if (!targetTenantId) {
+      console.error("Erro: tenant_id não identificado para a empresa selecionada", { targetCompanyId, companies });
+      toast.error("Erro: Não foi possível identificar o tenant da empresa selecionada.");
       return;
     }
 
