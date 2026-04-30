@@ -24,6 +24,7 @@ import NotFound from "./pages/NotFound.tsx";
 import PlayerMonitoring from "./pages/PlayerMonitoring";
 import ProductQueriesAnalytics from "./pages/ProductQueriesAnalytics";
 import UsersPage from "./pages/Users";
+import QuickAccessPage from "./pages/QuickAccess";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
