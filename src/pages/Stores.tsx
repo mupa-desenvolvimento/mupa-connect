@@ -62,26 +62,43 @@ export default function StoresPage() {
       if (error) throw error;
 
       // Fetch device counts for the current page
-      const codes = stores.map(s => s.code).filter(Boolean) as string[];
-      let deviceCounts: Record<string, number> = {};
-      
-      if (codes.length > 0) {
-        const { data: devices } = await supabase
-          .from("dispositivos")
-          .select("num_filial")
-          .in("num_filial", codes);
+      // We'll fetch all devices once to ensure we can match flexibly
+      const { data: allDevices } = await supabase
+        .from("dispositivos")
+        .select("num_filial");
 
-        deviceCounts = devices?.reduce((acc: Record<string, number>, d) => {
-          if (d.num_filial) acc[d.num_filial] = (acc[d.num_filial] || 0) + 1;
-          return acc;
-        }, {}) || {};
-      }
+      const storesWithCounts = stores.map((s) => {
+        const storeCode = s.code;
+        let count = 0;
+        
+        if (storeCode && allDevices) {
+          const cleanCode = storeCode.replace(/[^0-9]/g, '');
+          count = allDevices.filter(d => {
+            if (!d.num_filial) return false;
+            
+            // Match exact
+            if (d.num_filial === storeCode) return true;
+            
+            // Match numeric variants (e.g. "1", "01", "001")
+            const dClean = d.num_filial.replace(/[^0-9]/g, '');
+            if (cleanCode && dClean === cleanCode) {
+              const n1 = parseInt(cleanCode, 10);
+              const n2 = parseInt(dClean, 10);
+              return !isNaN(n1) && !isNaN(n2) && n1 === n2;
+            }
+            
+            return false;
+          }).length;
+        }
+
+        return {
+          ...s,
+          devicesCount: count,
+        };
+      });
 
       return {
-        stores: stores.map((s) => ({
-          ...s,
-          devicesCount: deviceCounts[s.code || ""] || 0,
-        })),
+        stores: storesWithCounts,
         count: count || 0,
       };
     },
