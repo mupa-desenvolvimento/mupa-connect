@@ -249,7 +249,7 @@ export default function ProductQueriesAnalytics() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-wider text-muted-foreground">Dispositivos Ativos</p>
-                <p className="mt-2 font-display text-3xl font-bold">{uniqueDevices}</p>
+                <p className="mt-2 font-display text-3xl font-bold">{uniqueDevicesCount}</p>
               </div>
               <div className="h-10 w-10 rounded-xl bg-accent/10 grid place-items-center text-accent">
                 <Monitor className="h-5 w-5" />
