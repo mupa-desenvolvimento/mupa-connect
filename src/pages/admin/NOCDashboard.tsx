@@ -536,6 +536,72 @@ function MetricCard({ label, value, color, icon: Icon }: any) {
   );
 }
 
+function StoreCard({ item, status }: any) {
+  const statusColor = status === "online" ? "bg-green-500" : status === "unstable" ? "bg-yellow-500" : "bg-red-500";
+  const borderColor = status === "online" ? "border-green-500/20" : status === "unstable" ? "border-yellow-500/20" : "border-red-500/20";
+  const textColor = status === "online" ? "text-green-500" : status === "unstable" ? "text-yellow-500" : "text-red-500";
+
+  return (
+    <div className={cn(
+      "flex flex-col justify-between p-3 rounded-lg border-2 bg-[#09090b] transition-all hover:scale-[1.02]",
+      borderColor
+    )}>
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex flex-col overflow-hidden">
+          <span className="text-xs font-black uppercase truncate text-white leading-tight">{item.name}</span>
+          <span className="text-[10px] opacity-50 font-bold uppercase tracking-wider">{item.code}</span>
+        </div>
+        <div className={cn("h-3 w-3 rounded-full shrink-0 mt-1 shadow-[0_0_10px_rgba(0,0,0,0.5)]", statusColor)} />
+      </div>
+      
+      <div className="flex items-end justify-between mt-1">
+        <div className="flex flex-col">
+          <span className="text-[9px] uppercase font-bold opacity-40">Dispositivos</span>
+          <span className="text-lg font-black leading-none">{item.deviceCount}</span>
+        </div>
+        <div className="flex gap-1 text-[8px] font-black">
+          {item.offline > 0 && <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-500">{item.offline} OFF</span>}
+          {item.unstable > 0 && <span className="px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-500">{item.unstable} WARN</span>}
+          {item.online > 0 && <span className="px-1.5 py-0.5 rounded bg-green-500/20 text-green-500">{item.online} ON</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DeviceCard({ item, status }: any) {
+  const statusColor = status === "online" ? "bg-green-500" : status === "unstable" ? "bg-yellow-500" : "bg-red-500";
+  const borderColor = status === "online" ? "border-green-500/20" : status === "unstable" ? "border-yellow-500/20" : "border-red-500/20";
+  const textColor = status === "online" ? "text-green-500" : status === "unstable" ? "text-yellow-500" : "text-red-500";
+
+  return (
+    <div className={cn(
+      "flex flex-col justify-between p-3 rounded-lg border-2 bg-[#09090b] transition-all hover:scale-[1.02]",
+      borderColor
+    )}>
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex flex-col overflow-hidden">
+          <span className="text-xs font-black uppercase truncate text-white leading-tight">{item.apelido_interno || item.serial}</span>
+          <span className="text-[10px] opacity-50 font-bold uppercase tracking-wider">{item.num_filial || 'Sem Filial'}</span>
+        </div>
+        <div className={cn("h-3 w-3 rounded-full shrink-0 mt-1 shadow-[0_0_10px_rgba(0,0,0,0.5)]", statusColor, status !== 'offline' && "animate-pulse")} />
+      </div>
+      
+      <div className="flex items-end justify-between mt-1">
+        <div className="flex flex-col">
+          <span className="text-[9px] uppercase font-bold opacity-40">Visto por último</span>
+          <span className="text-[10px] font-bold truncate">
+            {item.last_heartbeat_at ? formatDistanceToNow(new Date(item.last_heartbeat_at), { addSuffix: true, locale: ptBR }) : 'Nunca'}
+          </span>
+        </div>
+        <Badge variant="outline" className={cn("text-[8px] h-4 px-1 border-0 bg-background/50 uppercase font-black", textColor)}>
+          {status}
+        </Badge>
+      </div>
+    </div>
+  );
+}
+
 function getPanelDefaultTitle(type: PanelType): string {
   switch (type) {
     case "metrics": return "Métricas Gerais";
