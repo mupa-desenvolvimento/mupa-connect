@@ -70,6 +70,8 @@ interface CommandConfig {
   field?: "package" | "codbar" | "ip";
   placeholder?: string;
   accent: string;
+  /** Quando definido, envia esse codbar fixo sem solicitar input do usuário */
+  fixedCodbar?: string;
 }
 
 const COMMANDS: CommandConfig[] = [
@@ -115,16 +117,18 @@ const COMMANDS: CommandConfig[] = [
   },
   {
     key: "resetar",
-    comando: "resetar_app",
-    label: "Resetar Aplicação",
-    description: "Reinicia o aplicativo no dispositivo",
+    comando: "consulta_ean",
+    fixedCodbar: "050223",
+    label: "Restaurar App",
+    description: "Restaura o aplicativo no dispositivo",
     icon: RotateCcw,
     accent: "text-warning",
   },
   {
     key: "fechar",
-    comando: "fechar_app",
-    label: "Fechar Aplicação",
+    comando: "consulta_ean",
+    fixedCodbar: "040816",
+    label: "Fechar App",
     description: "Encerra o aplicativo no dispositivo",
     icon: XCircle,
     accent: "text-destructive",
@@ -159,13 +163,14 @@ export function DeviceFirebaseCommandDrawer({
       }
     }
 
+    const codbarValue = cfg.fixedCodbar ?? (cfg.field === "codbar" ? value : "");
     const payload: Record<string, string> = {
       comando: cfg.comando,
       id_grupo: device.grupo_dispositivos ?? "",
-      codbar: cfg.field === "codbar" ? value : "",
+      codbar: codbarValue,
       package: cfg.field === "package" ? value : "",
       ip: cfg.field === "ip" ? value : "",
-      time: new Date().toISOString(),
+      time: `${Date.now()}`,
     };
 
     setSending(cfg.key);
