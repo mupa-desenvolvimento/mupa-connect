@@ -171,7 +171,13 @@ export default function SharedMonitoringPage() {
         if (panel.type === "store_view" && panel.storeId) {
           const store = stores.find(s => s.id === panel.storeId);
           if (store) {
-            displayDevices = devices.filter(d => d.num_filial === store.code || d.empresa === store.name);
+            const cleanCode = store.code?.replace(/^0+/, '');
+            displayDevices = devices.filter(d => {
+              const deviceCode = d.num_filial?.replace(/^0+/, '');
+              return (deviceCode && cleanCode && deviceCode === cleanCode) || 
+                     d.num_filial === store.code || 
+                     d.empresa === store.name;
+            });
           }
         }
         return (
