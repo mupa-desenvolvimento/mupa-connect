@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
@@ -7,8 +7,16 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, Plus, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { RefreshCw, Plus, Search, ChevronLeft, ChevronRight, Smartphone, ExternalLink, MoreVertical } from "lucide-react";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useUserRole } from "@/hooks/use-user-role";
+import { QuickAccessModal } from "@/components/QuickAccessModal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function StoresPage() {
   const [page, setPage] = useState(0);
