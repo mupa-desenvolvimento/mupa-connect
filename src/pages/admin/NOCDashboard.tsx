@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/use-user-role";
+import { AnimatePresence, motion } from "framer-motion";
 import { 
   Monitor, 
   LayoutGrid, 
@@ -19,7 +20,9 @@ import {
   Share2,
   ExternalLink,
   Copy,
-  Clock
+  Clock,
+  ChevronRight,
+  ChevronLeft
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
