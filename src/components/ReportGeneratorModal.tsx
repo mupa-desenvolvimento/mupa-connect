@@ -19,7 +19,7 @@ import {
 import { FileText, Download, Loader2, BarChart3, Package, Monitor, Info, Store, Tag } from "lucide-react";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
-import jsPDF from "jsPDF";
+import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 interface ReportGeneratorModalProps {
