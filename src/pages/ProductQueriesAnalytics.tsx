@@ -127,8 +127,9 @@ export default function ProductQueriesAnalytics() {
   
   const productCounts = logs?.reduce((acc: any, log) => {
     const key = log.ean || "N/A";
-    if (!acc[key]) acc[key] = { ean: key, desc: log.descricao_produto || "Sem descrição", count: 0 };
+    if (!acc[key]) acc[key] = { ean: key, desc: log.descricao_produto || "Sem descrição", count: 0, errors: 0 };
     acc[key].count++;
+    if (log.status_code !== 200) acc[key].errors++;
     return acc;
   }, {});
   
@@ -157,6 +158,14 @@ export default function ProductQueriesAnalytics() {
     return acc;
   }, {});
 
+  const storesRanking = logs?.reduce((acc: any, log) => {
+    const store = log.loja || "Sem Loja";
+    if (!acc[store]) acc[store] = { name: store, count: 0, errors: 0 };
+    acc[store].count++;
+    if (log.status_code !== 200) acc[store].errors++;
+    return acc;
+  }, {});
+
   const topDevicesData = Object.values(devicesRanking || {})
     .sort((a: any, b: any) => b.count - a.count)
     .slice(0, 5) as any[];
@@ -169,7 +178,6 @@ export default function ProductQueriesAnalytics() {
 
   const errorChartData = Object.entries(errorStatusData).map(([status, count]) => ({ status, count }));
 
-  // Relatórios movidos para ReportGeneratorModal.tsx
 
 
   if (isLoading) {
