@@ -435,10 +435,10 @@ export default function DevicesPage() {
                           </div>
                         </div>
 
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="icon" 
+                        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="outline"
+                            size="icon"
                             className="h-8 w-8 text-destructive hover:bg-destructive/10"
                             onClick={() => handleRebootDevice(d.id.toString(), d.apelido_interno)}
                             title="Reiniciar Player"
