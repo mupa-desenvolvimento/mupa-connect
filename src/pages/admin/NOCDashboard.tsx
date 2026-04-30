@@ -100,8 +100,8 @@ export default function NOCDashboard() {
 
   async function fetchStores() {
     let query = supabase.from("stores").select("id, name, code");
-    if (!isSuperAdmin && companyId) {
-      query = query.eq("company_id", companyId);
+    if (!isSuperAdmin && tenantId) {
+      query = query.eq("tenant_id", tenantId);
     }
     const { data } = await query;
     if (data) setStores(data);
@@ -290,7 +290,7 @@ export default function NOCDashboard() {
                 {panel.type === "metrics" && <Activity className="h-3.5 w-3.5 text-primary" />}
                 {panel.type === "alerts" && <AlertCircle className="h-3.5 w-3.5 text-destructive" />}
                 {panel.type === "status" && <Monitor className="h-3.5 w-3.5 text-green-500" />}
-                {panel.type === "store_view" && <Store className="h-3.5 w-3.5 text-blue-500" />}
+                {panel.type === "store_view" && <Warehouse className="h-3.5 w-3.5 text-blue-500" />}
                 {panel.title}
               </CardTitle>
               
