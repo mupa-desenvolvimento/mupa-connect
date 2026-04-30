@@ -177,6 +177,16 @@ export default function NOCDashboard() {
             </div>
           </ScrollArea>
         );
+      case "queries_feed":
+        const storeForFeed = stores.find(s => s.id === panel.storeId);
+        return (
+          <ProductQueriesFeed 
+            storeId={panel.storeId} 
+            storeCode={storeForFeed?.code}
+            tenantId={tenantId}
+            isSuperAdmin={isSuperAdmin}
+          />
+        );
       case "status":
       case "store_view":
         let displayDevices = devices;
