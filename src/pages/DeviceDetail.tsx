@@ -25,7 +25,7 @@ export default function DeviceDetailPage() {
     setLoading(true);
     supabase
       .from("dispositivos")
-      .select("id, apelido_interno, serial, online, resolucao")
+      .select("id, apelido_interno, serial, online")
       .eq("id", Number(id))
       .maybeSingle()
       .then(({ data }) => {
@@ -35,7 +35,7 @@ export default function DeviceDetailPage() {
             name: data.apelido_interno ?? "Dispositivo",
             device_code: data.serial ?? null,
             status: data.online ? "online" : "offline",
-            resolution: data.resolucao ?? null,
+            resolution: null,
           });
         } else {
           setDevice(null);
