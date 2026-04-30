@@ -36,6 +36,22 @@ export function AppSidebar() {
   if (isLoading) return null;
 
 
+  const mainItems = [
+    { title: "Dashboard", url: "/", icon: LayoutDashboard, visible: true },
+    { title: "Dispositivos", url: "/dispositivos", icon: MonitorPlay, visible: isTecnico },
+    { title: "Playlists", url: "/playlists", icon: ListVideo, visible: isMarketing },
+    { title: "Campanhas", url: "/campanhas", icon: Megaphone, visible: isMarketing },
+    { title: "Mídias", url: "/midias", icon: ImageIcon, visible: isMarketing },
+    { title: "Inteligência EAN", url: "/admin/analytics/consultas", icon: BarChart3, visible: true },
+  ].filter((i) => i.visible);
+
+  const orgItems = [
+    { title: "Usuários", url: "/usuarios", icon: Users, visible: isAdmin },
+    { title: "Lojas", url: "/lojas", icon: Store, visible: isAdmin },
+    { title: "Grupos", url: "/grupos", icon: Network, visible: isAdmin },
+    { title: "Configurações", url: "/configuracoes", icon: Settings, visible: isAdmin },
+  ].filter((i) => i.visible);
+
   const isActive = (path: string) => (path === "/" ? pathname === "/" : pathname.startsWith(path));
 
   const renderItem = (item: { title: string; url: string; icon: any }) => (
@@ -81,14 +97,14 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>Operação</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>{main.map(renderItem)}</SidebarMenu>
+            <SidebarMenu>{mainItems.map(renderItem)}</SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
         <SidebarGroup>
           <SidebarGroupLabel>Organização</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>{org.map(renderItem)}</SidebarMenu>
+            <SidebarMenu>{orgItems.map(renderItem)}</SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
