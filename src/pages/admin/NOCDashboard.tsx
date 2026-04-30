@@ -71,6 +71,46 @@ export default function NOCDashboard() {
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [sharing, setSharing] = useState(false);
+  const [rotationIndex, setRotationIndex] = useState(0);
+  const ROTATION_INTERVAL = 10000; // 10 segundos para leitura confortável
+  const ITEMS_PER_PAGE = 8;
+
+  const storeStats = useMemo(() => {
+    return stores.map(store => {
+      const cleanCode = store.code?.replace(/^0+/, '');
+      const storeDevices = devices.filter(d => {
+        const deviceCode = d.num_filial?.replace(/^0+/, '');
+        return (deviceCode && cleanCode && deviceCode === cleanCode) || 
+               d.num_filial === store.code || 
+               d.empresa === store.name;
+      });
+      
+      const online = storeDevices.filter(d => getDeviceStatus(d) === "online").length;
+      const offline = storeDevices.filter(d => getDeviceStatus(d) === "offline").length;
+      const unstable = storeDevices.filter(d => getDeviceStatus(d) === "unstable").length;
+      
+      let status: "online" | "offline" | "unstable" = "online";
+      if (offline > 0) status = "offline";
+      else if (unstable > 0) status = "unstable";
+      
+      return {
+        ...store,
+        deviceCount: storeDevices.length,
+        online,
+        offline,
+        unstable,
+        status,
+        lastActivity: storeDevices.length > 0 ? storeDevices[0].last_heartbeat_at : null
+      };
+    });
+  }, [stores, devices]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRotationIndex(prev => prev + 1);
+    }, ROTATION_INTERVAL);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     fetchInitialData();
