@@ -569,3 +569,71 @@ function getPanelDefaultTitle(type: PanelType): string {
     default: return "Painel";
   }
 }
+
+function AutoRotatingGrid({ items, rotationIndex, ItemComponent, getItemStatus, emptyMessage, accentColor }: any) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const observer = new ResizeObserver((entries) => {
+      const { width, height } = entries[0].contentRect;
+      const cols = Math.floor((width + CARD_GAP) / (CARD_MIN_WIDTH + CARD_GAP));
+      const rows = Math.floor((height + CARD_GAP) / (CARD_HEIGHT + CARD_GAP));
+      const total = Math.max(1, cols * rows);
+      setItemsPerPage(total);
+    });
+
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const totalPages = Math.ceil(items.length / itemsPerPage);
+  const currentPage = rotationIndex % (totalPages || 1);
+  const paginatedItems = items.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
+
+  return (
+    <div ref={containerRef} className="h-full flex flex-col overflow-hidden">
+      <div className="flex-1 overflow-hidden relative">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`grid-${currentPage}-${itemsPerPage}`}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.02 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] grid-auto-rows-[120px] gap-3 p-1 h-full content-start overflow-hidden"
+          >
+            {paginatedItems.map((item: any) => (
+              <ItemComponent 
+                key={item.id} 
+                item={item} 
+                status={getItemStatus(item)} 
+              />
+            ))}
+            {items.length === 0 && (
+              <div className="col-span-full flex items-center justify-center h-40 text-muted-foreground italic">
+                {emptyMessage}
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+      
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-1.5 mt-2 pb-1">
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <div 
+              key={i} 
+              className={cn(
+                "h-1.5 rounded-full transition-all duration-500",
+                i === currentPage ? cn("w-8", accentColor || "bg-primary") : "w-1.5 bg-border/40"
+              )}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
