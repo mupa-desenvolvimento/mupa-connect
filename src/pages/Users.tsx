@@ -20,7 +20,7 @@ import { toast } from "sonner";
 
 export default function UsersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { companyId, isAdmin } = useUserRole();
+  const { companyId, tenantId, isAdmin, isSuperAdmin } = useUserRole();
 
   const { data: users, isLoading, refetch } = useQuery({
     queryKey: ["users-list", companyId, tenantId, isSuperAdmin],
