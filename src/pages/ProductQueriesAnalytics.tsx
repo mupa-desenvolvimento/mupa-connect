@@ -212,18 +212,64 @@ export default function ProductQueriesAnalytics() {
         description="Insights operacionais e performance de consultas EAN"
         actions={
           <div className="flex flex-wrap gap-2">
-            <Select value={period} onValueChange={setPeriod}>
-              <SelectTrigger className="w-[140px]">
-                <Calendar className="mr-2 h-4 w-4" />
-                <SelectValue placeholder="Período" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todo período</SelectItem>
-                <SelectItem value="1">Hoje</SelectItem>
-                <SelectItem value="7">Últimos 7 dias</SelectItem>
-                <SelectItem value="30">Últimos 30 dias</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+              <Select value={period} onValueChange={(val) => {
+                setPeriod(val);
+                if (val !== 'custom') setDateRange(undefined);
+              }}>
+                <SelectTrigger className="w-[140px]">
+                  <Calendar className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="Período" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todo período</SelectItem>
+                  <SelectItem value="1">Hoje</SelectItem>
+                  <SelectItem value="7">Últimos 7 dias</SelectItem>
+                  <SelectItem value="30">Últimos 30 dias</SelectItem>
+                  <SelectItem value="custom">Personalizado</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {period === "custom" && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-[240px] justify-start text-left font-normal",
+                        !dateRange && "text-muted-foreground"
+                      )}
+                    >
+                      <Calendar className="mr-2 h-4 w-4" />
+                      {dateRange?.from ? (
+                        dateRange.to ? (
+                          <>
+                            {format(dateRange.from, "dd/MM/yy")} -{" "}
+                            {format(dateRange.to, "dd/MM/yy")}
+                          </>
+                        ) : (
+                          format(dateRange.from, "dd/MM/yy")
+                        )
+                      ) : (
+                        <span>Selecione uma data</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      initialFocus
+                      mode="range"
+                      defaultMonth={dateRange?.from}
+                      selected={dateRange}
+                      onSelect={setDateRange}
+                      numberOfMonths={2}
+                      locale={ptBR}
+                    />
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
+
 
             <Select value={selectedStore} onValueChange={setSelectedStore}>
               <SelectTrigger className="w-[140px]">
