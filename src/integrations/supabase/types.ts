@@ -4432,6 +4432,51 @@ export type Database = {
           },
         ]
       }
+      product_queries_log: {
+        Row: {
+          apelido: string | null
+          codigo_etiqueta: string | null
+          codigo_produto: string | null
+          consulted_at: string | null
+          created_at: string | null
+          descricao_produto: string | null
+          device_id: string
+          ean: string | null
+          id: number
+          link_imagem: string | null
+          loja: string | null
+          status_code: number | null
+        }
+        Insert: {
+          apelido?: string | null
+          codigo_etiqueta?: string | null
+          codigo_produto?: string | null
+          consulted_at?: string | null
+          created_at?: string | null
+          descricao_produto?: string | null
+          device_id: string
+          ean?: string | null
+          id?: never
+          link_imagem?: string | null
+          loja?: string | null
+          status_code?: number | null
+        }
+        Update: {
+          apelido?: string | null
+          codigo_etiqueta?: string | null
+          codigo_produto?: string | null
+          consulted_at?: string | null
+          created_at?: string | null
+          descricao_produto?: string | null
+          device_id?: string
+          ean?: string | null
+          id?: never
+          link_imagem?: string | null
+          loja?: string | null
+          status_code?: number | null
+        }
+        Relationships: []
+      }
       product_recommendations: {
         Row: {
           category: string | null
