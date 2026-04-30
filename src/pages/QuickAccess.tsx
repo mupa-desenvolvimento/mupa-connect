@@ -59,7 +59,8 @@ export default function QuickAccessPage() {
             .single();
           
           if (storeData) {
-            query = query.eq("num_filial", storeData.code);
+            const cleanCode = storeData.code?.replace(/[^0-9]/g, '');
+            query = query.or(`num_filial.eq.${storeData.code}${cleanCode ? `,num_filial.eq.${cleanCode}` : ''}`);
           }
         }
 
