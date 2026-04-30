@@ -223,25 +223,18 @@ export default function MediaPage() {
   };
 
   const deleteItem = async (id: string) => {
-    // Check if media is in use via the new RPC function
-    const { data: isInUse, error: checkError } = await supabase
-      .rpc('check_media_in_use', { media_id: id });
+    if (!confirm("Deseja mover esta mídia para a lixeira? Ela poderá ser recuperada em até 30 dias.")) return;
 
-    if (checkError) {
-      toast.error("Erro ao verificar uso da mídia: " + checkError.message);
-      return;
-    }
+    const { error } = await supabase
+      .from('media_items')
+      .update({ deleted_at: new Date().toISOString(), deleted_by: (await supabase.auth.getUser()).data.user?.id })
+      .eq('id', id);
 
-    if (isInUse) {
-      toast.error("Esta mídia está em uso em uma playlist ou campanha e não pode ser excluída.");
-      return;
-    }
-
-    const { error } = await supabase.from('media_items').delete().eq('id', id);
     if (error) {
-      toast.error("Erro ao excluir: " + error.message);
+      toast.error("Erro ao mover para lixeira: " + error.message);
     } else {
-      toast.success("Item excluído");
+      await supabase.rpc('log_media_trash_action', { p_media_id: id, p_action: 'deleted' });
+      toast.success("Mídia movida para a lixeira");
       fetchMedia();
     }
   };
