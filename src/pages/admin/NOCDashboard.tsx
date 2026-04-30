@@ -318,6 +318,7 @@ export default function NOCDashboard() {
                 {panel.type === "alerts" && <AlertCircle className="h-3.5 w-3.5 text-destructive" />}
                 {panel.type === "status" && <Monitor className="h-3.5 w-3.5 text-green-500" />}
                 {panel.type === "store_view" && <Warehouse className="h-3.5 w-3.5 text-blue-500" />}
+                {panel.type === "queries_feed" && <Search className="h-3.5 w-3.5 text-purple-500" />}
                 {panel.title}
               </CardTitle>
               
@@ -342,6 +343,7 @@ export default function NOCDashboard() {
                         <option value="alerts">Alertas Críticos</option>
                         <option value="status">Status Dispositivos</option>
                         <option value="store_view">Visão por Loja</option>
+                        <option value="queries_feed">Consultas em Tempo Real</option>
                       </select>
                     </div>
 
