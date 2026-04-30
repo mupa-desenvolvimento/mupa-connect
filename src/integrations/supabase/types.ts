@@ -6490,6 +6490,8 @@ export type Database = {
         | "admin_loja"
         | "operador_conteudo"
         | "tecnico"
+        | "admin"
+        | "marketing"
       campaign_type:
         | "satisfaction_survey"
         | "product_link"
@@ -6638,6 +6640,8 @@ export const Constants = {
         "admin_loja",
         "operador_conteudo",
         "tecnico",
+        "admin",
+        "marketing",
       ],
       campaign_type: [
         "satisfaction_survey",
