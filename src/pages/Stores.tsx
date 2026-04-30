@@ -1,185 +1,158 @@
-import { PageHeader } from "@/components/PageHeader";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { MapPin, MonitorPlay, Plus, Loader2, RefreshCw, Store, Smartphone } from "lucide-react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { QuickAccessModal } from "@/components/QuickAccessModal";
-import { useState } from "react";
-import { useUserRole } from "@/hooks/use-user-role";
+import { PageHeader } from "@/components/PageHeader";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { RefreshCw, Plus, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export default function StoresPage() {
-  const [selectedStore, setSelectedStore] = useState<{ id: string; name: string } | null>(null);
-  const { companyId, tenantId, isSuperAdmin, isLoading: roleLoading } = useUserRole();
+  const [page, setPage] = useState(0);
+  const [pageSize] = useState(10);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const debouncedSearch = useDebounce(search, 300);
 
-  // Buscar dados da empresa ativa para nomear as filiais corretamente
-  const { data: company } = useQuery({
-    queryKey: ["company-info", companyId],
-    enabled: !!companyId,
+  const { data, isLoading, refetch, isFetching } = useQuery({
+    queryKey: ["stores-paginated", page, debouncedSearch, statusFilter],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("companies")
-        .select("id, code, name")
-        .eq("id", companyId!)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: storesData, isLoading, refetch } = useQuery({
-    queryKey: ["stores-by-company", companyId],
-    enabled: !roleLoading && (!!companyId || isSuperAdmin),
-    queryFn: async () => {
-      const { data: stores, error: storesError } = await supabase
+      let query = supabase
         .from("stores")
-        .select("id, name, code, tenant_id")
-        .eq("is_active", true);
+        .select("id, name, code, is_active, tenant_id", { count: "exact" })
+        .order("name");
 
-      if (storesError) throw storesError;
-
-      // Filtrar as lojas se não for super admin
-      let filteredStores = stores || [];
-      if (!isSuperAdmin) {
-        if (tenantId) {
-          // Gerente de loja - vê apenas as lojas vinculadas ao seu tenant
-          filteredStores = filteredStores.filter(s => s.tenant_id === tenantId);
-        } else if (companyId) {
-          // Admin da empresa - vê todas as lojas da empresa (o RLS já deve cuidar disso, mas aqui garantimos via lógica)
-          // Se as lojas tivessem company_id, filtraríamos por ele. Como usam tenant_id/RLS, mantemos a lista.
-        }
+      if (debouncedSearch) {
+        query = query.ilike("name", `%${debouncedSearch}%`);
+      }
+      if (statusFilter !== "all") {
+        query = query.eq("is_active", statusFilter === "active");
       }
 
-      // Agora buscamos as estatísticas de dispositivos para essas lojas
-      const { data: devices, error: deviceError } = await supabase
+      const { data, error, count } = await query.range(page * pageSize, (page + 1) * pageSize - 1);
+      if (error) throw error;
+
+      // Fetch device counts
+      const storeIds = data.map((s) => s.id);
+      const { data: devices } = await supabase
         .from("dispositivos")
-        .select("num_filial, online");
+        .select("num_filial")
+        .in("num_filial", data.map(s => s.code).filter(Boolean) as string[]);
 
-      if (deviceError) throw deviceError;
+      const deviceCounts = devices?.reduce((acc: Record<string, number>, d) => {
+        acc[d.num_filial!] = (acc[d.num_filial!] || 0) + 1;
+        return acc;
+      }, {});
 
-      const branchStats: Record<string, { total: number; online: number }> = {};
-      devices?.forEach((d) => {
-        const filial = d.num_filial || "Sem Filial";
-        if (!branchStats[filial]) branchStats[filial] = { total: 0, online: 0 };
-        branchStats[filial].total += 1;
-        if (d.online) branchStats[filial].online += 1;
-      });
-
-      const companyName = company?.name?.trim() || "Empresa";
-
-      return filteredStores.map((s) => ({
-        id: s.id,
-        name: s.name || `${companyName} - Filial ${s.code}`,
-        code: s.code || "---",
-        city: "—",
-        devicesCount: branchStats[s.code]?.total || 0,
-        onlineCount: branchStats[s.code]?.online || 0,
-      })).sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
+      return {
+        stores: data.map((s) => ({
+          ...s,
+          devicesCount: deviceCounts?.[s.code!] || 0,
+        })),
+        count: count || 0,
+      };
     },
   });
 
-  const showEmptyState = !roleLoading && !companyId && !isSuperAdmin;
+  const totalPages = Math.ceil((data?.count || 0) / pageSize);
 
   return (
-    <>
+    <div className="h-[calc(100vh-6rem)] flex flex-col">
       <PageHeader
-        title={`Lojas${company?.name ? ` - ${company.name.trim()}` : ""}`}
-        description="Gestão de unidades físicas e monitoramento de terminais por filial."
+        title="Gestão de Lojas"
         actions={
           <div className="flex gap-2">
-            <Button variant="outline" size="icon" onClick={() => refetch()} disabled={isLoading}>
-              <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+            <Button variant="outline" size="icon" onClick={() => refetch()} disabled={isFetching}>
+              <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
             </Button>
-            <Button className="bg-gradient-primary text-primary-foreground shadow-glow">
-              <Plus className="h-4 w-4 mr-1" /> Nova loja
+            <Button className="bg-gradient-primary">
+              <Plus className="h-4 w-4 mr-2" /> Nova Loja
             </Button>
           </div>
         }
       />
 
-      {showEmptyState ? (
-        <div className="h-40 flex items-center justify-center border-2 border-dashed rounded-xl border-border/40">
-          <p className="text-muted-foreground">Nenhuma empresa selecionada para este usuário.</p>
+      <div className="flex gap-4 mb-4 items-center">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nome..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-8"
+          />
         </div>
-      ) : isLoading || roleLoading ? (
-        <div className="h-64 flex flex-col items-center justify-center gap-2">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Carregando lojas...</p>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="active">Ativo</SelectItem>
+            <SelectItem value="inactive">Inativo</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex-1 overflow-hidden border rounded-md bg-card">
+        <div className="h-full overflow-y-auto">
+          <Table>
+            <TableHeader className="sticky top-0 bg-background z-10">
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Código</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Dispositivos</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-10">Carregando...</TableCell>
+                </TableRow>
+              ) : data?.stores.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-10">Nenhuma loja encontrada.</TableCell>
+                </TableRow>
+              ) : (
+                data?.stores.map((s) => (
+                  <TableRow key={s.id}>
+                    <TableCell className="font-medium">{s.name}</TableCell>
+                    <TableCell className="font-mono text-xs">{s.code}</TableCell>
+                    <TableCell>
+                      <Badge variant={s.is_active ? "default" : "secondary"}>
+                        {s.is_active ? "Ativo" : "Inativo"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{s.devicesCount}</TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="sm">Editar</Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {storesData && storesData.length > 0 ? (
-            storesData.map((s) => (
-              <Card key={s.id} className="hover:shadow-elegant transition-all duration-300 border-border/60 hover:border-primary/30 group">
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <div className="font-display font-bold text-lg truncate">{s.name}</div>
-                      </div>
-                      <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mt-0.5 px-1.5 py-0.5 bg-muted rounded w-fit">
-                        {s.code}
-                      </div>
-                    </div>
-                    <div className="h-10 w-10 rounded-xl bg-gradient-primary shadow-sm grid place-items-center text-primary-foreground text-xs font-bold shrink-0">
-                      <Store className="h-5 w-5" />
-                    </div>
-                  </div>
+      </div>
 
-                  <div className="mt-6 space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <MapPin className="h-4 w-4 text-primary" />
-                        <span>{s.city}</span>
-                      </div>
-                    </div>
-
-                    <div className="pt-3 border-t border-border/40 flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        <MonitorPlay className="h-4 w-4 text-primary" />
-                        <span>{s.devicesCount} Dispositivos</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="flex h-2 w-2 rounded-full bg-success animate-pulse"></span>
-                        <span className="text-xs font-semibold text-success">{s.onlineCount} Online</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 mt-4">
-                    <Button variant="ghost" className="flex-1 h-8 text-xs font-semibold text-primary hover:bg-primary/5">
-                      Detalhes
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="h-8 px-2 text-primary border-primary/20 hover:bg-primary/5"
-                      onClick={() => setSelectedStore({ id: s.id, name: s.name })}
-                      title="Gerenciar Acesso Rápido"
-                    >
-                      <Smartphone className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <div className="col-span-full h-40 flex items-center justify-center border-2 border-dashed rounded-xl border-border/40">
-              <p className="text-muted-foreground">
-                Nenhuma filial encontrada{company?.name ? ` para ${company.name.trim()}` : ""}.
-              </p>
-            </div>
-          )}
+      <div className="flex items-center justify-between py-4">
+        <span className="text-sm text-muted-foreground">
+          Página {page + 1} de {totalPages || 1}
+        </span>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
-      )}
-
-      <QuickAccessModal
-        isOpen={!!selectedStore}
-        onClose={() => setSelectedStore(null)}
-        storeId={selectedStore?.id}
-        storeName={selectedStore?.name}
-        companyId={companyId || undefined}
-        tenantId={tenantId || undefined}
-      />
-    </>
+      </div>
+    </div>
   );
 }
