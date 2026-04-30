@@ -628,7 +628,7 @@ export default function MediaPage() {
                           size="icon" 
                           className="h-8 w-8 text-destructive"
                           onClick={() => deleteItem(m.id)}
-                          title="Excluir"
+                          title="Mover para lixeira"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
