@@ -48,19 +48,30 @@ export default function UsersPage() {
       const { data, error } = await query;
       if (error) throw error;
 
+      // Buscar perfis para obter nomes e e-mails
+      const userIds = data.map(u => u.id);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", userIds);
+
+      const profileMap = (profiles || []).reduce((acc: any, p) => {
+        acc[p.id] = p;
+        return acc;
+      }, {});
+
       return data.map(u => ({
         ...u,
-        email: "usuario@mupa.app",
-        name: "Colaborador"
+        email: profileMap[u.id]?.email || "sem-email@mupa.app",
+        name: profileMap[u.id]?.full_name || "Colaborador"
       }));
     },
-    enabled: !!companyId || !!tenantId || isSuperAdmin,
+    enabled: (!!companyId || !!tenantId || isSuperAdmin),
   });
 
   const handleDeleteUser = async (id: string) => {
     if (!window.confirm("Deseja realmente remover este usuário?")) return;
     
-    // Deleting from user_profiles will cascade or we can use a service function
     const { error } = await supabase.from("user_profiles").delete().eq("id", id);
     if (error) {
       toast.error("Erro ao remover usuário");
@@ -112,14 +123,14 @@ export default function UsersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users?.length === 0 ? (
+                {!users || users.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={4} className="h-32 text-center text-muted-foreground">
                       Nenhum usuário encontrado.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  users?.map((user) => (
+                  users.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
