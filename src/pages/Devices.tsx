@@ -98,8 +98,9 @@ export default function DevicesPage() {
     const now = new Date().getTime();
     const heartbeatTime = new Date(lastHeartbeat).getTime();
     const proofTime = lastProof ? new Date(lastProof).getTime() : 0;
-    const isHeartbeatRecent = (now - heartbeatTime) < 60000;
-    const isProofRecent = (now - proofTime) < 60000;
+    // Aumentado para 5 minutos (300000ms) para ser mais tolerante a variações de conexão
+    const isHeartbeatRecent = (now - heartbeatTime) < 300000;
+    const isProofRecent = (now - proofTime) < 300000;
     if (isHeartbeatRecent) return isProofRecent ? "online" : "unstable";
     return "offline";
   };
