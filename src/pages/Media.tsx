@@ -11,6 +11,7 @@ import {
   MoreVertical, 
   Trash2, 
   ChevronRight,
+  Recycle,
   Loader2,
   FileIcon,
   Video,
@@ -51,6 +52,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useNavigate } from "react-router-dom";
 
 interface MediaItem {
   id: string;
@@ -75,6 +77,7 @@ interface FolderItem {
 
 export default function MediaPage() {
   const { tenantId, isLoading: isTenantLoading } = useTenant();
+  const navigate = useNavigate();
   const [items, setItems] = useState<MediaItem[]>([]);
   const [folders, setFolders] = useState<FolderItem[]>([]);
   const [currentFolder, setCurrentFolder] = useState<string | null>(null);
@@ -139,6 +142,7 @@ export default function MediaPage() {
     let query = supabase
       .from("media_items")
       .select("*")
+      .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
     if (tenantId) {
@@ -221,25 +225,18 @@ export default function MediaPage() {
   };
 
   const deleteItem = async (id: string) => {
-    // Check if media is in use via the new RPC function
-    const { data: isInUse, error: checkError } = await supabase
-      .rpc('check_media_in_use', { media_id: id });
+    if (!confirm("Deseja mover esta mídia para a lixeira? Ela poderá ser recuperada em até 30 dias.")) return;
 
-    if (checkError) {
-      toast.error("Erro ao verificar uso da mídia: " + checkError.message);
-      return;
-    }
+    const { error } = await supabase
+      .from('media_items')
+      .update({ deleted_at: new Date().toISOString(), deleted_by: (await supabase.auth.getUser()).data.user?.id })
+      .eq('id', id);
 
-    if (isInUse) {
-      toast.error("Esta mídia está em uso em uma playlist ou campanha e não pode ser excluída.");
-      return;
-    }
-
-    const { error } = await supabase.from('media_items').delete().eq('id', id);
     if (error) {
-      toast.error("Erro ao excluir: " + error.message);
+      toast.error("Erro ao mover para lixeira: " + error.message);
     } else {
-      toast.success("Item excluído");
+      await supabase.rpc('log_media_trash_action', { p_media_id: id, p_action: 'deleted' });
+      toast.success("Mídia movida para a lixeira");
       fetchMedia();
     }
   };
@@ -312,6 +309,10 @@ export default function MediaPage() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+
+            <Button variant="outline" size="sm" className="h-9" onClick={() => navigate("/midias/lixeira")}>
+              <Recycle className="h-4 w-4 mr-2" /> Lixeira
+            </Button>
 
             <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
               <DialogTrigger asChild>
@@ -500,7 +501,7 @@ export default function MediaPage() {
                           className="text-destructive cursor-pointer"
                           onClick={() => deleteItem(m.id)}
                         >
-                          <Trash2 className="h-4 w-4 mr-2" /> Excluir permanentemente
+                          <Trash2 className="h-4 w-4 mr-2" /> Mover para lixeira
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -627,7 +628,7 @@ export default function MediaPage() {
                           size="icon" 
                           className="h-8 w-8 text-destructive"
                           onClick={() => deleteItem(m.id)}
-                          title="Excluir"
+                          title="Mover para lixeira"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

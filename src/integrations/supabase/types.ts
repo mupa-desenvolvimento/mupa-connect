@@ -2792,6 +2792,8 @@ export type Database = {
         Row: {
           auto_delete: boolean | null
           created_at: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           duration: number | null
           file_size: number | null
           file_url: string | null
@@ -2809,6 +2811,8 @@ export type Database = {
         Insert: {
           auto_delete?: boolean | null
           created_at?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           duration?: number | null
           file_size?: number | null
           file_url?: string | null
@@ -2826,6 +2830,8 @@ export type Database = {
         Update: {
           auto_delete?: boolean | null
           created_at?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           duration?: number | null
           file_size?: number | null
           file_url?: string | null
@@ -2841,6 +2847,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "media_items_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "vw_user_creation_status"
+            referencedColumns: ["auth_user_id"]
+          },
           {
             foreignKeyName: "media_items_folder_id_fkey"
             columns: ["folder_id"]
@@ -2889,6 +2902,38 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "media_items"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_trash_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          media_id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          media_id: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          media_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_trash_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vw_user_creation_status"
+            referencedColumns: ["auth_user_id"]
           },
         ]
       }
@@ -6276,6 +6321,10 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      log_media_trash_action: {
+        Args: { p_action: string; p_media_id: string }
+        Returns: undefined
       }
       mark_device_command_executed: {
         Args: {
