@@ -540,6 +540,7 @@ export default function MediaPage() {
                   <TableHead className="w-[400px]">Nome</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Tamanho</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -558,6 +559,7 @@ export default function MediaPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">Pasta</TableCell>
+                    <TableCell>--</TableCell>
                     <TableCell className="text-muted-foreground">--</TableCell>
                     <TableCell className="text-muted-foreground">--</TableCell>
                     <TableCell className="text-right">
@@ -593,13 +595,29 @@ export default function MediaPage() {
                       <Badge variant="outline" className="capitalize text-[10px]">{m.type}</Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground font-mono text-[11px]">{formatSize(m.file_size)}</TableCell>
+                    <TableCell>
+                      {m.auto_delete ? (
+                        <Badge variant="destructive" className="text-[9px]">Auto Exclusão</Badge>
+                      ) : (
+                        <span className="text-[9px] text-muted-foreground">Manual</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-muted-foreground text-[11px]">{new Date(m.created_at).toLocaleDateString()}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyUrl(m.file_url)}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyUrl(m.file_url)} title="Copiar URL">
                           <Copy className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className={cn("h-8 w-8", m.auto_delete ? "text-primary" : "")}
+                          onClick={() => toggleAutoDelete(m.id, m.auto_delete)}
+                          title="Alternar auto exclusão"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" asChild title="Visualizar">
                           <a href={m.file_url} target="_blank" rel="noopener noreferrer">
                             <Play className="h-4 w-4" />
                           </a>
@@ -609,6 +627,7 @@ export default function MediaPage() {
                           size="icon" 
                           className="h-8 w-8 text-destructive"
                           onClick={() => deleteItem(m.id)}
+                          title="Excluir"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
