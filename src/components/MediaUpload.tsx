@@ -131,6 +131,11 @@ export function MediaUpload({ tenantId, currentFolderId, onUploadComplete, onClo
 
           const type = upload.file.type.startsWith('video') ? 'video' : 'image';
 
+          // Validação crítica: garantir que tenant_id existe antes do insert
+          if (!tenantId) {
+            throw new Error('Tenant ID não encontrado. Por favor, recarregue a página.');
+          }
+
           const { error: dbError } = await supabase
             .from('media_items')
             .insert({
