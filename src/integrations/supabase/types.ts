@@ -2922,6 +2922,64 @@ export type Database = {
         }
         Relationships: []
       }
+      monitoring_views: {
+        Row: {
+          company_id: string | null
+          config: Json
+          created_at: string | null
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          tenant_id: string | null
+          token: string
+        }
+        Insert: {
+          company_id?: string | null
+          config?: Json
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          tenant_id?: string | null
+          token: string
+        }
+        Update: {
+          company_id?: string | null
+          config?: Json
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          tenant_id?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monitoring_views_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "monitoring_views_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "vw_user_creation_status"
+            referencedColumns: ["auth_user_id"]
+          },
+          {
+            foreignKeyName: "monitoring_views_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       motivational_quotes: {
         Row: {
           author: string
