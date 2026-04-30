@@ -219,7 +219,7 @@ export default function NOCDashboard() {
     }
   };
 
-  const getDeviceStatus = (device: any) => {
+  function getDeviceStatus(device: any) {
     if (!device.last_heartbeat_at) return "offline";
     const now = new Date();
     const lastHeartbeat = new Date(device.last_heartbeat_at);
@@ -228,7 +228,7 @@ export default function NOCDashboard() {
     if (diffSeconds > 120) return "offline";
     if (diffSeconds > 60) return "unstable";
     return "online";
-  };
+  }
 
   const updatePanel = (id: string, updates: Partial<PanelConfig>) => {
     setPanels(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
