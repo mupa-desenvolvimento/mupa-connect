@@ -265,7 +265,7 @@ export default function NOCDashboard() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.5 }}
-                  className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2 p-1 h-full content-start overflow-y-auto"
+                  className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] grid-auto-rows-[120px] gap-3 p-1 h-full content-start overflow-y-auto"
                 >
                   {paginatedAlerts.map(d => (
                     <DeviceCard key={d.id} item={d} status={getDeviceStatus(d)} />
