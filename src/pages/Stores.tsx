@@ -9,48 +9,73 @@ import { useState } from "react";
 import { useUserRole } from "@/hooks/use-user-role";
 
 export default function StoresPage() {
-  const stockCenterId = "003ZAF";
-  const [selectedStore, setSelectedStore] = useState<{id: string, name: string} | null>(null);
-  const { companyId, tenantId } = useUserRole();
+  const [selectedStore, setSelectedStore] = useState<{ id: string; name: string } | null>(null);
+  const { companyId, tenantId, isSuperAdmin, isLoading: roleLoading } = useUserRole();
+
+  // Buscar dados da empresa ativa para nomear as filiais corretamente
+  const { data: company } = useQuery({
+    queryKey: ["company-info", companyId],
+    enabled: !!companyId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("companies")
+        .select("id, code, name")
+        .eq("id", companyId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const { data: storesData, isLoading, refetch } = useQuery({
-    queryKey: ["stores-stock-center"],
+    queryKey: ["stores-by-company", companyId],
+    enabled: !roleLoading && (!!companyId || isSuperAdmin),
     queryFn: async () => {
-      // 1. Get all unique branch numbers from devices of Stock Center
-      const { data: devices, error: deviceError } = await supabase
+      // Filtrar dispositivos pela empresa ativa do usuário (RLS também aplica)
+      let query = supabase
         .from("dispositivos")
-        .select("num_filial, online")
-        .ilike("empresa", stockCenterId);
-      
+        .select("num_filial, online, company_id");
+
+      if (companyId) {
+        query = query.eq("company_id", companyId);
+      } else if (!isSuperAdmin) {
+        return [];
+      }
+
+      const { data: devices, error: deviceError } = await query;
       if (deviceError) throw deviceError;
 
-      // 2. Count devices per branch
-      const branchStats: Record<string, { total: number, online: number }> = {};
-      devices?.forEach(d => {
+      // Agrupar por filial
+      const branchStats: Record<string, { total: number; online: number }> = {};
+      devices?.forEach((d) => {
         const filial = d.num_filial || "Sem Filial";
-        if (!branchStats[filial]) {
-          branchStats[filial] = { total: 0, online: 0 };
-        }
+        if (!branchStats[filial]) branchStats[filial] = { total: 0, online: 0 };
         branchStats[filial].total += 1;
         if (d.online) branchStats[filial].online += 1;
       });
 
-      // 3. Transform to display format
-      return Object.entries(branchStats).map(([filial, stats]) => ({
-        id: filial,
-        name: `Stock Center - Filial ${filial}`,
-        code: `SC-${filial.padStart(3, '0')}`,
-        city: "Passo Fundo", // Default for Stock Center
-        devicesCount: stats.total,
-        onlineCount: stats.online
-      })).sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
+      const companyName = company?.name?.trim() || "Empresa";
+      const companyCode = company?.code || "---";
+
+      return Object.entries(branchStats)
+        .map(([filial, stats]) => ({
+          id: filial,
+          name: `${companyName} - Filial ${filial}`,
+          code: `${companyCode}-${String(filial).padStart(3, "0")}`,
+          city: "—",
+          devicesCount: stats.total,
+          onlineCount: stats.online,
+        }))
+        .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
     },
   });
+
+  const showEmptyState = !roleLoading && !companyId && !isSuperAdmin;
 
   return (
     <>
       <PageHeader
-        title="Lojas - Stock Center"
+        title={`Lojas${company?.name ? ` - ${company.name.trim()}` : ""}`}
         description="Gestão de unidades físicas e monitoramento de terminais por filial."
         actions={
           <div className="flex gap-2">
@@ -64,7 +89,11 @@ export default function StoresPage() {
         }
       />
 
-      {isLoading ? (
+      {showEmptyState ? (
+        <div className="h-40 flex items-center justify-center border-2 border-dashed rounded-xl border-border/40">
+          <p className="text-muted-foreground">Nenhuma empresa selecionada para este usuário.</p>
+        </div>
+      ) : isLoading || roleLoading ? (
         <div className="h-64 flex flex-col items-center justify-center gap-2">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground">Carregando lojas...</p>
@@ -88,7 +117,7 @@ export default function StoresPage() {
                       <Store className="h-5 w-5" />
                     </div>
                   </div>
-                  
+
                   <div className="mt-6 space-y-3">
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2 text-muted-foreground">
@@ -96,7 +125,7 @@ export default function StoresPage() {
                         <span>{s.city}</span>
                       </div>
                     </div>
-                    
+
                     <div className="pt-3 border-t border-border/40 flex items-center justify-between">
                       <div className="flex items-center gap-2 text-sm font-medium">
                         <MonitorPlay className="h-4 w-4 text-primary" />
@@ -108,13 +137,13 @@ export default function StoresPage() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex gap-2 mt-4">
                     <Button variant="ghost" className="flex-1 h-8 text-xs font-semibold text-primary hover:bg-primary/5">
                       Detalhes
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="h-8 px-2 text-primary border-primary/20 hover:bg-primary/5"
                       onClick={() => setSelectedStore({ id: s.id, name: s.name })}
                       title="Gerenciar Acesso Rápido"
@@ -127,7 +156,9 @@ export default function StoresPage() {
             ))
           ) : (
             <div className="col-span-full h-40 flex items-center justify-center border-2 border-dashed rounded-xl border-border/40">
-              <p className="text-muted-foreground">Nenhuma filial encontrada para Stock Center.</p>
+              <p className="text-muted-foreground">
+                Nenhuma filial encontrada{company?.name ? ` para ${company.name.trim()}` : ""}.
+              </p>
             </div>
           )}
         </div>
