@@ -9,6 +9,7 @@ import {
   Network,
   Settings,
   ShieldCheck,
+  BarChart3,
 } from "lucide-react";
 import {
   Sidebar,
