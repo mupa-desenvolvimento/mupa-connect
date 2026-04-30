@@ -31,7 +31,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { pathname } = useLocation();
-  const { isAdmin, isSuperAdmin, isTecnico, isMarketing, isLoading } = useUserRole();
+  const { isAdmin, isSuperAdmin, isTecnico, isMarketing, isLoading, tenantId } = useUserRole();
 
   if (isLoading) return null;
 
@@ -47,7 +47,7 @@ export function AppSidebar() {
 
   const orgItems = [
     { title: "Usuários", url: "/usuarios", icon: Users, visible: isAdmin },
-    { title: "Lojas", url: "/lojas", icon: Store, visible: isAdmin },
+    { title: "Lojas", url: "/lojas", icon: Store, visible: isAdmin || !!tenantId },
     { title: "Grupos", url: "/grupos", icon: Network, visible: isAdmin },
     { title: "Configurações", url: "/configuracoes", icon: Settings, visible: isAdmin },
   ].filter((i) => i.visible);

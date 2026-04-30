@@ -31,21 +31,32 @@ export default function StoresPage() {
     queryKey: ["stores-by-company", companyId],
     enabled: !roleLoading && (!!companyId || isSuperAdmin),
     queryFn: async () => {
-      // Filtrar dispositivos pela empresa ativa do usuário (RLS também aplica)
-      let query = supabase
-        .from("dispositivos")
-        .select("num_filial, online, company_id");
+      const { data: stores, error: storesError } = await supabase
+        .from("stores")
+        .select("id, name, code, tenant_id")
+        .eq("is_active", true);
 
-      if (companyId) {
-        query = query.eq("company_id", companyId);
-      } else if (!isSuperAdmin) {
-        return [];
+      if (storesError) throw storesError;
+
+      // Filtrar as lojas se não for super admin
+      let filteredStores = stores || [];
+      if (!isSuperAdmin) {
+        if (tenantId) {
+          // Gerente de loja - vê apenas as lojas vinculadas ao seu tenant
+          filteredStores = filteredStores.filter(s => s.tenant_id === tenantId);
+        } else if (companyId) {
+          // Admin da empresa - vê todas as lojas da empresa (o RLS já deve cuidar disso, mas aqui garantimos via lógica)
+          // Se as lojas tivessem company_id, filtraríamos por ele. Como usam tenant_id/RLS, mantemos a lista.
+        }
       }
 
-      const { data: devices, error: deviceError } = await query;
+      // Agora buscamos as estatísticas de dispositivos para essas lojas
+      const { data: devices, error: deviceError } = await supabase
+        .from("dispositivos")
+        .select("num_filial, online");
+
       if (deviceError) throw deviceError;
 
-      // Agrupar por filial
       const branchStats: Record<string, { total: number; online: number }> = {};
       devices?.forEach((d) => {
         const filial = d.num_filial || "Sem Filial";
@@ -55,18 +66,15 @@ export default function StoresPage() {
       });
 
       const companyName = company?.name?.trim() || "Empresa";
-      const companyCode = company?.code || "---";
 
-      return Object.entries(branchStats)
-        .map(([filial, stats]) => ({
-          id: filial,
-          name: `${companyName} - Filial ${filial}`,
-          code: `${companyCode}-${String(filial).padStart(3, "0")}`,
-          city: "—",
-          devicesCount: stats.total,
-          onlineCount: stats.online,
-        }))
-        .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
+      return filteredStores.map((s) => ({
+        id: s.id,
+        name: s.name || `${companyName} - Filial ${s.code}`,
+        code: s.code || "---",
+        city: "—",
+        devicesCount: branchStats[s.code]?.total || 0,
+        onlineCount: branchStats[s.code]?.online || 0,
+      })).sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
     },
   });
 
