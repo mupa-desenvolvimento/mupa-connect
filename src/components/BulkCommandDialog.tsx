@@ -387,7 +387,7 @@ export function BulkCommandDialog({
                 })}
               </div>
 
-              {selectedCmd.field && (
+              {selectedCmd.field && commandKey !== "fecha_app" && commandKey !== "img_delete" && (
                 <div className="space-y-1.5">
                   <Label className="text-xs">{selectedCmd.label}</Label>
                   <Input
