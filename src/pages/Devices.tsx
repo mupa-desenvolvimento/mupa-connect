@@ -61,8 +61,13 @@ export default function DevicesPage() {
     queryFn: async () => {
       let query = supabase.from("dispositivos").select("*");
       
-      if (!isSuperAdmin && companyId) {
+      // Filtrar por companyId se disponível (activeCompanyId)
+      if (companyId) {
         query = query.eq("company_id", companyId);
+      } else if (!isSuperAdmin) {
+        // Fallback de segurança se não for super admin e não tiver companyId
+        // mas o ideal é que o companyId venha do useUserRole() refletindo a seleção atual
+        return [];
       }
       
       const { data, error } = await query.order("apelido_interno");
@@ -76,8 +81,10 @@ export default function DevicesPage() {
     queryKey: ["stores-list", companyId],
     queryFn: async () => {
       let query = supabase.from("dispositivos").select("num_filial").not("num_filial", "is", null);
-      if (!isSuperAdmin && companyId) {
+      if (companyId) {
         query = query.eq("company_id", companyId);
+      } else if (!isSuperAdmin) {
+        return [];
       }
       const { data, error } = await query;
       if (error) return [];
