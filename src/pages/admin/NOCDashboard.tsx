@@ -15,7 +15,8 @@ import {
   RefreshCw,
   Store,
   Warehouse,
-  X
+  X,
+  MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,8 +36,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { ProductQueriesFeed } from "@/components/admin/monitoring/ProductQueriesFeed";
 
-type PanelType = "status" | "metrics" | "alerts" | "charts" | "store_view";
+type PanelType = "status" | "metrics" | "alerts" | "charts" | "store_view" | "queries_feed";
 type LayoutType = "1" | "2h" | "2v" | "4" | "6";
 
 interface PanelConfig {
@@ -175,6 +177,16 @@ export default function NOCDashboard() {
             </div>
           </ScrollArea>
         );
+      case "queries_feed":
+        const storeForFeed = stores.find(s => s.id === panel.storeId);
+        return (
+          <ProductQueriesFeed 
+            storeId={panel.storeId} 
+            storeCode={storeForFeed?.code}
+            tenantId={tenantId}
+            isSuperAdmin={isSuperAdmin}
+          />
+        );
       case "status":
       case "store_view":
         let displayDevices = devices;
@@ -306,6 +318,7 @@ export default function NOCDashboard() {
                 {panel.type === "alerts" && <AlertCircle className="h-3.5 w-3.5 text-destructive" />}
                 {panel.type === "status" && <Monitor className="h-3.5 w-3.5 text-green-500" />}
                 {panel.type === "store_view" && <Warehouse className="h-3.5 w-3.5 text-blue-500" />}
+                {panel.type === "queries_feed" && <Search className="h-3.5 w-3.5 text-purple-500" />}
                 {panel.title}
               </CardTitle>
               
@@ -330,10 +343,11 @@ export default function NOCDashboard() {
                         <option value="alerts">Alertas Críticos</option>
                         <option value="status">Status Dispositivos</option>
                         <option value="store_view">Visão por Loja</option>
+                        <option value="queries_feed">Consultas em Tempo Real</option>
                       </select>
                     </div>
 
-                    {panel.type === "store_view" && (
+                    {(panel.type === "store_view" || panel.type === "queries_feed") && (
                       <div className="space-y-1">
                         <label className="text-[10px] font-bold uppercase opacity-60">Selecionar Loja</label>
                         <select 
@@ -381,6 +395,7 @@ function getPanelDefaultTitle(type: PanelType): string {
     case "alerts": return "Alertas Críticos";
     case "status": return "Status Dispositivos";
     case "store_view": return "Visão por Loja";
+    case "queries_feed": return "Consultas em Tempo Real";
     default: return "Painel";
   }
 }
