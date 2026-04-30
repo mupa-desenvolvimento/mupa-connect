@@ -318,9 +318,11 @@ export default function ProductQueriesAnalytics() {
         logs={logs || []}
         filters={{
           period,
+          dateRange,
           store: selectedStore,
           device: selectedDevice
         }}
+
       />
 
       {/* KPI Cards */}
