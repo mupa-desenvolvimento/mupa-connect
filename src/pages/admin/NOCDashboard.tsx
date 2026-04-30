@@ -227,10 +227,12 @@ export default function NOCDashboard() {
     return <div className="p-20 text-center">Acesso restrito a técnicos e administradores.</div>;
   }
 
+  const isNOCRoute = window.location.pathname === "/admin/monitoring";
+
   return (
     <div className={cn(
       "flex flex-col bg-background text-foreground transition-all duration-500",
-      isFullscreen ? "fixed inset-0 z-50 p-4 bg-[#09090b]" : "h-full w-full"
+      (isFullscreen || isNOCRoute) ? "fixed inset-0 z-50 p-4 bg-[#09090b]" : "h-full w-full"
     )}>
       {/* Header do NOC */}
       <div className="flex items-center justify-between mb-4 border-b pb-4 border-border/40">
