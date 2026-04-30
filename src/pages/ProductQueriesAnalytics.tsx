@@ -151,7 +151,7 @@ export default function ProductQueriesAnalytics() {
     const name = log.apelido || log.device_id;
     if (!acc[log.device_id]) acc[log.device_id] = { name, count: 0, errors: 0 };
     acc[log.device_id].count++;
-    if (log.status_code !== 200 && log.status_code !== "200") acc[log.device_id].errors++;
+    if (log.status_code !== 200) acc[log.device_id].errors++;
     return acc;
   }, {});
 
