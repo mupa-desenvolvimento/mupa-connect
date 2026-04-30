@@ -73,7 +73,7 @@ export default function NOCDashboard() {
   const [sharing, setSharing] = useState(false);
   const [rotationIndex, setRotationIndex] = useState(0);
   const ROTATION_INTERVAL = 10000; // 10 segundos para leitura confortável
-  const ITEMS_PER_PAGE = 8;
+  const ITEMS_PER_PAGE = 12;
 
   const storeStats = useMemo(() => {
     return stores.map(store => {
