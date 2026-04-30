@@ -823,6 +823,7 @@ export type Database = {
           advertiser_id: string | null
           budget: number | null
           campaign_type: string | null
+          company_id: string | null
           contract_id: string | null
           created_at: string | null
           current_impressions: number | null
@@ -847,6 +848,7 @@ export type Database = {
           advertiser_id?: string | null
           budget?: number | null
           campaign_type?: string | null
+          company_id?: string | null
           contract_id?: string | null
           created_at?: string | null
           current_impressions?: number | null
@@ -871,6 +873,7 @@ export type Database = {
           advertiser_id?: string | null
           budget?: number | null
           campaign_type?: string | null
+          company_id?: string | null
           contract_id?: string | null
           created_at?: string | null
           current_impressions?: number | null
@@ -897,6 +900,13 @@ export type Database = {
             columns: ["advertiser_id"]
             isOneToOne: false
             referencedRelation: "advertisers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaigns_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
@@ -2143,6 +2153,7 @@ export type Database = {
           atualizado: string | null
           campanhas: string[] | null
           comando: string | null
+          company_id: string | null
           current_media_id: string | null
           current_playlist_id: string | null
           empresa: string | null
@@ -2165,6 +2176,7 @@ export type Database = {
           atualizado?: string | null
           campanhas?: string[] | null
           comando?: string | null
+          company_id?: string | null
           current_media_id?: string | null
           current_playlist_id?: string | null
           empresa?: string | null
@@ -2187,6 +2199,7 @@ export type Database = {
           atualizado?: string | null
           campanhas?: string[] | null
           comando?: string | null
+          company_id?: string | null
           current_media_id?: string | null
           current_playlist_id?: string | null
           empresa?: string | null
@@ -2204,6 +2217,13 @@ export type Database = {
           type?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "dispositivos_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "dispositivos_playlist_id_fkey"
             columns: ["playlist_id"]
@@ -5434,6 +5454,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_profiles: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          id: string
+          role: string | null
+          tenant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          id: string
+          role?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          role?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -6185,6 +6247,7 @@ export type Database = {
           atualizado: string | null
           campanhas: string[] | null
           comando: string | null
+          company_id: string | null
           current_media_id: string | null
           current_playlist_id: string | null
           empresa: string | null
