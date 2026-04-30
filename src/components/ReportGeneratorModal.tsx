@@ -73,7 +73,66 @@ export function ReportGeneratorModal({ isOpen, onClose, logs, filters }: ReportG
       periodLabel = `${format(filters.dateRange.from, "dd/MM/yy")}${filters.dateRange.to ? ` - ${format(filters.dateRange.to, "dd/MM/yy")}` : ""}`;
     } else {
       periodLabel = filters.period === "all" ? "Todo o tempo" : filters.period === "1" ? "Hoje" : `Últimos ${filters.period} dias`;
-    }
+      } 
+      else if (reportType === "stores") {
+        const storeStats = logs.reduce((acc: any, log) => {
+          const storeName = log.loja || "Sem Loja";
+          if (!acc[storeName]) acc[storeName] = { loja: storeName, consultas: 0, erros: 0 };
+          acc[storeName].consultas++;
+          if (log.status_code !== 200) acc[storeName].erros++;
+          return acc;
+        }, {});
+        const data = Object.values(storeStats).sort((a: any, b: any) => b.consultas - a.consultas);
+
+        if (formatType === "csv") {
+          generateCSV(data, `relatorio-lojas-${timestamp}`);
+        } else {
+          const doc = new jsPDF();
+          doc.text("Relatório de Consultas por Loja", 14, 15);
+          doc.setFontSize(10);
+          doc.text(`Período: ${periodLabel} | Lojas Ativas: ${data.length}`, 14, 22);
+          
+          autoTable(doc, {
+            startY: 30,
+            head: [["Loja", "Consultas", "Erros", "% Erro"]],
+            body: data.map((item: any) => [
+              item.loja, 
+              item.consultas, 
+              item.erros, 
+              ((item.erros / item.consultas) * 100).toFixed(1) + "%"
+            ]),
+            headStyles: { fillColor: [245, 158, 11] }
+          });
+          doc.save(`relatorio-lojas-${timestamp}.pdf`);
+        }
+      }
+      else if (reportType === "tags") {
+        const tagStats = logs.reduce((acc: any, log) => {
+          // Usando etiqueta do log se disponível, senão EAN como fallback se for etiqueta
+          const tag = log.etiqueta || log.ean || "N/A";
+          if (!acc[tag]) acc[tag] = { etiqueta: tag, descricao: log.descricao_produto || "Sem descrição", consultas: 0 };
+          acc[tag].consultas++;
+          return acc;
+        }, {});
+        const data = Object.values(tagStats).sort((a: any, b: any) => b.consultas - a.consultas);
+
+        if (formatType === "csv") {
+          generateCSV(data, `relatorio-etiquetas-${timestamp}`);
+        } else {
+          const doc = new jsPDF();
+          doc.text("Relatório de Etiquetas Mais Consultadas", 14, 15);
+          doc.setFontSize(10);
+          doc.text(`Período: ${periodLabel} | Total de Etiquetas: ${data.length}`, 14, 22);
+          
+          autoTable(doc, {
+            startY: 30,
+            head: [["Etiqueta/EAN", "Descrição", "Consultas"]],
+            body: data.map((item: any) => [item.etiqueta, item.descricao, item.consultas]),
+            headStyles: { fillColor: [139, 92, 246] }
+          });
+          doc.save(`relatorio-etiquetas-${timestamp}.pdf`);
+        }
+      } 
 
 
     try {
