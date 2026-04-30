@@ -16,8 +16,12 @@ import {
   Store,
   Warehouse,
   X,
-  MessageSquare
+  Share2,
+  ExternalLink,
+  Copy,
+  Clock
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -49,7 +53,7 @@ interface PanelConfig {
 }
 
 export default function NOCDashboard() {
-  const { isSuperAdmin, isTecnico, companyId, tenantId } = useUserRole();
+  const { isSuperAdmin, isTecnico, companyId, tenantId, role } = useUserRole();
   const navigate = useNavigate();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [layout, setLayout] = useState<LayoutType>("4");
@@ -63,6 +67,7 @@ export default function NOCDashboard() {
   const [stores, setStores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     fetchInitialData();
@@ -123,6 +128,47 @@ export default function NOCDashboard() {
         document.exitFullscreen();
         setIsFullscreen(false);
       }
+    }
+  };
+
+  const handleShare = async () => {
+    if (!companyId || !tenantId) {
+      toast.error("Erro ao identificar empresa/tenant.");
+      return;
+    }
+
+    setSharing(true);
+    try {
+      const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      
+      const { data, error } = await supabase
+        .from("monitoring_views" as any)
+        .insert({
+          token,
+          company_id: companyId,
+          tenant_id: tenantId,
+          config: {
+            layout,
+            panels
+          },
+          expires_at: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString() // 7 dias
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const url = `${window.location.origin}/monitoring/view/${token}`;
+      await navigator.clipboard.writeText(url);
+      toast.success("Link de monitoramento copiado para a área de transferência! Válido por 7 dias.");
+      
+      // Opcional: abrir em nova aba
+      window.open(url, '_blank');
+    } catch (err) {
+      console.error("Error sharing monitoring:", err);
+      toast.error("Falha ao gerar link compartilhado.");
+    } finally {
+      setSharing(false);
     }
   };
 
@@ -265,6 +311,17 @@ export default function NOCDashboard() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-9 gap-2 text-primary border-primary/20 hover:bg-primary/5"
+            onClick={handleShare}
+            disabled={sharing}
+          >
+            {sharing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
+            <span>Compartilhar</span>
+          </Button>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-9 gap-2">

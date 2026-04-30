@@ -26,6 +26,7 @@ import ProductQueriesAnalytics from "./pages/ProductQueriesAnalytics";
 import UsersPage from "./pages/Users";
 import QuickAccessPage from "./pages/QuickAccess";
 import NOCDashboard from "./pages/admin/NOCDashboard";
+import SharedMonitoringPage from "./pages/monitoring/SharedMonitoring";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
@@ -85,6 +86,9 @@ const App = () => {
               
               {/* Player rota fullscreen, sem layout e sem auth obrigatória (usa deviceCode) */}
               <Route path="/play/:deviceCode" element={<Player />} />
+
+              {/* Monitoramento Compartilhado - Sem login obrigatório (protegido por token) */}
+              <Route path="/monitoring/view/:token" element={<SharedMonitoringPage />} />
 
               {/* Acesso Rápido - Sem login obrigatório (protegido por token) */}
               <Route path="/quick-access/:token" element={<QuickAccessPage />} />
