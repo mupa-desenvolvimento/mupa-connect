@@ -11,7 +11,8 @@ import {
   Rocket, 
   Loader2, 
   CheckCircle2, 
-  AlertTriangle 
+  AlertTriangle,
+  ExternalLink 
 } from "lucide-react";
 import { toast } from "sonner";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -183,6 +184,12 @@ export default function QuickAccessPage() {
                 </CardHeader>
                 <CardContent className="p-4 pt-0 space-y-4">
                   <div className="grid grid-cols-2 gap-2 pt-2">
+                    <QuickButton
+                      icon={ExternalLink}
+                      label="Abrir Player"
+                      variant="primary"
+                      onClick={() => window.open(`${window.location.origin}/play/${device.serial}`, "_blank")}
+                    />
                     <QuickButton
                       icon={XCircle}
                       label="Fechar App"
