@@ -229,13 +229,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "audience_detections_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "devices"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "audience_detections_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -561,13 +554,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "campaign_segment_targets_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "devices"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "campaign_segment_targets_device_type_id_fkey"
             columns: ["device_type_id"]
             isOneToOne: false
@@ -751,13 +737,6 @@ export type Database = {
             columns: ["device_group_id"]
             isOneToOne: false
             referencedRelation: "device_groups"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "campaign_targets_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "devices"
             referencedColumns: ["id"]
           },
           {
@@ -1414,15 +1393,7 @@ export type Database = {
           response?: Json | null
           status_code?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "device_check_logs_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: true
-            referencedRelation: "devices"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       device_commands: {
         Row: {
@@ -1539,13 +1510,6 @@ export type Database = {
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "media_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "device_detection_logs_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "devices"
             referencedColumns: ["id"]
           },
           {
@@ -1666,13 +1630,6 @@ export type Database = {
           id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "device_group_members_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "devices"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "device_group_members_group_id_fkey"
             columns: ["group_id"]
@@ -1811,13 +1768,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "device_status_logs_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "devices"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "device_status_logs_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -1856,13 +1806,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "device_table_assignments_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "devices"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "device_table_assignments_price_table_id_fkey"
             columns: ["price_table_id"]
             isOneToOne: false
@@ -1891,13 +1834,6 @@ export type Database = {
           tag_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "device_tags_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "devices"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "device_tags_tag_id_fkey"
             columns: ["tag_id"]
@@ -1950,198 +1886,6 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      devices: {
-        Row: {
-          api_integration_id: string | null
-          blocked_message: string | null
-          camera_enabled: boolean | null
-          channel_id: string | null
-          company_id: string | null
-          created_at: string
-          current_playlist_id: string | null
-          device_code: string | null
-          device_token: string | null
-          device_type_id: string | null
-          display_profile_id: string | null
-          group_id: string | null
-          id: string
-          is_active: boolean
-          is_blocked: boolean
-          last_accessed: string | null
-          last_seen_at: string | null
-          last_sync_requested_at: string | null
-          last_updated: string | null
-          location: string | null
-          metadata: Json | null
-          name: string
-          override_media_expires_at: string | null
-          override_media_id: string | null
-          price_integration_enabled: boolean
-          price_integration_id: string | null
-          region_id: string | null
-          resolution: string | null
-          sector_id: string | null
-          status: string
-          store_code: string | null
-          store_id: string | null
-          updated_at: string | null
-          view_link: string | null
-          zone_id: string | null
-        }
-        Insert: {
-          api_integration_id?: string | null
-          blocked_message?: string | null
-          camera_enabled?: boolean | null
-          channel_id?: string | null
-          company_id?: string | null
-          created_at?: string
-          current_playlist_id?: string | null
-          device_code?: string | null
-          device_token?: string | null
-          device_type_id?: string | null
-          display_profile_id?: string | null
-          group_id?: string | null
-          id?: string
-          is_active?: boolean
-          is_blocked?: boolean
-          last_accessed?: string | null
-          last_seen_at?: string | null
-          last_sync_requested_at?: string | null
-          last_updated?: string | null
-          location?: string | null
-          metadata?: Json | null
-          name: string
-          override_media_expires_at?: string | null
-          override_media_id?: string | null
-          price_integration_enabled?: boolean
-          price_integration_id?: string | null
-          region_id?: string | null
-          resolution?: string | null
-          sector_id?: string | null
-          status?: string
-          store_code?: string | null
-          store_id?: string | null
-          updated_at?: string | null
-          view_link?: string | null
-          zone_id?: string | null
-        }
-        Update: {
-          api_integration_id?: string | null
-          blocked_message?: string | null
-          camera_enabled?: boolean | null
-          channel_id?: string | null
-          company_id?: string | null
-          created_at?: string
-          current_playlist_id?: string | null
-          device_code?: string | null
-          device_token?: string | null
-          device_type_id?: string | null
-          display_profile_id?: string | null
-          group_id?: string | null
-          id?: string
-          is_active?: boolean
-          is_blocked?: boolean
-          last_accessed?: string | null
-          last_seen_at?: string | null
-          last_sync_requested_at?: string | null
-          last_updated?: string | null
-          location?: string | null
-          metadata?: Json | null
-          name?: string
-          override_media_expires_at?: string | null
-          override_media_id?: string | null
-          price_integration_enabled?: boolean
-          price_integration_id?: string | null
-          region_id?: string | null
-          resolution?: string | null
-          sector_id?: string | null
-          status?: string
-          store_code?: string | null
-          store_id?: string | null
-          updated_at?: string | null
-          view_link?: string | null
-          zone_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "devices_api_integration_id_fkey"
-            columns: ["api_integration_id"]
-            isOneToOne: false
-            referencedRelation: "api_integrations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "devices_channel_id_fkey"
-            columns: ["channel_id"]
-            isOneToOne: false
-            referencedRelation: "distribution_channels"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "devices_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "devices_device_type_id_fkey"
-            columns: ["device_type_id"]
-            isOneToOne: false
-            referencedRelation: "device_types"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "devices_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "device_groups"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "devices_override_media_id_fkey"
-            columns: ["override_media_id"]
-            isOneToOne: false
-            referencedRelation: "media_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "devices_price_integration_id_fkey"
-            columns: ["price_integration_id"]
-            isOneToOne: false
-            referencedRelation: "price_check_integrations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "devices_region_id_fkey"
-            columns: ["region_id"]
-            isOneToOne: false
-            referencedRelation: "regions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "devices_sector_id_fkey"
-            columns: ["sector_id"]
-            isOneToOne: false
-            referencedRelation: "sectors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "devices_store_id_fkey"
-            columns: ["store_id"]
-            isOneToOne: false
-            referencedRelation: "stores"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "devices_zone_id_fkey"
-            columns: ["zone_id"]
-            isOneToOne: false
-            referencedRelation: "zones"
             referencedColumns: ["id"]
           },
         ]
@@ -2499,13 +2243,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "group_devices_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "devices"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "group_devices_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
@@ -2783,13 +2520,6 @@ export type Database = {
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "media_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "impression_logs_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "devices"
             referencedColumns: ["id"]
           },
           {
@@ -3116,13 +2846,6 @@ export type Database = {
           played_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "media_play_logs_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "devices"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "media_play_logs_media_id_fkey"
             columns: ["media_id"]
@@ -3591,13 +3314,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "platform_logs_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "devices"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "platform_logs_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -4050,13 +3766,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "price_check_logs_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "devices"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "price_check_logs_integration_id_fkey"
             columns: ["integration_id"]
             isOneToOne: false
@@ -4392,13 +4101,6 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "product_lookup_analytics_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "devices"
-            referencedColumns: ["id"]
-          },
         ]
       }
       product_lookup_logs: {
@@ -4441,13 +4143,6 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "product_lookup_logs_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "devices"
             referencedColumns: ["id"]
           },
         ]
@@ -4776,13 +4471,6 @@ export type Database = {
             referencedRelation: "qrcode_campaigns"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "qrcode_scan_logs_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "devices"
-            referencedColumns: ["id"]
-          },
         ]
       }
       quick_access_logs: {
@@ -5043,13 +4731,6 @@ export type Database = {
           internal_group_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "store_internal_group_devices_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "devices"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "store_internal_group_devices_internal_group_id_fkey"
             columns: ["internal_group_id"]
