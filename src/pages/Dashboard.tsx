@@ -2,7 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { devices, mediaItems, playlists, stores } from "@/lib/mock-data";
 import { Activity, MonitorPlay, Image as ImageIcon, Store, ArrowUpRight, Search, AlertTriangle, Package } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -249,20 +248,16 @@ export default function DashboardPage() {
             <CardTitle className="font-display">Atividade recente</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
-            {[
-              ["Playlist Padrão atualizada", "há 12 min"],
-              ["MUPA-003 ficou offline", "há 2 h"],
-              ["Nova mídia: Promo Verão", "ontem"],
-              ["Campanha Lançamento agendada", "ontem"],
-            ].map(([t, w]) => (
-              <div key={t} className="flex items-start gap-3">
-                <div className="h-2 w-2 rounded-full bg-primary mt-1.5" />
-                <div className="flex-1">
-                  <div>{t}</div>
-                  <div className="text-xs text-muted-foreground">{w}</div>
-                </div>
+            <div className="flex items-start gap-3">
+              <div className="h-2 w-2 rounded-full bg-primary mt-1.5" />
+              <div className="flex-1">
+                <div>Sistema sincronizado</div>
+                <div className="text-xs text-muted-foreground">Agora</div>
               </div>
-            ))}
+            </div>
+            <div className="text-xs text-muted-foreground italic">
+              Novos logs de atividade serão implementados em breve.
+            </div>
           </CardContent>
         </Card>
       </section>
