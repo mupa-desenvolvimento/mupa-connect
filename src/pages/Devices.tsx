@@ -355,16 +355,16 @@ export default function DevicesPage() {
                           <TableCell>
                             <StatusBadge status={status} />
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                             <div className="flex justify-end gap-2">
                               <Button asChild size="icon" variant="ghost" className="h-8 w-8">
                                 <Link to={`/dispositivos/${d.id}`}>
                                   <Settings className="h-4 w-4" />
                                 </Link>
                               </Button>
-                              <Button 
-                                size="icon" 
-                                variant="ghost" 
+                              <Button
+                                size="icon"
+                                variant="ghost"
                                 className="h-8 w-8 text-destructive hover:bg-destructive/10"
                                 onClick={() => handleRebootDevice(d.id.toString(), d.apelido_interno)}
                                 title="Reiniciar Player"
