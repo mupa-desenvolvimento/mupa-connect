@@ -257,7 +257,13 @@ export default function DevicesPage() {
         onOpenChange={setDrawerOpen}
         formatDate={formatDate}
       />
-      <BulkCommandDialog open={bulkOpen} onOpenChange={setBulkOpen} selectedCount={filteredDevices.length} devices={filteredDevices} />
+      <BulkCommandDialog 
+        open={bulkOpen} 
+        onOpenChange={setBulkOpen} 
+        devices={filteredDevices} 
+        stores={stores || []}
+        groups={groups}
+      />
     </div>
   );
 }
