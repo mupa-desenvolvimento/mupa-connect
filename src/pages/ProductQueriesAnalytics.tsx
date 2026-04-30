@@ -322,7 +322,6 @@ export default function ProductQueriesAnalytics() {
           store: selectedStore,
           device: selectedDevice
         }}
-
       />
 
       {/* KPI Cards */}
