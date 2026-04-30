@@ -237,6 +237,33 @@ export type Database = {
           },
         ]
       }
+      auditoria_correcoes_log: {
+        Row: {
+          detalhes: string | null
+          etapa: string
+          executado_em: string | null
+          id: string
+          registros_afetados: number | null
+          status: string
+        }
+        Insert: {
+          detalhes?: string | null
+          etapa: string
+          executado_em?: string | null
+          id?: string
+          registros_afetados?: number | null
+          status: string
+        }
+        Update: {
+          detalhes?: string | null
+          etapa?: string
+          executado_em?: string | null
+          id?: string
+          registros_afetados?: number | null
+          status?: string
+        }
+        Relationships: []
+      }
       auto_content_items: {
         Row: {
           category: string | null
@@ -5233,27 +5260,27 @@ export type Database = {
       }
       user_profiles: {
         Row: {
-          company_id: string | null
+          company_id: string
           created_at: string | null
           id: string
           role: string | null
-          tenant_id: string | null
+          tenant_id: string
           updated_at: string | null
         }
         Insert: {
-          company_id?: string | null
+          company_id: string
           created_at?: string | null
           id: string
           role?: string | null
-          tenant_id?: string | null
+          tenant_id: string
           updated_at?: string | null
         }
         Update: {
-          company_id?: string | null
+          company_id?: string
           created_at?: string | null
           id?: string
           role?: string | null
-          tenant_id?: string | null
+          tenant_id?: string
           updated_at?: string | null
         }
         Relationships: [
@@ -5603,6 +5630,30 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_auditoria_relatorio: {
+        Row: {
+          detalhes: string | null
+          etapa: string | null
+          executado_em: string | null
+          registros_afetados: number | null
+          status: string | null
+        }
+        Insert: {
+          detalhes?: string | null
+          etapa?: string | null
+          executado_em?: string | null
+          registros_afetados?: never
+          status?: string | null
+        }
+        Update: {
+          detalhes?: string | null
+          etapa?: string | null
+          executado_em?: string | null
+          registros_afetados?: never
+          status?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_playlist_item: {
@@ -5640,6 +5691,25 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      auditoria_listar_dispositivos_orfaos: {
+        Args: never
+        Returns: {
+          apelido: string
+          empresa: string
+          id: number
+          serial: string
+          ultimo_heartbeat: string
+        }[]
+      }
+      auditoria_verificar_integridade: {
+        Args: never
+        Returns: {
+          categoria: string
+          problema: string
+          quantidade: number
+          severidade: string
+        }[]
       }
       cadastrar_dispositivo:
         | {
