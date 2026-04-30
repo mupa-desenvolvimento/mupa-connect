@@ -19,7 +19,7 @@ import {
 import { FileText, Download, Loader2, BarChart3, Package, Monitor, Info, Store, Tag } from "lucide-react";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
-import jsPDF from "jspdf";
+import jsPDF from "jsPDF";
 import autoTable from "jspdf-autotable";
 
 interface ReportGeneratorModalProps {
@@ -73,66 +73,7 @@ export function ReportGeneratorModal({ isOpen, onClose, logs, filters }: ReportG
       periodLabel = `${format(filters.dateRange.from, "dd/MM/yy")}${filters.dateRange.to ? ` - ${format(filters.dateRange.to, "dd/MM/yy")}` : ""}`;
     } else {
       periodLabel = filters.period === "all" ? "Todo o tempo" : filters.period === "1" ? "Hoje" : `Últimos ${filters.period} dias`;
-      } 
-      else if (reportType === "stores") {
-        const storeStats = logs.reduce((acc: any, log) => {
-          const storeName = log.loja || "Sem Loja";
-          if (!acc[storeName]) acc[storeName] = { loja: storeName, consultas: 0, erros: 0 };
-          acc[storeName].consultas++;
-          if (log.status_code !== 200) acc[storeName].erros++;
-          return acc;
-        }, {});
-        const data = Object.values(storeStats).sort((a: any, b: any) => b.consultas - a.consultas);
-
-        if (formatType === "csv") {
-          generateCSV(data, `relatorio-lojas-${timestamp}`);
-        } else {
-          const doc = new jsPDF();
-          doc.text("Relatório de Consultas por Loja", 14, 15);
-          doc.setFontSize(10);
-          doc.text(`Período: ${periodLabel} | Lojas Ativas: ${data.length}`, 14, 22);
-          
-          autoTable(doc, {
-            startY: 30,
-            head: [["Loja", "Consultas", "Erros", "% Erro"]],
-            body: data.map((item: any) => [
-              item.loja, 
-              item.consultas, 
-              item.erros, 
-              ((item.erros / item.consultas) * 100).toFixed(1) + "%"
-            ]),
-            headStyles: { fillColor: [245, 158, 11] }
-          });
-          doc.save(`relatorio-lojas-${timestamp}.pdf`);
-        }
-      }
-      else if (reportType === "tags") {
-        const tagStats = logs.reduce((acc: any, log) => {
-          // Usando etiqueta do log se disponível, senão EAN como fallback se for etiqueta
-          const tag = log.etiqueta || log.ean || "N/A";
-          if (!acc[tag]) acc[tag] = { etiqueta: tag, descricao: log.descricao_produto || "Sem descrição", consultas: 0 };
-          acc[tag].consultas++;
-          return acc;
-        }, {});
-        const data = Object.values(tagStats).sort((a: any, b: any) => b.consultas - a.consultas);
-
-        if (formatType === "csv") {
-          generateCSV(data, `relatorio-etiquetas-${timestamp}`);
-        } else {
-          const doc = new jsPDF();
-          doc.text("Relatório de Etiquetas Mais Consultadas", 14, 15);
-          doc.setFontSize(10);
-          doc.text(`Período: ${periodLabel} | Total de Etiquetas: ${data.length}`, 14, 22);
-          
-          autoTable(doc, {
-            startY: 30,
-            head: [["Etiqueta/EAN", "Descrição", "Consultas"]],
-            body: data.map((item: any) => [item.etiqueta, item.descricao, item.consultas]),
-            headStyles: { fillColor: [139, 92, 246] }
-          });
-          doc.save(`relatorio-etiquetas-${timestamp}.pdf`);
-        }
-      } 
+    }
 
 
     try {
@@ -193,6 +134,64 @@ export function ReportGeneratorModal({ isOpen, onClose, logs, filters }: ReportG
             headStyles: { fillColor: [16, 185, 129] }
           });
           doc.save(`relatorio-dispositivos-${timestamp}.pdf`);
+        }
+      } 
+      else if (reportType === "stores") {
+        const storeStats = logs.reduce((acc: any, log) => {
+          const storeName = log.loja || "Sem Loja";
+          if (!acc[storeName]) acc[storeName] = { loja: storeName, consultas: 0, erros: 0 };
+          acc[storeName].consultas++;
+          if (log.status_code !== 200) acc[storeName].erros++;
+          return acc;
+        }, {});
+        const data = Object.values(storeStats).sort((a: any, b: any) => b.consultas - a.consultas);
+
+        if (formatType === "csv") {
+          generateCSV(data, `relatorio-lojas-${timestamp}`);
+        } else {
+          const doc = new jsPDF();
+          doc.text("Relatório de Consultas por Loja", 14, 15);
+          doc.setFontSize(10);
+          doc.text(`Período: ${periodLabel} | Lojas Ativas: ${data.length}`, 14, 22);
+          
+          autoTable(doc, {
+            startY: 30,
+            head: [["Loja", "Consultas", "Erros", "% Erro"]],
+            body: data.map((item: any) => [
+              item.loja, 
+              item.consultas, 
+              item.erros, 
+              ((item.erros / item.consultas) * 100).toFixed(1) + "%"
+            ]),
+            headStyles: { fillColor: [245, 158, 11] }
+          });
+          doc.save(`relatorio-lojas-${timestamp}.pdf`);
+        }
+      }
+      else if (reportType === "tags") {
+        const tagStats = logs.reduce((acc: any, log) => {
+          const tag = log.etiqueta || log.ean || "N/A";
+          if (!acc[tag]) acc[tag] = { etiqueta: tag, descricao: log.descricao_produto || "Sem descrição", consultas: 0 };
+          acc[tag].consultas++;
+          return acc;
+        }, {});
+        const data = Object.values(tagStats).sort((a: any, b: any) => b.consultas - a.consultas);
+
+        if (formatType === "csv") {
+          generateCSV(data, `relatorio-etiquetas-${timestamp}`);
+        } else {
+          const doc = new jsPDF();
+          doc.text("Relatório de Etiquetas Mais Consultadas", 14, 15);
+          doc.setFontSize(10);
+          doc.text(`Período: ${periodLabel} | Total de Etiquetas: ${data.length}`, 14, 22);
+          
+          autoTable(doc, {
+            startY: 30,
+            head: [["Etiqueta/EAN", "Descrição", "Consultas"]],
+            body: data.map((item: any) => [item.etiqueta, item.descricao, item.consultas]),
+            headStyles: { fillColor: [139, 92, 246] }
+          });
+          doc.save(`relatorio-etiquetas-${timestamp}.pdf`);
         }
       } 
       else {
@@ -303,6 +302,36 @@ export function ReportGeneratorModal({ isOpen, onClose, logs, filters }: ReportG
                 <div>
                   <p className="text-sm font-medium">Uso por Dispositivo</p>
                   <p className="text-xs text-muted-foreground">Ranking e taxas de erro por terminal</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setReportType("stores")}
+                className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-colors ${
+                  reportType === "stores" ? "bg-primary/5 border-primary" : "hover:bg-muted"
+                }`}
+              >
+                <div className={`p-2 rounded-md ${reportType === "stores" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                  <Store className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Consultas por Loja</p>
+                  <p className="text-xs text-muted-foreground">Volume e performance por unidade</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setReportType("tags")}
+                className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-colors ${
+                  reportType === "tags" ? "bg-primary/5 border-primary" : "hover:bg-muted"
+                }`}
+              >
+                <div className={`p-2 rounded-md ${reportType === "tags" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                  <Tag className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Ranking de Etiquetas</p>
+                  <p className="text-xs text-muted-foreground">Itens físicos mais consultados</p>
                 </div>
               </button>
             </div>
