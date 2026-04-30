@@ -308,6 +308,10 @@ export default function MediaPage() {
               </DialogContent>
             </Dialog>
 
+            <Button variant="outline" size="sm" className="h-9" onClick={() => navigate("/midias/lixeira")}>
+              <Recycle className="h-4 w-4 mr-2" /> Lixeira
+            </Button>
+
             <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-gradient-primary text-primary-foreground shadow-glow h-9" size="sm">
