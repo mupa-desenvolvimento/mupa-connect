@@ -2791,6 +2791,7 @@ export type Database = {
       media_items: {
         Row: {
           auto_delete: boolean | null
+          company_id: string | null
           created_at: string | null
           deleted_at: string | null
           deleted_by: string | null
@@ -2810,6 +2811,7 @@ export type Database = {
         }
         Insert: {
           auto_delete?: boolean | null
+          company_id?: string | null
           created_at?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
@@ -2829,6 +2831,7 @@ export type Database = {
         }
         Update: {
           auto_delete?: boolean | null
+          company_id?: string | null
           created_at?: string | null
           deleted_at?: string | null
           deleted_by?: string | null

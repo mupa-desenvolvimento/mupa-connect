@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export function useTenant() {
   const [tenantId, setTenantId] = useState<string | null>(null);
+  const [companyId, setCompanyId] = useState<string | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -30,7 +31,21 @@ export function useTenant() {
             return;
           }
 
-          // 1. Check user_tenant_mappings (New system)
+          // 1. Check user_profiles for company_id (Specific for RLS fix)
+          const { data: profileData } = await supabase
+            .from("user_profiles")
+            .select("tenant_id, company_id")
+            .eq("id", session.user.id)
+            .maybeSingle();
+
+          if (profileData) {
+            setTenantId(profileData.tenant_id);
+            setCompanyId(profileData.company_id);
+            setIsLoading(false);
+            return;
+          }
+
+          // 2. Check user_tenant_mappings (New system)
           const { data: mappingData } = await supabase
             .from("user_tenant_mappings")
             .select("tenant_id")
@@ -83,5 +98,5 @@ export function useTenant() {
     getTenant();
   }, []);
 
-  return { tenantId, isSuperAdmin, isLoading };
+  return { tenantId, companyId, isSuperAdmin, isLoading };
 }

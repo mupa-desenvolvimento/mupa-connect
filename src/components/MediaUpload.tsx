@@ -18,12 +18,13 @@ interface FileUpload {
 
 interface MediaUploadProps {
   tenantId: string | null;
+  companyId: string | null;
   currentFolderId: string | null;
   onUploadComplete: () => void;
   onClose: () => void;
 }
 
-export function MediaUpload({ tenantId, currentFolderId, onUploadComplete, onClose }: MediaUploadProps) {
+export function MediaUpload({ tenantId, companyId, currentFolderId, onUploadComplete, onClose }: MediaUploadProps) {
   const [uploads, setUploads] = useState<FileUpload[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -131,25 +132,25 @@ export function MediaUpload({ tenantId, currentFolderId, onUploadComplete, onClo
 
           const type = upload.file.type.startsWith('video') ? 'video' : 'image';
 
-          // Validação crítica: garantir que tenant_id existe antes do insert
-          if (!tenantId) {
+          // Validação crítica: garantir que tenant_id e company_id existem antes do insert
+          if (!tenantId || !companyId) {
             const { data: { user } } = await supabase.auth.getUser();
             
-            // Telemetria: Logar erro de tenant ausente para diagnóstico
+            // Telemetria: Logar erro de identificadores ausentes para diagnóstico
             await supabase.from('platform_logs').insert({
               level: 'error',
               category: 'media_upload',
-              message: `Tenant ID ausente durante upload de mídia: ${upload.file.name}`,
+              message: `Identificadores ausentes durante upload de mídia (Tenant: ${tenantId}, Company: ${companyId}): ${upload.file.name}`,
               user_id: user?.id,
               metadata: {
                 file_name: upload.file.name,
-                file_type: upload.file.type,
-                file_size: upload.file.size,
+                tenant_id: tenantId,
+                company_id: companyId,
                 browser: navigator.userAgent
               }
             });
 
-            throw new Error('Tenant ID não encontrado. Por favor, recarregue a página.');
+            throw new Error('Empresa não identificada. Por favor, recarregue a página.');
           }
 
           const { error: dbError } = await supabase
@@ -161,6 +162,7 @@ export function MediaUpload({ tenantId, currentFolderId, onUploadComplete, onClo
               file_size: fileToUpload.size,
               folder_id: currentFolderId,
               tenant_id: tenantId,
+              company_id: companyId,
               status: 'ready'
             });
 
