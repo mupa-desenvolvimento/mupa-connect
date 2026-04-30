@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/use-user-role";
@@ -55,6 +55,11 @@ interface PanelConfig {
   storeId?: string;
 }
 
+const ROTATION_INTERVAL = 8000;
+const CARD_MIN_WIDTH = 180;
+const CARD_HEIGHT = 120;
+const CARD_GAP = 12;
+
 export default function NOCDashboard() {
   const { isSuperAdmin, isTecnico, companyId, tenantId, role } = useUserRole();
   const navigate = useNavigate();
@@ -72,8 +77,9 @@ export default function NOCDashboard() {
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [sharing, setSharing] = useState(false);
   const [rotationIndex, setRotationIndex] = useState(0);
-  const ROTATION_INTERVAL = 10000; // 10 segundos para leitura confortável
-  const ITEMS_PER_PAGE = 12;
+  const ROTATION_INTERVAL = 8000; // 8 segundos para leitura dinâmica
+  const CARD_MIN_WIDTH = 180;
+  const CARD_HEIGHT = 120;
 
   const storeStats = useMemo(() => {
     return stores.map(store => {
@@ -243,49 +249,23 @@ export default function NOCDashboard() {
         const offlineCount = devices.filter(d => getDeviceStatus(d) === "offline").length;
         return (
           <div className="grid grid-cols-2 gap-4 h-full p-2">
-            <MetricCard label="Online" value={onlineCount} color="text-green-500" icon={Activity} />
-            <MetricCard label="Offline" value={offlineCount} color="text-red-500" icon={WifiOff} />
-            <MetricCard label="Instáveis" value={unstableCount} color="text-yellow-500" icon={AlertCircle} />
-            <MetricCard label="Total" value={devices.length} color="text-blue-500" icon={Monitor} />
+            <MetricCard label="Online" value={onlineCount} color="text-success" icon={Activity} />
+            <MetricCard label="Offline" value={offlineCount} color="text-destructive" icon={WifiOff} />
+            <MetricCard label="Instáveis" value={unstableCount} color="text-warning" icon={AlertCircle} />
+            <MetricCard label="Total" value={devices.length} color="text-primary" icon={Monitor} />
           </div>
         );
       case "alerts":
         const alerts = devices.filter(d => getDeviceStatus(d) !== "online");
-        const alertsTotalPages = Math.ceil(alerts.length / ITEMS_PER_PAGE);
-        const alertsCurrentPage = rotationIndex % (alertsTotalPages || 1);
-        const paginatedAlerts = alerts.slice(alertsCurrentPage * ITEMS_PER_PAGE, (alertsCurrentPage + 1) * ITEMS_PER_PAGE);
-
         return (
-          <div className="h-full flex flex-col overflow-hidden">
-            <div className="flex-1 overflow-hidden relative">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={`alerts-${alertsCurrentPage}`}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.5 }}
-                  className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] grid-auto-rows-[120px] gap-3 p-1 h-full content-start overflow-y-auto"
-                >
-                  {paginatedAlerts.map(d => (
-                    <DeviceCard key={d.id} item={d} status={getDeviceStatus(d)} />
-                  ))}
-                  {alerts.length === 0 && (
-                    <div className="col-span-full flex items-center justify-center h-40 text-muted-foreground italic">
-                      Nenhum alerta crítico
-                    </div>
-                  )}
-                </motion.div>
-              </AnimatePresence>
-            </div>
-            {alertsTotalPages > 1 && (
-              <div className="flex items-center justify-center gap-1 mt-2 pb-1">
-                {Array.from({ length: alertsTotalPages }).map((_, i) => (
-                  <div key={i} className={cn("h-1 rounded-full transition-all duration-300", i === alertsCurrentPage ? "w-6 bg-destructive" : "w-1.5 bg-border")} />
-                ))}
-              </div>
-            )}
-          </div>
+          <AutoRotatingGrid 
+            items={alerts} 
+            rotationIndex={rotationIndex}
+            ItemComponent={DeviceCard}
+            getItemStatus={(item) => getDeviceStatus(item)}
+            emptyMessage="Nenhum alerta crítico"
+            accentColor="bg-destructive"
+          />
         );
       case "queries_feed":
         const storeForFeed = stores.find(s => s.id === panel.storeId);
@@ -302,15 +282,13 @@ export default function NOCDashboard() {
         const isStoreView = panel.type === "store_view";
         const hasSelectedStore = !!panel.storeId;
         
-        let items = [];
-        let ItemComponent: any;
+        let displayItems = [];
+        let ItemComp: any;
 
         if (isStoreView && !hasSelectedStore) {
-          // Visão Geral de Lojas (Gid de Lojas)
-          items = storeStats;
-          ItemComponent = StoreCard;
+          displayItems = storeStats;
+          ItemComp = StoreCard;
         } else {
-          // Status de Dispositivos ou Loja Específica
           let displayDevices = devices;
           if (hasSelectedStore) {
             const store = stores.find(s => s.id === panel.storeId);
@@ -324,56 +302,18 @@ export default function NOCDashboard() {
               });
             }
           }
-          items = displayDevices;
-          ItemComponent = DeviceCard;
+          displayItems = displayDevices;
+          ItemComp = DeviceCard;
         }
 
-        const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
-        const currentPage = rotationIndex % (totalPages || 1);
-        const paginatedItems = items.slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE);
-
         return (
-          <div className="h-full flex flex-col overflow-hidden">
-            <div className="flex-1 overflow-hidden relative">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={`${panel.id}-${currentPage}`}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.5, ease: "easeInOut" }}
-                  className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] grid-auto-rows-[120px] gap-3 p-1 h-full content-start overflow-y-auto"
-                >
-                  {paginatedItems.map((item: any) => (
-                    <ItemComponent 
-                      key={item.id} 
-                      item={item} 
-                      status={panel.type === "status" ? getDeviceStatus(item) : item.status} 
-                    />
-                  ))}
-                  {items.length === 0 && (
-                    <div className="col-span-full flex items-center justify-center h-40 text-muted-foreground italic">
-                      Nenhum item encontrado
-                    </div>
-                  )}
-                </motion.div>
-              </AnimatePresence>
-            </div>
-            
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-1 mt-2 pb-1">
-                {Array.from({ length: totalPages }).map((_, i) => (
-                  <div 
-                    key={i} 
-                    className={cn(
-                      "h-1 rounded-full transition-all duration-300",
-                      i === currentPage ? "w-6 bg-primary" : "w-1.5 bg-border"
-                    )}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+          <AutoRotatingGrid 
+            items={displayItems} 
+            rotationIndex={rotationIndex}
+            ItemComponent={ItemComp}
+            getItemStatus={(item) => isStoreView && !hasSelectedStore ? item.status : getDeviceStatus(item)}
+            emptyMessage="Nenhum item encontrado"
+          />
         );
       default:
         return <div className="flex items-center justify-center h-full text-muted-foreground italic">Em desenvolvimento...</div>;
@@ -554,9 +494,9 @@ function MetricCard({ label, value, color, icon: Icon }: any) {
 }
 
 function StoreCard({ item, status }: any) {
-  const statusColor = status === "online" ? "bg-green-500" : status === "unstable" ? "bg-yellow-500" : "bg-red-500";
-  const borderColor = status === "online" ? "border-green-500/20" : status === "unstable" ? "border-yellow-500/20" : "border-red-500/20";
-  const textColor = status === "online" ? "text-green-500" : status === "unstable" ? "text-yellow-500" : "text-red-500";
+  const statusColor = status === "online" ? "bg-success shadow-[0_0_12px_hsl(var(--success)/0.4)]" : status === "unstable" ? "bg-warning shadow-[0_0_12px_hsl(var(--warning)/0.4)]" : "bg-destructive shadow-[0_0_12px_hsl(var(--destructive)/0.4)]";
+  const borderColor = status === "online" ? "border-success/20" : status === "unstable" ? "border-warning/20" : "border-destructive/20";
+  const textColor = status === "online" ? "text-success" : status === "unstable" ? "text-warning" : "text-destructive";
 
   return (
     <div className={cn(
@@ -587,9 +527,9 @@ function StoreCard({ item, status }: any) {
 }
 
 function DeviceCard({ item, status }: any) {
-  const statusColor = status === "online" ? "bg-green-500" : status === "unstable" ? "bg-yellow-500" : "bg-red-500";
-  const borderColor = status === "online" ? "border-green-500/20" : status === "unstable" ? "border-yellow-500/20" : "border-red-500/20";
-  const textColor = status === "online" ? "text-green-500" : status === "unstable" ? "text-yellow-500" : "text-red-500";
+  const statusColor = status === "online" ? "bg-success shadow-[0_0_12px_hsl(var(--success)/0.4)]" : status === "unstable" ? "bg-warning shadow-[0_0_12px_hsl(var(--warning)/0.4)]" : "bg-destructive shadow-[0_0_12px_hsl(var(--destructive)/0.4)]";
+  const borderColor = status === "online" ? "border-success/20" : status === "unstable" ? "border-warning/20" : "border-destructive/20";
+  const textColor = status === "online" ? "text-success" : status === "unstable" ? "text-warning" : "text-destructive";
 
   return (
     <div className={cn(
@@ -628,4 +568,72 @@ function getPanelDefaultTitle(type: PanelType): string {
     case "queries_feed": return "Consultas em Tempo Real";
     default: return "Painel";
   }
+}
+
+function AutoRotatingGrid({ items, rotationIndex, ItemComponent, getItemStatus, emptyMessage, accentColor }: any) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const observer = new ResizeObserver((entries) => {
+      const { width, height } = entries[0].contentRect;
+      const cols = Math.floor((width + CARD_GAP) / (CARD_MIN_WIDTH + CARD_GAP));
+      const rows = Math.floor((height + CARD_GAP) / (CARD_HEIGHT + CARD_GAP));
+      const total = Math.max(1, cols * rows);
+      setItemsPerPage(total);
+    });
+
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const totalPages = Math.ceil(items.length / itemsPerPage);
+  const currentPage = rotationIndex % (totalPages || 1);
+  const paginatedItems = items.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
+
+  return (
+    <div ref={containerRef} className="h-full flex flex-col overflow-hidden">
+      <div className="flex-1 overflow-hidden relative">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`grid-${currentPage}-${itemsPerPage}`}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.02 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] grid-auto-rows-[120px] gap-3 p-1 h-full content-start overflow-hidden"
+          >
+            {paginatedItems.map((item: any) => (
+              <ItemComponent 
+                key={item.id} 
+                item={item} 
+                status={getItemStatus(item)} 
+              />
+            ))}
+            {items.length === 0 && (
+              <div className="col-span-full flex items-center justify-center h-40 text-muted-foreground italic">
+                {emptyMessage}
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+      
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-1.5 mt-2 pb-1">
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <div 
+              key={i} 
+              className={cn(
+                "h-1.5 rounded-full transition-all duration-500",
+                i === currentPage ? cn("w-8", accentColor || "bg-primary") : "w-1.5 bg-border/40"
+              )}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
