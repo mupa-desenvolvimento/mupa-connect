@@ -153,109 +153,99 @@ export default function DevicesPage() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
+    <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
       <PageHeader
         title="Dispositivos"
         description="Monitoramento real dos terminais da rede com status de exibição."
         actions={
           <div className="flex items-center gap-2">
-            <div className="flex border rounded-lg p-1 bg-muted/30">
-              <Button variant={viewMode === "table" ? "secondary" : "ghost"} size="sm" onClick={() => setViewMode("table")}><List className="h-4 w-4" /></Button>
-              <Button variant={viewMode === "grid" ? "secondary" : "ghost"} size="sm" onClick={() => setViewMode("grid")}><LayoutGrid className="h-4 w-4" /></Button>
+            <div className="hidden sm:flex border rounded-lg p-1 bg-muted/30 mr-2">
+              <Button variant={viewMode === "table" ? "secondary" : "ghost"} size="sm" className="h-7 w-7 p-0" onClick={() => setViewMode("table")}><List className="h-4 w-4" /></Button>
+              <Button variant={viewMode === "grid" ? "secondary" : "ghost"} size="sm" className="h-7 w-7 p-0" onClick={() => setViewMode("grid")}><LayoutGrid className="h-4 w-4" /></Button>
             </div>
             {isTecnico && (
-              <Button variant="outline" size="sm" onClick={() => setBulkOpen(true)} className="h-10 border-primary/40 text-primary hover:bg-primary/10">
+              <Button variant="outline" size="sm" onClick={() => setBulkOpen(true)} className="h-9 border-primary/40 text-primary hover:bg-primary/10">
                 <Megaphone className="h-4 w-4 mr-2" /> Comandos
               </Button>
             )}
-            {isTecnico && (
-              <Button variant="outline" size="sm" onClick={handleRebootAll} className="h-10 text-destructive hover:bg-destructive/10">
-                <RotateCcw className="h-4 w-4 mr-2" /> Reiniciar Todos
-              </Button>
-            )}
-            <Button variant="outline" size="sm" onClick={() => refetch()} className="h-10"><RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} /> Atualizar</Button>
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="h-9"><RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} /> Atualizar</Button>
             {isAdmin && (
-              <Button className="bg-gradient-primary text-primary-foreground shadow-glow h-10"><Plus className="h-4 w-4 mr-2" /> Novo</Button>
+              <Button className="bg-gradient-primary text-primary-foreground shadow-glow h-9"><Plus className="h-4 w-4 mr-2" /> Novo</Button>
             )}
           </div>
         }
       />
 
-      <div className="bg-card border-y p-4 flex flex-wrap items-center gap-4 sticky top-0 z-10 shadow-sm">
-        <div className="relative flex-1 min-w-[200px]">
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-card p-4 rounded-xl border border-border/60 shadow-sm sticky top-0 z-10">
+        <div className="relative flex-1 w-full md:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar..." className="pl-9 h-10" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input placeholder="Buscar dispositivo ou serial..." className="pl-10 h-10 bg-background/50 border-border/40 focus:bg-background" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <Select value={storeFilter} onValueChange={setStoreFilter}>
-          <SelectTrigger className="w-[180px] h-10"><SelectValue placeholder="Lojas" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as Lojas</SelectItem>
-            {stores?.map(s => <SelectItem key={s.id} value={s.code || s.id.toString()}>{s.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={groupFilter} onValueChange={setGroupFilter}>
-          <SelectTrigger className="w-[180px] h-10"><SelectValue placeholder="Todos os Grupos" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os Grupos</SelectItem>
-            {groups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[150px] h-10"><SelectValue placeholder="Status" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos Status</SelectItem>
-            <SelectItem value="online">Online</SelectItem>
-            <SelectItem value="unstable">Instável</SelectItem>
-            <SelectItem value="offline">Offline</SelectItem>
-          </SelectContent>
-        </Select>
-        {(search || storeFilter !== "all" || groupFilter !== "all" || statusFilter !== "all") && (
-          <Button variant="ghost" size="sm" onClick={() => {setSearch(""); setStoreFilter("all"); setGroupFilter("all"); setStatusFilter("all");}}><FilterX className="h-4 w-4 mr-2" /> Limpar</Button>
-        )}
-      </div>
-
-      <ScrollArea className="flex-1">
-        <div className="p-4">
-          {isLoading ? <div className="h-64 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div> : (
-            <Card className="border-border/60 shadow-elegant overflow-hidden">
-              <Table>
-                <TableHeader className="bg-muted/50">
-                  <TableRow>
-                    <TableHead>Dispositivo</TableHead>
-                    <TableHead>Serial</TableHead>
-                    <TableHead>Loja</TableHead>
-                    <TableHead>Última Atividade</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredDevices.map((d) => {
-                    const status = getStatus(d.last_heartbeat_at, d.last_proof_at);
-                    return (
-                      <TableRow key={d.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => openDeviceDrawer(d)}>
-                        <TableCell><div className="flex items-center gap-3"><Monitor className="h-4 w-4 text-primary" />{d.apelido_interno}</div></TableCell>
-                        <TableCell className="font-mono text-xs">{d.serial}</TableCell>
-                        <TableCell>Loja {d.num_filial}</TableCell>
-                        <TableCell>{formatDate(d.last_heartbeat_at)}</TableCell>
-                        <TableCell><StatusBadge status={status} /></TableCell>
-                        <TableCell className="text-right" onClick={e => e.stopPropagation()}>
-                          <div className="flex justify-end gap-2">
-                            {isTecnico && (
-                              <Button size="icon" variant="ghost" onClick={() => handleRebootDevice(d.id.toString(), d.apelido_interno)}><RotateCcw className="h-4 w-4 text-destructive" /></Button>
-                            )}
-                            <Button asChild size="sm" variant="outline"><Link to={`/play/${d.serial}`} target="_blank"><Play className="h-3 w-3 mr-1" /> Player</Link></Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </Card>
+        <div className="flex flex-wrap gap-2 w-full md:w-auto">
+          <Select value={storeFilter} onValueChange={setStoreFilter}>
+            <SelectTrigger className="w-full md:w-[160px] h-10 bg-background/50 border-border/40"><SelectValue placeholder="Lojas" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as Lojas</SelectItem>
+              {stores?.map(s => <SelectItem key={s.id} value={s.code || s.id.toString()}>{s.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full md:w-[130px] h-10 bg-background/50 border-border/40"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Status</SelectItem>
+              <SelectItem value="online">Online</SelectItem>
+              <SelectItem value="unstable">Instável</SelectItem>
+              <SelectItem value="offline">Offline</SelectItem>
+            </SelectContent>
+          </Select>
+          {(search || storeFilter !== "all" || groupFilter !== "all" || statusFilter !== "all") && (
+            <Button variant="ghost" size="sm" className="h-10 text-muted-foreground hover:text-primary" onClick={() => {setSearch(""); setStoreFilter("all"); setGroupFilter("all"); setStatusFilter("all");}}><FilterX className="h-4 w-4 mr-2" /> Limpar</Button>
           )}
         </div>
-      </ScrollArea>
+      </div>
+
+      <div className="flex-1 overflow-hidden border border-border/60 rounded-xl bg-card shadow-sm flex flex-col">
+        <div className="flex-1 overflow-y-auto">
+          {isLoading ? (
+            <div className="h-64 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-50" /></div>
+          ) : (
+            <Table>
+              <TableHeader className="sticky top-0 bg-card z-10 border-b border-border/60">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-[30%]">Dispositivo</TableHead>
+                  <TableHead>Serial</TableHead>
+                  <TableHead>Loja</TableHead>
+                  <TableHead>Última Atividade</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredDevices.map((d) => {
+                  const status = getStatus(d.last_heartbeat_at, d.last_proof_at);
+                  return (
+                    <TableRow key={d.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => openDeviceDrawer(d)}>
+                      <TableCell><div className="flex items-center gap-3"><Monitor className="h-4 w-4 text-primary opacity-70" />{d.apelido_interno}</div></TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">{d.serial}</TableCell>
+                      <TableCell><span className="text-xs px-2 py-1 bg-muted rounded-md">Loja {d.num_filial}</span></TableCell>
+                      <TableCell className="text-muted-foreground text-xs">{formatDate(d.last_heartbeat_at)}</TableCell>
+                      <TableCell><StatusBadge status={status} /></TableCell>
+                      <TableCell className="text-right" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-end gap-1">
+                          {isTecnico && (
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10" onClick={() => handleRebootDevice(d.id.toString(), d.apelido_interno)} title="Reiniciar"><RotateCcw className="h-4 w-4" /></Button>
+                          )}
+                          <Button asChild size="sm" variant="ghost" className="h-8 text-primary hover:bg-primary/10"><Link to={`/play/${d.serial}`} target="_blank"><Play className="h-3.5 w-3.5 mr-1" /> Player</Link></Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+      </div>
 
       <DeviceFirebaseCommandDrawer
         device={selectedDevice}
