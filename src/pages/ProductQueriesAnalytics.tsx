@@ -169,68 +169,7 @@ export default function ProductQueriesAnalytics() {
 
   const errorChartData = Object.entries(errorStatusData).map(([status, count]) => ({ status, count }));
 
-  const handleExportCSV = () => {
-    if (!logs || logs.length === 0) {
-      toast({ title: "Sem dados", description: "Não há registros para exportar.", variant: "destructive" });
-      return;
-    }
-    const headers = ["Data", "EAN", "Produto", "Loja", "Dispositivo", "Status", "Resposta"];
-    const rows = logs.map((l: any) => [
-      format(parseISO(l.created_at), "dd/MM/yyyy HH:mm:ss"),
-      l.ean ?? "",
-      (l.descricao_produto ?? "").replace(/"/g, '""'),
-      l.loja ?? "",
-      l.apelido ?? l.device_id ?? "",
-      l.status_code ?? "",
-      typeof l.response === "string" ? l.response.replace(/"/g, '""') : JSON.stringify(l.response ?? "").replace(/"/g, '""'),
-    ]);
-    const csv = [headers, ...rows]
-      .map(r => r.map(c => `"${String(c ?? "")}"`).join(";"))
-      .join("\n");
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `consultas-ean-${format(new Date(), "yyyyMMdd-HHmm")}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast({ title: "CSV exportado", description: `${logs.length} registros baixados.` });
-  };
-
-  const handleExportPDF = () => {
-    if (!logs || logs.length === 0) {
-      toast({ title: "Sem dados", description: "Não há registros para exportar.", variant: "destructive" });
-      return;
-    }
-    const doc = new jsPDF({ orientation: "landscape" });
-    doc.setFontSize(14);
-    doc.text("Inteligência de Consultas — Logs EAN", 14, 14);
-    doc.setFontSize(9);
-    doc.text(
-      `Gerado em ${format(new Date(), "dd/MM/yyyy HH:mm")} • ${logs.length} registros • Período: ${period === "all" ? "Todo o tempo" : period === "1" ? "Hoje" : `Últimos ${period} dias`}`,
-      14,
-      20
-    );
-
-    autoTable(doc, {
-      startY: 26,
-      head: [["Data", "EAN", "Produto", "Loja", "Dispositivo", "Status"]],
-      body: logs.map((l: any) => [
-        format(parseISO(l.created_at), "dd/MM/yy HH:mm"),
-        l.ean ?? "",
-        (l.descricao_produto ?? "").substring(0, 40),
-        l.loja ?? "",
-        l.apelido ?? l.device_id ?? "",
-        String(l.status_code ?? ""),
-      ]),
-      styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: { fillColor: [99, 102, 241] },
-      alternateRowStyles: { fillColor: [245, 245, 250] },
-    });
-
-    doc.save(`consultas-ean-${format(new Date(), "yyyyMMdd-HHmm")}.pdf`);
-    toast({ title: "PDF exportado", description: `${logs.length} registros baixados.` });
-  };
+  // Relatórios movidos para ReportGeneratorModal.tsx
 
 
   if (isLoading) {
