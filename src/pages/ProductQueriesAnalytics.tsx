@@ -28,8 +28,13 @@ import {
   Filter,
   Calendar,
   Store,
-  RefreshCw
+  RefreshCw,
+  Download,
+  FileText
 } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { toast } from "@/hooks/use-toast";
 import { format, subDays, startOfDay, endOfDay, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
