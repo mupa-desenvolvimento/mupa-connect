@@ -55,6 +55,11 @@ interface PanelConfig {
   storeId?: string;
 }
 
+const ROTATION_INTERVAL = 8000;
+const CARD_MIN_WIDTH = 180;
+const CARD_HEIGHT = 120;
+const CARD_GAP = 12;
+
 export default function NOCDashboard() {
   const { isSuperAdmin, isTecnico, companyId, tenantId, role } = useUserRole();
   const navigate = useNavigate();
