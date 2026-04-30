@@ -127,8 +127,9 @@ export default function ProductQueriesAnalytics() {
   
   const productCounts = logs?.reduce((acc: any, log) => {
     const key = log.ean || "N/A";
-    if (!acc[key]) acc[key] = { ean: key, desc: log.descricao_produto || "Sem descrição", count: 0 };
+    if (!acc[key]) acc[key] = { ean: key, desc: log.descricao_produto || "Sem descrição", count: 0, errors: 0 };
     acc[key].count++;
+    if (log.status_code !== 200) acc[key].errors++;
     return acc;
   }, {});
   
@@ -157,6 +158,14 @@ export default function ProductQueriesAnalytics() {
     return acc;
   }, {});
 
+  const storesRanking = logs?.reduce((acc: any, log) => {
+    const store = log.loja || "Sem Loja";
+    if (!acc[store]) acc[store] = { name: store, count: 0, errors: 0 };
+    acc[store].count++;
+    if (log.status_code !== 200) acc[store].errors++;
+    return acc;
+  }, {});
+
   const topDevicesData = Object.values(devicesRanking || {})
     .sort((a: any, b: any) => b.count - a.count)
     .slice(0, 5) as any[];
@@ -169,7 +178,6 @@ export default function ProductQueriesAnalytics() {
 
   const errorChartData = Object.entries(errorStatusData).map(([status, count]) => ({ status, count }));
 
-  // Relatórios movidos para ReportGeneratorModal.tsx
 
 
   if (isLoading) {
@@ -491,6 +499,83 @@ export default function ProductQueriesAnalytics() {
                     <TableCell className="text-right font-bold">{prod.count}</TableCell>
                   </TableRow>
                 ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Produtos com Mais Erros</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>EAN</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead className="text-right">Erros</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {Object.values(productCounts || {})
+                  .filter((p: any) => p.errors > 0)
+                  .sort((a: any, b: any) => b.errors - a.errors)
+                  .slice(0, 5)
+                  .map((prod: any) => (
+                    <TableRow key={`error-prod-${prod.ean}`}>
+                      <TableCell className="font-mono text-xs">{prod.ean}</TableCell>
+                      <TableCell className="max-w-[150px] truncate">{prod.desc}</TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant="destructive">{prod.errors}</Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                {Object.values(productCounts || {}).filter((p: any) => p.errors > 0).length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
+                      Nenhum erro registrado
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Ranking de Erros por Loja</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Loja</TableHead>
+                  <TableHead className="text-right">Erros</TableHead>
+                  <TableHead className="text-right">% Erro</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {Object.values(storesRanking || {})
+                  .sort((a: any, b: any) => b.errors - a.errors)
+                  .slice(0, 5)
+                  .map((store: any) => {
+                    const storeErrorRate = store.count > 0 ? (store.errors / store.count) * 100 : 0;
+                    return (
+                      <TableRow key={`error-store-${store.name}`}>
+                        <TableCell className="font-medium">{store.name}</TableCell>
+                        <TableCell className="text-right">{store.errors}</TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant={storeErrorRate > 15 ? "destructive" : "secondary"}>
+                            {storeErrorRate.toFixed(1)}%
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
               </TableBody>
             </Table>
           </CardContent>
