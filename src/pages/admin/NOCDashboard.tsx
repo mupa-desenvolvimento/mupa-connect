@@ -347,7 +347,7 @@ export default function NOCDashboard() {
                       </select>
                     </div>
 
-                    {panel.type === "store_view" && (
+                    {(panel.type === "store_view" || panel.type === "queries_feed") && (
                       <div className="space-y-1">
                         <label className="text-[10px] font-bold uppercase opacity-60">Selecionar Loja</label>
                         <select 
