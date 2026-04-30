@@ -36,7 +36,7 @@ interface ReportGeneratorModalProps {
 
 
 export function ReportGeneratorModal({ isOpen, onClose, logs, filters }: ReportGeneratorModalProps) {
-  const [reportType, setReportType] = useState<"general" | "products" | "devices">("general");
+  const [reportType, setReportType] = useState<"general" | "products" | "devices" | "stores" | "tags">("general");
   const [formatType, setFormatType] = useState<"pdf" | "csv">("pdf");
   const [isGenerating, setIsGenerating] = useState(false);
 
