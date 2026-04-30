@@ -491,11 +491,16 @@ export default function MediaPage() {
                         <DropdownMenuItem className="cursor-pointer" onClick={() => copyUrl(m.file_url)}>
                           <Copy className="h-4 w-4 mr-2" /> Copiar URL
                         </DropdownMenuItem>
+                        <DropdownMenuItem className="cursor-pointer" onClick={() => toggleAutoDelete(m.id, m.auto_delete)}>
+                          <Trash2 className={cn("h-4 w-4 mr-2", m.auto_delete ? "text-primary fill-primary/10" : "text-muted-foreground")} />
+                          {m.auto_delete ? "Desativar Auto Exclusão" : "Ativar Auto Exclusão"}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem 
                           className="text-destructive cursor-pointer"
                           onClick={() => deleteItem(m.id)}
                         >
-                          <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                          <Trash2 className="h-4 w-4 mr-2" /> Excluir permanentemente
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -505,6 +510,14 @@ export default function MediaPage() {
                     <div className="absolute bottom-2 left-2 z-20">
                       <Badge variant="secondary" className="backdrop-blur bg-background/80 text-[9px] font-mono border-border/40 py-0 h-5">
                         {m.duration || 0}s
+                      </Badge>
+                    </div>
+                  )}
+
+                  {m.auto_delete && (
+                    <div className="absolute bottom-2 right-2 z-20">
+                      <Badge variant="destructive" className="text-[8px] px-1 h-4 uppercase tracking-tighter">
+                        Auto Excluir
                       </Badge>
                     </div>
                   )}
