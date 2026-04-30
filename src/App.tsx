@@ -22,6 +22,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound.tsx";
 import PlayerMonitoring from "./pages/PlayerMonitoring";
+import ProductQueriesAnalytics from "./pages/ProductQueriesAnalytics";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
@@ -88,6 +89,7 @@ const App = () => {
                 <Route path="/superadmin" element={<SuperAdmin />} />
                 <Route path="/dispositivos" element={<Devices />} />
                 <Route path="/admin/player-logs" element={<PlayerMonitoring />} />
+                <Route path="/admin/analytics/consultas" element={<ProductQueriesAnalytics />} />
                 <Route path="/dispositivos/:id" element={<DeviceDetail />} />
                 <Route path="/midias" element={<Media />} />
                 <Route path="/playlists" element={<Playlists />} />
