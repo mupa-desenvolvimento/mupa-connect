@@ -94,7 +94,7 @@ export default function ProductQueriesAnalytics() {
     queryKey: ["filter-stores"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("product_queries_log" as any)
+        .from("product_queries_log")
         .select("loja")
         .not("loja", "is", null);
       
