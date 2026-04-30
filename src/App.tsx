@@ -28,6 +28,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { Loader2 } from "lucide-react";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -86,19 +87,77 @@ const App = () => {
               {/* Painel Empresa - Protegido */}
               <Route element={session ? <AppLayout /> : <Login />}>
                 <Route path="/" element={<Dashboard />} />
-                <Route path="/superadmin" element={<SuperAdmin />} />
-                <Route path="/usuarios" element={<UsersPage />} />
-                <Route path="/dispositivos" element={<Devices />} />
-                <Route path="/admin/player-logs" element={<PlayerMonitoring />} />
+                
+                {/* ADMIN GLOBAL ONLY */}
+                <Route path="/superadmin" element={
+                  <ProtectedRoute requireAdmin allowedRoles={["admin_global"]}>
+                    <SuperAdmin />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/admin/player-logs" element={
+                  <ProtectedRoute allowedRoles={["admin_global"]}>
+                    <PlayerMonitoring />
+                  </ProtectedRoute>
+                } />
+
+                {/* COMPANY ADMIN ONLY */}
+                <Route path="/usuarios" element={
+                  <ProtectedRoute requireAdmin>
+                    <UsersPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/lojas" element={
+                  <ProtectedRoute requireAdmin>
+                    <Stores />
+                  </ProtectedRoute>
+                } />
+                <Route path="/grupos" element={
+                  <ProtectedRoute requireAdmin>
+                    <Groups />
+                  </ProtectedRoute>
+                } />
+                <Route path="/configuracoes" element={
+                  <ProtectedRoute requireAdmin>
+                    <Settings />
+                  </ProtectedRoute>
+                } />
+
+                {/* TECNICO / ADMIN */}
+                <Route path="/dispositivos" element={
+                  <ProtectedRoute requireTecnico>
+                    <Devices />
+                  </ProtectedRoute>
+                } />
+                <Route path="/dispositivos/:id" element={
+                  <ProtectedRoute requireTecnico>
+                    <DeviceDetail />
+                  </ProtectedRoute>
+                } />
+
+                {/* MARKETING / ADMIN */}
+                <Route path="/midias" element={
+                  <ProtectedRoute requireMarketing>
+                    <Media />
+                  </ProtectedRoute>
+                } />
+                <Route path="/playlists" element={
+                  <ProtectedRoute requireMarketing>
+                    <Playlists />
+                  </ProtectedRoute>
+                } />
+                <Route path="/playlists/:id" element={
+                  <ProtectedRoute requireMarketing>
+                    <PlaylistEditor />
+                  </ProtectedRoute>
+                } />
+                <Route path="/campanhas" element={
+                  <ProtectedRoute requireMarketing>
+                    <Campaigns />
+                  </ProtectedRoute>
+                } />
+
                 <Route path="/admin/analytics/consultas" element={<ProductQueriesAnalytics />} />
-                <Route path="/dispositivos/:id" element={<DeviceDetail />} />
-                <Route path="/midias" element={<Media />} />
-                <Route path="/playlists" element={<Playlists />} />
-                <Route path="/playlists/:id" element={<PlaylistEditor />} />
-                <Route path="/campanhas" element={<Campaigns />} />
-                <Route path="/lojas" element={<Stores />} />
-                <Route path="/grupos" element={<Groups />} />
-                <Route path="/configuracoes" element={<Settings />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
