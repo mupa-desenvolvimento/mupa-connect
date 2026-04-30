@@ -36,11 +36,11 @@ export default function SharedMonitoringPage() {
 
       try {
         const { data, error: vError } = await supabase
-          .from("monitoring_views" as any)
+          .from("monitoring_views")
           .select("*")
           .eq("token", token)
           .eq("is_active", true)
-          .maybeSingle();
+          .maybeSingle() as any;
 
         if (vError || !data) {
           setError("Link de monitoramento inválido, expirado ou inativo.");
