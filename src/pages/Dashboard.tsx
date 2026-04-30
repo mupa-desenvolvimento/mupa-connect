@@ -10,15 +10,41 @@ import { supabase } from "@/integrations/supabase/client";
 import { format, subHours, startOfDay, endOfDay } from "date-fns";
 import { LineChart, Line, ResponsiveContainer } from "recharts";
 
-const stats = [
-  { label: "Dispositivos online", value: devices.filter(d => d.status === "online").length, total: devices.length, icon: MonitorPlay, accent: "text-success" },
-  { label: "Lojas ativas",        value: stores.length,    icon: Store,       accent: "text-primary" },
-  { label: "Mídias publicadas",   value: mediaItems.length, icon: ImageIcon,  accent: "text-accent" },
-  { label: "Playlists em uso",    value: playlists.length, icon: Activity,    accent: "text-warning" },
-];
+  // Removendo estatísticas estáticas para usar dinâmicas via useQuery
 
 
 export default function DashboardPage() {
+  const { data: statsData } = useQuery({
+    queryKey: ["dashboard-stats"],
+    queryFn: async () => {
+      const { data: devicesData } = await supabase.from("dispositivos").select("id, online");
+      const { count: storesCount } = await supabase.from("stores").select("*", { count: 'exact', head: true });
+      const { count: mediaCount } = await supabase.from("media_items").select("*", { count: 'exact', head: true });
+      const { count: playlistCount } = await supabase.from("playlists").select("*", { count: 'exact', head: true });
+
+      const totalDevices = devicesData?.length || 0;
+      const onlineDevices = devicesData?.filter(d => d.online).length || 0;
+
+      return [
+        { label: "Dispositivos online", value: onlineDevices, total: totalDevices, icon: MonitorPlay, accent: "text-success" },
+        { label: "Lojas ativas",        value: storesCount || 0, icon: Store,       accent: "text-primary" },
+        { label: "Mídias publicadas",   value: mediaCount || 0, icon: ImageIcon,  accent: "text-accent" },
+        { label: "Playlists em uso",    value: playlistCount || 0, icon: Activity,    accent: "text-warning" },
+      ];
+    }
+  });
+
+  const { data: devicesList } = useQuery({
+    queryKey: ["dashboard-devices-list"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("dispositivos")
+        .select("*")
+        .limit(10);
+      return data || [];
+    }
+  });
+
   const { data: analyticsData } = useQuery({
     queryKey: ["dashboard-ean-analytics"],
     queryFn: async () => {
@@ -91,7 +117,7 @@ export default function DashboardPage() {
       />
 
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {stats.map((s) => (
+        {(statsData || []).map((s: any) => (
           <Card key={s.label} className="border-border/60 hover:shadow-elegant transition-shadow">
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
@@ -188,26 +214,33 @@ export default function DashboardPage() {
             <CardTitle className="font-display">Status dos dispositivos</CardTitle>
           </CardHeader>
           <CardContent className="divide-y divide-border">
-            {devices.map((d) => (
+            {devicesList?.map((d: any) => (
               <div key={d.id} className="flex items-center justify-between py-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="h-9 w-9 rounded-lg bg-muted grid place-items-center shrink-0">
                     <MonitorPlay className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div className="min-w-0">
-                    <div className="font-medium truncate">{d.name}</div>
-                    <div className="text-xs text-muted-foreground truncate">{d.store} · {d.code}</div>
+                    <div className="font-medium truncate">{d.apelido_interno || "Sem nome"}</div>
+                    <div className="text-xs text-muted-foreground truncate">{d.empresa || "Sem loja"} · {d.serial}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  <span className="text-xs text-muted-foreground hidden sm:inline">{d.lastSeen}</span>
-                  <StatusBadge status={d.status} />
+                  <span className="text-xs text-muted-foreground hidden sm:inline">
+                    {d.last_heartbeat_at ? format(new Date(d.last_heartbeat_at), "HH:mm") : "N/A"}
+                  </span>
+                  <StatusBadge status={d.online ? "online" : "offline"} />
                   <Button asChild size="sm" variant="outline">
-                    <Link to={`/play/${d.code}`} target="_blank">Abrir player</Link>
+                    <Link to={`/play/${d.serial}`} target="_blank">Abrir player</Link>
                   </Button>
                 </div>
               </div>
             ))}
+            {(!devicesList || devicesList.length === 0) && (
+              <div className="py-8 text-center text-muted-foreground">
+                Nenhum dispositivo encontrado
+              </div>
+            )}
           </CardContent>
         </Card>
 
