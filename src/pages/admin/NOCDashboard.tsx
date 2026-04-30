@@ -46,6 +46,7 @@ interface PanelConfig {
 
 export default function NOCDashboard() {
   const { isSuperAdmin, isTecnico, companyId, tenantId } = useUserRole();
+  const navigate = useNavigate();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [layout, setLayout] = useState<LayoutType>("4");
   const [panels, setPanels] = useState<PanelConfig[]>([
@@ -278,6 +279,14 @@ export default function NOCDashboard() {
           >
             {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             <span>{isFullscreen ? "Sair Fullscreen" : "Modo Monitor"}</span>
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-9 w-9 p-0"
+            onClick={() => navigate("/")}
+          >
+            <X className="h-5 w-5" />
           </Button>
         </div>
       </div>
