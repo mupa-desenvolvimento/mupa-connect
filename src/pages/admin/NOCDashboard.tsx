@@ -395,6 +395,7 @@ function getPanelDefaultTitle(type: PanelType): string {
     case "alerts": return "Alertas Críticos";
     case "status": return "Status Dispositivos";
     case "store_view": return "Visão por Loja";
+    case "queries_feed": return "Consultas em Tempo Real";
     default: return "Painel";
   }
 }
