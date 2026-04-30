@@ -295,17 +295,26 @@ export default function ProductQueriesAnalytics() {
               <RefreshCw className="h-4 w-4" />
             </Button>
 
-            <Button variant="outline" onClick={handleExportCSV} title="Exportar CSV">
-              <Download className="mr-2 h-4 w-4" />
-              CSV
-            </Button>
-
-            <Button variant="outline" onClick={handleExportPDF} title="Exportar PDF">
+            <Button 
+              className="bg-gradient-primary shadow-glow" 
+              onClick={() => setReportModalOpen(true)}
+            >
               <FileText className="mr-2 h-4 w-4" />
-              PDF
+              Gerar Relatório
             </Button>
           </div>
         }
+      />
+
+      <ReportGeneratorModal
+        isOpen={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        logs={logs || []}
+        filters={{
+          period,
+          store: selectedStore,
+          device: selectedDevice
+        }}
       />
 
       {/* KPI Cards */}
