@@ -1,41 +1,39 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-
-import { useTenant as useTenantHook } from "@/hooks/use-tenant";
+import { useUserRole } from "@/hooks/use-user-role";
 
 export function useTenant() {
-  const { tenantId, isSuperAdmin, isLoading } = useTenantHook();
-  return { data: tenantId, isSuperAdmin, isLoading };
+  const { tenantId, companyId, isSuperAdmin, isLoading } = useUserRole();
+  // Return companyId if present, otherwise tenantId (reseller level)
+  return { data: companyId || tenantId, isSuperAdmin, isLoading };
 }
 
-export function useMedias(tenantId?: string) {
+export function useMedias(contextId?: string) {
   return useQuery({
-    queryKey: ["medias", tenantId],
+    queryKey: ["medias", contextId],
     queryFn: async () => {
       let query = supabase
         .from("media_items")
         .select("id, name, thumbnail_url, file_url, type, duration, tenant_id")
-        .in("status", ["ready", "active"]) // Aceita ambos os status como válidos para exibição
+        .in("status", ["ready", "active"])
         .order("created_at", { ascending: false });
 
-      if (tenantId) {
-        query = query.eq("tenant_id", tenantId);
+      if (contextId) {
+        // Try to filter by company or tenant
+        query = query.or(`company_id.eq.${contextId},tenant_id.eq.${contextId}`);
       }
 
       const { data, error } = await query;
-
       if (error) throw error;
       return data || [];
     },
-    // Removido enabled: !!tenantId para permitir que super admins vejam sem tenant_id
-    // Mas mantemos para usuários comuns via RLS e UI
     staleTime: 1000 * 60 * 5,
   });
 }
 
-export function usePlaylists(tenantId?: string, isSuperAdmin?: boolean) {
+export function usePlaylists(contextId?: string, isSuperAdmin?: boolean) {
   return useQuery({
-    queryKey: ["playlists", tenantId, isSuperAdmin],
+    queryKey: ["playlists", contextId, isSuperAdmin],
     queryFn: async () => {
       let query = supabase
         .from("playlists")
@@ -65,25 +63,17 @@ export function usePlaylists(tenantId?: string, isSuperAdmin?: boolean) {
           )
         `);
 
-      if (tenantId) {
-        query = query.eq("tenant_id", tenantId);
+      if (contextId) {
+        query = query.or(`company_id.eq.${contextId},tenant_id.eq.${contextId}`);
       } else if (!isSuperAdmin) {
-        // Se não é super admin e não tem tenantId, não deve ver nada
-        // (RLS também cuida disso, mas economizamos uma query)
         return [];
       }
       
       const { data, error } = await query;
-
-      if (error) {
-        console.error("Error fetching playlists:", error);
-        throw error;
-      }
-      
+      if (error) throw error;
       return data || [];
     },
-    // Habilitado se tiver tenantId OU se for super admin
-    enabled: !!tenantId || isSuperAdmin,
+    enabled: !!contextId || isSuperAdmin,
     staleTime: 1000 * 60 * 2,
     refetchOnMount: true,
   });
