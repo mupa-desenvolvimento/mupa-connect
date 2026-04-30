@@ -35,7 +35,7 @@ import {
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "@/hooks/use-toast";
-import { format, subDays, startOfDay, endOfDay, parseISO } from "date-fns";
+import { format, subDays, startOfDay, endOfDay, parseISO, isWithinInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Select,
@@ -59,7 +59,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
 export default function ProductQueriesAnalytics() {
-  const [period, setPeriod] = useState("7");
+  const [period, setPeriod] = useState("all");
   const [selectedStore, setSelectedStore] = useState("all");
   const [selectedDevice, setSelectedDevice] = useState("all");
 
@@ -67,27 +67,26 @@ export default function ProductQueriesAnalytics() {
     queryKey: ["product-queries-logs", period, selectedStore, selectedDevice],
     queryFn: async () => {
       let query = supabase
-        .from("product_queries_log" as any)
-        .select("*")
-        .order("created_at", { ascending: false });
+        .from("product_queries_log")
+        .select("*");
 
-      if (period !== "custom") {
+      if (period !== "all") {
         const days = parseInt(period);
         const date = subDays(new Date(), days);
-        query = (query as any).gte("created_at", date.toISOString());
+        query = query.gte("created_at", date.toISOString());
       }
 
       if (selectedStore !== "all") {
-        query = (query as any).eq("loja", selectedStore);
+        query = query.eq("loja", selectedStore);
       }
 
       if (selectedDevice !== "all") {
-        query = (query as any).eq("device_id", selectedDevice);
+        query = query.eq("device_id", selectedDevice);
       }
 
-      const { data, error } = await (query as any);
+      const { data, error } = await query.order("created_at", { ascending: false });
       if (error) throw error;
-      return data as any[];
+      return data;
     },
   });
 
@@ -95,7 +94,7 @@ export default function ProductQueriesAnalytics() {
     queryKey: ["filter-stores"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("product_queries_log" as any)
+        .from("product_queries_log")
         .select("loja")
         .not("loja", "is", null);
       
@@ -109,7 +108,7 @@ export default function ProductQueriesAnalytics() {
     queryKey: ["filter-devices"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("product_queries_log" as any)
+        .from("product_queries_log")
         .select("device_id, apelido");
       
       if (error) return [];
@@ -121,7 +120,7 @@ export default function ProductQueriesAnalytics() {
   // KPI Calculations
   const totalConsultas = logs?.length || 0;
   const uniqueDevicesCount = new Set(logs?.map(l => l.device_id)).size;
-  const errorLogs = logs?.filter(l => l.status_code !== 200 && l.status_code !== "200") || [];
+  const errorLogs = logs?.filter(l => l.status_code !== 200) || [];
   const erroRate = totalConsultas > 0 ? (errorLogs.length / totalConsultas) * 100 : 0;
   
   const productCounts = logs?.reduce((acc: any, log) => {
@@ -152,7 +151,7 @@ export default function ProductQueriesAnalytics() {
     const name = log.apelido || log.device_id;
     if (!acc[log.device_id]) acc[log.device_id] = { name, count: 0, errors: 0 };
     acc[log.device_id].count++;
-    if (log.status_code !== 200 && log.status_code !== "200") acc[log.device_id].errors++;
+    if (log.status_code !== 200) acc[log.device_id].errors++;
     return acc;
   }, {});
 
@@ -206,7 +205,7 @@ export default function ProductQueriesAnalytics() {
     doc.text("Inteligência de Consultas — Logs EAN", 14, 14);
     doc.setFontSize(9);
     doc.text(
-      `Gerado em ${format(new Date(), "dd/MM/yyyy HH:mm")} • ${logs.length} registros • Período: ${period === "1" ? "Hoje" : `Últimos ${period} dias`}`,
+      `Gerado em ${format(new Date(), "dd/MM/yyyy HH:mm")} • ${logs.length} registros • Período: ${period === "all" ? "Todo o tempo" : period === "1" ? "Hoje" : `Últimos ${period} dias`}`,
       14,
       20
     );
@@ -257,6 +256,7 @@ export default function ProductQueriesAnalytics() {
                 <SelectValue placeholder="Período" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="all">Todo período</SelectItem>
                 <SelectItem value="1">Hoje</SelectItem>
                 <SelectItem value="7">Últimos 7 dias</SelectItem>
                 <SelectItem value="30">Últimos 30 dias</SelectItem>
