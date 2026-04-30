@@ -4,12 +4,13 @@ import {
   MonitorPlay,
   ListVideo,
   Megaphone,
-  Image as ImageIcon,
+  ImageIcon,
   Store,
   Network,
   Settings,
   ShieldCheck,
   BarChart3,
+  Users,
 } from "lucide-react";
 import {
   Sidebar,
@@ -24,48 +25,16 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-
-const main = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Dispositivos", url: "/dispositivos", icon: MonitorPlay },
-  { title: "Playlists", url: "/playlists", icon: ListVideo },
-  { title: "Campanhas", url: "/campanhas", icon: Megaphone },
-  { title: "Mídias", url: "/midias", icon: ImageIcon },
-  { title: "Inteligência EAN", url: "/admin/analytics/consultas", icon: BarChart3 },
-];
-
-const org = [
-  { title: "Lojas", url: "/lojas", icon: Store },
-  { title: "Grupos", url: "/grupos", icon: Network },
-  { title: "Configurações", url: "/configuracoes", icon: Settings },
-];
+import { useUserRole } from "@/hooks/use-user-role";
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { pathname } = useLocation();
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  
-  useEffect(() => {
-    async function checkRole() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", user.id)
-          .eq("role", "admin_global")
-          .single();
-        
-        if (roleData) {
-          setIsSuperAdmin(true);
-        }
-      }
-    }
-    checkRole();
-  }, []);
+  const { isAdmin, isSuperAdmin, isTecnico, isMarketing, isLoading } = useUserRole();
+
+  if (isLoading) return null;
+
 
   const isActive = (path: string) => (path === "/" ? pathname === "/" : pathname.startsWith(path));
 
