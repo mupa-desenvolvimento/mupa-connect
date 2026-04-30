@@ -593,18 +593,18 @@ function DeviceCard({ item, status }: any) {
 
   return (
     <div className={cn(
-      "flex flex-col justify-between p-3 rounded-lg border-2 bg-[#09090b] transition-all hover:scale-[1.02]",
+      "flex flex-col justify-between p-3 rounded-lg border-2 bg-[#09090b] transition-all hover:scale-[1.02] h-full",
       borderColor
     )}>
-      <div className="flex items-start justify-between mb-2">
+      <div className="flex items-start justify-between mb-1">
         <div className="flex flex-col overflow-hidden">
-          <span className="text-xs font-black uppercase truncate text-white leading-tight">{item.apelido_interno || item.serial}</span>
+          <span className="text-sm font-black uppercase truncate text-white leading-tight">{item.apelido_interno || item.serial}</span>
           <span className="text-[10px] opacity-50 font-bold uppercase tracking-wider">{item.num_filial || 'Sem Filial'}</span>
         </div>
         <div className={cn("h-3 w-3 rounded-full shrink-0 mt-1 shadow-[0_0_10px_rgba(0,0,0,0.5)]", statusColor, status !== 'offline' && "animate-pulse")} />
       </div>
       
-      <div className="flex items-end justify-between mt-1">
+      <div className="flex items-end justify-between mt-auto">
         <div className="flex flex-col">
           <span className="text-[9px] uppercase font-bold opacity-40">Visto por último</span>
           <span className="text-[10px] font-bold truncate">
