@@ -319,10 +319,6 @@ export default function NOCDashboard() {
         return <div className="flex items-center justify-center h-full text-muted-foreground italic">Em desenvolvimento...</div>;
     }
   };
-      default:
-        return <div className="flex items-center justify-center h-full text-muted-foreground italic">Em desenvolvimento...</div>;
-    }
-  };
 
   const getGridLayoutClass = () => {
     switch (layout) {
