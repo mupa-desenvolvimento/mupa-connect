@@ -62,27 +62,27 @@ export default function ProductQueriesAnalytics() {
     queryKey: ["product-queries-logs", period, selectedStore, selectedDevice],
     queryFn: async () => {
       let query = supabase
-        .from("product_queries_log")
+        .from("product_queries_log" as any)
         .select("*")
         .order("created_at", { ascending: false });
 
       if (period !== "custom") {
         const days = parseInt(period);
         const date = subDays(new Date(), days);
-        query = query.gte("created_at", date.toISOString());
+        query = (query as any).gte("created_at", date.toISOString());
       }
 
       if (selectedStore !== "all") {
-        query = query.eq("loja", selectedStore);
+        query = (query as any).eq("loja", selectedStore);
       }
 
       if (selectedDevice !== "all") {
-        query = query.eq("device_id", selectedDevice);
+        query = (query as any).eq("device_id", selectedDevice);
       }
 
-      const { data, error } = await query;
+      const { data, error } = await (query as any);
       if (error) throw error;
-      return data;
+      return data as any[];
     },
   });
 
@@ -90,13 +90,13 @@ export default function ProductQueriesAnalytics() {
     queryKey: ["filter-stores"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("product_queries_log")
+        .from("product_queries_log" as any)
         .select("loja")
         .not("loja", "is", null);
       
       if (error) return [];
-      const uniqueStores = Array.from(new Set(data.map(d => d.loja)));
-      return uniqueStores.sort();
+      const uniqueStores = Array.from(new Set((data as any[]).map(d => d.loja)));
+      return uniqueStores.sort() as string[];
     }
   });
 
@@ -104,18 +104,18 @@ export default function ProductQueriesAnalytics() {
     queryKey: ["filter-devices"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("product_queries_log")
+        .from("product_queries_log" as any)
         .select("device_id, apelido");
       
       if (error) return [];
-      const uniqueDevices = Array.from(new Map(data.map(d => [d.device_id, d.apelido || d.device_id])).entries());
+      const uniqueDevices = Array.from(new Map((data as any[]).map(d => [d.device_id, d.apelido || d.device_id])).entries());
       return uniqueDevices.map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
     }
   });
 
   // KPI Calculations
   const totalConsultas = logs?.length || 0;
-  const uniqueDevices = new Set(logs?.map(l => l.device_id)).size;
+  const uniqueDevicesCount = new Set(logs?.map(l => l.device_id)).size;
   const errorLogs = logs?.filter(l => l.status_code !== 200 && l.status_code !== "200") || [];
   const erroRate = totalConsultas > 0 ? (errorLogs.length / totalConsultas) * 100 : 0;
   
@@ -162,6 +162,7 @@ export default function ProductQueriesAnalytics() {
   }, {});
 
   const errorChartData = Object.entries(errorStatusData).map(([status, count]) => ({ status, count }));
+
 
   if (isLoading) {
     return (
