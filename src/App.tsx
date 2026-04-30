@@ -151,6 +151,11 @@ const App = () => {
                     <Media />
                   </ProtectedRoute>
                 } />
+                <Route path="/midias/lixeira" element={
+                  <ProtectedRoute requireMarketing>
+                    <MediaTrash />
+                  </ProtectedRoute>
+                } />
                 <Route path="/playlists" element={
                   <ProtectedRoute requireMarketing>
                     <Playlists />
