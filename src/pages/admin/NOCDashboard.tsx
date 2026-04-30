@@ -527,9 +527,9 @@ function StoreCard({ item, status }: any) {
 }
 
 function DeviceCard({ item, status }: any) {
-  const statusColor = status === "online" ? "bg-green-500" : status === "unstable" ? "bg-yellow-500" : "bg-red-500";
-  const borderColor = status === "online" ? "border-green-500/20" : status === "unstable" ? "border-yellow-500/20" : "border-red-500/20";
-  const textColor = status === "online" ? "text-green-500" : status === "unstable" ? "text-yellow-500" : "text-red-500";
+  const statusColor = status === "online" ? "bg-success shadow-[0_0_12px_hsl(var(--success)/0.4)]" : status === "unstable" ? "bg-warning shadow-[0_0_12px_hsl(var(--warning)/0.4)]" : "bg-destructive shadow-[0_0_12px_hsl(var(--destructive)/0.4)]";
+  const borderColor = status === "online" ? "border-success/20" : status === "unstable" ? "border-warning/20" : "border-destructive/20";
+  const textColor = status === "online" ? "text-success" : status === "unstable" ? "text-warning" : "text-destructive";
 
   return (
     <div className={cn(
