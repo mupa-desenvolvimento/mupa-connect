@@ -38,6 +38,8 @@ import { cn } from "@/lib/utils";
 import { issueDeviceCommand } from "@/lib/device-commands";
 import { toast } from "sonner";
 import { DeviceFirebaseCommandDrawer } from "@/components/DeviceFirebaseCommandDrawer";
+import { BulkCommandDialog } from "@/components/BulkCommandDialog";
+import { Megaphone } from "lucide-react";
 
 type DeviceStatus = "online" | "unstable" | "offline";
 
@@ -49,6 +51,7 @@ export default function DevicesPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedDevice, setSelectedDevice] = useState<any | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const openDeviceDrawer = (device: any) => {
     setSelectedDevice(device);
@@ -202,6 +205,16 @@ export default function DevicesPage() {
                 <LayoutGrid className="h-4 w-4" />
               </Button>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setBulkOpen(true)}
+              disabled={isLoading}
+              className="h-10 border-primary/40 text-primary hover:bg-primary/10"
+            >
+              <Megaphone className="h-4 w-4 mr-2" />
+              Enviar comando em massa
+            </Button>
             <Button 
               variant="outline" 
               size="sm" 
@@ -483,6 +496,14 @@ export default function DevicesPage() {
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
         formatDate={formatDate}
+      />
+
+      <BulkCommandDialog
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        devices={devices ?? []}
+        stores={(stores ?? []).map((s) => ({ code: String(s.code ?? s.id), name: s.name }))}
+        groups={groups}
       />
     </div>
   );
