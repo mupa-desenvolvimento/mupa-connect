@@ -4785,6 +4785,102 @@ export type Database = {
           },
         ]
       }
+      quick_access_logs: {
+        Row: {
+          command: string
+          created_at: string | null
+          device_id: number | null
+          id: string
+          payload: Json | null
+          token_id: string | null
+        }
+        Insert: {
+          command: string
+          created_at?: string | null
+          device_id?: number | null
+          id?: string
+          payload?: Json | null
+          token_id?: string | null
+        }
+        Update: {
+          command?: string
+          created_at?: string | null
+          device_id?: number | null
+          id?: string
+          payload?: Json | null
+          token_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quick_access_logs_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "quick_access_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quick_access_tokens: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          device_id: number | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          store_id: string | null
+          tenant_id: string | null
+          token: string
+          updated_at: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          device_id?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          store_id?: string | null
+          tenant_id?: string | null
+          token?: string
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          device_id?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          store_id?: string | null
+          tenant_id?: string | null
+          token?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quick_access_tokens_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quick_access_tokens_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quick_access_tokens_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       regions: {
         Row: {
           code: string | null
