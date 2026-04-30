@@ -140,6 +140,7 @@ export default function MediaPage() {
     let query = supabase
       .from("media_items")
       .select("*")
+      .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
     if (tenantId) {
