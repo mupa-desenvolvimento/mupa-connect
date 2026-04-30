@@ -581,6 +581,6 @@ export default function ProductQueriesAnalytics() {
           </CardContent>
         </Card>
       </div>
-
+    </div>
   );
 }
