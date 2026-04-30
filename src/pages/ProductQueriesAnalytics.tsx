@@ -256,6 +256,7 @@ export default function ProductQueriesAnalytics() {
                 <SelectValue placeholder="Período" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="all">Todo período</SelectItem>
                 <SelectItem value="1">Hoje</SelectItem>
                 <SelectItem value="7">Últimos 7 dias</SelectItem>
                 <SelectItem value="30">Últimos 30 dias</SelectItem>
