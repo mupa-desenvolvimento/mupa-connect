@@ -11,7 +11,9 @@ import {
   Activity,
   WifiOff,
   Search,
-  RefreshCw
+  RefreshCw,
+  Store,
+  Warehouse
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,7 +45,7 @@ interface PanelConfig {
 }
 
 export default function NOCDashboard() {
-  const { isSuperAdmin, isTecnico, companyId } = useUserRole();
+  const { isSuperAdmin, isTecnico, companyId, tenantId } = useUserRole();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [layout, setLayout] = useState<LayoutType>("4");
   const [panels, setPanels] = useState<PanelConfig[]>([
@@ -99,7 +101,7 @@ export default function NOCDashboard() {
   }
 
   async function fetchStores() {
-    let query = supabase.from("stores").select("id, name, code");
+    let query = supabase.from("stores").select("id, name, code, tenant_id");
     if (!isSuperAdmin && tenantId) {
       query = query.eq("tenant_id", tenantId);
     }
