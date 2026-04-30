@@ -166,7 +166,7 @@ export function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalP
             </Select>
           </div>
 
-          {isSuperAdmin && (
+          {(isSuperAdmin || tenantId) && (
             <div className="space-y-2">
               <Label htmlFor="company">Empresa Vinculada</Label>
               <Select value={companyId} onValueChange={setCompanyId} required>
