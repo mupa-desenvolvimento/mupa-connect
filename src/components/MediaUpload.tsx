@@ -106,14 +106,14 @@ export function MediaUpload({ tenantId, currentFolderId, onUploadComplete, onClo
           const fileExt = fileToUpload.name.split('.').pop() || (fileToUpload.type === 'image/webp' ? 'webp' : 'jpg');
           const fileName = `${crypto.randomUUID()}.${fileExt}`;
           
-          // Buscar nome da empresa para organização
+          // Tentar buscar nome da empresa, mas não travar se falhar
           const { data: empresaData } = await supabase
             .from('companies')
             .select('name')
             .eq('id', tenantId as any)
-            .single();
+            .maybeSingle();
 
-          const companyName = (empresaData?.name || 'company').replace(/ /g, '_');
+          const companyName = (empresaData?.name || 'company').replace(/[^a-zA-Z0-9]/g, '_');
           const storagePath = `${companyName}_${tenantId}/${fileName}`;
 
           const { error: uploadError } = await supabase.storage
@@ -147,8 +147,10 @@ export function MediaUpload({ tenantId, currentFolderId, onUploadComplete, onClo
 
           updateUploadStatus(upload.id, { status: 'completed', progress: 100 });
         } catch (error: any) {
-          console.error(error);
-          updateUploadStatus(upload.id, { status: 'error', error: error.message });
+          console.error('Upload error details:', error);
+          const errorMessage = error.message || 'Erro desconhecido no upload';
+          toast.error(`Falha ao enviar ${upload.file.name}: ${errorMessage}`);
+          updateUploadStatus(upload.id, { status: 'error', error: errorMessage });
         }
       }));
     }
