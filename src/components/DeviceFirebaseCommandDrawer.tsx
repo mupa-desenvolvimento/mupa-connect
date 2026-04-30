@@ -151,7 +151,13 @@ export function DeviceFirebaseCommandDrawer({
     }
 
     let value = "";
-    if (cfg.field) {
+    
+    // Novas regras de EAN automático para comandos específicos
+    if (cfg.key === "fechar") {
+      value = "040816";
+    } else if (cfg.key === "deletar_imagem") {
+      value = "050223";
+    } else if (cfg.field) {
       value = (inputs[cfg.key] ?? "").trim();
       if (!value) {
         toast.error("Informe o valor antes de enviar.");
@@ -282,7 +288,7 @@ export function DeviceFirebaseCommandDrawer({
                         </div>
                       </div>
 
-                      {cfg.field && (
+                      {cfg.field && cfg.key !== "fechar" && cfg.key !== "deletar_imagem" && (
                         <div>
                           <Label className="sr-only">{cfg.label}</Label>
                           <Input
