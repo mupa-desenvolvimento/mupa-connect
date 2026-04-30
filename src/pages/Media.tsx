@@ -63,6 +63,7 @@ interface MediaItem {
   thumbnail_url: string | null;
   tenant_id: string;
   created_at: string;
+  auto_delete: boolean;
 }
 
 interface FolderItem {
@@ -205,7 +206,35 @@ export default function MediaPage() {
     }
   };
 
+  const toggleAutoDelete = async (id: string, currentStatus: boolean) => {
+    const { error } = await supabase
+      .from('media_items')
+      .update({ auto_delete: !currentStatus })
+      .eq('id', id);
+
+    if (error) {
+      toast.error("Erro ao atualizar auto exclusão: " + error.message);
+    } else {
+      toast.success(currentStatus ? "Auto exclusão desativada" : "Auto exclusão ativada");
+      fetchMedia();
+    }
+  };
+
   const deleteItem = async (id: string) => {
+    // Check if media is in use via the new RPC function
+    const { data: isInUse, error: checkError } = await supabase
+      .rpc('check_media_in_use', { media_id: id });
+
+    if (checkError) {
+      toast.error("Erro ao verificar uso da mídia: " + checkError.message);
+      return;
+    }
+
+    if (isInUse) {
+      toast.error("Esta mídia está em uso em uma playlist ou campanha e não pode ser excluída.");
+      return;
+    }
+
     const { error } = await supabase.from('media_items').delete().eq('id', id);
     if (error) {
       toast.error("Erro ao excluir: " + error.message);
@@ -462,11 +491,16 @@ export default function MediaPage() {
                         <DropdownMenuItem className="cursor-pointer" onClick={() => copyUrl(m.file_url)}>
                           <Copy className="h-4 w-4 mr-2" /> Copiar URL
                         </DropdownMenuItem>
+                        <DropdownMenuItem className="cursor-pointer" onClick={() => toggleAutoDelete(m.id, m.auto_delete)}>
+                          <Trash2 className={cn("h-4 w-4 mr-2", m.auto_delete ? "text-primary fill-primary/10" : "text-muted-foreground")} />
+                          {m.auto_delete ? "Desativar Auto Exclusão" : "Ativar Auto Exclusão"}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem 
                           className="text-destructive cursor-pointer"
                           onClick={() => deleteItem(m.id)}
                         >
-                          <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                          <Trash2 className="h-4 w-4 mr-2" /> Excluir permanentemente
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -476,6 +510,14 @@ export default function MediaPage() {
                     <div className="absolute bottom-2 left-2 z-20">
                       <Badge variant="secondary" className="backdrop-blur bg-background/80 text-[9px] font-mono border-border/40 py-0 h-5">
                         {m.duration || 0}s
+                      </Badge>
+                    </div>
+                  )}
+
+                  {m.auto_delete && (
+                    <div className="absolute bottom-2 right-2 z-20">
+                      <Badge variant="destructive" className="text-[8px] px-1 h-4 uppercase tracking-tighter">
+                        Auto Excluir
                       </Badge>
                     </div>
                   )}
@@ -498,6 +540,7 @@ export default function MediaPage() {
                   <TableHead className="w-[400px]">Nome</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Tamanho</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -516,6 +559,7 @@ export default function MediaPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">Pasta</TableCell>
+                    <TableCell>--</TableCell>
                     <TableCell className="text-muted-foreground">--</TableCell>
                     <TableCell className="text-muted-foreground">--</TableCell>
                     <TableCell className="text-right">
@@ -551,13 +595,29 @@ export default function MediaPage() {
                       <Badge variant="outline" className="capitalize text-[10px]">{m.type}</Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground font-mono text-[11px]">{formatSize(m.file_size)}</TableCell>
+                    <TableCell>
+                      {m.auto_delete ? (
+                        <Badge variant="destructive" className="text-[9px]">Auto Exclusão</Badge>
+                      ) : (
+                        <span className="text-[9px] text-muted-foreground">Manual</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-muted-foreground text-[11px]">{new Date(m.created_at).toLocaleDateString()}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyUrl(m.file_url)}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyUrl(m.file_url)} title="Copiar URL">
                           <Copy className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className={cn("h-8 w-8", m.auto_delete ? "text-primary" : "")}
+                          onClick={() => toggleAutoDelete(m.id, m.auto_delete)}
+                          title="Alternar auto exclusão"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" asChild title="Visualizar">
                           <a href={m.file_url} target="_blank" rel="noopener noreferrer">
                             <Play className="h-4 w-4" />
                           </a>
@@ -567,6 +627,7 @@ export default function MediaPage() {
                           size="icon" 
                           className="h-8 w-8 text-destructive"
                           onClick={() => deleteItem(m.id)}
+                          title="Excluir"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
