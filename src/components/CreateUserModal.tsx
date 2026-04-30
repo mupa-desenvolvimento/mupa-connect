@@ -85,9 +85,10 @@ export function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalP
           .insert({
             id: data.user.id,
             company_id: targetCompanyId,
+            tenant_id: tenantId,
             role: role,
           });
-        
+
         if (profileError) {
           console.error("Error creating user profile:", profileError);
           toast.error("Usuário criado, mas houve erro ao definir perfil.");
