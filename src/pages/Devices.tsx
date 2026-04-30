@@ -303,7 +303,11 @@ export default function DevicesPage() {
                     {filteredDevices.map((d) => {
                       const status = getStatus(d.last_heartbeat_at, d.last_proof_at);
                       return (
-                        <TableRow key={d.id} className="hover:bg-muted/30 transition-colors">
+                        <TableRow
+                          key={d.id}
+                          className="hover:bg-muted/30 transition-colors cursor-pointer"
+                          onClick={() => openDeviceDrawer(d)}
+                        >
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <div className={cn(
