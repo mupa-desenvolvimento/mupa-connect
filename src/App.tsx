@@ -84,6 +84,9 @@ const App = () => {
               {/* Player rota fullscreen, sem layout e sem auth obrigatória (usa deviceCode) */}
               <Route path="/play/:deviceCode" element={<Player />} />
 
+              {/* Acesso Rápido - Sem login obrigatório (protegido por token) */}
+              <Route path="/quick-access/:token" element={<QuickAccessPage />} />
+
               {/* Painel Empresa - Protegido */}
               <Route element={session ? <AppLayout /> : <Login />}>
                 <Route path="/" element={<Dashboard />} />
