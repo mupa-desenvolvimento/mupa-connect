@@ -31,7 +31,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { pathname } = useLocation();
-  const { isAdmin, isSuperAdmin, isTecnico, isMarketing, isLoading } = useUserRole();
+  const { isAdmin, isSuperAdmin, isTecnico, isMarketing, isLoading, tenantId } = useUserRole();
 
   if (isLoading) return null;
 

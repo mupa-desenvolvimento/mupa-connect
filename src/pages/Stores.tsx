@@ -34,16 +34,14 @@ export default function StoresPage() {
       // Filtrar dispositivos pela empresa ativa do usuário (RLS também aplica)
       let query = supabase
         .from("dispositivos")
-        .select("num_filial, online, company_id, tenant_id");
+        .select("num_filial, online, company_id");
 
       if (companyId) {
         query = query.eq("company_id", companyId);
       }
       
-      // Se tiver tenantId, filtrar por ele também para restringir a lojas específicas do gerente
-      if (tenantId && !isSuperAdmin) {
-        query = query.eq("tenant_id", tenantId);
-      } else if (!companyId && !isSuperAdmin) {
+      // Se não for super admin e não tiver empresa, não retorna nada
+      if (!companyId && !isSuperAdmin) {
         return [];
       }
 
