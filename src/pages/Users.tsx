@@ -95,28 +95,28 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
+    <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
       <PageHeader
         title="Gestão de Usuários"
         description="Controle quem acessa o painel da sua empresa e quais permissões eles possuem."
         actions={
-          <Button onClick={() => setIsModalOpen(true)} className="bg-gradient-primary shadow-glow">
+          <Button onClick={() => setIsModalOpen(true)} className="bg-gradient-primary shadow-glow h-9">
             <Plus className="h-4 w-4 mr-2" /> Novo Usuário
           </Button>
         }
       />
 
-      <div className="p-6">
-        <Card className="border-border/60 shadow-elegant overflow-hidden">
+      <div className="flex-1 overflow-hidden border border-border/60 rounded-xl bg-card shadow-sm flex flex-col">
+        <div className="flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="h-64 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <Loader2 className="h-8 w-8 animate-spin text-primary opacity-50" />
             </div>
           ) : (
             <Table>
-              <TableHeader className="bg-muted/50">
-                <TableRow>
-                  <TableHead>Usuário</TableHead>
+              <TableHeader className="sticky top-0 bg-card z-10 border-b border-border/60">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-[40%]">Usuário</TableHead>
                   <TableHead>Perfil / Permissão</TableHead>
                   <TableHead>Data de Cadastro</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -125,40 +125,43 @@ export default function UsersPage() {
               <TableBody>
                 {!users || users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="h-32 text-center text-muted-foreground">
-                      Nenhum usuário encontrado.
+                    <TableCell colSpan={4} className="h-64 text-center">
+                      <div className="flex flex-col items-center justify-center text-muted-foreground gap-2">
+                        <UsersIcon className="h-10 w-10 opacity-20" />
+                        <p>Nenhum usuário encontrado.</p>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : (
                   users.map((user) => (
-                    <TableRow key={user.id}>
+                    <TableRow key={user.id} className="group hover:bg-muted/30 transition-colors">
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                            <UsersIcon className="h-4 w-4 text-primary" />
+                          <div className="h-9 w-9 rounded-full bg-primary/5 flex items-center justify-center border border-primary/10">
+                            <UsersIcon className="h-4.5 w-4.5 text-primary" />
                           </div>
                           <div className="flex flex-col">
-                            <span className="font-medium">{user.name}</span>
+                            <span className="font-semibold text-foreground/90">{user.name}</span>
                             <span className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Mail className="h-3 w-3" /> {user.email}
+                              <Mail className="h-3 w-3 opacity-60" /> {user.email}
                             </span>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Shield className="h-4 w-4 text-muted-foreground" />
+                          <Shield className="h-3.5 w-3.5 text-muted-foreground opacity-60" />
                           {getRoleBadge(user.role)}
                         </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
+                      <TableCell className="text-muted-foreground text-xs font-mono">
                         {new Date(user.created_at).toLocaleDateString("pt-BR")}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                          className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
                           onClick={() => handleDeleteUser(user.id)}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -170,7 +173,7 @@ export default function UsersPage() {
               </TableBody>
             </Table>
           )}
-        </Card>
+        </div>
       </div>
 
       <CreateUserModal
