@@ -1,12 +1,17 @@
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { MapPin, MonitorPlay, Plus, Loader2, RefreshCw, Store } from "lucide-react";
+import { MapPin, MonitorPlay, Plus, Loader2, RefreshCw, Store, Smartphone } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { QuickAccessModal } from "@/components/QuickAccessModal";
+import { useState } from "react";
+import { useUserRole } from "@/hooks/use-user-role";
 
 export default function StoresPage() {
   const stockCenterId = "003ZAF";
+  const [selectedStore, setSelectedStore] = useState<{id: string, name: string} | null>(null);
+  const { companyId, tenantId } = useUserRole();
 
   const { data: storesData, isLoading, refetch } = useQuery({
     queryKey: ["stores-stock-center"],
@@ -104,9 +109,19 @@ export default function StoresPage() {
                     </div>
                   </div>
                   
-                  <Button variant="ghost" className="w-full mt-4 h-8 text-xs font-semibold text-primary hover:bg-primary/5 group-hover:bg-primary/5">
-                    Ver detalhes da filial
-                  </Button>
+                  <div className="flex gap-2 mt-4">
+                    <Button variant="ghost" className="flex-1 h-8 text-xs font-semibold text-primary hover:bg-primary/5">
+                      Detalhes
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="h-8 px-2 text-primary border-primary/20 hover:bg-primary/5"
+                      onClick={() => setSelectedStore({ id: s.id, name: s.name })}
+                      title="Gerenciar Acesso Rápido"
+                    >
+                      <Smartphone className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))
@@ -117,6 +132,15 @@ export default function StoresPage() {
           )}
         </div>
       )}
+
+      <QuickAccessModal
+        isOpen={!!selectedStore}
+        onClose={() => setSelectedStore(null)}
+        storeId={selectedStore?.id}
+        storeName={selectedStore?.name}
+        companyId={companyId || undefined}
+        tenantId={tenantId || undefined}
+      />
     </>
   );
 }

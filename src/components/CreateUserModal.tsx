@@ -35,25 +35,28 @@ export function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalP
   const [companyId, setCompanyId] = useState("");
   const [role, setRole] = useState("tecnico");
   const [loading, setLoading] = useState(false);
-  const { companyId: currentCompanyId, isSuperAdmin } = useUserRole();
+  const { companyId: currentCompanyId, isSuperAdmin, tenantId } = useUserRole();
 
-  // Fetch companies for the select dropdown (only for SuperAdmins)
+  // Fetch companies for the select dropdown
   const { data: companies } = useQuery({
-    queryKey: ["companies-list"],
+    queryKey: ["companies-list", isSuperAdmin, tenantId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("companies")
-        .select("id, name")
-        .order("name");
+      let query = supabase.from("companies").select("id, name");
+      
+      if (!isSuperAdmin && tenantId) {
+        query = query.eq("tenant_id", tenantId);
+      }
+      
+      const { data, error } = await query.order("name");
       if (error) throw error;
       return data;
     },
-    enabled: isOpen && isSuperAdmin,
+    enabled: isOpen && (isSuperAdmin || !!tenantId),
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const targetCompanyId = isSuperAdmin ? companyId : currentCompanyId;
+    const targetCompanyId = (isSuperAdmin || tenantId) ? companyId : currentCompanyId;
 
     if (!email || !password || !name || !targetCompanyId || !role) {
       toast.error("Preencha todos os campos");
@@ -82,9 +85,10 @@ export function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalP
           .insert({
             id: data.user.id,
             company_id: targetCompanyId,
+            tenant_id: tenantId,
             role: role,
           });
-        
+
         if (profileError) {
           console.error("Error creating user profile:", profileError);
           toast.error("Usuário criado, mas houve erro ao definir perfil.");
@@ -163,7 +167,7 @@ export function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalP
             </Select>
           </div>
 
-          {isSuperAdmin && (
+          {(isSuperAdmin || tenantId) && (
             <div className="space-y-2">
               <Label htmlFor="company">Empresa Vinculada</Label>
               <Select value={companyId} onValueChange={setCompanyId} required>

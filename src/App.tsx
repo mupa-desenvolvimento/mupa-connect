@@ -24,6 +24,7 @@ import NotFound from "./pages/NotFound.tsx";
 import PlayerMonitoring from "./pages/PlayerMonitoring";
 import ProductQueriesAnalytics from "./pages/ProductQueriesAnalytics";
 import UsersPage from "./pages/Users";
+import QuickAccessPage from "./pages/QuickAccess";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
@@ -83,6 +84,9 @@ const App = () => {
               
               {/* Player rota fullscreen, sem layout e sem auth obrigatória (usa deviceCode) */}
               <Route path="/play/:deviceCode" element={<Player />} />
+
+              {/* Acesso Rápido - Sem login obrigatório (protegido por token) */}
+              <Route path="/quick-access/:token" element={<QuickAccessPage />} />
 
               {/* Painel Empresa - Protegido */}
               <Route element={session ? <AppLayout /> : <Login />}>
