@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   BarChart3,
   Users,
+  Activity,
 } from "lucide-react";
 import {
   Sidebar,
@@ -43,6 +44,7 @@ export function AppSidebar() {
     { title: "Campanhas", url: "/campanhas", icon: Megaphone, visible: isMarketing },
     { title: "Mídias", url: "/midias", icon: ImageIcon, visible: isMarketing },
     { title: "Inteligência EAN", url: "/admin/analytics/consultas", icon: BarChart3, visible: true },
+    { title: "Painel NOC", url: "/admin/monitoring", icon: Activity, visible: isTecnico },
   ].filter((i) => i.visible);
 
   const orgItems = [

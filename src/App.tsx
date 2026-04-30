@@ -25,6 +25,7 @@ import PlayerMonitoring from "./pages/PlayerMonitoring";
 import ProductQueriesAnalytics from "./pages/ProductQueriesAnalytics";
 import UsersPage from "./pages/Users";
 import QuickAccessPage from "./pages/QuickAccess";
+import NOCDashboard from "./pages/admin/NOCDashboard";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
@@ -162,6 +163,11 @@ const App = () => {
                 } />
 
                 <Route path="/admin/analytics/consultas" element={<ProductQueriesAnalytics />} />
+                <Route path="/admin/monitoring" element={
+                  <ProtectedRoute requireTecnico>
+                    <NOCDashboard />
+                  </ProtectedRoute>
+                } />
               </Route>
 
               <Route path="*" element={<NotFound />} />

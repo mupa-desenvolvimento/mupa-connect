@@ -1,0 +1,386 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useUserRole } from "@/hooks/use-user-role";
+import { 
+  Monitor, 
+  LayoutGrid, 
+  Maximize2, 
+  Minimize2, 
+  Settings2,
+  AlertCircle,
+  Activity,
+  WifiOff,
+  Search,
+  RefreshCw,
+  Store,
+  Warehouse,
+  X
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+
+type PanelType = "status" | "metrics" | "alerts" | "charts" | "store_view";
+type LayoutType = "1" | "2h" | "2v" | "4" | "6";
+
+interface PanelConfig {
+  id: string;
+  type: PanelType;
+  title: string;
+  storeId?: string;
+}
+
+export default function NOCDashboard() {
+  const { isSuperAdmin, isTecnico, companyId, tenantId } = useUserRole();
+  const navigate = useNavigate();
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [layout, setLayout] = useState<LayoutType>("4");
+  const [panels, setPanels] = useState<PanelConfig[]>([
+    { id: "p1", type: "metrics", title: "Métricas Gerais" },
+    { id: "p2", type: "alerts", title: "Alertas Críticos" },
+    { id: "p3", type: "status", title: "Status Dispositivos" },
+    { id: "p4", type: "store_view", title: "Visão por Loja" }
+  ]);
+  const [devices, setDevices] = useState<any[]>([]);
+  const [stores, setStores] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState(new Date());
+
+  useEffect(() => {
+    fetchInitialData();
+    
+    const devicesSubscription = supabase
+      .channel('noc_devices')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'dispositivos' }, () => {
+        fetchDevices();
+      })
+      .subscribe();
+
+    const interval = setInterval(() => {
+      fetchDevices();
+    }, 10000);
+
+    return () => {
+      supabase.removeChannel(devicesSubscription);
+      clearInterval(interval);
+    };
+  }, []);
+
+  async function fetchInitialData() {
+    setLoading(true);
+    await Promise.all([fetchDevices(), fetchStores()]);
+    setLoading(false);
+  }
+
+  async function fetchDevices() {
+    let query = supabase.from("dispositivos").select("*");
+    
+    // Se não for super admin, filtrar pela empresa
+    if (!isSuperAdmin && companyId) {
+      query = query.eq("company_id", companyId);
+    }
+
+    const { data } = await query.order('last_heartbeat_at', { ascending: false });
+    if (data) {
+      setDevices(data);
+      setLastUpdate(new Date());
+    }
+  }
+
+  async function fetchStores() {
+    let query = supabase.from("stores").select("id, name, code, tenant_id");
+    if (!isSuperAdmin && tenantId) {
+      query = query.eq("tenant_id", tenantId);
+    }
+    const { data } = await query;
+    if (data) setStores(data);
+  }
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    }
+  };
+
+  const getDeviceStatus = (device: any) => {
+    if (!device.last_heartbeat_at) return "offline";
+    const now = new Date();
+    const lastHeartbeat = new Date(device.last_heartbeat_at);
+    const diffSeconds = (now.getTime() - lastHeartbeat.getTime()) / 1000;
+    
+    if (diffSeconds > 120) return "offline";
+    if (diffSeconds > 60) return "unstable";
+    return "online";
+  };
+
+  const updatePanel = (id: string, updates: Partial<PanelConfig>) => {
+    setPanels(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+  };
+
+  // Render Panel content based on type
+  const renderPanelContent = (panel: PanelConfig) => {
+    switch (panel.type) {
+      case "metrics":
+        const onlineCount = devices.filter(d => getDeviceStatus(d) === "online").length;
+        const unstableCount = devices.filter(d => getDeviceStatus(d) === "unstable").length;
+        const offlineCount = devices.filter(d => getDeviceStatus(d) === "offline").length;
+        return (
+          <div className="grid grid-cols-2 gap-4 h-full p-2">
+            <MetricCard label="Online" value={onlineCount} color="text-green-500" icon={Activity} />
+            <MetricCard label="Offline" value={offlineCount} color="text-red-500" icon={WifiOff} />
+            <MetricCard label="Instáveis" value={unstableCount} color="text-yellow-500" icon={AlertCircle} />
+            <MetricCard label="Total" value={devices.length} color="text-blue-500" icon={Monitor} />
+          </div>
+        );
+      case "alerts":
+        const alerts = devices.filter(d => getDeviceStatus(d) !== "online").slice(0, 20);
+        return (
+          <ScrollArea className="h-full pr-4">
+            <div className="space-y-2 p-1">
+              {alerts.length === 0 ? (
+                <p className="text-center text-muted-foreground py-10">Nenhum alerta crítico</p>
+              ) : (
+                alerts.map(d => (
+                  <div key={d.id} className="flex items-center justify-between p-3 rounded-lg border bg-background/50 border-destructive/20">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-sm uppercase">{d.apelido_interno || d.serial}</span>
+                      <span className="text-[10px] text-muted-foreground uppercase">{d.empresa || 'Sem Loja'}</span>
+                    </div>
+                    <Badge variant="destructive" className="animate-pulse">OFFLINE</Badge>
+                  </div>
+                ))
+              )}
+            </div>
+          </ScrollArea>
+        );
+      case "status":
+      case "store_view":
+        let displayDevices = devices;
+        if (panel.type === "store_view" && panel.storeId) {
+          const store = stores.find(s => s.id === panel.storeId);
+          if (store) {
+            displayDevices = devices.filter(d => d.num_filial === store.code || d.empresa === store.name);
+          }
+        }
+        return (
+          <ScrollArea className="h-full pr-4">
+            <div className="grid grid-cols-1 gap-1 p-1">
+              {displayDevices.map(d => {
+                const status = getDeviceStatus(d);
+                return (
+                  <div key={d.id} className="flex items-center justify-between p-2 rounded border bg-background/30 text-xs">
+                    <div className="flex items-center gap-2">
+                      <div className={cn(
+                        "h-2 w-2 rounded-full",
+                        status === "online" ? "bg-green-500" : status === "unstable" ? "bg-yellow-500" : "bg-red-500"
+                      )} />
+                      <div className="flex flex-col">
+                        <span className="font-bold uppercase truncate max-w-[120px]">{d.apelido_interno || d.serial}</span>
+                        <span className="text-[9px] opacity-60 uppercase">{d.num_filial || '—'}</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] opacity-60">
+                      {d.last_heartbeat_at ? formatDistanceToNow(new Date(d.last_heartbeat_at), { addSuffix: true, locale: ptBR }) : 'Nunca'}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </ScrollArea>
+        );
+      default:
+        return <div className="flex items-center justify-center h-full text-muted-foreground italic">Em desenvolvimento...</div>;
+    }
+  };
+
+  const getGridLayoutClass = () => {
+    switch (layout) {
+      case "1": return "grid-cols-1";
+      case "2h": return "grid-cols-1 grid-rows-2";
+      case "2v": return "grid-cols-2";
+      case "4": return "grid-cols-2 grid-rows-2";
+      case "6": return "grid-cols-3 grid-rows-2";
+      default: return "grid-cols-2 grid-rows-2";
+    }
+  };
+
+  if (!isTecnico && !loading) {
+    return <div className="p-20 text-center">Acesso restrito a técnicos e administradores.</div>;
+  }
+
+  const isNOCRoute = window.location.pathname === "/admin/monitoring";
+
+  return (
+    <div className={cn(
+      "flex flex-col bg-background text-foreground transition-all duration-500",
+      (isFullscreen || isNOCRoute) ? "fixed inset-0 z-50 p-4 bg-[#09090b]" : "h-full w-full"
+    )}>
+      {/* Header do NOC */}
+      <div className="flex items-center justify-between mb-4 border-b pb-4 border-border/40">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 grid place-items-center text-primary">
+            <Activity className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight uppercase">NOC <span className="text-primary">Monitor</span></h1>
+            <div className="flex items-center gap-2 text-[10px] text-muted-foreground uppercase font-bold tracking-widest">
+              <RefreshCw className={cn("h-3 w-3", loading && "animate-spin")} />
+              Atualizado: {lastUpdate.toLocaleTimeString()}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9 gap-2">
+                <LayoutGrid className="h-4 w-4" />
+                <span>Layout</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>Escolher Grid</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup value={layout} onValueChange={(v) => setLayout(v as LayoutType)}>
+                <DropdownMenuRadioItem value="1">1 Painel (100%)</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="2h">2 Painéis (Horiz)</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="2v">2 Painéis (Vert)</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="4">4 Painéis (2x2)</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="6">6 Painéis (3x2)</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button 
+            variant={isFullscreen ? "secondary" : "default"} 
+            size="sm" 
+            className="h-9 gap-2"
+            onClick={toggleFullscreen}
+          >
+            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            <span>{isFullscreen ? "Sair Fullscreen" : "Modo Monitor"}</span>
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-9 w-9 p-0"
+            onClick={() => navigate("/")}
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Grid de Painéis */}
+      <div className={cn(
+        "grid flex-1 gap-4 overflow-hidden",
+        getGridLayoutClass()
+      )}>
+        {panels.slice(0, layout === "6" ? 6 : layout === "4" ? 4 : layout === "1" ? 1 : 2).map((panel) => (
+          <Card key={panel.id} className="border-border/60 bg-card/30 flex flex-col overflow-hidden shadow-elegant border-2">
+            <CardHeader className="py-2 px-4 border-b border-border/40 flex flex-row items-center justify-between space-y-0">
+              <CardTitle className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                {panel.type === "metrics" && <Activity className="h-3.5 w-3.5 text-primary" />}
+                {panel.type === "alerts" && <AlertCircle className="h-3.5 w-3.5 text-destructive" />}
+                {panel.type === "status" && <Monitor className="h-3.5 w-3.5 text-green-500" />}
+                {panel.type === "store_view" && <Warehouse className="h-3.5 w-3.5 text-blue-500" />}
+                {panel.title}
+              </CardTitle>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-6 w-6">
+                    <Settings2 className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>Configurar Painel</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <div className="p-2 space-y-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase opacity-60">Tipo de Dado</label>
+                      <select 
+                        className="w-full h-8 rounded border bg-background text-xs px-2"
+                        value={panel.type}
+                        onChange={(e) => updatePanel(panel.id, { type: e.target.value as PanelType, title: getPanelDefaultTitle(e.target.value as PanelType) })}
+                      >
+                        <option value="metrics">Métricas Gerais</option>
+                        <option value="alerts">Alertas Críticos</option>
+                        <option value="status">Status Dispositivos</option>
+                        <option value="store_view">Visão por Loja</option>
+                      </select>
+                    </div>
+
+                    {panel.type === "store_view" && (
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase opacity-60">Selecionar Loja</label>
+                        <select 
+                          className="w-full h-8 rounded border bg-background text-xs px-2"
+                          value={panel.storeId}
+                          onChange={(e) => {
+                            const store = stores.find(s => s.id === e.target.value);
+                            updatePanel(panel.id, { storeId: e.target.value, title: `Loja: ${store?.name || 'Selecione'}` });
+                          }}
+                        >
+                          <option value="">Selecione uma loja</option>
+                          {stores.map(s => (
+                            <option key={s.id} value={s.id}>{s.name} ({s.code})</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </CardHeader>
+            <CardContent className="flex-1 p-3 overflow-hidden">
+              {renderPanelContent(panel)}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MetricCard({ label, value, color, icon: Icon }: any) {
+  return (
+    <div className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-border/40 bg-background/40">
+      <Icon className={cn("h-8 w-8 mb-2 opacity-80", color)} />
+      <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">{label}</span>
+      <span className={cn("text-3xl font-black mt-1", color)}>{value}</span>
+    </div>
+  );
+}
+
+function getPanelDefaultTitle(type: PanelType): string {
+  switch (type) {
+    case "metrics": return "Métricas Gerais";
+    case "alerts": return "Alertas Críticos";
+    case "status": return "Status Dispositivos";
+    case "store_view": return "Visão por Loja";
+    default: return "Painel";
+  }
+}
