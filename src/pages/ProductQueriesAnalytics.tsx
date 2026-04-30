@@ -108,7 +108,7 @@ export default function ProductQueriesAnalytics() {
     queryKey: ["filter-devices"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("product_queries_log" as any)
+        .from("product_queries_log")
         .select("device_id, apelido");
       
       if (error) return [];
