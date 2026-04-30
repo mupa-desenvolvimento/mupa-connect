@@ -16,8 +16,12 @@ import {
   Store,
   Warehouse,
   X,
-  MessageSquare
+  Share2,
+  ExternalLink,
+  Copy,
+  Clock
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
