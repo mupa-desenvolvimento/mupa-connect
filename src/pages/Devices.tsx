@@ -37,6 +37,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { issueDeviceCommand } from "@/lib/device-commands";
 import { toast } from "sonner";
+import { DeviceFirebaseCommandDrawer } from "@/components/DeviceFirebaseCommandDrawer";
 
 type DeviceStatus = "online" | "unstable" | "offline";
 
@@ -46,6 +47,13 @@ export default function DevicesPage() {
   const [storeFilter, setStoreFilter] = useState("all");
   const [groupFilter, setGroupFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedDevice, setSelectedDevice] = useState<any | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const openDeviceDrawer = (device: any) => {
+    setSelectedDevice(device);
+    setDrawerOpen(true);
+  };
 
   const { data: devices, isLoading, refetch } = useQuery({
     queryKey: ["dispositivos-full"],
@@ -295,7 +303,11 @@ export default function DevicesPage() {
                     {filteredDevices.map((d) => {
                       const status = getStatus(d.last_heartbeat_at, d.last_proof_at);
                       return (
-                        <TableRow key={d.id} className="hover:bg-muted/30 transition-colors">
+                        <TableRow
+                          key={d.id}
+                          className="hover:bg-muted/30 transition-colors cursor-pointer"
+                          onClick={() => openDeviceDrawer(d)}
+                        >
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <div className={cn(
@@ -343,16 +355,16 @@ export default function DevicesPage() {
                           <TableCell>
                             <StatusBadge status={status} />
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                             <div className="flex justify-end gap-2">
                               <Button asChild size="icon" variant="ghost" className="h-8 w-8">
                                 <Link to={`/dispositivos/${d.id}`}>
                                   <Settings className="h-4 w-4" />
                                 </Link>
                               </Button>
-                              <Button 
-                                size="icon" 
-                                variant="ghost" 
+                              <Button
+                                size="icon"
+                                variant="ghost"
                                 className="h-8 w-8 text-destructive hover:bg-destructive/10"
                                 onClick={() => handleRebootDevice(d.id.toString(), d.apelido_interno)}
                                 title="Reiniciar Player"
@@ -377,11 +389,15 @@ export default function DevicesPage() {
                 {filteredDevices.map((d) => {
                   const status = getStatus(d.last_heartbeat_at, d.last_proof_at);
                   return (
-                    <Card key={d.id} className={cn(
-                      "hover:shadow-md transition-all border-l-4",
-                      status === "online" ? "border-l-success" : 
-                      status === "unstable" ? "border-l-warning" : "border-l-destructive"
-                    )}>
+                    <Card
+                      key={d.id}
+                      onClick={() => openDeviceDrawer(d)}
+                      className={cn(
+                        "hover:shadow-md transition-all border-l-4 cursor-pointer",
+                        status === "online" ? "border-l-success" :
+                        status === "unstable" ? "border-l-warning" : "border-l-destructive"
+                      )}
+                    >
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start mb-4">
                           <div className="flex items-center gap-2">
@@ -419,10 +435,10 @@ export default function DevicesPage() {
                           </div>
                         </div>
 
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="icon" 
+                        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="outline"
+                            size="icon"
                             className="h-8 w-8 text-destructive hover:bg-destructive/10"
                             onClick={() => handleRebootDevice(d.id.toString(), d.apelido_interno)}
                             title="Reiniciar Player"
@@ -460,6 +476,14 @@ export default function DevicesPage() {
           )}
         </div>
       </ScrollArea>
+
+      <DeviceFirebaseCommandDrawer
+        device={selectedDevice}
+        status={selectedDevice ? getStatus(selectedDevice.last_heartbeat_at, selectedDevice.last_proof_at) : "offline"}
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        formatDate={formatDate}
+      />
     </div>
   );
 }
