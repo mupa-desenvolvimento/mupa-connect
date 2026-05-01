@@ -170,8 +170,8 @@ export default function PlaylistEditor() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: tenantId, isSuperAdmin, isLoading: isTenantLoading } = useTenant();
-  const { data: medias, isLoading: isMediasLoading } = useMedias(tenantId || undefined);
+  const { data: contextId, tenantId, companyId, isSuperAdmin, isLoading: isTenantLoading } = useTenant();
+  const { data: medias, isLoading: isMediasLoading } = useMedias(contextId || undefined);
   const { data: playlistData, isLoading: isPlaylistLoading } = usePlaylist(id!);
 
   const isLoadingPlaylist = isTenantLoading || isPlaylistLoading;
