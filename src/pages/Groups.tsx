@@ -55,7 +55,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
 export default function GroupsPage() {
-  const { data: tenantId } = useTenant();
+  const { data: contextId, tenantId, companyId } = useTenant();
   const queryClient = useQueryClient();
   const [treeData, setTreeData] = useState<TreeNode[]>([]);
   const [loading, setLoading] = useState(true);
@@ -330,6 +330,7 @@ export default function GroupsPage() {
         .insert({
           name: newGroupName,
           tenant_id: tenantId,
+          company_id: companyId,
           parent_id: null
         } as any);
 
