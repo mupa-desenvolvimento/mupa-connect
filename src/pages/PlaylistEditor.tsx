@@ -552,7 +552,7 @@ export default function PlaylistEditor() {
         {/* Left Sidebar - Media Library */}
         <aside className="w-80 border-r border-white/5 bg-[#0c0c0e] flex flex-col z-40 h-full overflow-hidden">
           <Tabs defaultValue="media" className="flex-1 flex flex-col h-full overflow-hidden">
-            <div className="p-4 border-b border-white/5">
+            <div className="p-4 border-b border-white/5 shrink-0">
               <TabsList className="grid w-full grid-cols-2 bg-black/40 p-1 border border-white/5 h-10">
                 <TabsTrigger value="media" className="data-[state=active]:bg-[#085CF0] text-xs gap-2">
                   <ImageIcon className="h-3.5 w-3.5" /> Mídias
@@ -736,7 +736,7 @@ export default function PlaylistEditor() {
 
         {/* Right Sidebar - Properties Panel */}
         <aside className="w-80 border-l border-white/5 bg-[#0c0c0e] flex flex-col z-40">
-           <div className="p-6 border-b border-white/5">
+           <div className="p-6 border-b border-white/5 shrink-0">
               <h3 className="text-xs font-bold text-white uppercase tracking-widest mb-1">Painel de Propriedades</h3>
               <p className="text-[10px] text-white/40 uppercase tracking-wider font-medium">Configuração do item selecionado</p>
            </div>
