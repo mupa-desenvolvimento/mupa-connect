@@ -153,7 +153,8 @@ export default function GroupsPage() {
       return {
         ...group,
         devices: finalDevices,
-        device_count: finalDevices.length
+        device_count: finalDevices.length,
+        store_count: storeIds.size
       };
     });
   }, [groups, devices, stores]);
