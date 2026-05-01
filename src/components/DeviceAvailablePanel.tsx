@@ -273,7 +273,7 @@ export function DeviceAvailablePanel({
           let vinculationType: Device['vinculation_type'] = 'none';
 
           // Priority 1: Explicit group_devices table
-          let groupId = linkMap.get(d.id.toString());
+          let groupId = linkMap.get(d.device_uuid);
           if (groupId) vinculationType = 'direct';
           
           // Priority 2: Legacy grupo_dispositivos UUID
