@@ -597,7 +597,7 @@ function StoreItem({ store, onClick }: { store: StoreData, onClick?: (groupId: s
         <div className="flex items-center gap-1.5 mt-2">
           {isLinked ? (
             <Badge variant="secondary" className="bg-[#085CF0]/10 text-[#085CF0] border-[#085CF0]/20 text-[9px] h-4 uppercase tracking-tighter">
-              {store.group_name}
+              {store.group_name || "Vinculado"}
             </Badge>
           ) : (
             <Badge variant="outline" className="text-[9px] uppercase tracking-tighter border-green-500/20 text-green-500 bg-green-500/5 h-4">
