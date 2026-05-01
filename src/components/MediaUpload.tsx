@@ -33,10 +33,12 @@ export function MediaUpload({ tenantId, companyId, currentFolderId, onUploadComp
       maxSizeMB: 1,
       maxWidthOrHeight: 1920,
       useWebWorker: true,
-      fileType: 'image/webp' as any,
+      fileType: file.type as any, // Mantém o tipo original
     };
     try {
-      return await imageCompression(file, options);
+      const compressedBlob = await imageCompression(file, options);
+      // Converte o Blob de volta para File para preservar o nome original
+      return new File([compressedBlob], file.name, { type: file.type });
     } catch (error) {
       console.error('Image optimization failed', error);
       return file;
@@ -104,8 +106,8 @@ export function MediaUpload({ tenantId, companyId, currentFolderId, onUploadComp
           
           updateUploadStatus(upload.id, { progress: 30 });
 
-          const fileExt = fileToUpload.name.split('.').pop() || (fileToUpload.type === 'image/webp' ? 'webp' : 'jpg');
-          const fileName = `${crypto.randomUUID()}.${fileExt}`;
+          const fileExt = fileToUpload.name.split('.').pop() || '';
+          const fileName = `${crypto.randomUUID()}${fileExt ? `.${fileExt}` : ''}`;
           
           // Usar Edge Function para upload seguro com validação de Tenant/Company no servidor
           const formData = new FormData();

@@ -82,8 +82,9 @@ serve(async (req) => {
       }
     }
 
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${crypto.randomUUID()}.${fileExt}`
+    const originalName = file.name || 'unnamed'
+    const fileExt = originalName.includes('.') ? originalName.split('.').pop() : ''
+    const fileName = `${crypto.randomUUID()}${fileExt ? `.${fileExt}` : ''}`
     
     // Buscar nome da empresa para o path do storage
     const { data: companyData } = await supabaseClient
@@ -124,7 +125,7 @@ serve(async (req) => {
     const { data: mediaItem, error: dbError } = await supabaseClient
       .from('media_items')
       .insert({
-        name: file.name,
+        name: originalName,
         type: type,
         file_url: publicUrl,
         file_size: file.size,
