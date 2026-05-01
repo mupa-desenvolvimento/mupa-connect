@@ -565,9 +565,9 @@ export function DeviceAvailablePanel({
             ) : filteredDevices.length > 0 ? (
               filteredDevices.map(device => (
                 <DeviceItem 
-                  key={device.id} 
+                  key={device.device_uuid} 
                   device={device} 
-                  isSelected={selectedIds.has(device.id)}
+                  isSelected={selectedIds.has(device.device_uuid)}
                   onToggle={handleToggle}
                   onClick={onHighlightGroup}
                 />
