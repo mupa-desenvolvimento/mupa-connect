@@ -484,6 +484,7 @@ export function DeviceAvailablePanel({
                   device={device} 
                   isSelected={selectedIds.has(device.id)}
                   onToggle={handleToggle}
+                  onClick={onHighlightGroup}
                 />
               ))
             ) : (
