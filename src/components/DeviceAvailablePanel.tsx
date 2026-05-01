@@ -86,7 +86,7 @@ export function DeviceItem({ device, isSelected, onToggle, onClick }: DeviceItem
           : "bg-white/5 border-white/5 hover:border-white/10 hover:bg-white/[0.07]",
         isDragging && "opacity-0"
       )}
-      onClick={() => device.grupo_dispositivos && onClick?.(device.grupo_dispositivos)}
+      onClick={() => device.group_id && onClick?.(device.group_id)}
     >
       <div 
         className="flex items-center gap-3 flex-1 min-w-0"
