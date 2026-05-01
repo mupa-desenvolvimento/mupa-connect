@@ -49,7 +49,7 @@ export default function DevicesPage() {
   const [selectedDevice, setSelectedDevice] = useState<any | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
-  const { companyId, isSuperAdmin, isTecnico, isAdmin } = useUserRole();
+  const { tenantId, isSuperAdmin, isTecnico, isAdmin } = useUserRole();
 
   const openDeviceDrawer = (device: any) => {
     setSelectedDevice(device);
