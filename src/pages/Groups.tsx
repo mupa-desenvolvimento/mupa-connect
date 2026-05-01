@@ -133,6 +133,8 @@ export default function GroupsPage() {
       .channel('schema-db-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'playlists' }, () => fetchTreeData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'groups' }, () => fetchTreeData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'group_devices' }, () => fetchTreeData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'group_stores' }, () => fetchTreeData())
       .subscribe();
 
     return () => {
@@ -221,24 +223,41 @@ export default function GroupsPage() {
     const activeType = active.data.current?.type;
     const overType = over.data.current?.type;
 
-    // Se estiver movendo um grupo ou loja do painel lateral
-    if (activeType === 'store' && !active.data.current?.node) {
+    // If moving a store (from sidebar or tree)
+    if (activeType === 'store') {
       const targetNode = over.data.current?.node;
-      if (targetNode?.type === 'store_group') {
-        try {
-          const { error } = await supabase
-            .from("group_stores")
-            .upsert({ group_id: targetNode.id, store_id: active.data.current.store.id });
-          
-          if (error) throw error;
-          toast.success("Loja adicionada ao grupo!");
-          fetchTreeData();
-          queryClient.invalidateQueries({ queryKey: ["available-stores"] });
-        } catch (error: any) {
-          toast.error("Erro ao mover loja: " + error.message);
+      const isDroppingInPanel = over.data.current?.type === 'available-panel';
+      const store = active.data.current?.store;
+      
+      if (!store) return;
+
+      // Confirmation if already linked
+      if (store.group_name && !isDroppingInPanel) {
+        const confirmed = window.confirm(`Esta loja já pertence ao grupo \"${store.group_name}\". Deseja movê-la?`);
+        if (!confirmed) return;
+      }
+
+      try {
+        if (isDroppingInPanel) {
+          // Remove link
+          await supabase.from("group_stores").delete().eq("store_id", store.id);
+          toast.success("Loja removida do grupo!");
+        } else if (targetNode?.type === 'store_group') {
+          await supabase.from("group_stores").upsert({ 
+            group_id: targetNode.id, 
+            store_id: store.id,
+            tenant_id: tenantId
+          }, { onConflict: 'store_id' });
+          toast.success("Loja vinculada ao grupo!");
+        } else {
+          toast.info("Lojas devem ser soltas em um Grupo de Lojas ou no painel lateral.");
+          return;
         }
-      } else {
-        toast.info("Lojas devem ser soltas em um Grupo de Lojas.");
+        
+        fetchTreeData();
+        queryClient.invalidateQueries({ queryKey: ["all-stores-panel"] });
+      } catch (error: any) {
+        toast.error("Erro ao processar loja: " + error.message);
       }
       return;
     }
@@ -254,65 +273,66 @@ export default function GroupsPage() {
     if (activeType === 'device') {
       const targetNode = over.data.current?.node;
       const isDroppingInPanel = over.data.current?.type === 'available-panel';
+      const device = active.data.current?.device;
 
-      const getDeviceId = (id: string) => {
-        if (typeof id === 'string' && id.startsWith('device-')) {
-          return parseInt(id.replace('device-', ''));
-        }
-        return parseInt(id);
-      };
-
-      const activeDeviceId = active.data.current?.device?.id || getDeviceId(active.id as string);
-
+      const activeDeviceId = device?.id || parseInt(String(active.id).replace('device-', ''));
       const devicesToMove = selectedDevices.has(activeDeviceId)
         ? Array.from(selectedDevices)
         : [activeDeviceId];
 
+      // Confirmation for already linked devices
+      if (device?.group_name && !isDroppingInPanel) {
+        const confirmed = window.confirm(`Este dispositivo já pertence ao grupo \"${device.group_name}\". Deseja movê-lo?`);
+        if (!confirmed) return;
+      }
+
       try {
-        let updateData: any = {};
-        
         if (isDroppingInPanel) {
-          // Remover do grupo/loja
-          updateData = { num_filial: null, grupo_dispositivos: null };
+          // Remove from all hierarchical group tables
+          await Promise.all(devicesToMove.map(id => 
+            supabase.from("group_devices").delete().eq("device_id", id)
+          ));
+          // Also reset legacy columns
+          await supabase.from("dispositivos").update({ num_filial: null, grupo_dispositivos: null }).in("id", devicesToMove);
+        } else if (targetNode?.type === 'store_group') {
+          // New hierarchy system
+          for (const devId of devicesToMove) {
+            await supabase.from("group_devices").upsert({ 
+              group_id: targetNode.id, 
+              device_id: devId,
+              tenant_id: tenantId 
+            }, { onConflict: 'device_id' });
+          }
         } else if (targetNode?.type === 'store') {
-          const { data: store } = await supabase
-            .from("stores")
-            .select("code")
-            .eq("id", targetNode.id)
-            .single();
-          
+          const { data: store } = await supabase.from("stores").select("code").eq("id", targetNode.id).single();
           if (store) {
-            updateData = { num_filial: store.code, grupo_dispositivos: null };
+            await supabase.from("dispositivos").update({ num_filial: store.code, grupo_dispositivos: null }).in("id", devicesToMove);
+            // Also remove from group_devices to keep only one link
+            await Promise.all(devicesToMove.map(id => 
+              supabase.from("group_devices").delete().eq("device_id", id)
+            ));
           }
         } else if (targetNode?.type === 'device_group') {
-          const { data: dg } = await supabase
-            .from("device_groups")
-            .select("id, store_id, stores(code)")
-            .eq("id", targetNode.id)
-            .single();
-          
+          const { data: dg } = await supabase.from("device_groups").select("id, stores(code)").eq("id", targetNode.id).single();
           if (dg) {
-            updateData = { 
+            await supabase.from("dispositivos").update({ 
               grupo_dispositivos: dg.id, 
               num_filial: (dg.stores as any)?.code || null 
-            };
+            }).in("id", devicesToMove);
+            // Also remove from group_devices
+            await Promise.all(devicesToMove.map(id => 
+              supabase.from("group_devices").delete().eq("device_id", id)
+            ));
           }
         } else {
-          toast.info("Por favor, solte o dispositivo em uma Loja, Grupo de Dispositivos ou no painel lateral.");
+          toast.info("Por favor, solte o dispositivo em um Grupo, Loja ou no painel lateral.");
           return;
         }
 
-        const { error } = await supabase
-          .from("dispositivos")
-          .update(updateData)
-          .in("id", devicesToMove);
-
-        if (error) throw error;
-
-        toast.success(`${devicesToMove.length} dispositivo(s) atualizado(s) com sucesso!`);
+        toast.success(`${devicesToMove.length} dispositivo(s) atualizado(s)!`);
         setSelectedDevices(new Set());
         fetchTreeData();
-        queryClient.invalidateQueries({ queryKey: ["available-devices"] });
+        queryClient.invalidateQueries({ queryKey: ["all-devices-panel"] });
       } catch (error: any) {
         console.error("Error moving devices:", error);
         toast.error("Erro ao atualizar dispositivos: " + error.message);
@@ -451,6 +471,21 @@ export default function GroupsPage() {
               }}
               onSelectAll={(ids) => setSelectedDevices(new Set(ids))}
               onClearSelection={() => setSelectedDevices(new Set())}
+              onHighlightGroup={(groupId) => {
+                // To highlight/select, we find the node in the tree and select it
+                const findAndSelect = (nodes: TreeNode[]): boolean => {
+                  for (const node of nodes) {
+                    if (String(node.id) === String(groupId)) {
+                      setSelectedNode(node);
+                      setIsSidebarOpen(true);
+                      return true;
+                    }
+                    if (node.children && findAndSelect(node.children)) return true;
+                  }
+                  return false;
+                };
+                findAndSelect(treeData);
+              }}
             />
           </div>
         </div>

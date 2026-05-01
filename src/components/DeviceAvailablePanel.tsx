@@ -35,6 +35,7 @@ interface Device {
   num_filial: string | null;
   grupo_dispositivos: string | null;
   // Dynamic fields
+  group_id?: string | null;
   group_name?: string | null;
   store_name?: string | null;
 }
@@ -45,6 +46,7 @@ interface StoreData {
   code: string;
   tenant_id: string;
   // Dynamic fields
+  group_id?: string | null;
   group_name?: string | null;
   device_count?: number;
 }
@@ -53,9 +55,10 @@ interface DeviceItemProps {
   device: Device;
   isSelected: boolean;
   onToggle: (id: number, isShiftKey: boolean) => void;
+  onClick?: (groupId: string) => void;
 }
 
-export function DeviceItem({ device, isSelected, onToggle }: DeviceItemProps) {
+export function DeviceItem({ device, isSelected, onToggle, onClick }: DeviceItemProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `device-${device.id}`,
     data: {
@@ -77,12 +80,13 @@ export function DeviceItem({ device, isSelected, onToggle }: DeviceItemProps) {
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group relative flex items-center gap-3 p-3 rounded-xl border transition-all duration-200",
+        "group relative flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 cursor-pointer",
         isSelected 
           ? "bg-[#085CF0]/10 border-[#085CF0]/30 shadow-[0_0_15px_rgba(8,92,240,0.1)]" 
           : "bg-white/5 border-white/5 hover:border-white/10 hover:bg-white/[0.07]",
         isDragging && "opacity-0"
       )}
+      onClick={() => device.group_id && onClick?.(device.group_id)}
     >
       <div 
         className="flex items-center gap-3 flex-1 min-w-0"
@@ -146,12 +150,14 @@ export function DeviceAvailablePanel({
   selectedIds, 
   onToggleSelection,
   onSelectAll,
-  onClearSelection
+  onClearSelection,
+  onHighlightGroup
 }: { 
   selectedIds: Set<number>,
   onToggleSelection: (ids: number[]) => void,
   onSelectAll: (ids: number[]) => void,
-  onClearSelection: () => void
+  onClearSelection: () => void,
+  onHighlightGroup?: (groupId: string) => void
 }) {
   const [lastSelectedId, setLastSelectedId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -208,8 +214,7 @@ export function DeviceAvailablePanel({
       // Fetch explicit group_devices links
       const { data: groupLinks } = await supabase
         .from("group_devices")
-        .select("device_id, group_id")
-        .eq("tenant_id", tenantId);
+        .select("device_id, group_id");
       
       const linkMap = new Map(groupLinks?.map(l => [l.device_id, l.group_id]) || []);
 
@@ -224,6 +229,7 @@ export function DeviceAvailablePanel({
 
           return {
             ...d,
+            group_id: groupId,
             group_name: groupId ? groupMap.get(groupId) : null,
             store_name: d.num_filial ? storeMap.get(d.num_filial) : null
           };
@@ -250,10 +256,12 @@ export function DeviceAvailablePanel({
           store_id,
           group_id,
           groups(name)
-        `)
-        .eq("tenant_id", tenantId);
+        `);
       
-      const storeLinkMap = new Map(linkedStores?.map(ls => [ls.store_id, (ls.groups as any)?.name]) || []);
+      const storeLinkMap = new Map(linkedStores?.map(ls => [ls.store_id, { 
+        id: ls.group_id, 
+        name: (ls.groups as any)?.name 
+      }]) || []);
 
       // 3. Get device counts per store code
       const { data: deviceCounts } = await supabase
@@ -267,11 +275,15 @@ export function DeviceAvailablePanel({
         }
       });
       
-      return allStores.map(s => ({
-        ...s,
-        group_name: storeLinkMap.get(s.id),
-        device_count: countMap.get(s.code) || 0
-      })) as StoreData[];
+      return allStores.map(s => {
+        const link = storeLinkMap.get(s.id);
+        return {
+          ...s,
+          group_id: link?.id,
+          group_name: link?.name,
+          device_count: countMap.get(s.code) || 0
+        };
+      }) as StoreData[];
     },
     enabled: !!tenantId && viewMode === "stores"
   });
@@ -377,6 +389,16 @@ export function DeviceAvailablePanel({
                  <Badge variant="outline" className="text-[9px] h-4 bg-white/5 border-white/5 text-white/40">
                    {viewMode === "devices" ? `${devices?.length || 0} TOTAL` : `${stores?.length || 0} TOTAL`}
                  </Badge>
+                 {viewMode === "devices" && devices && (
+                   <>
+                     <Badge variant="outline" className="text-[9px] h-4 border-blue-500/20 text-blue-400 bg-blue-500/5">
+                       {devices.filter(d => !!d.group_name).length} VINC.
+                     </Badge>
+                     <Badge variant="outline" className="text-[9px] h-4 border-green-500/20 text-green-400 bg-green-500/5">
+                       {devices.filter(d => !d.group_name).length} LIVRES
+                     </Badge>
+                   </>
+                 )}
               </div>
             </div>
           </div>
@@ -473,6 +495,7 @@ export function DeviceAvailablePanel({
                   device={device} 
                   isSelected={selectedIds.has(device.id)}
                   onToggle={handleToggle}
+                  onClick={onHighlightGroup}
                 />
               ))
             ) : (
@@ -485,7 +508,7 @@ export function DeviceAvailablePanel({
               ))
             ) : filteredStores.length > 0 ? (
               filteredStores.map(store => (
-                <StoreItem key={store.id} store={store} />
+                <StoreItem key={store.id} store={store} onClick={onHighlightGroup} />
               ))
             ) : (
               <EmptyState type="loja" />
@@ -504,7 +527,7 @@ export function DeviceAvailablePanel({
   );
 }
 
-function StoreItem({ store }: { store: StoreData }) {
+function StoreItem({ store, onClick }: { store: StoreData, onClick?: (groupId: string) => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `store-${store.id}`,
     data: {
@@ -526,10 +549,11 @@ function StoreItem({ store }: { store: StoreData }) {
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group relative flex items-center gap-3 p-3 rounded-xl border transition-all duration-300",
+        "group relative flex items-center gap-3 p-3 rounded-xl border transition-all duration-300 cursor-pointer",
         "bg-white/5 border-white/5 hover:border-[#085CF0]/30 hover:bg-[#085CF0]/5",
         isDragging && "opacity-0"
       )}
+      onClick={() => store.group_id && onClick?.(store.group_id)}
     >
       <div 
         {...attributes} 
