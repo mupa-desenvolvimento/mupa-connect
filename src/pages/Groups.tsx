@@ -87,11 +87,61 @@ export default function GroupsPage() {
     selectedDeviceIds: [] as string[]
   });
 
-  const filteredGroups = useMemo(() => {
+  const enrichedGroups = useMemo(() => {
     if (!groups) return [];
-    if (!searchQuery) return groups.filter(g => !g.parent_id);
-    return groups.filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase()));
-  }, [groups, searchQuery]);
+    
+    return groups.map(group => {
+      // Find devices for this group
+      const groupStoreIds = new Set(group.linked_store_ids || []);
+      const groupStoreCodes = new Set(
+        stores?.filter(s => groupStoreIds.has(s.id)).map(s => s.code) || []
+      );
+      
+      const directDeviceIds = new Set(group.direct_device_ids || []);
+
+      const groupDevices = (devices || []).map(d => {
+        // Direct via group_devices OR legacy column
+        const isDirect = directDeviceIds.has(d.id.toString()) || d.grupo_dispositivos === group.id;
+        // Inherited via store
+        const isFromStore = !!(d.num_filial && groupStoreCodes.has(d.num_filial));
+        
+        if (isDirect || isFromStore) {
+          return {
+            ...d,
+            origin: (isDirect ? 'direto' : 'loja') as 'direto' | 'loja'
+          };
+        }
+        return null;
+      }).filter((d): d is any => d !== null);
+
+      // Deduplicate by device ID, priority: direct > store
+      const uniqueDevicesMap = new Map();
+      groupDevices.forEach(d => {
+        if (!uniqueDevicesMap.has(d.id)) {
+          uniqueDevicesMap.set(d.id, d);
+        } else {
+          const existing = uniqueDevicesMap.get(d.id);
+          if (d.origin === 'direto' && existing.origin === 'loja') {
+            uniqueDevicesMap.set(d.id, d);
+          }
+        }
+      });
+
+      const finalDevices = Array.from(uniqueDevicesMap.values());
+
+      return {
+        ...group,
+        devices: finalDevices,
+        device_count: finalDevices.length
+      };
+    });
+  }, [groups, devices, stores]);
+
+  const filteredGroups = useMemo(() => {
+    if (!enrichedGroups) return [];
+    if (!searchQuery) return enrichedGroups.filter(g => !g.parent_id);
+    return enrichedGroups.filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [enrichedGroups, searchQuery]);
 
   const [deviceSearchQuery, setDeviceSearchQuery] = useState("");
 
@@ -312,7 +362,7 @@ export default function GroupsPage() {
                     <GroupTreeNode 
                       key={group.id} 
                       node={group} 
-                      allGroups={groups} 
+                      allGroups={enrichedGroups} 
                       onAction={handleGroupAction}
                     />
                   ))}

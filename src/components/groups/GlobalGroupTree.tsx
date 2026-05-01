@@ -11,12 +11,21 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Group } from "@/hooks/use-groups";
+import { Device } from "@/hooks/use-devices";
+
+interface EnrichedDevice extends Device {
+  origin?: 'direto' | 'loja';
+}
+
+interface EnrichedGroup extends Group {
+  devices?: EnrichedDevice[];
+}
 
 interface GroupTreeNodeProps {
-  node: Group;
-  allGroups: Group[];
+  node: EnrichedGroup;
+  allGroups: EnrichedGroup[];
   level?: number;
-  onAction: (type: 'create' | 'edit' | 'delete' | 'stores' | 'devices', group: Group) => void;
+  onAction: (type: 'create' | 'edit' | 'delete' | 'stores' | 'devices', group: EnrichedGroup) => void;
 }
 
 export function GroupTreeNode({ node, allGroups, level = 0, onAction }: GroupTreeNodeProps) {
@@ -108,6 +117,29 @@ export function GroupTreeNode({ node, allGroups, level = 0, onAction }: GroupTre
           </DropdownMenu>
         </div>
       </div>
+      
+      {isOpen && node.devices && node.devices.length > 0 && (
+        <div 
+          className="flex flex-wrap gap-1.5 pb-2" 
+          style={{ marginLeft: `${(level * 20) + 48}px` }}
+        >
+          {node.devices.map(device => (
+            <Badge 
+              key={device.id} 
+              variant="outline" 
+              className={`text-[9px] py-0 h-4 border-white/5 flex items-center gap-1.5 px-2 ${
+                device.origin === 'direto' 
+                  ? 'bg-blue-500/10 text-blue-300 border-blue-500/20' 
+                  : 'bg-yellow-500/10 text-yellow-300 border-yellow-500/20'
+              }`}
+            >
+              <div className={`w-1 h-1 rounded-full ${device.origin === 'direto' ? 'bg-blue-400' : 'bg-yellow-400'}`} />
+              {device.nome}
+              <span className="opacity-40 font-normal">({device.num_filial || 'Livre'})</span>
+            </Badge>
+          ))}
+        </div>
+      )}
 
       {isOpen && hasChildren && (
         <div className="space-y-1">

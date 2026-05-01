@@ -245,8 +245,8 @@ export function DeviceAvailablePanel({
         .select("id, name, code")
         .eq("tenant_id", tenantId);
       
-      const storeMap = new Map(stores?.map(s => [s.code, s.name]) || []);
-      const storeIdByCode = new Map(stores?.map(s => [s.code, s.id]) || []);
+      const storeMap = new Map(stores?.map(s => [s.code?.toString().trim(), s.name]) || []);
+      const storeIdByCode = new Map(stores?.map(s => [s.code?.toString().trim(), s.id]) || []);
 
       // Fetch explicit group_devices links (New hierarchy system)
       const { data: groupLinks } = await supabase
@@ -254,7 +254,7 @@ export function DeviceAvailablePanel({
         .select("device_id, group_id")
         .eq("tenant_id", tenantId);
       
-      const linkMap = new Map(groupLinks?.map(l => [l.device_id, l.group_id]) || []);
+      const linkMap = new Map(groupLinks?.map(l => [l.device_id.toString(), l.group_id]) || []);
 
       // Fetch group_stores links to resolve transitive vinculation (device -> store -> group)
       const { data: storeGroupLinks } = await supabase
@@ -269,7 +269,7 @@ export function DeviceAvailablePanel({
           let vinculationType: Device['vinculation_type'] = 'none';
 
           // Priority 1: Explicit group_devices table
-          let groupId = linkMap.get(d.id);
+          let groupId = linkMap.get(d.id.toString());
           if (groupId) vinculationType = 'direct';
           
           // Priority 2: Legacy grupo_dispositivos UUID
@@ -280,7 +280,7 @@ export function DeviceAvailablePanel({
 
           // Priority 3: Transitive vinculation via store (num_filial -> store -> group)
           if (!groupId && d.num_filial) {
-            const storeId = storeIdByCode.get(d.num_filial);
+            const storeId = storeIdByCode.get(d.num_filial.toString().trim());
             if (storeId) {
               const transitiveGroupId = storeToGroupMap.get(storeId);
               if (transitiveGroupId) {
