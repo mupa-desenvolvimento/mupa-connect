@@ -182,7 +182,7 @@ export default function GroupsPage() {
       return {
         ...group,
         devices: finalLocalDevices,
-        device_count: uniqueRecursiveCount,
+        device_count: finalRecursiveCount,
         store_count: storeIds.size
       };
     });
