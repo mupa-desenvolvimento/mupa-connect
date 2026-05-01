@@ -147,6 +147,11 @@ export default function GroupsPage() {
         return null;
       }).filter((d): d is any => d !== null);
 
+      // Debug mandatory logs
+      console.log(`group: ${group.id} (${group.name})`);
+      console.log(`devices direct: ${localDirectDeviceIds.size}`);
+      console.log(`devices store: ${localStoreCodes.size} codes, ${localDevices.length} devices found`);
+
       // Deduplicate local devices
       const uniqueLocalDevicesMap = new Map();
       localDevices.forEach(d => {
@@ -160,12 +165,24 @@ export default function GroupsPage() {
         }
       });
 
-      const finalLocalDevices = Array.from(uniqueLocalDevicesMap.values());
+      // Fallback: if group has NO devices and NO stores, 
+      // check if it should show "free" devices (as a fallback behavior requested)
+      let finalLocalDevices = Array.from(uniqueLocalDevicesMap.values());
+      let finalRecursiveCount = uniqueRecursiveCount;
+
+      if (finalRecursiveCount === 0 && !group.parent_id) {
+        const freeDevices = (devices || []).filter(d => !d.grupo_dispositivos && !d.num_filial);
+        // Only apply fallback to groups that look like "General" or "Default" or if it's the only group
+        if (freeDevices.length > 0 && (group.name.toLowerCase().includes("padrão") || groups.length === 1)) {
+          finalLocalDevices = freeDevices.map(d => ({ ...d, origin: 'direto' }));
+          finalRecursiveCount = freeDevices.length;
+        }
+      }
 
       return {
         ...group,
         devices: finalLocalDevices,
-        device_count: uniqueRecursiveCount,
+        device_count: finalRecursiveCount,
         store_count: storeIds.size
       };
     });
@@ -173,7 +190,7 @@ export default function GroupsPage() {
 
   const filteredGroups = useMemo(() => {
     if (!enrichedGroups) return [];
-    if (!searchQuery) return enrichedGroups.filter(g => !g.parent_id);
+    if (!searchQuery) return enrichedGroups.filter(g => !g.parent_id || !enrichedGroups.some(pg => pg.id === g.parent_id));
     return enrichedGroups.filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [enrichedGroups, searchQuery]);
 
