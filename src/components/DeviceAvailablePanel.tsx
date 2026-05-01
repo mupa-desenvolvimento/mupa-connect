@@ -151,7 +151,8 @@ export function DeviceAvailablePanel({
   selectedIds: Set<number>,
   onToggleSelection: (ids: number[]) => void,
   onSelectAll: (ids: number[]) => void,
-  onClearSelection: () => void
+  onClearSelection: () => void,
+  onHighlightGroup?: (groupId: string) => void
 }) {
   const [lastSelectedId, setLastSelectedId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
