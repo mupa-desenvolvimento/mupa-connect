@@ -563,7 +563,7 @@ export default function GroupsPage() {
               <Input placeholder="Buscar dispositivos..." className="pl-9 bg-white/5 border-white/10" />
             </div>
             <div className="grid grid-cols-1 gap-2 max-h-80 overflow-y-auto p-2 border border-white/10 rounded-md bg-white/5 custom-scrollbar">
-              {devices?.map(device => (
+              {filteredLinkDevices?.map(device => (
                 <div key={device.id} className="flex items-center space-x-2 p-2 hover:bg-white/5 rounded transition-colors">
                   <Checkbox 
                     id={`link-dev-${device.id}`} 
