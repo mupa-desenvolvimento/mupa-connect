@@ -88,22 +88,55 @@ export default function GroupsPage() {
   });
 
   const enrichedGroups = useMemo(() => {
-    if (!groups) return [];
+    if (!groups || !devices || !stores) return [];
     
-    return groups.map(group => {
-      // Find devices for this group
-      const groupStoreIds = new Set(group.linked_store_ids || []);
-      const groupStoreCodes = new Set(
-        stores?.filter(s => groupStoreIds.has(s.id)).map(s => s.code) || []
-      );
-      
+    // Memoize descendant data for efficiency
+    const memo = new Map<string, { storeCodes: Set<string>, storeIds: Set<string>, directDeviceIds: Set<string> }>();
+
+    const getGroupDataRecursive = (groupId: string): { storeCodes: Set<string>, storeIds: Set<string>, directDeviceIds: Set<string> } => {
+      if (memo.has(groupId)) return memo.get(groupId)!;
+
+      const group = groups.find(g => g.id === groupId);
+      if (!group) return { storeCodes: new Set(), storeIds: new Set(), directDeviceIds: new Set() };
+
+      const storeIds = new Set(group.linked_store_ids || []);
+      const storeCodes = new Set(stores.filter(s => storeIds.has(s.id)).map(s => s.code));
       const directDeviceIds = new Set(group.direct_device_ids || []);
 
-      const groupDevices = (devices || []).map(d => {
-        // Direct via group_devices OR legacy column
+      // Get children
+      const children = groups.filter(g => g.parent_id === groupId);
+      children.forEach(child => {
+        const childData = getGroupDataRecursive(child.id);
+        childData.storeCodes.forEach(code => storeCodes.add(code));
+        childData.storeIds.forEach(id => storeIds.add(id));
+        childData.directDeviceIds.forEach(id => directDeviceIds.add(id));
+      });
+
+      const result = { storeCodes, storeIds, directDeviceIds };
+      memo.set(groupId, result);
+      return result;
+    };
+
+    return groups.map(group => {
+      const { storeCodes, storeIds, directDeviceIds } = getGroupDataRecursive(group.id);
+
+      // Recursive devices for total count
+      const allGroupDevices = (devices || []).filter(d => {
         const isDirect = directDeviceIds.has(d.id.toString()) || d.grupo_dispositivos === group.id;
-        // Inherited via store
-        const isFromStore = !!(d.num_filial && groupStoreCodes.has(d.num_filial));
+        const isFromStore = !!(d.num_filial && storeCodes.has(d.num_filial));
+        return isDirect || isFromStore;
+      });
+      
+      const uniqueRecursiveCount = new Set(allGroupDevices.map(d => d.id)).size;
+
+      // Local devices for badges
+      const localStoreIds = new Set(group.linked_store_ids || []);
+      const localStoreCodes = new Set(stores.filter(s => localStoreIds.has(s.id)).map(s => s.code));
+      const localDirectDeviceIds = new Set(group.direct_device_ids || []);
+
+      const localDevices = (devices || []).map(d => {
+        const isDirect = localDirectDeviceIds.has(d.id.toString()) || d.grupo_dispositivos === group.id;
+        const isFromStore = !!(d.num_filial && localStoreCodes.has(d.num_filial));
         
         if (isDirect || isFromStore) {
           return {
@@ -114,25 +147,26 @@ export default function GroupsPage() {
         return null;
       }).filter((d): d is any => d !== null);
 
-      // Deduplicate by device ID, priority: direct > store
-      const uniqueDevicesMap = new Map();
-      groupDevices.forEach(d => {
-        if (!uniqueDevicesMap.has(d.id)) {
-          uniqueDevicesMap.set(d.id, d);
+      // Deduplicate local devices
+      const uniqueLocalDevicesMap = new Map();
+      localDevices.forEach(d => {
+        if (!uniqueLocalDevicesMap.has(d.id)) {
+          uniqueLocalDevicesMap.set(d.id, d);
         } else {
-          const existing = uniqueDevicesMap.get(d.id);
+          const existing = uniqueLocalDevicesMap.get(d.id);
           if (d.origin === 'direto' && existing.origin === 'loja') {
-            uniqueDevicesMap.set(d.id, d);
+            uniqueLocalDevicesMap.set(d.id, d);
           }
         }
       });
 
-      const finalDevices = Array.from(uniqueDevicesMap.values());
+      const finalLocalDevices = Array.from(uniqueLocalDevicesMap.values());
 
       return {
         ...group,
-        devices: finalDevices,
-        device_count: finalDevices.length
+        devices: finalLocalDevices,
+        device_count: uniqueRecursiveCount,
+        store_count: storeIds.size
       };
     });
   }, [groups, devices, stores]);
@@ -363,8 +397,11 @@ export default function GroupsPage() {
                       key={group.id} 
                       node={group} 
                       allGroups={enrichedGroups} 
+                      allStores={stores || []}
+                      allDevices={devices || []}
                       onAction={handleGroupAction}
                     />
+
                   ))}
                 </div>
               ) : (

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronRight, ChevronDown, Folder, Monitor, Store, MoreVertical, Plus, Edit2, Trash2, Link2 } from "lucide-react";
+import { ChevronRight, ChevronDown, Folder, Monitor, Store as StoreIcon, MoreVertical, Plus, Edit2, Trash2, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PlaylistBadge } from "./PlaylistBadge";
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Group } from "@/hooks/use-groups";
 import { Device } from "@/hooks/use-devices";
+import { Store } from "@/hooks/use-stores";
 
 interface EnrichedDevice extends Device {
   origin?: 'direto' | 'loja';
@@ -24,14 +25,17 @@ interface EnrichedGroup extends Group {
 interface GroupTreeNodeProps {
   node: EnrichedGroup;
   allGroups: EnrichedGroup[];
+  allStores: Store[];
+  allDevices: Device[];
   level?: number;
   onAction: (type: 'create' | 'edit' | 'delete' | 'stores' | 'devices', group: EnrichedGroup) => void;
 }
 
-export function GroupTreeNode({ node, allGroups, level = 0, onAction }: GroupTreeNodeProps) {
+export function GroupTreeNode({ node, allGroups, allStores, allDevices, level = 0, onAction }: GroupTreeNodeProps) {
   const [isOpen, setIsOpen] = useState(level < 1); // Expand first level by default
-  const children = allGroups.filter(g => g.parent_id === node.id);
-  const hasChildren = children.length > 0;
+  const childrenGroups = allGroups.filter(g => g.parent_id === node.id);
+  const childrenStores = allStores.filter(s => node.linked_store_ids?.includes(s.id));
+  const hasChildren = childrenGroups.length > 0 || childrenStores.length > 0;
 
   // Inheritance logic for UI
   const getInheritedPlaylist = (currentId: string | null): { name: string | null, from: string | null } => {
@@ -82,7 +86,7 @@ export function GroupTreeNode({ node, allGroups, level = 0, onAction }: GroupTre
               />
               <div className="flex items-center gap-2 text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">
                 <span className="flex items-center gap-0.5"><Monitor className="w-3 h-3" /> {node.device_count}</span>
-                <span className="flex items-center gap-0.5"><Store className="w-3 h-3" /> {node.store_count}</span>
+                <span className="flex items-center gap-0.5"><StoreIcon className="w-3 h-3" /> {node.store_count}</span>
               </div>
             </div>
           </div>
@@ -104,7 +108,7 @@ export function GroupTreeNode({ node, allGroups, level = 0, onAction }: GroupTre
                 <Plus className="w-4 h-4" /> Novo Subgrupo
               </DropdownMenuItem>
               <DropdownMenuItem className="gap-2" onClick={() => onAction('stores', node)}>
-                <Store className="w-4 h-4" /> Gerenciar Lojas
+                <StoreIcon className="w-4 h-4" /> Gerenciar Lojas
               </DropdownMenuItem>
               <DropdownMenuItem className="gap-2" onClick={() => onAction('devices', node)}>
                 <Monitor className="w-4 h-4" /> Vincular Dispositivos
@@ -118,6 +122,7 @@ export function GroupTreeNode({ node, allGroups, level = 0, onAction }: GroupTre
         </div>
       </div>
       
+      {/* Direct Devices Badges */}
       {isOpen && node.devices && node.devices.length > 0 && (
         <div 
           className="flex flex-wrap gap-1.5 pb-2" 
@@ -141,17 +146,48 @@ export function GroupTreeNode({ node, allGroups, level = 0, onAction }: GroupTre
         </div>
       )}
 
+      {/* Children: Subgroups and Stores */}
       {isOpen && hasChildren && (
         <div className="space-y-1">
-          {children.map(child => (
+          {childrenGroups.map(child => (
             <GroupTreeNode 
               key={child.id} 
               node={child} 
               allGroups={allGroups} 
+              allStores={allStores}
+              allDevices={allDevices}
               level={level + 1} 
               onAction={onAction}
             />
           ))}
+          
+          {childrenStores.map(store => {
+            const storeDevices = allDevices.filter(d => d.num_filial === store.code);
+            return (
+              <div 
+                key={store.id}
+                className="flex items-center gap-2 p-2 rounded-lg hover:bg-white/5 border border-transparent transition-all cursor-default"
+                style={{ marginLeft: `${(level + 1) * 20}px` }}
+              >
+                <div className="w-5" />
+                <div className="p-1.5 rounded bg-amber-500/10 text-amber-400">
+                  <StoreIcon className="w-4 h-4" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-sm font-medium truncate">{store.name} <span className="text-xs text-muted-foreground font-normal">({store.code})</span></span>
+                  <div className="flex items-center gap-2">
+                    <PlaylistBadge 
+                      playlistName={store.playlist_name || 'Playlist Padrão'}
+                      isInherited={!store.playlist_id}
+                    />
+                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">
+                      <Monitor className="w-3 h-3" /> {storeDevices.length}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
