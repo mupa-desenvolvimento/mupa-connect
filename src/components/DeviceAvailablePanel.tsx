@@ -133,7 +133,7 @@ export function DeviceItem({ device, isSelected, onToggle, onClick }: DeviceItem
           <div className="flex flex-wrap gap-1.5 mt-2">
             {device.status_label === "Vinculado" ? (
               <Badge variant="secondary" className="bg-[#085CF0]/10 text-[#085CF0] border-[#085CF0]/20 text-[9px] h-4 uppercase tracking-tighter">
-                {device.group_name}
+                {device.group_name || "Vinculado"}
               </Badge>
             ) : device.status_label === "Em Loja" ? (
               <Badge variant="outline" className="text-[9px] uppercase tracking-tighter border-yellow-500/20 text-yellow-500 bg-yellow-500/5 h-4">
