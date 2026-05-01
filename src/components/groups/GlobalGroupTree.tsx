@@ -11,6 +11,15 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Group } from "@/hooks/use-groups";
+import { Device } from "@/hooks/use-devices";
+
+interface EnrichedDevice extends Device {
+  origin?: 'direto' | 'loja';
+}
+
+interface EnrichedGroup extends Group {
+  devices?: EnrichedDevice[];
+}
 
 interface GroupTreeNodeProps {
   node: Group;
