@@ -86,6 +86,8 @@ export default function GroupsPage() {
   }, [groups, searchQuery]);
 
   const [deviceSearchQuery, setDeviceSearchQuery] = useState("");
+
+  const filteredStores = useMemo(() => {
     if (!stores) return [];
     if (!searchQuery) return stores;
     return stores.filter(s => 
