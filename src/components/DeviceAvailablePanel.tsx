@@ -133,7 +133,7 @@ export function DeviceItem({ device, isSelected, onToggle, onClick }: DeviceItem
           <div className="flex flex-wrap gap-1.5 mt-2">
             {device.status_label === "Vinculado" ? (
               <Badge variant="secondary" className="bg-[#085CF0]/10 text-[#085CF0] border-[#085CF0]/20 text-[9px] h-4 uppercase tracking-tighter">
-                {device.group_name}
+                {device.group_name || "Vinculado"}
               </Badge>
             ) : device.status_label === "Em Loja" ? (
               <Badge variant="outline" className="text-[9px] uppercase tracking-tighter border-yellow-500/20 text-yellow-500 bg-yellow-500/5 h-4">
@@ -168,12 +168,12 @@ export function DeviceAvailablePanel({
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"devices" | "stores">("devices");
   const [filterMode, setFilterMode] = useState<"all" | "linked" | "unlinked">("all");
-  const { data: tenantId } = useTenant();
+  const { tenantId, companyId } = useTenant();
 
   const { data: devices, isLoading } = useQuery({
     queryKey: ["all-devices-panel", tenantId],
     queryFn: async () => {
-      // Fetch devices by tenant context
+      // 1. Base query for devices
       let query = supabase
         .from("dispositivos")
         .select(`
@@ -186,16 +186,18 @@ export function DeviceAvailablePanel({
           company_id
         `);
       
-      if (tenantId) {
-        // Obter todas as empresas vinculadas a este tenant
-        const { data: tenantCompanies } = await supabase
+      // 2. Apply context filter
+      if (companyId) {
+        query = query.eq("company_id", companyId);
+      } else if (tenantId) {
+        const { data: companies } = await supabase
           .from("companies")
           .select("id")
           .eq("tenant_id", tenantId);
         
-        const companyIds = tenantCompanies?.map(c => c.id) || [];
-        if (companyIds.length > 0) {
-          query = query.in("company_id", companyIds);
+        const cIds = companies?.map(c => c.id) || [];
+        if (cIds.length > 0) {
+          query = query.in("company_id", cIds);
         } else {
           return [];
         }
@@ -247,7 +249,7 @@ export function DeviceAvailablePanel({
           return {
             ...d,
             group_id: groupId,
-            group_name: groupId ? (groupMap.get(groupId) || statusLabel) : statusLabel,
+            group_name: groupId ? groupMap.get(groupId) : null,
             store_name: d.num_filial ? storeMap.get(d.num_filial) : null,
             status_label: statusLabel
           };
@@ -315,8 +317,8 @@ export function DeviceAvailablePanel({
       
       if (!matchesSearch) return false;
 
-      if (filterMode === "linked") return !!d.group_name;
-      if (filterMode === "unlinked") return !d.group_name;
+      if (filterMode === "linked") return !!d.group_id;
+      if (filterMode === "unlinked") return !d.group_id;
       return true;
     });
   }, [devices, searchQuery, filterMode]);
@@ -411,10 +413,10 @@ export function DeviceAvailablePanel({
                  {viewMode === "devices" && devices && (
                    <>
                      <Badge variant="outline" className="text-[9px] h-4 border-blue-500/20 text-blue-400 bg-blue-500/5">
-                       {devices.filter(d => !!d.group_name).length} VINC.
+                       {devices.filter(d => !!d.group_id).length} VINC.
                      </Badge>
                      <Badge variant="outline" className="text-[9px] h-4 border-green-500/20 text-green-400 bg-green-500/5">
-                       {devices.filter(d => !d.group_name).length} LIVRES
+                       {devices.filter(d => !d.group_id).length} LIVRES
                      </Badge>
                    </>
                  )}
@@ -561,7 +563,7 @@ function StoreItem({ store, onClick }: { store: StoreData, onClick?: (groupId: s
     zIndex: 50
   } : undefined;
 
-  const isLinked = !!store.group_name;
+  const isLinked = !!store.group_id;
 
   return (
     <div
@@ -595,7 +597,7 @@ function StoreItem({ store, onClick }: { store: StoreData, onClick?: (groupId: s
         <div className="flex items-center gap-1.5 mt-2">
           {isLinked ? (
             <Badge variant="secondary" className="bg-[#085CF0]/10 text-[#085CF0] border-[#085CF0]/20 text-[9px] h-4 uppercase tracking-tighter">
-              {store.group_name}
+              {store.group_name || "Vinculado"}
             </Badge>
           ) : (
             <Badge variant="outline" className="text-[9px] uppercase tracking-tighter border-green-500/20 text-green-500 bg-green-500/5 h-4">
