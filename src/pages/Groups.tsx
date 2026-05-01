@@ -178,7 +178,7 @@ export default function GroupsPage() {
 
   const filteredGroups = useMemo(() => {
     if (!enrichedGroups) return [];
-    if (!searchQuery) return enrichedGroups.filter(g => !g.parent_id);
+    if (!searchQuery) return enrichedGroups.filter(g => !g.parent_id || !enrichedGroups.some(pg => pg.id === g.parent_id));
     return enrichedGroups.filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [enrichedGroups, searchQuery]);
 
