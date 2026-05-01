@@ -203,8 +203,6 @@ export function DeviceAvailablePanel({
       const { data: devicesData, error: devicesError } = await query;
       
       if (devicesError) throw devicesError;
-      
-      if (devicesError) throw devicesError;
 
       // Fetch all groups to get names
       const { data: groups } = await supabase
