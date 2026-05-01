@@ -122,8 +122,8 @@ export default function GroupsPage() {
 
       // Recursive devices for total count
       const allGroupDevices = (devices || []).filter(d => {
-        const isDirect = directDeviceIds.has(d.id.toString()) || d.grupo_dispositivos === group.id;
-        const isFromStore = !!(d.num_filial && storeCodes.has(d.num_filial));
+        const isDirect = directDeviceIds.has(d.device_uuid) || d.grupo_dispositivos === group.id;
+        const isFromStore = !!(d.store_id && storeIds.has(d.store_id));
         return isDirect || isFromStore;
       });
       
