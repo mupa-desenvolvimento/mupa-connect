@@ -269,7 +269,7 @@ export function DeviceAvailablePanel({
           let vinculationType: Device['vinculation_type'] = 'none';
 
           // Priority 1: Explicit group_devices table
-          let groupId = linkMap.get(d.id);
+          let groupId = linkMap.get(d.id.toString());
           if (groupId) vinculationType = 'direct';
           
           // Priority 2: Legacy grupo_dispositivos UUID
@@ -280,7 +280,7 @@ export function DeviceAvailablePanel({
 
           // Priority 3: Transitive vinculation via store (num_filial -> store -> group)
           if (!groupId && d.num_filial) {
-            const storeId = storeIdByCode.get(d.num_filial);
+            const storeId = storeIdByCode.get(d.num_filial.toString().trim());
             if (storeId) {
               const transitiveGroupId = storeToGroupMap.get(storeId);
               if (transitiveGroupId) {
