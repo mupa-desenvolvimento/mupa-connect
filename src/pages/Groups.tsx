@@ -135,8 +135,8 @@ export default function GroupsPage() {
       const localDirectDeviceIds = new Set(group.direct_device_ids || []);
 
       const localDevices = (devices || []).map(d => {
-        const isDirect = localDirectDeviceIds.has(d.id.toString()) || d.grupo_dispositivos === group.id;
-        const isFromStore = !!(d.num_filial && localStoreCodes.has(d.num_filial));
+        const isDirect = localDirectDeviceIds.has(d.device_uuid) || d.grupo_dispositivos === group.id;
+        const isFromStore = !!(d.store_id && localStoreIds.has(d.store_id));
         
         if (isDirect || isFromStore) {
           return {
