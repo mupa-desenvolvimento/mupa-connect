@@ -50,7 +50,7 @@ export default function GroupsPage() {
   
   const [activeTab, setActiveTab] = useState("groups");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedDevices, setSelectedDevices] = useState<Set<number>>(new Set());
+  const [selectedDevices, setSelectedDevices] = useState<Set<string>>(new Set());
 
   // Create/Edit Group Modal
   const [groupModal, setGroupModal] = useState<{
@@ -122,8 +122,8 @@ export default function GroupsPage() {
 
       // Recursive devices for total count
       const allGroupDevices = (devices || []).filter(d => {
-        const isDirect = directDeviceIds.has(d.id.toString()) || d.grupo_dispositivos === group.id;
-        const isFromStore = !!(d.num_filial && storeCodes.has(d.num_filial));
+        const isDirect = directDeviceIds.has(d.device_uuid) || d.grupo_dispositivos === group.id;
+        const isFromStore = !!(d.store_id && storeIds.has(d.store_id));
         return isDirect || isFromStore;
       });
       
@@ -135,8 +135,8 @@ export default function GroupsPage() {
       const localDirectDeviceIds = new Set(group.direct_device_ids || []);
 
       const localDevices = (devices || []).map(d => {
-        const isDirect = localDirectDeviceIds.has(d.id.toString()) || d.grupo_dispositivos === group.id;
-        const isFromStore = !!(d.num_filial && localStoreCodes.has(d.num_filial));
+        const isDirect = localDirectDeviceIds.has(d.device_uuid) || d.grupo_dispositivos === group.id;
+        const isFromStore = !!(d.store_id && localStoreIds.has(d.store_id));
         
         if (isDirect || isFromStore) {
           return {
@@ -171,7 +171,7 @@ export default function GroupsPage() {
       let finalRecursiveCount = uniqueRecursiveCount;
 
       if (finalRecursiveCount === 0 && !group.parent_id) {
-        const freeDevices = (devices || []).filter(d => !d.grupo_dispositivos && !d.num_filial);
+        const freeDevices = (devices || []).filter(d => !d.grupo_dispositivos && !d.store_id);
         // Only apply fallback to groups that look like "General" or "Default" or if it's the only group
         if (freeDevices.length > 0 && (group.name.toLowerCase().includes("padrão") || groups.length === 1)) {
           finalLocalDevices = freeDevices.map(d => ({ ...d, origin: 'direto' }));
@@ -468,9 +468,9 @@ export default function GroupsPage() {
         <div className="flex-1 min-w-[320px] max-w-[400px] h-full overflow-hidden flex flex-col">
           <DeviceAvailablePanel 
             selectedIds={selectedDevices}
-            onToggleSelection={(ids: number[]) => {
+            onToggleSelection={(ids: string[]) => {
               const next = new Set(selectedDevices);
-              ids.forEach((id: number) => {
+              ids.forEach((id: string) => {
                 if (next.has(id)) next.delete(id);
                 else next.add(id);
               });
@@ -668,19 +668,19 @@ export default function GroupsPage() {
             </div>
             <div className="grid grid-cols-1 gap-2 max-h-80 overflow-y-auto p-2 border border-white/10 rounded-md bg-white/5 custom-scrollbar">
               {filteredLinkDevices?.map(device => (
-                <div key={device.id} className="flex items-center space-x-2 p-2 hover:bg-white/5 rounded transition-colors">
+                <div key={device.device_uuid} className="flex items-center space-x-2 p-2 hover:bg-white/5 rounded transition-colors">
                   <Checkbox 
-                    id={`link-dev-${device.id}`} 
-                    checked={linkDevicesModal.selectedDeviceIds.includes(device.id)}
+                    id={`link-dev-${device.device_uuid}`} 
+                    checked={linkDevicesModal.selectedDeviceIds.includes(device.device_uuid)}
                     onCheckedChange={(checked) => {
                       if (checked) {
-                        setLinkDevicesModal({ ...linkDevicesModal, selectedDeviceIds: [...linkDevicesModal.selectedDeviceIds, device.id] });
+                        setLinkDevicesModal({ ...linkDevicesModal, selectedDeviceIds: [...linkDevicesModal.selectedDeviceIds, device.device_uuid] });
                       } else {
-                        setLinkDevicesModal({ ...linkDevicesModal, selectedDeviceIds: linkDevicesModal.selectedDeviceIds.filter(id => id !== device.id) });
+                        setLinkDevicesModal({ ...linkDevicesModal, selectedDeviceIds: linkDevicesModal.selectedDeviceIds.filter(id => id !== device.device_uuid) });
                       }
                     }}
                   />
-                  <label htmlFor={`link-dev-${device.id}`} className="text-sm font-medium leading-none cursor-pointer flex-1 flex items-center justify-between">
+                  <label htmlFor={`link-dev-${device.device_uuid}`} className="text-sm font-medium leading-none cursor-pointer flex-1 flex items-center justify-between">
                     <span>{device.nome}</span>
                     <div className="flex items-center gap-2">
                       {device.num_filial && <Badge variant="outline" className="text-[10px] h-4">Loja: {device.num_filial}</Badge>}

@@ -29,10 +29,12 @@ import {
 
 interface Device {
   id: number;
+  device_uuid: string;
   apelido_interno: string;
   serial: string;
   online: boolean;
   num_filial: string | null;
+  store_id: string | null;
   grupo_dispositivos: string | null;
   // Dynamic fields
   group_id?: string | null;
@@ -56,7 +58,7 @@ interface StoreData {
 interface DeviceItemProps {
   device: Device;
   isSelected: boolean;
-  onToggle: (id: number, isShiftKey: boolean) => void;
+  onToggle: (uuid: string, isShiftKey: boolean) => void;
   onClick?: (groupId: string) => void;
 }
 
@@ -92,7 +94,7 @@ export function DeviceItem({ device, isSelected, onToggle, onClick }: DeviceItem
     >
       <div 
         className="flex items-center gap-3 flex-1 min-w-0"
-        onClick={(e) => onToggle(device.id, e.shiftKey)}
+        onClick={(e) => onToggle(device.device_uuid, e.shiftKey)}
       >
         <Checkbox 
           checked={isSelected} 
@@ -183,13 +185,13 @@ export function DeviceAvailablePanel({
   onClearSelection,
   onHighlightGroup
 }: { 
-  selectedIds: Set<number>,
-  onToggleSelection: (ids: number[]) => void,
-  onSelectAll: (ids: number[]) => void,
+  selectedIds: Set<string>,
+  onToggleSelection: (uuids: string[]) => void,
+  onSelectAll: (uuids: string[]) => void,
   onClearSelection: () => void,
   onHighlightGroup?: (groupId: string) => void
 }) {
-  const [lastSelectedId, setLastSelectedId] = useState<number | null>(null);
+  const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"devices" | "stores">("devices");
   const [filterMode, setFilterMode] = useState<"all" | "linked" | "unlinked">("all");
@@ -203,10 +205,12 @@ export function DeviceAvailablePanel({
         .from("dispositivos")
         .select(`
           id, 
+          device_uuid,
           apelido_interno, 
           serial, 
           online, 
           num_filial, 
+          store_id,
           grupo_dispositivos,
           company_id
         `);
@@ -254,7 +258,7 @@ export function DeviceAvailablePanel({
         .select("device_id, group_id")
         .eq("tenant_id", tenantId);
       
-      const linkMap = new Map(groupLinks?.map(l => [l.device_id.toString(), l.group_id]) || []);
+      const linkMap = new Map(groupLinks?.map(l => [l.device_id, l.group_id]) || []);
 
       // Fetch group_stores links to resolve transitive vinculation (device -> store -> group)
       const { data: storeGroupLinks } = await supabase
@@ -269,7 +273,7 @@ export function DeviceAvailablePanel({
           let vinculationType: Device['vinculation_type'] = 'none';
 
           // Priority 1: Explicit group_devices table
-          let groupId = linkMap.get(d.id.toString());
+          let groupId = linkMap.get(d.device_uuid);
           if (groupId) vinculationType = 'direct';
           
           // Priority 2: Legacy grupo_dispositivos UUID
@@ -278,21 +282,18 @@ export function DeviceAvailablePanel({
             vinculationType = 'legacy';
           }
 
-          // Priority 3: Transitive vinculation via store (num_filial -> store -> group)
-          if (!groupId && d.num_filial) {
-            const storeId = storeIdByCode.get(d.num_filial.toString().trim());
-            if (storeId) {
-              const transitiveGroupId = storeToGroupMap.get(storeId);
-              if (transitiveGroupId) {
-                groupId = transitiveGroupId;
-                vinculationType = 'transitive';
-              }
+          // Priority 3: Transitive vinculation via store
+          if (!groupId && d.store_id) {
+            const transitiveGroupId = storeToGroupMap.get(d.store_id);
+            if (transitiveGroupId) {
+              groupId = transitiveGroupId;
+              vinculationType = 'transitive';
             }
           }
 
           if (groupId) {
             statusLabel = "Vinculado";
-          } else if (d.num_filial) {
+          } else if (d.store_id) {
             statusLabel = "Em Loja";
           }
 
@@ -300,7 +301,7 @@ export function DeviceAvailablePanel({
             ...d,
             group_id: groupId,
             group_name: groupId ? groupMap.get(groupId) : null,
-            store_name: d.num_filial ? storeMap.get(d.num_filial) : null,
+            store_name: d.store_id ? Array.from(stores || []).find(s => s.id === d.store_id)?.name : null,
             status_label: statusLabel,
             vinculation_type: vinculationType
           };
@@ -393,30 +394,30 @@ export function DeviceAvailablePanel({
       if (selectedIds.size === filteredDevices.length && filteredDevices.length > 0) {
         onClearSelection();
       } else {
-        onSelectAll(filteredDevices.map(d => d.id));
+        onSelectAll(filteredDevices.map(d => d.device_uuid));
       }
     }
   };
 
-  const handleToggle = (id: number, isShiftKey: boolean) => {
+  const handleToggle = (uuid: string, isShiftKey: boolean) => {
     if (viewMode === "devices") {
       if (isShiftKey && lastSelectedId !== null) {
-        const lastIndex = filteredDevices.findIndex(d => d.id === lastSelectedId);
-        const currentIndex = filteredDevices.findIndex(d => d.id === id);
+        const lastIndex = filteredDevices.findIndex(d => d.device_uuid === lastSelectedId);
+        const currentIndex = filteredDevices.findIndex(d => d.device_uuid === uuid);
         
         if (lastIndex !== -1 && currentIndex !== -1) {
           const start = Math.min(lastIndex, currentIndex);
           const end = Math.max(lastIndex, currentIndex);
-          const idsInRange = filteredDevices.slice(start, end + 1).map(d => d.id);
+          const idsInRange = filteredDevices.slice(start, end + 1).map(d => d.device_uuid);
           
           onToggleSelection(idsInRange);
-          setLastSelectedId(id);
+          setLastSelectedId(uuid);
           return;
         }
       }
       
-      onToggleSelection([id]);
-      setLastSelectedId(id);
+      onToggleSelection([uuid]);
+      setLastSelectedId(uuid);
     }
   };
 
@@ -563,9 +564,9 @@ export function DeviceAvailablePanel({
             ) : filteredDevices.length > 0 ? (
               filteredDevices.map(device => (
                 <DeviceItem 
-                  key={device.id} 
+                  key={device.device_uuid} 
                   device={device} 
-                  isSelected={selectedIds.has(device.id)}
+                  isSelected={selectedIds.has(device.device_uuid)}
                   onToggle={handleToggle}
                   onClick={onHighlightGroup}
                 />
