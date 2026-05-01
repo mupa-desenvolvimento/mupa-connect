@@ -293,7 +293,7 @@ export function DeviceAvailablePanel({
 
           if (groupId) {
             statusLabel = "Vinculado";
-          } else if (d.num_filial) {
+          } else if (d.store_id) {
             statusLabel = "Em Loja";
           }
 
@@ -301,7 +301,7 @@ export function DeviceAvailablePanel({
             ...d,
             group_id: groupId,
             group_name: groupId ? groupMap.get(groupId) : null,
-            store_name: d.num_filial ? storeMap.get(d.num_filial) : null,
+            store_name: d.store_id ? Array.from(stores || []).find(s => s.id === d.store_id)?.name : null,
             status_label: statusLabel,
             vinculation_type: vinculationType
           };
