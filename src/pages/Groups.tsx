@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { PageHeader } from "@/components/PageHeader";
-import { GroupTreeView, TreeNode, DeviceNode } from "@/components/GroupTreeView";
+import { GroupTreeView, TreeNode } from "@/components/GroupTreeView";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant, usePlaylists } from "@/hooks/use-playlist-data";
