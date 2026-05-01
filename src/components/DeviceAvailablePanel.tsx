@@ -505,7 +505,7 @@ export function DeviceAvailablePanel({
   );
 }
 
-function StoreItem({ store }: { store: StoreData }) {
+function StoreItem({ store, onClick }: { store: StoreData, onClick?: (groupId: string) => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `store-${store.id}`,
     data: {
