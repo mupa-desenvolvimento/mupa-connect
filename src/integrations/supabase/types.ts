@@ -6118,7 +6118,8 @@ export type Database = {
         Args: { p_group_id: string }
         Returns: string
       }
-      get_groups_hierarchy: { Args: { group_uuid: string }; Returns: Json }
+      get_group_path_json: { Args: { group_uuid: string }; Returns: Json }
+      get_groups_hierarchy: { Args: { p_tenant_id: string }; Returns: Json }
       get_medias_by_month: {
         Args: { p_ano: number; p_mes: number }
         Returns: {
