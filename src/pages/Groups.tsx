@@ -85,7 +85,7 @@ export default function GroupsPage() {
     return groups.filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [groups, searchQuery]);
 
-  const filteredStores = useMemo(() => {
+  const [deviceSearchQuery, setDeviceSearchQuery] = useState("");
     if (!stores) return [];
     if (!searchQuery) return stores;
     return stores.filter(s => 
