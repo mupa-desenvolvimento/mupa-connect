@@ -205,10 +205,12 @@ export function DeviceAvailablePanel({
         .from("dispositivos")
         .select(`
           id, 
+          device_uuid,
           apelido_interno, 
           serial, 
           online, 
           num_filial, 
+          store_id,
           grupo_dispositivos,
           company_id
         `);
