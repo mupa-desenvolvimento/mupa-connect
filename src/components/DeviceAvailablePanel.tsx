@@ -38,6 +38,7 @@ interface Device {
   group_id?: string | null;
   group_name?: string | null;
   store_name?: string | null;
+  status_label?: string;
 }
 
 interface StoreData {
@@ -130,13 +131,17 @@ export function DeviceItem({ device, isSelected, onToggle, onClick }: DeviceItem
           </div>
           
           <div className="flex flex-wrap gap-1.5 mt-2">
-            {isLinked ? (
+            {device.status_label === "Vinculado" ? (
               <Badge variant="secondary" className="bg-[#085CF0]/10 text-[#085CF0] border-[#085CF0]/20 text-[9px] h-4 uppercase tracking-tighter">
                 {device.group_name}
               </Badge>
+            ) : device.status_label === "Em Loja" ? (
+              <Badge variant="outline" className="text-[9px] uppercase tracking-tighter border-yellow-500/20 text-yellow-500 bg-yellow-500/5 h-4">
+                Em Loja
+              </Badge>
             ) : (
               <Badge variant="outline" className="text-[9px] uppercase tracking-tighter border-green-500/20 text-green-500 bg-green-500/5 h-4">
-                Livre
+                Disponível
               </Badge>
             )}
           </div>
@@ -232,11 +237,19 @@ export function DeviceAvailablePanel({
             groupId = d.grupo_dispositivos;
           }
 
+          let statusLabel = "Disponível";
+          if (groupId) {
+            statusLabel = "Vinculado";
+          } else if (d.num_filial) {
+            statusLabel = "Em Loja";
+          }
+
           return {
             ...d,
             group_id: groupId,
-            group_name: groupId ? groupMap.get(groupId) : null,
-            store_name: d.num_filial ? storeMap.get(d.num_filial) : null
+            group_name: groupId ? (groupMap.get(groupId) || statusLabel) : statusLabel,
+            store_name: d.num_filial ? storeMap.get(d.num_filial) : null,
+            status_label: statusLabel
           };
       }) as Device[];
     },
