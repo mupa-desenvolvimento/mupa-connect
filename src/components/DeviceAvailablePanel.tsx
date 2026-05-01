@@ -35,6 +35,7 @@ interface Device {
   num_filial: string | null;
   grupo_dispositivos: string | null;
   // Dynamic fields
+  group_id?: string | null;
   group_name?: string | null;
   store_name?: string | null;
 }
