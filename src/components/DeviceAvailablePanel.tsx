@@ -53,6 +53,7 @@ interface DeviceItemProps {
   device: Device;
   isSelected: boolean;
   onToggle: (id: number, isShiftKey: boolean) => void;
+  onClick?: (groupId: string) => void;
 }
 
 export function DeviceItem({ device, isSelected, onToggle }: DeviceItemProps) {
