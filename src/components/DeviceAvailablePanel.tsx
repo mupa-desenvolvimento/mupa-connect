@@ -191,7 +191,7 @@ export function DeviceAvailablePanel({
   onClearSelection: () => void,
   onHighlightGroup?: (groupId: string) => void
 }) {
-  const [lastSelectedId, setLastSelectedId] = useState<number | null>(null);
+  const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"devices" | "stores">("devices");
   const [filterMode, setFilterMode] = useState<"all" | "linked" | "unlinked">("all");
