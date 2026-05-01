@@ -173,7 +173,7 @@ export function DeviceAvailablePanel({
   const { data: devices, isLoading } = useQuery({
     queryKey: ["all-devices-panel", tenantId],
     queryFn: async () => {
-      // Fetch devices by tenant context
+      // 1. Base query for devices
       let query = supabase
         .from("dispositivos")
         .select(`
@@ -186,16 +186,18 @@ export function DeviceAvailablePanel({
           company_id
         `);
       
-      if (tenantId) {
-        // Obter todas as empresas vinculadas a este tenant
-        const { data: tenantCompanies } = await supabase
+      // 2. Apply context filter
+      if (companyId) {
+        query = query.eq("company_id", companyId);
+      } else if (tenantId) {
+        const { data: companies } = await supabase
           .from("companies")
           .select("id")
           .eq("tenant_id", tenantId);
         
-        const companyIds = tenantCompanies?.map(c => c.id) || [];
-        if (companyIds.length > 0) {
-          query = query.in("company_id", companyIds);
+        const cIds = companies?.map(c => c.id) || [];
+        if (cIds.length > 0) {
+          query = query.in("company_id", cIds);
         } else {
           return [];
         }
