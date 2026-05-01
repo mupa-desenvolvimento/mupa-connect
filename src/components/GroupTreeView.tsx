@@ -57,6 +57,7 @@ export interface TreeNode {
   has_conflict?: boolean;
   device_count?: number;
   parentId?: string | null;
+  devices?: any[];
   children?: TreeNode[];
 }
 
