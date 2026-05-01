@@ -7,6 +7,7 @@ import { useStores } from "@/hooks/use-stores";
 import { useDevices } from "@/hooks/use-devices";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Globe, Store, Plus, Search, Loader2, Package, Filter } from "lucide-react";
 import { GroupTreeNode } from "@/components/groups/GlobalGroupTree";
 import { StoreCard } from "@/components/groups/StoreCard";
