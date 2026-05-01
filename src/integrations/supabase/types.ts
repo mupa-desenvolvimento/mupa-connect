@@ -2262,18 +2262,21 @@ export type Database = {
           device_id: string
           group_id: string
           id: string
+          tenant_id: string | null
         }
         Insert: {
           created_at?: string
           device_id: string
           group_id: string
           id?: string
+          tenant_id?: string | null
         }
         Update: {
           created_at?: string
           device_id?: string
           group_id?: string
           id?: string
+          tenant_id?: string | null
         }
         Relationships: [
           {
@@ -2333,18 +2336,21 @@ export type Database = {
           group_id: string
           id: string
           store_id: string
+          tenant_id: string | null
         }
         Insert: {
           created_at?: string
           group_id: string
           id?: string
           store_id: string
+          tenant_id?: string | null
         }
         Update: {
           created_at?: string
           group_id?: string
           id?: string
           store_id?: string
+          tenant_id?: string | null
         }
         Relationships: [
           {
