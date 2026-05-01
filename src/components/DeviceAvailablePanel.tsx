@@ -317,8 +317,8 @@ export function DeviceAvailablePanel({
       
       if (!matchesSearch) return false;
 
-      if (filterMode === "linked") return !!d.group_name;
-      if (filterMode === "unlinked") return !d.group_name;
+      if (filterMode === "linked") return !!d.group_id;
+      if (filterMode === "unlinked") return !d.group_id;
       return true;
     });
   }, [devices, searchQuery, filterMode]);
