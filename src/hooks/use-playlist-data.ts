@@ -5,7 +5,13 @@ import { useUserRole } from "@/hooks/use-user-role";
 export function useTenant() {
   const { tenantId, companyId, isSuperAdmin, isLoading } = useUserRole();
   // Return companyId if present, otherwise tenantId (reseller level)
-  return { data: companyId || tenantId, isSuperAdmin, isLoading };
+  return { 
+    data: companyId || tenantId, 
+    tenantId, 
+    companyId, 
+    isSuperAdmin, 
+    isLoading 
+  };
 }
 
 export function useMedias(contextId?: string) {
