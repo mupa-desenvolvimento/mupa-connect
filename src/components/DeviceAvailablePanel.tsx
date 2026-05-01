@@ -563,7 +563,7 @@ function StoreItem({ store, onClick }: { store: StoreData, onClick?: (groupId: s
     zIndex: 50
   } : undefined;
 
-  const isLinked = !!store.group_name;
+  const isLinked = !!store.group_id;
 
   return (
     <div
