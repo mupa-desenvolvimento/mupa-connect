@@ -454,22 +454,91 @@ export default function GroupsPage() {
     }
   };
 
+  const renderGroupCards = (nodes: TreeNode[]) => {
+    return (
+      <div className="flex flex-col gap-4 pb-8">
+        {nodes.map(node => (
+          <GroupCard
+            key={node.id}
+            node={node}
+            onNodeClick={handleNodeClick}
+            onEditPlaylist={(node) => {
+              setSelectedNode(node);
+              setIsSidebarOpen(true);
+            }}
+            onCreateSubgroup={(parentId) => {
+              // Set the parent and open dialog (need to implement parent selection logic)
+              setNewGroupName("");
+              setIsCreateDialogOpen(true);
+              // Store parentId to use when creating
+              (window as any)._pendingParentId = parentId;
+            }}
+            onRemoveDevice={async (id) => {
+              const confirmed = window.confirm("Deseja remover este dispositivo do grupo?");
+              if (!confirmed) return;
+
+              try {
+                const deviceId = parseInt(id);
+                await supabase.from("group_devices").delete().eq("device_id", String(deviceId));
+                const { error } = await supabase
+                  .from("dispositivos")
+                  .update({ 
+                    num_filial: null, 
+                    grupo_dispositivos: null 
+                  })
+                  .eq("id", deviceId);
+                  
+                if (error) throw error;
+                toast.success("Dispositivo removido com sucesso.");
+                fetchTreeData();
+                queryClient.invalidateQueries({ queryKey: ["all-devices-panel"] });
+              } catch (error: any) {
+                console.error("Erro ao remover dispositivo:", error);
+                toast.error("Erro ao remover: " + error.message);
+              }
+            }}
+            onDeleteGroup={async (node) => {
+              if (window.confirm(`Deseja realmente excluir o grupo "${node.name}"?`)) {
+                try {
+                  const { error } = await supabase.from("groups").delete().eq("id", node.id);
+                  if (error) throw error;
+                  toast.success("Grupo excluído!");
+                  fetchTreeData();
+                } catch (e: any) {
+                  toast.error("Erro ao excluir: " + e.message);
+                }
+              }
+            }}
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
       <div className="flex justify-between items-start">
         <PageHeader
-          title="Hierarquia de Grupos"
-          description="Visualize e gerencie a distribuição de conteúdos através da árvore de herança."
+          title="Gestão de Grupos"
+          description="Layout moderno para gestão visual de hierarquias, dispositivos e conteúdos."
         />
-        <Button 
-          variant="destructive" 
-          size="sm" 
-          onClick={handleClearAllDevices}
-          className="mt-2"
-        >
-          <X className="w-4 h-4 mr-2" />
-          Limpar todos os dispositivos
-        </Button>
+        <div className="flex gap-2 mt-2">
+          <Button 
+            onClick={() => setIsCreateDialogOpen(true)}
+            className="bg-[#085CF0] hover:bg-[#0750d4]"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Grupo
+          </Button>
+          <Button 
+            variant="destructive" 
+            size="sm" 
+            onClick={handleClearAllDevices}
+          >
+            <X className="w-4 h-4 mr-2" />
+            Limpar Dispositivos
+          </Button>
+        </div>
       </div>
 
       <DndContext
@@ -479,50 +548,21 @@ export default function GroupsPage() {
         onDragEnd={handleDragEnd}
       >
         <div className="flex-1 min-h-0 flex gap-6 overflow-hidden">
-          {/* Main Tree View */}
-          <div className="flex-[3] min-w-0 h-full">
-            <GroupTreeView 
-              data={treeData} 
-              onNodeClick={handleNodeClick}
-              onEditPlaylist={(node) => {
-                setSelectedNode(node);
-                setIsSidebarOpen(true);
-              }}
-              onCreateGroup={() => setIsCreateDialogOpen(true)}
-              onMoveNode={handleMoveNode}
-              onRemoveDevice={async (id) => {
-                const confirmed = window.confirm("Deseja remover este dispositivo do grupo?");
-                if (!confirmed) return;
-
-                try {
-                  const deviceId = parseInt(id);
-                  
-                  // 1. Remove from group_devices (New system)
-                  await supabase.from("group_devices").delete().eq("device_id", String(deviceId));
-                  
-                  // 2. Clear legacy columns (Legacy system)
-                  const { error } = await supabase
-                    .from("dispositivos")
-                    .update({ 
-                      num_filial: null, 
-                      grupo_dispositivos: null 
-                    })
-                    .eq("id", deviceId);
-                    
-                  if (error) throw error;
-                  
-                  toast.success("Dispositivo removido com sucesso.");
-                  
-                  // 3. Refresh data
-                  fetchTreeData();
-                  queryClient.invalidateQueries({ queryKey: ["all-devices-panel"] });
-                } catch (error: any) {
-                  console.error("Erro ao remover dispositivo:", error);
-                  toast.error("Erro ao remover: " + error.message);
-                }
-              }}
-              activeId={activeId}
-            />
+          {/* Modern Card View */}
+          <div className="flex-[3] min-w-0 h-full overflow-y-auto pr-2 custom-scrollbar">
+            {loading ? (
+              <div className="flex items-center justify-center h-64 text-white/20">
+                Carregando grupos...
+              </div>
+            ) : treeData.length > 0 ? (
+              renderGroupCards(treeData)
+            ) : (
+              <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-white/5 rounded-2xl bg-white/5">
+                <Layers className="w-12 h-12 text-white/10 mb-4" />
+                <p className="text-white/40">Nenhum grupo encontrado</p>
+                <Button variant="link" onClick={() => setIsCreateDialogOpen(true)}>Criar primeiro grupo</Button>
+              </div>
+            )}
           </div>
 
           {/* Available Devices Side Panel */}
