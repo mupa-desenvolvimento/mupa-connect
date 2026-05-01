@@ -221,6 +221,7 @@ export function DeviceAvailablePanel({
         .eq("tenant_id", tenantId);
       
       const storeMap = new Map(stores?.map(s => [s.code, s.name]) || []);
+      const storeIdByCode = new Map(stores?.map(s => [s.code, s.id]) || []);
 
       // Fetch explicit group_devices links (New hierarchy system)
       const { data: groupLinks } = await supabase
@@ -230,6 +231,14 @@ export function DeviceAvailablePanel({
       
       const linkMap = new Map(groupLinks?.map(l => [l.device_id, l.group_id]) || []);
 
+      // Fetch group_stores links to resolve transitive vinculation (device -> store -> group)
+      const { data: storeGroupLinks } = await supabase
+        .from("group_stores")
+        .select("store_id, group_id")
+        .eq("tenant_id", tenantId);
+
+      const storeToGroupMap = new Map(storeGroupLinks?.map(sl => [sl.store_id, sl.group_id]) || []);
+
       return (devicesData as any[]).map(d => {
           // Priority 1: Explicit group_devices table
           let groupId = linkMap.get(d.id);
@@ -237,6 +246,15 @@ export function DeviceAvailablePanel({
           // Priority 2: Legacy grupo_dispositivos UUID
           if (!groupId && d.grupo_dispositivos && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(d.grupo_dispositivos)) {
             groupId = d.grupo_dispositivos;
+          }
+
+          // Priority 3: Transitive vinculation via store (num_filial -> store -> group)
+          if (!groupId && d.num_filial) {
+            const storeId = storeIdByCode.get(d.num_filial);
+            if (storeId) {
+              const transitiveGroupId = storeToGroupMap.get(storeId);
+              if (transitiveGroupId) groupId = transitiveGroupId;
+            }
           }
 
           let statusLabel = "Disponível";
