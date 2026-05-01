@@ -527,10 +527,11 @@ function StoreItem({ store, onClick }: { store: StoreData, onClick?: (groupId: s
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group relative flex items-center gap-3 p-3 rounded-xl border transition-all duration-300",
+        "group relative flex items-center gap-3 p-3 rounded-xl border transition-all duration-300 cursor-pointer",
         "bg-white/5 border-white/5 hover:border-[#085CF0]/30 hover:bg-[#085CF0]/5",
         isDragging && "opacity-0"
       )}
+      onClick={() => store.group_id && onClick?.(store.group_id)}
     >
       <div 
         {...attributes} 
