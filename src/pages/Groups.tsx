@@ -429,11 +429,11 @@ export default function GroupsPage() {
       
       if (error1) throw error1;
 
-      // 2. Clear legacy columns in dispositivos
+      // 2. Clear legacy columns in ALL devices (including those without company_id in legacy data)
       const { error: error2 } = await supabase
         .from("dispositivos")
         .update({ num_filial: null, grupo_dispositivos: null })
-        .eq("company_id", companyId); // Using company_id context for dispositivos
+        .filter('id', 'not.is', null); // Workaround to update all records safely if no specific filter is needed
       
       if (error2) throw error2;
 
