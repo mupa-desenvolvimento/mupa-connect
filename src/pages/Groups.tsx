@@ -118,8 +118,8 @@ export default function GroupsPage() {
         selectedStoreIds: (data || []).map(d => d.store_id) 
       });
     } else if (type === 'devices') {
-      // Fetch currently linked devices
       const { data } = await supabase.from("group_devices").select("device_id").eq("group_id", group.id);
+      setDeviceSearchQuery("");
       setLinkDevicesModal({ 
         open: true, 
         group, 
@@ -127,6 +127,15 @@ export default function GroupsPage() {
       });
     }
   };
+
+  const filteredLinkDevices = useMemo(() => {
+    if (!devices) return [];
+    if (!deviceSearchQuery) return devices;
+    return devices.filter(d => 
+      d.nome?.toLowerCase().includes(deviceSearchQuery.toLowerCase()) ||
+      d.num_filial?.toLowerCase().includes(deviceSearchQuery.toLowerCase())
+    );
+  }, [devices, deviceSearchQuery]);
 
   const handleSaveStoreLinks = async () => {
     const groupId = linkStoresModal.group.id;
