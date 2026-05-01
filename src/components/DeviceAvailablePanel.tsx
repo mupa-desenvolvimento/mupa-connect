@@ -225,7 +225,8 @@ export function DeviceAvailablePanel({
       // Fetch explicit group_devices links
       const { data: groupLinks } = await supabase
         .from("group_devices")
-        .select("device_id, group_id");
+        .select("device_id, group_id")
+        .eq("tenant_id", tenantId);
       
       const linkMap = new Map(groupLinks?.map(l => [l.device_id, l.group_id]) || []);
 
