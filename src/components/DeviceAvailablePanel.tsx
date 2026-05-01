@@ -228,6 +228,7 @@ export function DeviceAvailablePanel({
 
           return {
             ...d,
+            group_id: groupId,
             group_name: groupId ? groupMap.get(groupId) : null,
             store_name: d.num_filial ? storeMap.get(d.num_filial) : null
           };
