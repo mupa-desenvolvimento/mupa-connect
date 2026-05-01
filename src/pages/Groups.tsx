@@ -330,6 +330,7 @@ export default function GroupsPage() {
         .insert({
           name: newGroupName,
           tenant_id: tenantId,
+          company_id: companyId,
           parent_id: null
         } as any);
 
