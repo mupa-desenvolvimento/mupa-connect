@@ -125,7 +125,7 @@ serve(async (req) => {
     const { data: mediaItem, error: dbError } = await supabaseClient
       .from('media_items')
       .insert({
-        name: file.name,
+        name: originalName,
         type: type,
         file_url: publicUrl,
         file_size: file.size,
