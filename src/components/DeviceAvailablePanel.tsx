@@ -268,7 +268,8 @@ export function DeviceAvailablePanel({
           store_id,
           group_id,
           groups(name)
-        `);
+        `)
+        .eq("tenant_id", tenantId);
       
       const storeLinkMap = new Map(linkedStores?.map(ls => [ls.store_id, { 
         id: ls.group_id, 
