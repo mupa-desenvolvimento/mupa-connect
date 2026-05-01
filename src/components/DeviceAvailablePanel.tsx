@@ -171,17 +171,8 @@ export function DeviceAvailablePanel({
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) return [];
 
-      const { data: userData } = await supabase
-        .from("users")
-        .select("company")
-        .eq("id", session.user.id)
-        .maybeSingle();
-
-      const companyId = userData?.company;
-      if (!companyId) return [];
-      
-      // Fetch all devices
-      const { data: devicesData, error: devicesError } = await supabase
+      // Fetch devices by tenant_id or company_id
+      let query = supabase
         .from("dispositivos")
         .select(`
           id, 
@@ -190,8 +181,26 @@ export function DeviceAvailablePanel({
           online, 
           num_filial, 
           grupo_dispositivos
-        `)
-        .eq("empresa", companyId);
+        `);
+      
+      if (tenantId) {
+        // Since dispositivos doesn't have tenant_id directly, we filter by company_id's tenant
+        // or by the companies the user has access to.
+        // For now, let's use company_id if available, or fetch all devices for the tenant's companies
+        const { data: tenantCompanies } = await supabase
+          .from("companies")
+          .select("id")
+          .eq("tenant_id", tenantId);
+        
+        const companyIds = tenantCompanies?.map(c => c.id) || [];
+        if (companyIds.length > 0) {
+          query = query.in("company_id", companyIds);
+        } else {
+          return [];
+        }
+      }
+
+      const { data: devicesData, error: devicesError } = await query;
       
       if (devicesError) throw devicesError;
 
@@ -214,7 +223,8 @@ export function DeviceAvailablePanel({
       // Fetch explicit group_devices links
       const { data: groupLinks } = await supabase
         .from("group_devices")
-        .select("device_id, group_id");
+        .select("device_id, group_id")
+        .eq("tenant_id", tenantId);
       
       const linkMap = new Map(groupLinks?.map(l => [l.device_id, l.group_id]) || []);
 
@@ -256,7 +266,8 @@ export function DeviceAvailablePanel({
           store_id,
           group_id,
           groups(name)
-        `);
+        `)
+        .eq("tenant_id", tenantId);
       
       const storeLinkMap = new Map(linkedStores?.map(ls => [ls.store_id, { 
         id: ls.group_id, 

@@ -110,6 +110,7 @@ export default function GroupsPage() {
             inherited_from: node.inherited_from_name,
             has_override: node.playlist_id !== null && node.inherited_from_name !== null,
             device_count: parseInt(node.device_count || "0"),
+            devices: node.devices || [],
             children: buildTree(allNodes, node.id)
           }));
       };
