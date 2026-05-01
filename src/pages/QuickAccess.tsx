@@ -51,36 +51,7 @@ export default function QuickAccessPage() {
         if (tData.device_id) {
           query = query.eq("id", tData.device_id);
         } else if (tData.store_id) {
-          // Precisamos buscar o código da loja para filtrar na tabela dispositivos
-          const { data: storeData } = await supabase
-            .from("stores")
-            .select("code")
-            .eq("id", tData.store_id)
-            .single();
-          
-          if (storeData) {
-            const cleanCode = storeData.code?.replace(/[^0-9]/g, '');
-            const conditions = [];
-            
-            if (storeData.code) {
-              conditions.push(`num_filial.eq.${storeData.code}`);
-              // Também tenta com o código preenchido com zeros à esquerda se for numérico
-              if (/^\d+$/.test(storeData.code)) {
-                conditions.push(`num_filial.eq.${storeData.code.padStart(3, '0')}`);
-                conditions.push(`num_filial.eq.${storeData.code.padStart(4, '0')}`);
-              }
-            }
-            
-            if (cleanCode && cleanCode !== storeData.code) {
-              conditions.push(`num_filial.eq.${cleanCode}`);
-              conditions.push(`num_filial.eq.${cleanCode.padStart(3, '0')}`);
-              conditions.push(`num_filial.eq.${cleanCode.padStart(4, '0')}`);
-            }
-
-            if (conditions.length > 0) {
-              query = query.or(conditions.join(','));
-            }
-          }
+          query = query.eq("store_id", tData.store_id);
         }
 
         const { data: dData, error: dError } = await query;
