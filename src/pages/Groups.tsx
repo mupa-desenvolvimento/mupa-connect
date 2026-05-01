@@ -414,12 +414,55 @@ export default function GroupsPage() {
     }
   };
 
+  const handleClearAllDevices = async () => {
+    if (!tenantId) return;
+    
+    const confirmed = window.confirm("Tem certeza que deseja remover TODOS os dispositivos de seus respectivos grupos? Esta ação não pode ser desfeita.");
+    if (!confirmed) return;
+
+    try {
+      // 1. Remove from group_devices
+      const { error: error1 } = await supabase
+        .from("group_devices")
+        .delete()
+        .eq("tenant_id", tenantId);
+      
+      if (error1) throw error1;
+
+      // 2. Clear legacy columns in dispositivos
+      const { error: error2 } = await supabase
+        .from("dispositivos")
+        .update({ num_filial: null, grupo_dispositivos: null })
+        .eq("company_id", companyId); // Using company_id context for dispositivos
+      
+      if (error2) throw error2;
+
+      toast.success("Todos os dispositivos foram removidos dos grupos!");
+      fetchTreeData();
+      queryClient.invalidateQueries({ queryKey: ["all-devices-panel"] });
+    } catch (error: any) {
+      console.error("Error clearing devices:", error);
+      toast.error("Erro ao limpar dispositivos: " + error.message);
+    }
+  };
+
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
-      <PageHeader
-        title="Hierarquia de Grupos"
-        description="Visualize e gerencie a distribuição de conteúdos através da árvore de herança."
-      />
+      <div className="flex justify-between items-start">
+        <PageHeader
+          title="Hierarquia de Grupos"
+          description="Visualize e gerencie a distribuição de conteúdos através da árvore de herança."
+        />
+        <Button 
+          variant="destructive" 
+          size="sm" 
+          onClick={handleClearAllDevices}
+          className="mt-2"
+        >
+          <X className="w-4 h-4 mr-2" />
+          Limpar todos os dispositivos
+        </Button>
+      </div>
 
       <DndContext
         sensors={sensors}
