@@ -223,24 +223,41 @@ export default function GroupsPage() {
     const activeType = active.data.current?.type;
     const overType = over.data.current?.type;
 
-    // Se estiver movendo um grupo ou loja do painel lateral
-    if (activeType === 'store' && !active.data.current?.node) {
+    // If moving a store (from sidebar or tree)
+    if (activeType === 'store') {
       const targetNode = over.data.current?.node;
-      if (targetNode?.type === 'store_group') {
-        try {
-          const { error } = await supabase
-            .from("group_stores")
-            .upsert({ group_id: targetNode.id, store_id: active.data.current.store.id });
-          
-          if (error) throw error;
-          toast.success("Loja adicionada ao grupo!");
-          fetchTreeData();
-          queryClient.invalidateQueries({ queryKey: ["all-stores-panel"] });
-        } catch (error: any) {
-          toast.error("Erro ao mover loja: " + error.message);
+      const isDroppingInPanel = over.data.current?.type === 'available-panel';
+      const store = active.data.current?.store;
+      
+      if (!store) return;
+
+      // Confirmation if already linked
+      if (store.group_name && !isDroppingInPanel) {
+        const confirmed = window.confirm(`Esta loja já pertence ao grupo \"${store.group_name}\". Deseja movê-la?`);
+        if (!confirmed) return;
+      }
+
+      try {
+        if (isDroppingInPanel) {
+          // Remove link
+          await supabase.from("group_stores").delete().eq("store_id", store.id);
+          toast.success("Loja removida do grupo!");
+        } else if (targetNode?.type === 'store_group') {
+          await supabase.from("group_stores").upsert({ 
+            group_id: targetNode.id, 
+            store_id: store.id,
+            tenant_id: tenantId
+          }, { onConflict: 'store_id' });
+          toast.success("Loja vinculada ao grupo!");
+        } else {
+          toast.info("Lojas devem ser soltas em um Grupo de Lojas ou no painel lateral.");
+          return;
         }
-      } else {
-        toast.info("Lojas devem ser soltas em um Grupo de Lojas.");
+        
+        fetchTreeData();
+        queryClient.invalidateQueries({ queryKey: ["all-stores-panel"] });
+      } catch (error: any) {
+        toast.error("Erro ao processar loja: " + error.message);
       }
       return;
     }
