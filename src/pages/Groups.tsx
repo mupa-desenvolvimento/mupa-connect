@@ -143,6 +143,13 @@ export default function GroupsPage() {
   }, [tenantId]);
 
   const handleNodeClick = (node: TreeNode) => {
+    if (node.type === 'device') {
+      // Highlight in sidebar instead of opening group settings
+      const deviceId = parseInt(node.id);
+      setSelectedDevices(new Set([deviceId]));
+      toast.info(`Dispositivo "${node.name}" selecionado no painel lateral.`);
+      return;
+    }
     setSelectedNode(node);
     setIsSidebarOpen(true);
   };
@@ -484,14 +491,22 @@ export default function GroupsPage() {
               onMoveNode={handleMoveNode}
               onRemoveDevice={async (id) => {
                 try {
+                  const deviceId = parseInt(id);
+                  
+                  // 1. Remove from group_devices
+                  await supabase.from("group_devices").delete().eq("device_id", deviceId);
+                  
+                  // 2. Clear legacy columns
                   const { error } = await supabase
                     .from("dispositivos")
                     .update({ num_filial: null, grupo_dispositivos: null })
-                    .eq("id", parseInt(id));
+                    .eq("id", deviceId);
+                    
                   if (error) throw error;
+                  
                   toast.success("Dispositivo removido do grupo.");
                   fetchTreeData();
-                  queryClient.invalidateQueries({ queryKey: ["available-devices"] });
+                  queryClient.invalidateQueries({ queryKey: ["all-devices-panel"] });
                 } catch (error: any) {
                   toast.error("Erro ao remover: " + error.message);
                 }
