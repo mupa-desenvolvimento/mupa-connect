@@ -33,6 +33,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 
+
+
+
+
+
+
+
+
 export default function GroupsPage() {
   const { tenantId, companyId } = useTenant();
   const { data: playlists } = usePlaylists(tenantId || undefined);
@@ -85,6 +93,8 @@ export default function GroupsPage() {
     return groups.filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [groups, searchQuery]);
 
+  const [deviceSearchQuery, setDeviceSearchQuery] = useState("");
+
   const filteredStores = useMemo(() => {
     if (!stores) return [];
     if (!searchQuery) return stores;
@@ -116,8 +126,8 @@ export default function GroupsPage() {
         selectedStoreIds: (data || []).map(d => d.store_id) 
       });
     } else if (type === 'devices') {
-      // Fetch currently linked devices
       const { data } = await supabase.from("group_devices").select("device_id").eq("group_id", group.id);
+      setDeviceSearchQuery("");
       setLinkDevicesModal({ 
         open: true, 
         group, 
@@ -126,8 +136,18 @@ export default function GroupsPage() {
     }
   };
 
+  const filteredLinkDevices = useMemo(() => {
+    if (!devices) return [];
+    if (!deviceSearchQuery) return devices;
+    return devices.filter(d => 
+      d.nome?.toLowerCase().includes(deviceSearchQuery.toLowerCase()) ||
+      d.num_filial?.toLowerCase().includes(deviceSearchQuery.toLowerCase())
+    );
+  }, [devices, deviceSearchQuery]);
+
   const handleSaveStoreLinks = async () => {
     const groupId = linkStoresModal.group.id;
+    if (!confirm(`Deseja salvar as alterações de vínculo das lojas para o grupo "${linkStoresModal.group.name}"?`)) return;
     try {
       // Simplistic sync: delete then insert
       await supabase.from("group_stores").delete().eq("group_id", groupId);
@@ -150,6 +170,7 @@ export default function GroupsPage() {
 
   const handleSaveDeviceLinks = async () => {
     const groupId = linkDevicesModal.group.id;
+    if (!confirm(`Deseja salvar as alterações de vínculo para ${linkDevicesModal.selectedDeviceIds.length} dispositivo(s) no grupo "${linkDevicesModal.group.name}"?`)) return;
     try {
       await supabase.from("group_devices").delete().eq("group_id", groupId);
       if (linkDevicesModal.selectedDeviceIds.length > 0) {
@@ -539,10 +560,10 @@ export default function GroupsPage() {
           <div className="space-y-4 py-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="Buscar dispositivos..." className="pl-9 bg-white/5 border-white/10" />
+              <Input placeholder="Buscar por nome ou loja..." className="pl-9 bg-white/5 border-white/10" value={deviceSearchQuery} onChange={(e) => setDeviceSearchQuery(e.target.value)} />
             </div>
             <div className="grid grid-cols-1 gap-2 max-h-80 overflow-y-auto p-2 border border-white/10 rounded-md bg-white/5 custom-scrollbar">
-              {devices?.map(device => (
+              {filteredLinkDevices?.map(device => (
                 <div key={device.id} className="flex items-center space-x-2 p-2 hover:bg-white/5 rounded transition-colors">
                   <Checkbox 
                     id={`link-dev-${device.id}`} 
