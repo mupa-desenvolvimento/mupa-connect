@@ -199,6 +199,10 @@ export function DeviceAvailablePanel({
           return [];
         }
       }
+
+      const { data: devicesData, error: devicesError } = await query;
+      
+      if (devicesError) throw devicesError;
       
       if (devicesError) throw devicesError;
 
