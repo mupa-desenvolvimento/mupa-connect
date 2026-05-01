@@ -168,10 +168,7 @@ export function DeviceAvailablePanel({
   const { data: devices, isLoading } = useQuery({
     queryKey: ["all-devices-panel", tenantId],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return [];
-
-      // Fetch devices by tenant_id or company_id
+      // Fetch devices by tenant context
       let query = supabase
         .from("dispositivos")
         .select(`
@@ -180,13 +177,12 @@ export function DeviceAvailablePanel({
           serial, 
           online, 
           num_filial, 
-          grupo_dispositivos
+          grupo_dispositivos,
+          company_id
         `);
       
       if (tenantId) {
-        // Since dispositivos doesn't have tenant_id directly, we filter by company_id's tenant
-        // or by the companies the user has access to.
-        // For now, let's use company_id if available, or fetch all devices for the tenant's companies
+        // Obter todas as empresas vinculadas a este tenant
         const { data: tenantCompanies } = await supabase
           .from("companies")
           .select("id")
@@ -201,10 +197,9 @@ export function DeviceAvailablePanel({
       }
 
       const { data: devicesData, error: devicesError } = await query;
-      
       if (devicesError) throw devicesError;
 
-      // Fetch all groups to get names
+      // Fetch all groups to get names for context
       const { data: groups } = await supabase
         .from("groups")
         .select("id, name")
@@ -212,7 +207,7 @@ export function DeviceAvailablePanel({
       
       const groupMap = new Map(groups?.map(g => [g.id, g.name]) || []);
 
-      // Fetch all stores to get names
+      // Fetch all stores to get names for context
       const { data: stores } = await supabase
         .from("stores")
         .select("id, name, code")
@@ -220,7 +215,7 @@ export function DeviceAvailablePanel({
       
       const storeMap = new Map(stores?.map(s => [s.code, s.name]) || []);
 
-      // Fetch explicit group_devices links
+      // Fetch explicit group_devices links (New hierarchy system)
       const { data: groupLinks } = await supabase
         .from("group_devices")
         .select("device_id, group_id")
@@ -232,7 +227,7 @@ export function DeviceAvailablePanel({
           // Priority 1: Explicit group_devices table
           let groupId = linkMap.get(d.id);
           
-          // Priority 2: Legacy/Alternative grupo_dispositivos UUID
+          // Priority 2: Legacy grupo_dispositivos UUID
           if (!groupId && d.grupo_dispositivos && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(d.grupo_dispositivos)) {
             groupId = d.grupo_dispositivos;
           }
