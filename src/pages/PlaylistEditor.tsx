@@ -280,7 +280,7 @@ export default function PlaylistEditor() {
           .insert({ 
             name: updatedName, 
             tenant_id: tenantId as any, 
-            company_id: companyData.id,
+            company_id: companyId || companyData.id,
             is_active: true 
           })
           .select().single();
