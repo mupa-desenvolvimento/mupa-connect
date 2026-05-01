@@ -258,7 +258,7 @@ export function DeviceAvailablePanel({
         .select("device_id, group_id")
         .eq("tenant_id", tenantId);
       
-      const linkMap = new Map(groupLinks?.map(l => [l.device_id.toString(), l.group_id]) || []);
+      const linkMap = new Map(groupLinks?.map(l => [l.device_id, l.group_id]) || []);
 
       // Fetch group_stores links to resolve transitive vinculation (device -> store -> group)
       const { data: storeGroupLinks } = await supabase
