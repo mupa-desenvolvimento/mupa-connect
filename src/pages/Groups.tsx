@@ -50,7 +50,7 @@ export default function GroupsPage() {
   
   const [activeTab, setActiveTab] = useState("groups");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedDevices, setSelectedDevices] = useState<Set<number>>(new Set());
+  const [selectedDevices, setSelectedDevices] = useState<Set<string>>(new Set());
 
   // Create/Edit Group Modal
   const [groupModal, setGroupModal] = useState<{
