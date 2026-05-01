@@ -46,6 +46,7 @@ interface StoreData {
   code: string;
   tenant_id: string;
   // Dynamic fields
+  group_id?: string | null;
   group_name?: string | null;
   device_count?: number;
 }
