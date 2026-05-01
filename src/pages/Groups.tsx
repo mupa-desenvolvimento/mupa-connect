@@ -353,13 +353,14 @@ export default function GroupsPage() {
     
     setIsCreatingGroup(true);
     try {
+      const parentId = (window as any)._pendingParentId || null;
       const { error } = await supabase
         .from("groups")
         .insert({
           name: newGroupName,
           tenant_id: tenantId,
           company_id: companyId,
-          parent_id: null
+          parent_id: parentId
         } as any);
 
       if (error) throw error;
