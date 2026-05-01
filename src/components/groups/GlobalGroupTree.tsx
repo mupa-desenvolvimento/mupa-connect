@@ -13,6 +13,8 @@ import {
 import { Group } from "@/hooks/use-groups";
 import { Device } from "@/hooks/use-devices";
 
+import { Store } from "@/hooks/use-stores";
+
 interface EnrichedDevice extends Device {
   origin?: 'direto' | 'loja';
 }
@@ -24,6 +26,8 @@ interface EnrichedGroup extends Group {
 interface GroupTreeNodeProps {
   node: EnrichedGroup;
   allGroups: EnrichedGroup[];
+  allStores: Store[];
+  allDevices: Device[];
   level?: number;
   onAction: (type: 'create' | 'edit' | 'delete' | 'stores' | 'devices', group: EnrichedGroup) => void;
 }
