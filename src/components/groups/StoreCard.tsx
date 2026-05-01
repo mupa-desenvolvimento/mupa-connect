@@ -30,10 +30,32 @@ interface StoreCardProps {
 
 export function StoreCard({ store, playlists, onRefresh }: StoreCardProps) {
   const { data: sectors, refetch: refetchSectors } = useStoreInternalGroups(store.id);
-  const { data: allDevices, refetch: refetchDevices } = useDevices(null); // Passing null but it might work if we filter manually or use a specific hook
+  const { data: allDevices, refetch: refetchDevices } = useDevices(null);
   
-  // Filter devices belonging to this store
-  const storeDevices = allDevices?.filter(d => d.store_id === store.id) || [];
+  const normalize = (val: string | null | undefined) => {
+    if (!val) return "";
+    let normalized = val.replace(/FIL-/gi, "");
+    normalized = normalized.replace(/\s+/g, "");
+    normalized = normalized.replace(/^0+/, "");
+    if (normalized === "" && val.trim() !== "") {
+      const onlyDigits = val.replace(/[^0-9]/g, "");
+      if (onlyDigits.match(/^0+$/)) return "0";
+    }
+    return normalized.toLowerCase();
+  };
+
+  // Filter devices belonging to this store using both UUID and normalized code fallback
+  const storeDevices = allDevices?.filter(d => {
+    // Priority 1: UUID link
+    if (d.store_id === store.id) return true;
+    
+    // Priority 2: Normalized code match (Temporary fallback)
+    const normalizedStoreCode = normalize(store.code);
+    const normalizedDeviceFilial = normalize(d.num_filial);
+    
+    return normalizedStoreCode !== "" && normalizedStoreCode === normalizedDeviceFilial;
+  }) || [];
+  
   const devicesWithoutSector = storeDevices.filter(d => !d.internal_group_id);
 
   const handleStorePlaylistChange = async (playlistId: string) => {

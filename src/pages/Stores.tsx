@@ -67,28 +67,44 @@ export default function StoresPage() {
         .from("dispositivos")
         .select("num_filial");
 
+      const normalize = (val: string | null | undefined) => {
+        if (!val) return "";
+        // Remove "FIL-", "fil-", "Fil-" case insensitive
+        let normalized = val.replace(/FIL-/gi, "");
+        // Remove spaces
+        normalized = normalized.replace(/\s+/g, "");
+        // Remove leading zeros
+        normalized = normalized.replace(/^0+/, "");
+        // If it was "0", it becomes empty, so we should probably keep "0" if it's just zero, 
+        // but the rule says "remover zeros à esquerda". Let's assume "01" -> "1".
+        // If it was just "0", normalized is now "". Let's make it "0" if empty but original had content.
+        if (normalized === "" && val.trim() !== "") {
+          const onlyDigits = val.replace(/[^0-9]/g, "");
+          if (onlyDigits.match(/^0+$/)) return "0";
+        }
+        return normalized.toLowerCase();
+      };
+
       const storesWithCounts = stores.map((s) => {
         const storeCode = s.code;
         let count = 0;
         
-        if (storeCode && allDevices) {
-          const cleanCode = storeCode.replace(/[^0-9]/g, '');
-          count = allDevices.filter(d => {
-            if (!d.num_filial) return false;
+        if (allDevices) {
+          const normalizedStoreCode = normalize(storeCode);
+          
+          const filteredDevices = allDevices.filter(d => {
+            const normalizedDeviceFilial = normalize(d.num_filial);
+            const match = normalizedStoreCode !== "" && normalizedStoreCode === normalizedDeviceFilial;
             
-            // Match exact
-            if (d.num_filial === storeCode) return true;
-            
-            // Match numeric variants (e.g. "1", "01", "001")
-            const dClean = d.num_filial.replace(/[^0-9]/g, '');
-            if (cleanCode && dClean === cleanCode) {
-              const n1 = parseInt(cleanCode, 10);
-              const n2 = parseInt(dClean, 10);
-              return !isNaN(n1) && !isNaN(n2) && n1 === n2;
+            // Debug logs as requested
+            if (normalizedStoreCode !== "" && normalizedDeviceFilial !== "") {
+              console.log(`[Matching] Store: ${s.name} (${storeCode} -> ${normalizedStoreCode}) | Device Filial: (${d.num_filial} -> ${normalizedDeviceFilial}) | Match: ${match}`);
             }
             
-            return false;
-          }).length;
+            return match;
+          });
+          
+          count = filteredDevices.length;
         }
 
         return {
