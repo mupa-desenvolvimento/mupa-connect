@@ -33,10 +33,12 @@ export function MediaUpload({ tenantId, companyId, currentFolderId, onUploadComp
       maxSizeMB: 1,
       maxWidthOrHeight: 1920,
       useWebWorker: true,
-      fileType: 'image/webp' as any,
+      fileType: file.type as any, // Mantém o tipo original
     };
     try {
-      return await imageCompression(file, options);
+      const compressedBlob = await imageCompression(file, options);
+      // Converte o Blob de volta para File para preservar o nome original
+      return new File([compressedBlob], file.name, { type: file.type });
     } catch (error) {
       console.error('Image optimization failed', error);
       return file;
