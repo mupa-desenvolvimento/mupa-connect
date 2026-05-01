@@ -389,6 +389,16 @@ export function DeviceAvailablePanel({
                  <Badge variant="outline" className="text-[9px] h-4 bg-white/5 border-white/5 text-white/40">
                    {viewMode === "devices" ? `${devices?.length || 0} TOTAL` : `${stores?.length || 0} TOTAL`}
                  </Badge>
+                 {viewMode === "devices" && devices && (
+                   <>
+                     <Badge variant="outline" className="text-[9px] h-4 border-blue-500/20 text-blue-400 bg-blue-500/5">
+                       {devices.filter(d => !!d.group_name).length} VINC.
+                     </Badge>
+                     <Badge variant="outline" className="text-[9px] h-4 border-green-500/20 text-green-400 bg-green-500/5">
+                       {devices.filter(d => !d.group_name).length} LIVRES
+                     </Badge>
+                   </>
+                 )}
               </div>
             </div>
           </div>
