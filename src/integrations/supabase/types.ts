@@ -2285,6 +2285,48 @@ export type Database = {
           },
         ]
       }
+      group_playlists: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          is_override: boolean | null
+          playlist_id: string
+          priority: number | null
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          is_override?: boolean | null
+          playlist_id: string
+          priority?: number | null
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          is_override?: boolean | null
+          playlist_id?: string
+          priority?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_playlists_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_playlists_playlist_id_fkey"
+            columns: ["playlist_id"]
+            isOneToOne: false
+            referencedRelation: "playlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_stores: {
         Row: {
           created_at: string
@@ -2324,6 +2366,7 @@ export type Database = {
       groups: {
         Row: {
           color: string | null
+          company_id: string | null
           created_at: string | null
           id: string
           name: string
@@ -2334,6 +2377,7 @@ export type Database = {
         }
         Insert: {
           color?: string | null
+          company_id?: string | null
           created_at?: string | null
           id?: string
           name: string
@@ -2344,6 +2388,7 @@ export type Database = {
         }
         Update: {
           color?: string | null
+          company_id?: string | null
           created_at?: string | null
           id?: string
           name?: string
@@ -2353,6 +2398,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "groups_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "groups_parent_id_fkey"
             columns: ["parent_id"]
@@ -6066,7 +6118,7 @@ export type Database = {
         Args: { p_group_id: string }
         Returns: string
       }
-      get_groups_hierarchy: { Args: { p_tenant_id: string }; Returns: Json }
+      get_groups_hierarchy: { Args: { group_uuid: string }; Returns: Json }
       get_medias_by_month: {
         Args: { p_ano: number; p_mes: number }
         Returns: {
