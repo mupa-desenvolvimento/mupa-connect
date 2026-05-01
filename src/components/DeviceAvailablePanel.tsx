@@ -39,6 +39,7 @@ interface Device {
   group_name?: string | null;
   store_name?: string | null;
   status_label?: string;
+  vinculation_type?: 'direct' | 'legacy' | 'transitive' | 'none';
 }
 
 interface StoreData {
@@ -132,9 +133,33 @@ export function DeviceItem({ device, isSelected, onToggle, onClick }: DeviceItem
           
           <div className="flex flex-wrap gap-1.5 mt-2">
             {device.status_label === "Vinculado" ? (
-              <Badge variant="secondary" className="bg-[#085CF0]/10 text-[#085CF0] border-[#085CF0]/20 text-[9px] h-4 uppercase tracking-tighter">
-                {device.group_name || "Vinculado"}
-              </Badge>
+              <div className="flex items-center gap-1.5">
+                <Badge variant="secondary" className="bg-[#085CF0]/10 text-[#085CF0] border-[#085CF0]/20 text-[9px] h-4 uppercase tracking-tighter">
+                  {device.group_name || "Vinculado"}
+                </Badge>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="cursor-help">
+                        {device.vinculation_type === 'direct' && (
+                          <Badge variant="outline" className="text-[8px] h-3.5 px-1 border-blue-500/30 text-blue-400 bg-blue-500/5 uppercase">Dir</Badge>
+                        )}
+                        {device.vinculation_type === 'legacy' && (
+                          <Badge variant="outline" className="text-[8px] h-3.5 px-1 border-purple-500/30 text-purple-400 bg-purple-500/5 uppercase">Leg</Badge>
+                        )}
+                        {device.vinculation_type === 'transitive' && (
+                          <Badge variant="outline" className="text-[8px] h-3.5 px-1 border-orange-500/30 text-orange-400 bg-orange-500/5 uppercase">Loja</Badge>
+                        )}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-black border-white/10 text-[10px]">
+                      {device.vinculation_type === 'direct' && "Vínculo direto via Tabela de Dispositivos"}
+                      {device.vinculation_type === 'legacy' && "Vínculo legado via ID de Grupo no Dispositivo"}
+                      {device.vinculation_type === 'transitive' && `Vínculo herdado da Loja: ${device.store_name}`}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
             ) : device.status_label === "Em Loja" ? (
               <Badge variant="outline" className="text-[9px] uppercase tracking-tighter border-yellow-500/20 text-yellow-500 bg-yellow-500/5 h-4">
                 Em Loja
@@ -240,12 +265,17 @@ export function DeviceAvailablePanel({
       const storeToGroupMap = new Map(storeGroupLinks?.map(sl => [sl.store_id, sl.group_id]) || []);
 
       return (devicesData as any[]).map(d => {
+          let statusLabel = "Disponível";
+          let vinculationType: Device['vinculation_type'] = 'none';
+
           // Priority 1: Explicit group_devices table
           let groupId = linkMap.get(d.id);
+          if (groupId) vinculationType = 'direct';
           
           // Priority 2: Legacy grupo_dispositivos UUID
           if (!groupId && d.grupo_dispositivos && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(d.grupo_dispositivos)) {
             groupId = d.grupo_dispositivos;
+            vinculationType = 'legacy';
           }
 
           // Priority 3: Transitive vinculation via store (num_filial -> store -> group)
@@ -253,11 +283,13 @@ export function DeviceAvailablePanel({
             const storeId = storeIdByCode.get(d.num_filial);
             if (storeId) {
               const transitiveGroupId = storeToGroupMap.get(storeId);
-              if (transitiveGroupId) groupId = transitiveGroupId;
+              if (transitiveGroupId) {
+                groupId = transitiveGroupId;
+                vinculationType = 'transitive';
+              }
             }
           }
 
-          let statusLabel = "Disponível";
           if (groupId) {
             statusLabel = "Vinculado";
           } else if (d.num_filial) {
@@ -269,7 +301,8 @@ export function DeviceAvailablePanel({
             group_id: groupId,
             group_name: groupId ? groupMap.get(groupId) : null,
             store_name: d.num_filial ? storeMap.get(d.num_filial) : null,
-            status_label: statusLabel
+            status_label: statusLabel,
+            vinculation_type: vinculationType
           };
       }) as Device[];
     },
