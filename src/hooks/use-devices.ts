@@ -30,6 +30,7 @@ export function useDevices(tenantId: string | null) {
           nome,
           num_filial,
           store_id,
+          tenant_id,
           grupo_dispositivos,
           last_online,
           group_devices (
@@ -40,7 +41,8 @@ export function useDevices(tenantId: string | null) {
             internal_group_id,
             store_internal_groups (name)
           )
-        `);
+        `)
+        .eq('tenant_id', tenantId);
 
       if (error) throw error;
 
