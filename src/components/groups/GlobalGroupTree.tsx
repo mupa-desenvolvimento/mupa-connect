@@ -22,10 +22,10 @@ interface EnrichedGroup extends Group {
 }
 
 interface GroupTreeNodeProps {
-  node: Group;
-  allGroups: Group[];
+  node: EnrichedGroup;
+  allGroups: EnrichedGroup[];
   level?: number;
-  onAction: (type: 'create' | 'edit' | 'delete' | 'stores' | 'devices', group: Group) => void;
+  onAction: (type: 'create' | 'edit' | 'delete' | 'stores' | 'devices', group: EnrichedGroup) => void;
 }
 
 export function GroupTreeNode({ node, allGroups, level = 0, onAction }: GroupTreeNodeProps) {
