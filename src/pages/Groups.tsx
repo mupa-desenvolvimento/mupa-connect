@@ -383,8 +383,11 @@ export default function GroupsPage() {
                       key={group.id} 
                       node={group} 
                       allGroups={enrichedGroups} 
+                      allStores={stores || []}
+                      allDevices={devices || []}
                       onAction={handleGroupAction}
                     />
+
                   ))}
                 </div>
               ) : (
