@@ -97,9 +97,10 @@ export default function GroupsPage() {
       const buildTree = (allNodes: any[], parentId: string | null = null): TreeNode[] => {
         return allNodes
           .filter(node => {
-            // Se for store ou device_group, o parent_id é retornado como string pela query
-            // Se for store_group (da tabela groups), o parent_id é UUID
-            return node.parent_id === parentId || (parentId === null && !node.parent_id && node.type !== 'device');
+            // Dispositivos órfãos (sem parent) NUNCA aparecem na árvore — vão pro painel lateral
+            if (node.type === 'device' && !node.parent_id) return false;
+            // Match normal por parent_id (null === null para raízes reais: store_group sem parent)
+            return node.parent_id === parentId;
           })
           .map(node => ({
             id: node.id,
