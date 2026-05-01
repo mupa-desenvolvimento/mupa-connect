@@ -571,8 +571,11 @@ export default function PlaylistEditor() {
                 />
               </div>
             </div>
-            <TabsContent value="media" className="flex-1 m-0 p-0 border-none outline-none overflow-hidden h-full flex flex-col">
-              <ScrollArea className="flex-1 w-full">
+            <TabsContent 
+              value="media" 
+              className="flex-1 m-0 p-0 border-none outline-none data-[state=active]:flex data-[state=active]:flex-col overflow-hidden"
+            >
+              <ScrollArea className="flex-1 w-full h-full">
                 <div className="p-4 grid grid-cols-2 gap-3">
                   {medias?.filter(m => m.name.toLowerCase().includes(mediaSearch.toLowerCase())).map((media) => (
                     <motion.div
@@ -605,8 +608,11 @@ export default function PlaylistEditor() {
               </ScrollArea>
             </TabsContent>
             
-            <TabsContent value="campaigns" className="flex-1 m-0 p-0 border-none outline-none overflow-hidden h-full flex flex-col">
-              <ScrollArea className="flex-1 w-full">
+            <TabsContent 
+              value="campaigns" 
+              className="flex-1 m-0 p-0 border-none outline-none data-[state=active]:flex data-[state=active]:flex-col overflow-hidden"
+            >
+              <ScrollArea className="flex-1 w-full h-full">
                 <div className="p-4 text-center py-10 text-white/20 text-[10px] uppercase font-bold tracking-widest">
                   Nenhuma campanha disponível
                 </div>
