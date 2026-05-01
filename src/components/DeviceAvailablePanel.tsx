@@ -94,7 +94,7 @@ export function DeviceItem({ device, isSelected, onToggle, onClick }: DeviceItem
     >
       <div 
         className="flex items-center gap-3 flex-1 min-w-0"
-        onClick={(e) => onToggle(device.id, e.shiftKey)}
+        onClick={(e) => onToggle(device.device_uuid, e.shiftKey)}
       >
         <Checkbox 
           checked={isSelected} 
