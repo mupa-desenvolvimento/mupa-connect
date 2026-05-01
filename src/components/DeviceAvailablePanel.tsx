@@ -58,7 +58,7 @@ interface StoreData {
 interface DeviceItemProps {
   device: Device;
   isSelected: boolean;
-  onToggle: (id: number, isShiftKey: boolean) => void;
+  onToggle: (uuid: string, isShiftKey: boolean) => void;
   onClick?: (groupId: string) => void;
 }
 
