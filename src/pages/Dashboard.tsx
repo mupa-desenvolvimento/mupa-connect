@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format, subHours, startOfDay, endOfDay } from "date-fns";
 import { LineChart, Line, ResponsiveContainer } from "recharts";
 import { cn } from "@/lib/utils";
+import { useUserRole } from "@/hooks/use-user-role";
 
   // Removendo estatísticas estáticas para usar dinâmicas via useQuery
 
