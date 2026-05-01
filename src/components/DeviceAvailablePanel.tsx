@@ -29,10 +29,12 @@ import {
 
 interface Device {
   id: number;
+  device_uuid: string;
   apelido_interno: string;
   serial: string;
   online: boolean;
   num_filial: string | null;
+  store_id: string | null;
   grupo_dispositivos: string | null;
   // Dynamic fields
   group_id?: string | null;
