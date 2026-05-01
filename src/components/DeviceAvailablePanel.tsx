@@ -257,7 +257,10 @@ export function DeviceAvailablePanel({
           groups(name)
         `);
       
-      const storeLinkMap = new Map(linkedStores?.map(ls => [ls.store_id, (ls.groups as any)?.name]) || []);
+      const storeLinkMap = new Map(linkedStores?.map(ls => [ls.store_id, { 
+        id: ls.group_id, 
+        name: (ls.groups as any)?.name 
+      }]) || []);
 
       // 3. Get device counts per store code
       const { data: deviceCounts } = await supabase
