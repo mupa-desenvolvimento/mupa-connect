@@ -150,7 +150,8 @@ export function DeviceAvailablePanel({
   selectedIds, 
   onToggleSelection,
   onSelectAll,
-  onClearSelection
+  onClearSelection,
+  onHighlightGroup
 }: { 
   selectedIds: Set<number>,
   onToggleSelection: (ids: number[]) => void,
