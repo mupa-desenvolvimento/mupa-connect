@@ -395,30 +395,30 @@ export function DeviceAvailablePanel({
       if (selectedIds.size === filteredDevices.length && filteredDevices.length > 0) {
         onClearSelection();
       } else {
-        onSelectAll(filteredDevices.map(d => d.id));
+        onSelectAll(filteredDevices.map(d => d.device_uuid));
       }
     }
   };
 
-  const handleToggle = (id: number, isShiftKey: boolean) => {
+  const handleToggle = (uuid: string, isShiftKey: boolean) => {
     if (viewMode === "devices") {
       if (isShiftKey && lastSelectedId !== null) {
-        const lastIndex = filteredDevices.findIndex(d => d.id === lastSelectedId);
-        const currentIndex = filteredDevices.findIndex(d => d.id === id);
+        const lastIndex = filteredDevices.findIndex(d => d.device_uuid === lastSelectedId);
+        const currentIndex = filteredDevices.findIndex(d => d.device_uuid === uuid);
         
         if (lastIndex !== -1 && currentIndex !== -1) {
           const start = Math.min(lastIndex, currentIndex);
           const end = Math.max(lastIndex, currentIndex);
-          const idsInRange = filteredDevices.slice(start, end + 1).map(d => d.id);
+          const idsInRange = filteredDevices.slice(start, end + 1).map(d => d.device_uuid);
           
           onToggleSelection(idsInRange);
-          setLastSelectedId(id);
+          setLastSelectedId(uuid);
           return;
         }
       }
       
-      onToggleSelection([id]);
-      setLastSelectedId(id);
+      onToggleSelection([uuid]);
+      setLastSelectedId(uuid);
     }
   };
 
