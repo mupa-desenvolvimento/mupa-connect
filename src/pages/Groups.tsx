@@ -147,6 +147,11 @@ export default function GroupsPage() {
         return null;
       }).filter((d): d is any => d !== null);
 
+      // Debug mandatory logs
+      console.log(`group: ${group.id} (${group.name})`);
+      console.log(`devices direct: ${localDirectDeviceIds.size}`);
+      console.log(`devices store: ${localStoreCodes.size} codes, ${localDevices.length} devices found`);
+
       // Deduplicate local devices
       const uniqueLocalDevicesMap = new Map();
       localDevices.forEach(d => {
