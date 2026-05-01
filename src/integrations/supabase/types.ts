@@ -1927,7 +1927,9 @@ export type Database = {
           company_id: string | null
           current_media_id: string | null
           current_playlist_id: string | null
+          device_uuid: string | null
           empresa: string | null
+          external_id: number | null
           grupo_dispositivos: string | null
           id: number
           ip_dispositivo: string | null
@@ -1938,6 +1940,7 @@ export type Database = {
           pin: string | null
           playlist_id: string | null
           serial: string | null
+          store_id: string | null
           tipo_da_licenca: string | null
           type: string | null
         }
@@ -1950,7 +1953,9 @@ export type Database = {
           company_id?: string | null
           current_media_id?: string | null
           current_playlist_id?: string | null
+          device_uuid?: string | null
           empresa?: string | null
+          external_id?: number | null
           grupo_dispositivos?: string | null
           id?: number
           ip_dispositivo?: string | null
@@ -1961,6 +1966,7 @@ export type Database = {
           pin?: string | null
           playlist_id?: string | null
           serial?: string | null
+          store_id?: string | null
           tipo_da_licenca?: string | null
           type?: string | null
         }
@@ -1973,7 +1979,9 @@ export type Database = {
           company_id?: string | null
           current_media_id?: string | null
           current_playlist_id?: string | null
+          device_uuid?: string | null
           empresa?: string | null
+          external_id?: number | null
           grupo_dispositivos?: string | null
           id?: number
           ip_dispositivo?: string | null
@@ -1984,6 +1992,7 @@ export type Database = {
           pin?: string | null
           playlist_id?: string | null
           serial?: string | null
+          store_id?: string | null
           tipo_da_licenca?: string | null
           type?: string | null
         }
@@ -2000,6 +2009,13 @@ export type Database = {
             columns: ["playlist_id"]
             isOneToOne: false
             referencedRelation: "playlists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispositivos_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
@@ -2279,6 +2295,13 @@ export type Database = {
           tenant_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "group_devices_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: true
+            referencedRelation: "dispositivos"
+            referencedColumns: ["device_uuid"]
+          },
           {
             foreignKeyName: "group_devices_group_id_fkey"
             columns: ["group_id"]
@@ -3028,6 +3051,27 @@ export type Database = {
           id?: number
           id_media?: string
           qtd_views?: number | null
+        }
+        Relationships: []
+      }
+      migration_report: {
+        Row: {
+          created_at: string | null
+          details: Json | null
+          id: string
+          step: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          step?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          step?: string | null
         }
         Relationships: []
       }
@@ -6363,7 +6407,9 @@ export type Database = {
           company_id: string | null
           current_media_id: string | null
           current_playlist_id: string | null
+          device_uuid: string | null
           empresa: string | null
+          external_id: number | null
           grupo_dispositivos: string | null
           id: number
           ip_dispositivo: string | null
@@ -6374,6 +6420,7 @@ export type Database = {
           pin: string | null
           playlist_id: string | null
           serial: string | null
+          store_id: string | null
           tipo_da_licenca: string | null
           type: string | null
         }[]
