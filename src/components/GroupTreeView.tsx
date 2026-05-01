@@ -351,7 +351,8 @@ export function GroupTreeView({ data, onNodeClick, onEditPlaylist, onCreateGroup
     switch (type) {
       case 'store_group': return <Layers className="w-4 h-4" />;
       case 'store': return <Store className="w-4 h-4" />;
-      case 'device_group': return <Monitor className="w-4 h-4" />;
+      case 'device_group': return <Layers className="w-4 h-4 opacity-70" />;
+      case 'device': return <Monitor className="w-4 h-4 text-[#085CF0]" />;
       default: return <Monitor className="w-4 h-4" />;
     }
   };
