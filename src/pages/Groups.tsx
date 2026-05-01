@@ -668,19 +668,19 @@ export default function GroupsPage() {
             </div>
             <div className="grid grid-cols-1 gap-2 max-h-80 overflow-y-auto p-2 border border-white/10 rounded-md bg-white/5 custom-scrollbar">
               {filteredLinkDevices?.map(device => (
-                <div key={device.id} className="flex items-center space-x-2 p-2 hover:bg-white/5 rounded transition-colors">
+                <div key={device.device_uuid} className="flex items-center space-x-2 p-2 hover:bg-white/5 rounded transition-colors">
                   <Checkbox 
-                    id={`link-dev-${device.id}`} 
-                    checked={linkDevicesModal.selectedDeviceIds.includes(device.id)}
+                    id={`link-dev-${device.device_uuid}`} 
+                    checked={linkDevicesModal.selectedDeviceIds.includes(device.device_uuid)}
                     onCheckedChange={(checked) => {
                       if (checked) {
-                        setLinkDevicesModal({ ...linkDevicesModal, selectedDeviceIds: [...linkDevicesModal.selectedDeviceIds, device.id] });
+                        setLinkDevicesModal({ ...linkDevicesModal, selectedDeviceIds: [...linkDevicesModal.selectedDeviceIds, device.device_uuid] });
                       } else {
-                        setLinkDevicesModal({ ...linkDevicesModal, selectedDeviceIds: linkDevicesModal.selectedDeviceIds.filter(id => id !== device.id) });
+                        setLinkDevicesModal({ ...linkDevicesModal, selectedDeviceIds: linkDevicesModal.selectedDeviceIds.filter(id => id !== device.device_uuid) });
                       }
                     }}
                   />
-                  <label htmlFor={`link-dev-${device.id}`} className="text-sm font-medium leading-none cursor-pointer flex-1 flex items-center justify-between">
+                  <label htmlFor={`link-dev-${device.device_uuid}`} className="text-sm font-medium leading-none cursor-pointer flex-1 flex items-center justify-between">
                     <span>{device.nome}</span>
                     <div className="flex items-center gap-2">
                       {device.num_filial && <Badge variant="outline" className="text-[10px] h-4">Loja: {device.num_filial}</Badge>}
