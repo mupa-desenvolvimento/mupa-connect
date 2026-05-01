@@ -62,10 +62,14 @@ export default function StoresPage() {
       if (error) throw error;
 
       // Fetch device counts for the current page
-      // We'll fetch all devices once to ensure we can match flexibly
-      const { data: allDevices } = await supabase
-        .from("dispositivos")
-        .select("num_filial");
+      // Filtered by tenantId if available
+      let deviceQuery = supabase.from("dispositivos").select("num_filial");
+      
+      if (tenantId && !isSuperAdmin) {
+        deviceQuery = deviceQuery.eq("tenant_id", tenantId);
+      }
+      
+      const { data: allDevices } = await deviceQuery;
 
       const normalize = (val: string | null | undefined) => {
         if (!val) return "";

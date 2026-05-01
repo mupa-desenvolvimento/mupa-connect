@@ -1941,6 +1941,7 @@ export type Database = {
           playlist_id: string | null
           serial: string | null
           store_id: string | null
+          tenant_id: string | null
           tipo_da_licenca: string | null
           type: string | null
         }
@@ -1967,6 +1968,7 @@ export type Database = {
           playlist_id?: string | null
           serial?: string | null
           store_id?: string | null
+          tenant_id?: string | null
           tipo_da_licenca?: string | null
           type?: string | null
         }
@@ -1993,6 +1995,7 @@ export type Database = {
           playlist_id?: string | null
           serial?: string | null
           store_id?: string | null
+          tenant_id?: string | null
           tipo_da_licenca?: string | null
           type?: string | null
         }
@@ -2016,6 +2019,13 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispositivos_tenant_fk"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -6421,6 +6431,7 @@ export type Database = {
           playlist_id: string | null
           serial: string | null
           store_id: string | null
+          tenant_id: string | null
           tipo_da_licenca: string | null
           type: string | null
         }[]

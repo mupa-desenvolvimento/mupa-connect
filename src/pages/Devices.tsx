@@ -49,7 +49,7 @@ export default function DevicesPage() {
   const [selectedDevice, setSelectedDevice] = useState<any | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
-  const { companyId, isSuperAdmin, isTecnico, isAdmin } = useUserRole();
+  const { tenantId, isSuperAdmin, isTecnico, isAdmin } = useUserRole();
 
   const openDeviceDrawer = (device: any) => {
     setSelectedDevice(device);
@@ -57,16 +57,15 @@ export default function DevicesPage() {
   };
 
   const { data: devices, isLoading, refetch } = useQuery({
-    queryKey: ["dispositivos-full", companyId],
+    queryKey: ["dispositivos-full", tenantId],
     queryFn: async () => {
       let query = supabase.from("dispositivos").select("*");
       
-      // Filtrar por companyId se disponível (activeCompanyId)
-      if (companyId) {
-        query = query.eq("company_id", companyId);
+      // Filtrar por tenantId se disponível
+      if (tenantId) {
+        query = query.eq("tenant_id", tenantId);
       } else if (!isSuperAdmin) {
-        // Fallback de segurança se não for super admin e não tiver companyId
-        // mas o ideal é que o companyId venha do useUserRole() refletindo a seleção atual
+        // Fallback de segurança se não for super admin e não tiver tenantId
         return [];
       }
       
@@ -78,11 +77,11 @@ export default function DevicesPage() {
   });
 
   const { data: stores } = useQuery({
-    queryKey: ["stores-list", companyId],
+    queryKey: ["stores-list", tenantId],
     queryFn: async () => {
       let query = supabase.from("dispositivos").select("num_filial").not("num_filial", "is", null);
-      if (companyId) {
-        query = query.eq("company_id", companyId);
+      if (tenantId) {
+        query = query.eq("tenant_id", tenantId);
       } else if (!isSuperAdmin) {
         return [];
       }

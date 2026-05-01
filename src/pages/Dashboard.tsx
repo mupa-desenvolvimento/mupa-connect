@@ -9,18 +9,37 @@ import { supabase } from "@/integrations/supabase/client";
 import { format, subHours, startOfDay, endOfDay } from "date-fns";
 import { LineChart, Line, ResponsiveContainer } from "recharts";
 import { cn } from "@/lib/utils";
+import { useUserRole } from "@/hooks/use-user-role";
 
   // Removendo estatísticas estáticas para usar dinâmicas via useQuery
 
 
 export default function DashboardPage() {
+  const { tenantId, isSuperAdmin, isLoading: roleLoading } = useUserRole();
+
   const { data: statsData } = useQuery({
-    queryKey: ["dashboard-stats"],
+    queryKey: ["dashboard-stats", tenantId, isSuperAdmin],
+    enabled: !roleLoading,
     queryFn: async () => {
-      const { data: devicesData } = await supabase.from("dispositivos").select("id, online");
-      const { count: storesCount } = await supabase.from("stores").select("*", { count: 'exact', head: true });
-      const { count: mediaCount } = await supabase.from("media_items").select("*", { count: 'exact', head: true });
-      const { count: playlistCount } = await supabase.from("playlists").select("*", { count: 'exact', head: true });
+      let devicesQuery = supabase.from("dispositivos").select("id, online");
+      let storesQuery = supabase.from("stores").select("*", { count: 'exact', head: true });
+      let mediaQuery = supabase.from("media_items").select("*", { count: 'exact', head: true });
+      let playlistQuery = supabase.from("playlists").select("*", { count: 'exact', head: true });
+
+      if (tenantId && !isSuperAdmin) {
+        devicesQuery = devicesQuery.eq("tenant_id", tenantId);
+        storesQuery = storesQuery.eq("tenant_id", tenantId);
+        // Assuming media and playlists also have tenant_id
+        mediaQuery = mediaQuery.eq("tenant_id", tenantId);
+        playlistQuery = playlistQuery.eq("tenant_id", tenantId);
+      }
+
+      const [{ data: devicesData }, { count: storesCount }, { count: mediaCount }, { count: playlistCount }] = await Promise.all([
+        devicesQuery,
+        storesQuery,
+        mediaQuery,
+        playlistQuery
+      ]);
 
       const totalDevices = devicesData?.length || 0;
       const onlineDevices = devicesData?.filter(d => d.online).length || 0;
@@ -35,12 +54,16 @@ export default function DashboardPage() {
   });
 
   const { data: devicesList } = useQuery({
-    queryKey: ["dashboard-devices-list"],
+    queryKey: ["dashboard-devices-list", tenantId, isSuperAdmin],
+    enabled: !roleLoading,
     queryFn: async () => {
-      const { data } = await supabase
-        .from("dispositivos")
-        .select("*")
-        .limit(10);
+      let query = supabase.from("dispositivos").select("*").limit(10);
+      
+      if (tenantId && !isSuperAdmin) {
+        query = query.eq("tenant_id", tenantId);
+      }
+
+      const { data } = await query;
       return data || [];
     }
   });
