@@ -82,8 +82,9 @@ serve(async (req) => {
       }
     }
 
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${crypto.randomUUID()}.${fileExt}`
+    const originalName = file.name || 'unnamed'
+    const fileExt = originalName.includes('.') ? originalName.split('.').pop() : ''
+    const fileName = `${crypto.randomUUID()}${fileExt ? `.${fileExt}` : ''}`
     
     // Buscar nome da empresa para o path do storage
     const { data: companyData } = await supabaseClient
