@@ -1,785 +1,579 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/PageHeader";
-import { GroupTreeView, TreeNode } from "@/components/GroupTreeView";
-import { GroupCard } from "@/components/GroupCard";
-import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
-import { useTenant, usePlaylists } from "@/hooks/use-playlist-data";
 import { DeviceAvailablePanel } from "@/components/DeviceAvailablePanel";
-import { useQueryClient } from "@tanstack/react-query";
-import { 
-  DndContext, 
-  closestCenter, 
-  KeyboardSensor, 
-  PointerSensor, 
-  useSensor, 
-  useSensors,
-  DragOverlay,
-  defaultDropAnimationSideEffects
-} from "@dnd-kit/core";
-import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle, 
-  SheetDescription,
-  SheetFooter
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
+import { useTenant, usePlaylists } from "@/hooks/use-playlist-data";
+import { useGroups } from "@/hooks/use-groups";
+import { useStores } from "@/hooks/use-stores";
+import { useDevices } from "@/hooks/use-devices";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Layers, Monitor, Edit2, History, Store, Check, Search, X, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
+import { Globe, Store, Plus, Search, Loader2, Package, Filter } from "lucide-react";
+import { GroupTreeNode } from "@/components/groups/GlobalGroupTree";
+import { StoreCard } from "@/components/groups/StoreCard";
+import { Input } from "@/components/ui/input";
 import { 
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  } from "@/components/ui/popover";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
   DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  DialogDescription
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function GroupsPage() {
-  const { data: contextId, tenantId, companyId } = useTenant();
-  const queryClient = useQueryClient();
-  const [treeData, setTreeData] = useState<TreeNode[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isUpdatingPlaylist, setIsUpdatingPlaylist] = useState(false);
-  const { data: playlists } = usePlaylists();
+  const { tenantId, companyId } = useTenant();
+  const { data: playlists } = usePlaylists(tenantId || undefined);
+  const { data: groups, isLoading: loadingGroups, refetch: refetchGroups } = useGroups(tenantId);
+  const { data: stores, isLoading: loadingStores, refetch: refetchStores } = useStores(tenantId);
+  const { data: devices, refetch: refetchDevices } = useDevices(tenantId);
   
-  // Create Group Modal State
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [newGroupName, setNewGroupName] = useState("");
-  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
-
+  const [activeTab, setActiveTab] = useState("groups");
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedDevices, setSelectedDevices] = useState<Set<number>>(new Set());
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [activeDevice, setActiveDevice] = useState<any>(null);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
+  // Create/Edit Group Modal
+  const [groupModal, setGroupModal] = useState<{
+    open: boolean;
+    mode: 'create' | 'edit';
+    group?: any;
+    parentId?: string | null;
+  }>({ open: false, mode: 'create' });
 
-  const fetchTreeData = async () => {
-    // console.log("Fetching tree data for tenant:", tenantId);
-    if (!tenantId) return;
-    setLoading(true);
-    
-    try {
-      const { data, error } = await supabase.rpc('get_groups_hierarchy', { 
-        p_tenant_id: tenantId 
-      });
+  const [groupFormData, setGroupFormData] = useState({
+    name: "",
+    playlistMode: "inherit" as "inherit" | "custom",
+    playlistId: ""
+  });
 
-      if (error) throw error;
+  // Bulk Create Sector Modal
+  const [bulkSectorModal, setBulkSectorModal] = useState({
+    open: false,
+    name: "",
+    selectedStoreIds: [] as string[]
+  });
 
-      const nodes = (data as any[]) || [];
-      console.log("Raw hierarchy nodes from DB:", nodes);
+  // Link Stores (Segmentation) Modal
+  const [linkStoresModal, setLinkStoresModal] = useState({
+    open: false,
+    group: null as any,
+    selectedStoreIds: [] as string[]
+  });
 
-      // Transform recursive flat list into tree structure
-      const buildTree = (allNodes: any[], parentId: string | null = null): TreeNode[] => {
-        return allNodes
-          .filter(node => {
-            // Dispositivos órfãos (sem parent) NUNCA aparecem na árvore — vão pro painel lateral
-            if (node.type === 'device' && !node.parent_id) return false;
-            // Match normal por parent_id (null === null para raízes reais: store_group sem parent)
-            return node.parent_id === parentId;
-          })
-          .map(node => ({
-            id: node.id,
-            name: node.name,
-            type: node.type as TreeNode['type'],
-            playlist_id: node.resolved_playlist_id,
-            playlist_name: node.playlist_name,
-            inherited_from: node.inherited_from_name,
-            has_override: node.playlist_id !== null && node.inherited_from_name !== null,
-            device_count: parseInt(node.device_count || "0"),
-            children: buildTree(allNodes, node.id)
-          }));
-      };
+  // Link Devices Modal
+  const [linkDevicesModal, setLinkDevicesModal] = useState({
+    open: false,
+    group: null as any,
+    selectedDeviceIds: [] as string[]
+  });
 
-      const tree = buildTree(nodes);
-      console.log("Built tree structure:", tree);
-      setTreeData(tree);
-    } catch (error) {
-      console.error("Error loading tree data:", error);
-      toast.error("Erro ao carregar hierarquia de grupos");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const filteredGroups = useMemo(() => {
+    if (!groups) return [];
+    if (!searchQuery) return groups.filter(g => !g.parent_id);
+    return groups.filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [groups, searchQuery]);
 
-  useEffect(() => {
-    fetchTreeData();
-    
-    // Setup Realtime connection
-    const channel = supabase
-      .channel('schema-db-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'playlists' }, () => fetchTreeData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'groups' }, () => fetchTreeData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'group_devices' }, () => fetchTreeData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'group_stores' }, () => fetchTreeData())
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [tenantId]);
-
-  const handleNodeClick = (node: TreeNode) => {
-    if (node.type === 'device') {
-      // Highlight in sidebar instead of opening group settings
-      const deviceId = parseInt(node.id);
-      setSelectedDevices(new Set([deviceId]));
-      toast.info(`Dispositivo "${node.name}" selecionado no painel lateral.`);
-      return;
-    }
-    setSelectedNode(node);
-    setIsSidebarOpen(true);
-  };
-
-  const handleMoveNode = async (nodeId: string, newParentId: string) => {
-    if (!tenantId) return;
-    
-    try {
-      // Identificar o tipo do nó e do destino para decidir como mover
-      const allNodes = (treeData: TreeNode[]): TreeNode[] => {
-        let nodes: TreeNode[] = [];
-        treeData.forEach(n => {
-          nodes.push(n);
-          if (n.children) nodes.push(...allNodes(n.children));
-        });
-        return nodes;
-      };
-      
-      const flatNodes = allNodes(treeData);
-      const movingNode = flatNodes.find(n => String(n.id) === String(nodeId));
-      const targetNode = flatNodes.find(n => String(n.id) === String(newParentId));
-      
-      if (!movingNode || !targetNode) return;
-      
-      // Regras de negócio para o Drag & Drop
-      // 1. Loja (store) pode ir para dentro de Store Group (group)
-      if (movingNode.type === 'store' && targetNode.type === 'store_group') {
-        const { error } = await supabase
-          .from("group_stores")
-          .upsert({ group_id: targetNode.id, store_id: movingNode.id });
-        if (error) throw error;
-      } 
-      // 2. Grupo de Dispositivos pode ir para outra Loja
-      else if (movingNode.type === 'device_group' && targetNode.type === 'store') {
-        const { error } = await supabase
-          .from("device_groups")
-          .update({ store_id: targetNode.id } as any)
-          .eq("id", movingNode.id);
-        if (error) throw error;
-      }
-      // 3. Store Group pode ir para dentro de outro Store Group
-      else if (movingNode.type === 'store_group' && targetNode.type === 'store_group' && movingNode.id !== targetNode.id) {
-        const { error } = await supabase
-          .from("groups")
-          .update({ parent_id: targetNode.id } as any)
-          .eq("id", movingNode.id);
-        if (error) throw error;
-      } else {
-        toast.info("Movimentação não permitida para estes tipos de grupos.");
-        return;
-      }
-
-      toast.success("Hierarquia atualizada!");
-      fetchTreeData();
-    } catch (error: any) {
-      console.error("Error moving node:", error);
-      toast.error("Erro ao mover grupo: " + error.message);
-    }
-  };
-
-  const handleDragStart = (event: any) => {
-    const { active } = event;
-    setActiveId(active.id);
-    if (active.data.current?.type === 'device') {
-      setActiveDevice(active.data.current.device);
-    } else if (active.data.current?.type === 'store') {
-      setActiveDevice({ type: 'store', ...active.data.current.store });
-    }
-  };
-
-  const handleDragEnd = async (event: any) => {
-    const { active, over } = event;
-    setActiveId(null);
-    setActiveDevice(null);
-
-    if (!over) return;
-
-    const activeType = active.data.current?.type;
-    const overType = over.data.current?.type;
-
-    // If moving a store (from sidebar or tree)
-    if (activeType === 'store') {
-      const targetNode = over.data.current?.node;
-      const isDroppingInPanel = over.data.current?.type === 'available-panel';
-      const store = active.data.current?.store;
-      
-      if (!store) return;
-
-      // Confirmation if already linked
-      if (store.group_name && !isDroppingInPanel) {
-        const confirmed = window.confirm(`Esta loja já pertence ao grupo \"${store.group_name}\". Deseja movê-la?`);
-        if (!confirmed) return;
-      }
-
-      try {
-        if (isDroppingInPanel) {
-          // Remove link
-          await supabase.from("group_stores").delete().eq("store_id", store.id);
-          toast.success("Loja removida do grupo!");
-        } else if (targetNode?.type === 'store_group') {
-          await supabase.from("group_stores").upsert({ 
-            group_id: targetNode.id, 
-            store_id: store.id,
-            tenant_id: tenantId
-          }, { onConflict: 'store_id' });
-          toast.success("Loja vinculada ao grupo!");
-        } else {
-          toast.info("Lojas devem ser soltas em um Grupo de Lojas ou no painel lateral.");
-          return;
-        }
-        
-        fetchTreeData();
-        queryClient.invalidateQueries({ queryKey: ["all-stores-panel"] });
-      } catch (error: any) {
-        toast.error("Erro ao processar loja: " + error.message);
-      }
-      return;
-    }
-
-    if (activeType !== 'device' && activeType !== 'store') {
-      if (active.id !== over.id) {
-        handleMoveNode(active.id, over.id);
-      }
-      return;
-    }
-
-    // Se estiver soltando um dispositivo em um grupo
-    if (activeType === 'device') {
-      const targetNode = over.data.current?.node;
-      const isDroppingInPanel = over.data.current?.type === 'available-panel';
-      const device = active.data.current?.device;
-
-      const activeDeviceId = device?.id || parseInt(String(active.id).replace('device-', ''));
-      const devicesToMove = selectedDevices.has(activeDeviceId)
-        ? Array.from(selectedDevices)
-        : [activeDeviceId];
-
-      // Confirmation for already linked devices
-      if (device?.group_name && !isDroppingInPanel) {
-        const confirmed = window.confirm(`Este dispositivo já pertence ao grupo \"${device.group_name}\". Deseja movê-lo?`);
-        if (!confirmed) return;
-      }
-
-      try {
-        if (isDroppingInPanel) {
-          // Remove from all hierarchical group tables
-          await Promise.all(devicesToMove.map(id => 
-            supabase.from("group_devices").delete().eq("device_id", id)
-          ));
-          // Also reset legacy columns
-          await supabase.from("dispositivos").update({ num_filial: null, grupo_dispositivos: null }).in("id", devicesToMove);
-        } else if (targetNode?.type === 'store_group') {
-          // New hierarchy system
-          for (const devId of devicesToMove) {
-            await supabase.from("group_devices").upsert({ 
-              group_id: targetNode.id, 
-              device_id: String(devId),
-              tenant_id: tenantId 
-            }, { onConflict: 'device_id' });
-          }
-        } else if (targetNode?.type === 'store') {
-          const { data: store } = await supabase.from("stores").select("code").eq("id", targetNode.id).single();
-          if (store) {
-            await supabase.from("dispositivos").update({ num_filial: store.code, grupo_dispositivos: null }).in("id", devicesToMove);
-            // Also remove from group_devices to keep only one link
-            await Promise.all(devicesToMove.map(id => 
-              supabase.from("group_devices").delete().eq("device_id", id)
-            ));
-          }
-        } else if (targetNode?.type === 'device_group') {
-          const { data: dg } = await supabase.from("device_groups").select("id, stores(code)").eq("id", targetNode.id).single();
-          if (dg) {
-            await supabase.from("dispositivos").update({ 
-              grupo_dispositivos: dg.id, 
-              num_filial: (dg.stores as any)?.code || null 
-            }).in("id", devicesToMove);
-            // Also remove from group_devices
-            await Promise.all(devicesToMove.map(id => 
-              supabase.from("group_devices").delete().eq("device_id", id)
-            ));
-          }
-        } else {
-          toast.info("Por favor, solte o dispositivo em um Grupo, Loja ou no painel lateral.");
-          return;
-        }
-
-        toast.success(`${devicesToMove.length} dispositivo(s) atualizado(s)!`);
-        setSelectedDevices(new Set());
-        fetchTreeData();
-        queryClient.invalidateQueries({ queryKey: ["all-devices-panel"] });
-      } catch (error: any) {
-        console.error("Error moving devices:", error);
-        toast.error("Erro ao atualizar dispositivos: " + error.message);
-      }
-    }
-  };
-
-  const handleCreateGroup = async () => {
-    if (!newGroupName.trim() || !tenantId) return;
-    
-    setIsCreatingGroup(true);
-    try {
-      const parentId = (window as any)._pendingParentId || null;
-      const { error } = await supabase
-        .from("groups")
-        .insert({
-          name: newGroupName,
-          tenant_id: tenantId,
-          company_id: companyId,
-          parent_id: parentId
-        } as any);
-
-      if (error) throw error;
-
-      const isSubgroup = !!(window as any)._pendingParentId; toast.success(isSubgroup ? "Subgrupo criado!" : "Novo grupo pai criado!"); (window as any)._pendingParentId = null;
-      setIsCreateDialogOpen(false);
-      setNewGroupName("");
-      fetchTreeData();
-    } catch (error: any) {
-      console.error("Error creating group:", error);
-      toast.error("Erro ao criar grupo: " + error.message);
-    } finally {
-      setIsCreatingGroup(false);
-    }
-  };
-
-  const handleUpdatePlaylist = async (playlistId: string | null) => {
-    if (!selectedNode || !tenantId) return;
-    
-    setIsUpdatingPlaylist(true);
-    try {
-      let query: any;
-      if (selectedNode.type === "store_group") {
-        query = supabase.from("groups").update({ playlist_id: playlistId } as any).eq("id", selectedNode.id);
-      } else if (selectedNode.type === "store") {
-        query = supabase.from("stores").update({ playlist_id: playlistId } as any).eq("id", selectedNode.id);
-      } else if (selectedNode.type === "device_group") {
-        query = supabase.from("device_groups").update({ channel_id: playlistId } as any).eq("id", selectedNode.id);
-      }
-
-      if (!query) throw new Error("Tipo de nó desconhecido");
-
-      const { error } = await query;
-
-      if (error) throw error;
-
-      toast.success("Playlist atualizada com sucesso!");
-      
-      // Update local state for immediate feedback
-      const playlistName = playlistId 
-        ? playlists?.find(p => p.id === playlistId)?.name || "Nova Playlist" 
-        : null;
-        
-      setSelectedNode({
-        ...selectedNode,
-        playlist_id: playlistId,
-        playlist_name: playlistName,
-        // When updating directly, it becomes a local override unless we clear it
-        inherited_from: null, 
-        has_override: playlistId !== null
-      });
-
-      // Refetch full tree to resolve cascading inheritance
-      fetchTreeData();
-    } catch (error: any) {
-      console.error("Error updating playlist:", error);
-      toast.error("Erro ao atualizar playlist: " + error.message);
-    } finally {
-      setIsUpdatingPlaylist(false);
-    }
-  };
-
-  const handleClearAllDevices = async () => {
-    if (!tenantId) return;
-    
-    const confirmed = window.confirm("Tem certeza que deseja remover TODOS os dispositivos de seus respectivos grupos? Esta ação não pode ser desfeita.");
-    if (!confirmed) return;
-
-    try {
-      // 1. Remove from group_devices
-      const { error: error1 } = await supabase
-        .from("group_devices")
-        .delete()
-        .eq("tenant_id", tenantId);
-      
-      if (error1) throw error1;
-
-      // 2. Clear legacy columns in ALL devices (including those without company_id in legacy data)
-      const { error: error2 } = await supabase
-        .from("dispositivos")
-        .update({ num_filial: null, grupo_dispositivos: null })
-        .filter('id', 'not.is', null); // Workaround to update all records safely if no specific filter is needed
-      
-      if (error2) throw error2;
-
-      toast.success("Todos os dispositivos foram removidos dos grupos!");
-      fetchTreeData();
-      queryClient.invalidateQueries({ queryKey: ["all-devices-panel"] });
-    } catch (error: any) {
-      console.error("Error clearing devices:", error);
-      toast.error("Erro ao limpar dispositivos: " + error.message);
-    }
-  };
-
-  const renderGroupCards = (nodes: TreeNode[]) => {
-    return (
-      <div className="flex flex-col gap-4 pb-8">
-        {nodes.map(node => (
-          <GroupCard
-            key={node.id}
-            node={node}
-            onNodeClick={handleNodeClick}
-            onEditPlaylist={(node) => {
-              setSelectedNode(node);
-              setIsSidebarOpen(true);
-            }}
-            onCreateSubgroup={(parentId) => {
-              // Set the parent and open dialog (need to implement parent selection logic)
-              setNewGroupName("");
-              setIsCreateDialogOpen(true);
-              // Store parentId to use when creating
-              (window as any)._pendingParentId = parentId;
-            }}
-            onRemoveDevice={async (id) => {
-              const confirmed = window.confirm("Deseja remover este dispositivo do grupo?");
-              if (!confirmed) return;
-
-              try {
-                const deviceId = parseInt(id);
-                await supabase.from("group_devices").delete().eq("device_id", String(deviceId));
-                const { error } = await supabase
-                  .from("dispositivos")
-                  .update({ 
-                    num_filial: null, 
-                    grupo_dispositivos: null 
-                  })
-                  .eq("id", deviceId);
-                  
-                if (error) throw error;
-                toast.success("Dispositivo removido com sucesso.");
-                fetchTreeData();
-                queryClient.invalidateQueries({ queryKey: ["all-devices-panel"] });
-              } catch (error: any) {
-                console.error("Erro ao remover dispositivo:", error);
-                toast.error("Erro ao remover: " + error.message);
-              }
-            }}
-            onDeleteGroup={async (node) => {
-              if (window.confirm(`Deseja realmente excluir o grupo "${node.name}"?`)) {
-                try {
-                  const { error } = await supabase.from("groups").delete().eq("id", node.id);
-                  if (error) throw error;
-                  toast.success("Grupo excluído!");
-                  fetchTreeData();
-                } catch (e: any) {
-                  toast.error("Erro ao excluir: " + e.message);
-                }
-              }
-            }}
-          />
-        ))}
-      </div>
+  const filteredStores = useMemo(() => {
+    if (!stores) return [];
+    if (!searchQuery) return stores;
+    return stores.filter(s => 
+      s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      s.code.toLowerCase().includes(searchQuery.toLowerCase())
     );
+  }, [stores, searchQuery]);
+
+  const handleGroupAction = async (type: string, group: any) => {
+    if (type === 'create') {
+      setGroupFormData({ name: "", playlistMode: "inherit", playlistId: "" });
+      setGroupModal({ open: true, mode: 'create', parentId: group.id });
+    } else if (type === 'edit') {
+      setGroupFormData({ 
+        name: group.name, 
+        playlistMode: group.playlist_id ? "custom" : "inherit", 
+        playlistId: group.playlist_id || "" 
+      });
+      setGroupModal({ open: true, mode: 'edit', group });
+    } else if (type === 'delete') {
+      handleDeleteGroup(group.id, group.name);
+    } else if (type === 'stores') {
+      // Fetch currently linked stores
+      const { data } = await supabase.from("group_stores").select("store_id").eq("group_id", group.id);
+      setLinkStoresModal({ 
+        open: true, 
+        group, 
+        selectedStoreIds: (data || []).map(d => d.store_id) 
+      });
+    } else if (type === 'devices') {
+      // Fetch currently linked devices
+      const { data } = await supabase.from("group_devices").select("device_id").eq("group_id", group.id);
+      setLinkDevicesModal({ 
+        open: true, 
+        group, 
+        selectedDeviceIds: (data || []).map(d => d.device_id) 
+      });
+    }
+  };
+
+  const handleSaveStoreLinks = async () => {
+    const groupId = linkStoresModal.group.id;
+    try {
+      // Simplistic sync: delete then insert
+      await supabase.from("group_stores").delete().eq("group_id", groupId);
+      if (linkStoresModal.selectedStoreIds.length > 0) {
+        const inserts = linkStoresModal.selectedStoreIds.map(storeId => ({
+          group_id: groupId,
+          store_id: storeId,
+          tenant_id: tenantId
+        }));
+        const { error } = await supabase.from("group_stores").insert(inserts as any);
+        if (error) throw error;
+      }
+      toast.success("Vínculo de lojas atualizado!");
+      setLinkStoresModal({ ...linkStoresModal, open: false });
+      refetchGroups();
+    } catch (e: any) {
+      toast.error("Erro ao vincular lojas: " + e.message);
+    }
+  };
+
+  const handleSaveDeviceLinks = async () => {
+    const groupId = linkDevicesModal.group.id;
+    try {
+      await supabase.from("group_devices").delete().eq("group_id", groupId);
+      if (linkDevicesModal.selectedDeviceIds.length > 0) {
+        const inserts = linkDevicesModal.selectedDeviceIds.map(deviceId => ({
+          group_id: groupId,
+          device_id: deviceId,
+          tenant_id: tenantId
+        }));
+        const { error } = await supabase.from("group_devices").insert(inserts as any);
+        if (error) throw error;
+      }
+      toast.success("Vínculo de dispositivos atualizado!");
+      setLinkDevicesModal({ ...linkDevicesModal, open: false });
+      refetchGroups();
+      refetchDevices();
+    } catch (e: any) {
+      toast.error("Erro ao vincular dispositivos: " + e.message);
+    }
+  };
+
+  const handleSaveGroup = async () => {
+    if (!groupFormData.name.trim()) {
+      toast.error("O nome do grupo é obrigatório");
+      return;
+    }
+
+    const playlistId = groupFormData.playlistMode === 'custom' ? groupFormData.playlistId : null;
+    
+    try {
+      if (groupModal.mode === 'create') {
+        const { error } = await supabase.from("groups").insert({
+          name: groupFormData.name,
+          parent_id: groupModal.parentId,
+          playlist_id: playlistId,
+          tenant_id: tenantId,
+          company_id: companyId
+        } as any);
+        if (error) throw error;
+        toast.success("Grupo criado com sucesso!");
+      } else {
+        const { error } = await supabase.from("groups").update({
+          name: groupFormData.name,
+          playlist_id: playlistId
+        } as any).eq("id", groupModal.group.id);
+        if (error) throw error;
+        toast.success("Grupo atualizado!");
+      }
+      setGroupModal({ ...groupModal, open: false });
+      refetchGroups();
+    } catch (e: any) {
+      toast.error("Erro ao salvar grupo: " + e.message);
+    }
+  };
+
+  const handleDeleteGroup = async (id: string, name: string) => {
+    if (!confirm(`Deseja realmente excluir o grupo "${name}"? Todos os subgrupos também serão afetados.`)) return;
+
+    try {
+      const { error } = await supabase.from("groups").delete().eq("id", id);
+      if (error) throw error;
+      toast.success("Grupo excluído");
+      refetchGroups();
+    } catch (e: any) {
+      toast.error("Erro ao excluir grupo: " + e.message);
+    }
+  };
+
+  const handleBulkCreateSector = async () => {
+    if (!bulkSectorModal.name.trim() || bulkSectorModal.selectedStoreIds.length === 0) {
+      toast.error("Preencha o nome e selecione pelo menos uma loja");
+      return;
+    }
+
+    try {
+      const inserts = bulkSectorModal.selectedStoreIds.map(storeId => ({
+        store_id: storeId,
+        name: bulkSectorModal.name
+      }));
+
+      const { error } = await supabase.from("store_internal_groups").insert(inserts as any);
+      if (error) throw error;
+
+      toast.success(`Setor "${bulkSectorModal.name}" criado em ${inserts.length} lojas!`);
+      setBulkSectorModal({ open: false, name: "", selectedStoreIds: [] });
+      refetchStores();
+    } catch (e: any) {
+      toast.error("Erro na criação em massa: " + e.message);
+    }
   };
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
-      <div className="flex justify-between items-start">
+    <div className="h-[calc(100vh-8rem)] flex flex-col gap-4 overflow-hidden">
+      <div className="flex justify-between items-center pr-2">
         <PageHeader
           title="Gestão de Grupos"
-          description="Layout moderno para gestão visual de hierarquias, dispositivos e conteúdos."
+          description="Administre a hierarquia global de lojas, setores e playlists de forma intuitiva."
         />
-        <div className="flex gap-2 mt-2">
+        <div className="flex items-center gap-3">
+          <div className="relative w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input 
+              placeholder="Buscar..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-9 bg-white/5 border-white/10"
+            />
+          </div>
           <Button 
-            onClick={() => setIsCreateDialogOpen(true)}
-            className="bg-[#085CF0] hover:bg-[#0750d4]"
+            className="bg-primary hover:bg-primary/90 h-9"
+            onClick={() => {
+              setGroupFormData({ name: "", playlistMode: "inherit", playlistId: "" });
+              setGroupModal({ open: true, mode: 'create', parentId: null });
+            }}
           >
             <Plus className="w-4 h-4 mr-2" />
             Novo Grupo
           </Button>
-          <Button 
-            variant="destructive" 
-            size="sm" 
-            onClick={handleClearAllDevices}
-          >
-            <X className="w-4 h-4 mr-2" />
-            Limpar Dispositivos
-          </Button>
         </div>
       </div>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="flex-1 min-h-0 flex gap-6 overflow-hidden">
-          {/* Modern Card View */}
-          <div className="flex-[3] min-w-0 h-full overflow-y-auto pr-2 custom-scrollbar">
-            {loading ? (
-              <div className="flex items-center justify-center h-64 text-white/20">
-                Carregando grupos...
-              </div>
-            ) : treeData.length > 0 ? (
-              renderGroupCards(treeData)
-            ) : (
-              <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-white/5 rounded-2xl bg-white/5">
-                <Layers className="w-12 h-12 text-white/10 mb-4" />
-                <p className="text-white/40">Nenhum grupo encontrado</p>
-                <Button variant="link" onClick={() => setIsCreateDialogOpen(true)}>Criar primeiro grupo</Button>
-              </div>
-            )}
-          </div>
+      <div className="flex-1 min-h-0 flex gap-6 overflow-hidden">
+        <div className="flex-[3] min-w-0 flex flex-col gap-4">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+            <TabsList className="bg-white/5 border border-white/10 p-1 w-fit">
+              <TabsTrigger value="groups" className="gap-2 data-[state=active]:bg-primary">
+                <Globe className="w-4 h-4" /> Grupos Globais
+              </TabsTrigger>
+              <TabsTrigger value="stores" className="gap-2 data-[state=active]:bg-primary">
+                <Store className="w-4 h-4" /> Lojas & Setores
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Available Devices Side Panel */}
-          <div className="flex-1 min-w-[320px] max-w-[400px] h-full">
-            <DeviceAvailablePanel 
-              selectedIds={selectedDevices}
-              onToggleSelection={(ids: number[]) => {
-                const next = new Set(selectedDevices);
-                ids.forEach((id: number) => {
-                  if (next.has(id)) next.delete(id);
-                  else next.add(id);
-                });
-                setSelectedDevices(next);
-              }}
-              onSelectAll={(ids) => setSelectedDevices(new Set(ids))}
-              onClearSelection={() => setSelectedDevices(new Set())}
-              onHighlightGroup={(groupId) => {
-                // To highlight/select, we find the node in the tree and select it
-                const findAndSelect = (nodes: TreeNode[]): boolean => {
-                  for (const node of nodes) {
-                    if (String(node.id) === String(groupId)) {
-                      setSelectedNode(node);
-                      setIsSidebarOpen(true);
-                      return true;
-                    }
-                    if (node.children && findAndSelect(node.children)) return true;
-                  }
-                  return false;
-                };
-                findAndSelect(treeData);
-              }}
-            />
-          </div>
+            <TabsContent value="groups" className="flex-1 mt-4 overflow-y-auto pr-2 custom-scrollbar border-t border-white/5 pt-4">
+              {loadingGroups ? (
+                <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+              ) : groups && groups.length > 0 ? (
+                <div className="space-y-1">
+                  {filteredGroups.map(group => (
+                    <GroupTreeNode 
+                      key={group.id} 
+                      node={group} 
+                      allGroups={groups} 
+                      onAction={handleGroupAction}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-white/5 rounded-2xl bg-white/5">
+                  <Package className="w-12 h-12 text-white/10 mb-4" />
+                  <p className="text-white/40">Nenhum grupo global configurado</p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="stores" className="flex-1 mt-4 flex flex-col min-h-0">
+              <div className="flex items-center justify-between mb-4 px-1">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-primary" /> Listagem de Unidades
+                </h3>
+                <Button variant="outline" size="sm" className="h-8 border-white/10 hover:bg-white/5" onClick={() => setBulkSectorModal({ ...bulkSectorModal, open: true })}>
+                  Criação em Massa (Setores)
+                </Button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                {loadingStores ? (
+                  <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+                ) : filteredStores.length > 0 ? (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 pb-8">
+                    {filteredStores.map(store => (
+                      <StoreCard 
+                        key={store.id} 
+                        store={store} 
+                        playlists={playlists || []} 
+                        onRefresh={refetchStores} 
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-white/5 rounded-2xl bg-white/5">
+                    <Store className="w-12 h-12 text-white/10 mb-4" />
+                    <p className="text-white/40">Nenhuma loja encontrada</p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
 
-        <DragOverlay dropAnimation={{
-          sideEffects: defaultDropAnimationSideEffects({
-            styles: {
-              active: {
-                opacity: '0.5',
-              },
-            },
-          }),
-        }}>
-          {activeDevice ? (
-            <div className="bg-[#085CF0] text-white px-4 py-2 rounded-xl shadow-2xl flex items-center gap-2 border border-white/10">
-              {activeDevice.type === 'store' ? <Store className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
-              <span className="text-sm font-bold">
-                {activeDevice.type === 'store' 
-                  ? activeDevice.name 
-                  : (selectedDevices.has(activeDevice.id) && selectedDevices.size > 1 
-                    ? `${selectedDevices.size} dispositivos` 
-                    : activeDevice.apelido_interno)}
-              </span>
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+        {/* Sidebar Panel */}
+        <div className="flex-1 min-w-[320px] max-w-[400px] h-full overflow-hidden flex flex-col">
+          <DeviceAvailablePanel 
+            selectedIds={selectedDevices}
+            onToggleSelection={(ids: number[]) => {
+              const next = new Set(selectedDevices);
+              ids.forEach((id: number) => {
+                if (next.has(id)) next.delete(id);
+                else next.add(id);
+              });
+              setSelectedDevices(next);
+            }}
+            onSelectAll={(ids) => setSelectedDevices(new Set(ids))}
+            onClearSelection={() => setSelectedDevices(new Set())}
+            onHighlightGroup={() => {}}
+          />
+        </div>
+      </div>
 
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="bg-[#09090b] border-white/5 text-white">
+      {/* Group Create/Edit Dialog */}
+      <Dialog open={groupModal.open} onOpenChange={(o) => setGroupModal({ ...groupModal, open: o })}>
+        <DialogContent className="bg-card border-white/10 text-white">
           <DialogHeader>
-            <DialogTitle>Criar Novo Grupo Pai</DialogTitle>
+            <DialogTitle>{groupModal.mode === 'create' ? 'Criar Novo Grupo' : 'Editar Grupo'}</DialogTitle>
             <DialogDescription className="text-white/40">
-              Grupos pais servem para organizar lojas e aplicar playlists em massa.
+              {groupModal.parentId ? 'Este grupo será criado como um subgrupo.' : 'Este será um grupo de nível superior.'}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-6 py-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nome do Grupo</Label>
               <Input 
                 id="name" 
-                value={newGroupName} 
-                onChange={(e) => setNewGroupName(e.target.value)}
-                placeholder="Ex: Região Sul, Lojas de Shopping..."
-                className="bg-black/40 border-white/10"
+                value={groupFormData.name} 
+                onChange={(e) => setGroupFormData({ ...groupFormData, name: e.target.value })}
+                className="bg-white/5 border-white/10"
               />
+            </div>
+
+            <div className="space-y-3">
+              <Label>Configuração de Playlist</Label>
+              <RadioGroup 
+                value={groupFormData.playlistMode} 
+                onValueChange={(v: any) => setGroupFormData({ ...groupFormData, playlistMode: v })}
+                className="grid grid-cols-2 gap-4"
+              >
+                <div className="flex items-center space-x-2 p-3 rounded-lg border border-white/5 bg-white/5 cursor-pointer">
+                  <RadioGroupItem value="inherit" id="inherit" />
+                  <Label htmlFor="inherit" className="cursor-pointer">Herdar do Pai</Label>
+                </div>
+                <div className="flex items-center space-x-2 p-3 rounded-lg border border-white/5 bg-white/5 cursor-pointer">
+                  <RadioGroupItem value="custom" id="custom" />
+                  <Label htmlFor="custom" className="cursor-pointer">Customizada</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {groupFormData.playlistMode === 'custom' && (
+              <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                <Label>Selecionar Playlist</Label>
+                <Select value={groupFormData.playlistId} onValueChange={(v) => setGroupFormData({ ...groupFormData, playlistId: v })}>
+                  <SelectTrigger className="bg-white/5 border-white/10">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {playlists?.map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setGroupModal({ ...groupModal, open: false })}>Cancelar</Button>
+            <Button onClick={handleSaveGroup} className="bg-primary hover:bg-primary/90">Salvar Alterações</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Sector Dialog */}
+      <Dialog open={bulkSectorModal.open} onOpenChange={(o) => setBulkSectorModal({ ...bulkSectorModal, open: o })}>
+        <DialogContent className="bg-card border-white/10 text-white max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Criação de Setores em Massa</DialogTitle>
+            <DialogDescription>Crie um setor com o mesmo nome em múltiplas lojas simultaneamente.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            <div className="space-y-2">
+              <Label>Nome do Setor (ex: Padaria, Açougue)</Label>
+              <Input 
+                value={bulkSectorModal.name} 
+                onChange={(e) => setBulkSectorModal({ ...bulkSectorModal, name: e.target.value })}
+                placeholder="Digite o nome do setor..."
+                className="bg-white/5 border-white/10"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Selecione as Lojas ({bulkSectorModal.selectedStoreIds.length} selecionadas)</Label>
+                <Button 
+                  variant="link" 
+                  size="sm" 
+                  className="h-auto p-0" 
+                  onClick={() => {
+                    if (bulkSectorModal.selectedStoreIds.length === stores?.length) {
+                      setBulkSectorModal({ ...bulkSectorModal, selectedStoreIds: [] });
+                    } else {
+                      setBulkSectorModal({ ...bulkSectorModal, selectedStoreIds: stores?.map(s => s.id) || [] });
+                    }
+                  }}
+                >
+                  {bulkSectorModal.selectedStoreIds.length === stores?.length ? "Desmarcar Todas" : "Selecionar Todas"}
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto p-2 border border-white/10 rounded-md bg-white/5 custom-scrollbar">
+                {stores?.map(store => (
+                  <div key={store.id} className="flex items-center space-x-2 p-2 hover:bg-white/5 rounded transition-colors">
+                    <Checkbox 
+                      id={`store-${store.id}`} 
+                      checked={bulkSectorModal.selectedStoreIds.includes(store.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setBulkSectorModal({ ...bulkSectorModal, selectedStoreIds: [...bulkSectorModal.selectedStoreIds, store.id] });
+                        } else {
+                          setBulkSectorModal({ ...bulkSectorModal, selectedStoreIds: bulkSectorModal.selectedStoreIds.filter(id => id !== store.id) });
+                        }
+                      }}
+                    />
+                    <label htmlFor={`store-${store.id}`} className="text-sm font-medium leading-none cursor-pointer truncate">
+                      {store.name} ({store.code})
+                    </label>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => { setIsCreateDialogOpen(false); (window as any)._pendingParentId = null; }}>Cancelar</Button>
-            <Button 
-              onClick={handleCreateGroup} 
-              disabled={isCreatingGroup}
-              className="bg-[#085CF0] hover:bg-[#0750d4]"
-            >
-              {isCreatingGroup ? "Criando..." : "Criar Grupo"}
+            <Button variant="ghost" onClick={() => setBulkSectorModal({ ...bulkSectorModal, open: false })}>Cancelar</Button>
+            <Button onClick={handleBulkCreateSector} className="bg-primary hover:bg-primary/90" disabled={!bulkSectorModal.name || bulkSectorModal.selectedStoreIds.length === 0}>
+              Criar em {bulkSectorModal.selectedStoreIds.length} Lojas
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-        <SheetContent className="w-[400px] sm:w-[540px] bg-[#09090b] border-white/5 text-white">
-          <SheetHeader className="border-b border-white/5 pb-6 mb-6">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 rounded-xl bg-[#085CF0]/10 text-[#085CF0]">
-                {selectedNode?.type === 'store' ? <Store className="w-5 h-5" /> : 
-                 selectedNode?.type === 'device' ? <Monitor className="w-5 h-5" /> :
-                 <Layers className="w-5 h-5" />}
-              </div>
-              <div>
-                <SheetTitle className="text-white text-xl">{selectedNode?.name}</SheetTitle>
-                <SheetDescription className="text-white/40 uppercase text-[10px] font-bold tracking-widest">
-                  {selectedNode?.type.replace('_', ' ')}
-                </SheetDescription>
-              </div>
+      {/* Link Stores Dialog */}
+      <Dialog open={linkStoresModal.open} onOpenChange={(o) => setLinkStoresModal({ ...linkStoresModal, open: o })}>
+        <DialogContent className="bg-card border-white/10 text-white max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Vincular Lojas ao Grupo: {linkStoresModal.group?.name}</DialogTitle>
+            <DialogDescription>As lojas selecionadas herdarão a playlist deste grupo se não tiverem uma própria.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input placeholder="Buscar lojas..." className="pl-9 bg-white/5 border-white/10" />
             </div>
-          </SheetHeader>
+            <div className="grid grid-cols-2 gap-2 max-h-80 overflow-y-auto p-2 border border-white/10 rounded-md bg-white/5 custom-scrollbar">
+              {stores?.map(store => (
+                <div key={store.id} className="flex items-center space-x-2 p-2 hover:bg-white/5 rounded transition-colors">
+                  <Checkbox 
+                    id={`link-store-${store.id}`} 
+                    checked={linkStoresModal.selectedStoreIds.includes(store.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setLinkStoresModal({ ...linkStoresModal, selectedStoreIds: [...linkStoresModal.selectedStoreIds, store.id] });
+                      } else {
+                        setLinkStoresModal({ ...linkStoresModal, selectedStoreIds: linkStoresModal.selectedStoreIds.filter(id => id !== store.id) });
+                      }
+                    }}
+                  />
+                  <label htmlFor={`link-store-${store.id}`} className="text-sm font-medium leading-none cursor-pointer truncate flex-1">
+                    {store.name}
+                    {store.group_name && store.group_name !== linkStoresModal.group?.name && (
+                      <span className="ml-2 text-[10px] text-yellow-500 font-normal">({store.group_name})</span>
+                    )}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setLinkStoresModal({ ...linkStoresModal, open: false })}>Cancelar</Button>
+            <Button onClick={handleSaveStoreLinks} className="bg-primary hover:bg-primary/90">Salvar Vínculos</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-          <Tabs defaultValue="info" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 bg-black/40 border border-white/5">
-              <TabsTrigger value="info">Informações</TabsTrigger>
-              <TabsTrigger value="devices">Estrutura</TabsTrigger>
-              <TabsTrigger value="history">Histórico</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="info" className="space-y-6 animate-in fade-in slide-in-from-right-4">
-              <div className="space-y-4">
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
-                  <h4 className="text-xs font-bold text-white/40 uppercase mb-3 flex items-center gap-2">
-                    <Layers className="w-3 h-3" /> Playlist Ativa
-                  </h4>
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="space-y-1 flex-1 min-w-0">
-                      {selectedNode?.playlist_id ? (
-                        <>
-                          <p className="text-lg font-bold text-white truncate">{selectedNode.playlist_name}</p>
-                          <p className="text-xs text-[#085CF0]">
-                            {selectedNode.inherited_from ? `Herdado de ${selectedNode.inherited_from}` : 'Definido localmente (Override)'}
-                          </p>
-                        </>
-                      ) : (
-                        <p className="text-white/20 italic">Nenhuma playlist vinculada</p>
+      {/* Link Devices Dialog */}
+      <Dialog open={linkDevicesModal.open} onOpenChange={(o) => setLinkDevicesModal({ ...linkDevicesModal, open: o })}>
+        <DialogContent className="bg-card border-white/10 text-white max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Vincular Dispositivos: {linkDevicesModal.group?.name}</DialogTitle>
+            <DialogDescription>Selecione os dispositivos que devem responder diretamente a este grupo.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input placeholder="Buscar dispositivos..." className="pl-9 bg-white/5 border-white/10" />
+            </div>
+            <div className="grid grid-cols-1 gap-2 max-h-80 overflow-y-auto p-2 border border-white/10 rounded-md bg-white/5 custom-scrollbar">
+              {devices?.map(device => (
+                <div key={device.id} className="flex items-center space-x-2 p-2 hover:bg-white/5 rounded transition-colors">
+                  <Checkbox 
+                    id={`link-dev-${device.id}`} 
+                    checked={linkDevicesModal.selectedDeviceIds.includes(device.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setLinkDevicesModal({ ...linkDevicesModal, selectedDeviceIds: [...linkDevicesModal.selectedDeviceIds, device.id] });
+                      } else {
+                        setLinkDevicesModal({ ...linkDevicesModal, selectedDeviceIds: linkDevicesModal.selectedDeviceIds.filter(id => id !== device.id) });
+                      }
+                    }}
+                  />
+                  <label htmlFor={`link-dev-${device.id}`} className="text-sm font-medium leading-none cursor-pointer flex-1 flex items-center justify-between">
+                    <span>{device.nome}</span>
+                    <div className="flex items-center gap-2">
+                      {device.num_filial && <Badge variant="outline" className="text-[10px] h-4">Loja: {device.num_filial}</Badge>}
+                      {device.group_name && device.group_name !== linkDevicesModal.group?.name && (
+                        <Badge variant="outline" className="text-[10px] h-4 text-yellow-500 border-yellow-500/20">Grupo: {device.group_name}</Badge>
                       )}
                     </div>
-                    
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button size="icon" variant="ghost" className="text-white/40 hover:text-white shrink-0 h-10 w-10 bg-white/5">
-                          {isUpdatingPlaylist ? <Layers className="w-4 h-4 animate-spin" /> : <Edit2 className="w-4 h-4" />}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[300px] p-0 bg-[#18181b] border-white/10" align="end">
-                        <Command className="bg-transparent">
-                          <CommandInput placeholder="Buscar playlist..." className="text-white" />
-                          <CommandList>
-                            <CommandEmpty className="p-4 text-xs text-white/40">Nenhuma playlist encontrada.</CommandEmpty>
-                            <CommandGroup heading="Ações">
-                              <CommandItem
-                                onSelect={() => handleUpdatePlaylist(null)}
-                                className="text-red-400 focus:text-red-400 cursor-pointer"
-                              >
-                                <X className="mr-2 h-4 w-4" />
-                                Remover Playlist (Usar Herança)
-                              </CommandItem>
-                            </CommandGroup>
-                            <CommandGroup heading="Playlists Disponíveis">
-                              {playlists?.map((playlist) => (
-                                <CommandItem
-                                  key={playlist.id}
-                                  onSelect={() => handleUpdatePlaylist(playlist.id)}
-                                  className="text-white cursor-pointer"
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      selectedNode?.playlist_id === playlist.id ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  {playlist.name}
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
+                  </label>
                 </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
-                    <h4 className="text-[10px] font-bold text-white/40 uppercase mb-1">Dispositivos</h4>
-                    <p className="text-2xl font-bold">{selectedNode?.device_count || 0}</p>
-                  </div>
-                  <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
-                    <h4 className="text-[10px] font-bold text-white/40 uppercase mb-1">Status</h4>
-                    <Badge className="bg-green-500/20 text-green-400 border-green-500/20">Online</Badge>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-white/5">
-                <Button 
-                  className="w-full bg-[#085CF0] hover:bg-[#0750d4] text-white gap-2"
-                  onClick={() => setIsSidebarOpen(false)}
-                >
-                  Concluir
-                </Button>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="devices" className="text-center py-12">
-              <Monitor className="w-12 h-12 text-white/10 mx-auto mb-4" />
-              <p className="text-white/40">Visualização de sub-itens em desenvolvimento...</p>
-            </TabsContent>
-
-            <TabsContent value="history" className="text-center py-12">
-              <History className="w-12 h-12 text-white/10 mx-auto mb-4" />
-              <p className="text-white/40">Log de auditoria em desenvolvimento...</p>
-            </TabsContent>
-          </Tabs>
-        </SheetContent>
-      </Sheet>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setLinkDevicesModal({ ...linkDevicesModal, open: false })}>Cancelar</Button>
+            <Button onClick={handleSaveDeviceLinks} className="bg-primary hover:bg-primary/90">Salvar Vínculos</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
