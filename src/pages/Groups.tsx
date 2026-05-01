@@ -484,6 +484,95 @@ export default function GroupsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Link Stores Dialog */}
+      <Dialog open={linkStoresModal.open} onOpenChange={(o) => setLinkStoresModal({ ...linkStoresModal, open: o })}>
+        <DialogContent className="bg-card border-white/10 text-white max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Vincular Lojas ao Grupo: {linkStoresModal.group?.name}</DialogTitle>
+            <DialogDescription>As lojas selecionadas herdarão a playlist deste grupo se não tiverem uma própria.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input placeholder="Buscar lojas..." className="pl-9 bg-white/5 border-white/10" />
+            </div>
+            <div className="grid grid-cols-2 gap-2 max-h-80 overflow-y-auto p-2 border border-white/10 rounded-md bg-white/5 custom-scrollbar">
+              {stores?.map(store => (
+                <div key={store.id} className="flex items-center space-x-2 p-2 hover:bg-white/5 rounded transition-colors">
+                  <Checkbox 
+                    id={`link-store-${store.id}`} 
+                    checked={linkStoresModal.selectedStoreIds.includes(store.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setLinkStoresModal({ ...linkStoresModal, selectedStoreIds: [...linkStoresModal.selectedStoreIds, store.id] });
+                      } else {
+                        setLinkStoresModal({ ...linkStoresModal, selectedStoreIds: linkStoresModal.selectedStoreIds.filter(id => id !== store.id) });
+                      }
+                    }}
+                  />
+                  <label htmlFor={`link-store-${store.id}`} className="text-sm font-medium leading-none cursor-pointer truncate flex-1">
+                    {store.name}
+                    {store.group_name && store.group_name !== linkStoresModal.group?.name && (
+                      <span className="ml-2 text-[10px] text-yellow-500 font-normal">({store.group_name})</span>
+                    )}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setLinkStoresModal({ ...linkStoresModal, open: false })}>Cancelar</Button>
+            <Button onClick={handleSaveStoreLinks} className="bg-primary hover:bg-primary/90">Salvar Vínculos</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Link Devices Dialog */}
+      <Dialog open={linkDevicesModal.open} onOpenChange={(o) => setLinkDevicesModal({ ...linkDevicesModal, open: o })}>
+        <DialogContent className="bg-card border-white/10 text-white max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Vincular Dispositivos: {linkDevicesModal.group?.name}</DialogTitle>
+            <DialogDescription>Selecione os dispositivos que devem responder diretamente a este grupo.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input placeholder="Buscar dispositivos..." className="pl-9 bg-white/5 border-white/10" />
+            </div>
+            <div className="grid grid-cols-1 gap-2 max-h-80 overflow-y-auto p-2 border border-white/10 rounded-md bg-white/5 custom-scrollbar">
+              {devices?.map(device => (
+                <div key={device.id} className="flex items-center space-x-2 p-2 hover:bg-white/5 rounded transition-colors">
+                  <Checkbox 
+                    id={`link-dev-${device.id}`} 
+                    checked={linkDevicesModal.selectedDeviceIds.includes(device.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setLinkDevicesModal({ ...linkDevicesModal, selectedDeviceIds: [...linkDevicesModal.selectedDeviceIds, device.id] });
+                      } else {
+                        setLinkDevicesModal({ ...linkDevicesModal, selectedDeviceIds: linkDevicesModal.selectedDeviceIds.filter(id => id !== device.id) });
+                      }
+                    }}
+                  />
+                  <label htmlFor={`link-dev-${device.id}`} className="text-sm font-medium leading-none cursor-pointer flex-1 flex items-center justify-between">
+                    <span>{device.nome}</span>
+                    <div className="flex items-center gap-2">
+                      {device.num_filial && <Badge variant="outline" className="text-[10px] h-4">Loja: {device.num_filial}</Badge>}
+                      {device.group_name && device.group_name !== linkDevicesModal.group?.name && (
+                        <Badge variant="outline" className="text-[10px] h-4 text-yellow-500 border-yellow-500/20">Grupo: {device.group_name}</Badge>
+                      )}
+                    </div>
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setLinkDevicesModal({ ...linkDevicesModal, open: false })}>Cancelar</Button>
+            <Button onClick={handleSaveDeviceLinks} className="bg-primary hover:bg-primary/90">Salvar Vínculos</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
