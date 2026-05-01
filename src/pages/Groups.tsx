@@ -471,6 +471,21 @@ export default function GroupsPage() {
               }}
               onSelectAll={(ids) => setSelectedDevices(new Set(ids))}
               onClearSelection={() => setSelectedDevices(new Set())}
+              onHighlightGroup={(groupId) => {
+                // To highlight/select, we find the node in the tree and select it
+                const findAndSelect = (nodes: TreeNode[]): boolean => {
+                  for (const node of nodes) {
+                    if (String(node.id) === String(groupId)) {
+                      setSelectedNode(node);
+                      setIsSidebarOpen(true);
+                      return true;
+                    }
+                    if (node.children && findAndSelect(node.children)) return true;
+                  }
+                  return false;
+                };
+                findAndSelect(treeData);
+              }}
             />
           </div>
         </div>
