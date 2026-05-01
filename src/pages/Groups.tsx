@@ -133,6 +133,8 @@ export default function GroupsPage() {
       .channel('schema-db-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'playlists' }, () => fetchTreeData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'groups' }, () => fetchTreeData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'group_devices' }, () => fetchTreeData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'group_stores' }, () => fetchTreeData())
       .subscribe();
 
     return () => {
