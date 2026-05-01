@@ -171,7 +171,7 @@ export default function GroupsPage() {
       let finalRecursiveCount = uniqueRecursiveCount;
 
       if (finalRecursiveCount === 0 && !group.parent_id) {
-        const freeDevices = (devices || []).filter(d => !d.grupo_dispositivos && !d.num_filial);
+        const freeDevices = (devices || []).filter(d => !d.grupo_dispositivos && !d.store_id);
         // Only apply fallback to groups that look like "General" or "Default" or if it's the only group
         if (freeDevices.length > 0 && (group.name.toLowerCase().includes("padrão") || groups.length === 1)) {
           finalLocalDevices = freeDevices.map(d => ({ ...d, origin: 'direto' }));
