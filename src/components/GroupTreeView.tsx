@@ -336,6 +336,7 @@ export function GroupTreeView({ data, onNodeClick, onEditPlaylist, onCreateGroup
     if (node.playlist_id && !node.inherited_from) return "border-green-500/50 bg-green-500/10 text-green-400";
     if (node.has_override) return "border-yellow-500/50 bg-yellow-500/10 text-yellow-400";
     if (node.inherited_from) return "border-blue-500/50 bg-blue-500/10 text-blue-400";
+    if (node.type === 'device') return "border-[#085CF0]/30 bg-[#085CF0]/5 text-[#085CF0]";
     return "border-white/10 bg-white/5 text-white/40";
   };
 
@@ -351,7 +352,8 @@ export function GroupTreeView({ data, onNodeClick, onEditPlaylist, onCreateGroup
     switch (type) {
       case 'store_group': return <Layers className="w-4 h-4" />;
       case 'store': return <Store className="w-4 h-4" />;
-      case 'device_group': return <Monitor className="w-4 h-4" />;
+      case 'device_group': return <Layers className="w-4 h-4 opacity-70" />;
+      case 'device': return <Monitor className="w-4 h-4 text-[#085CF0]" />;
       default: return <Monitor className="w-4 h-4" />;
     }
   };
