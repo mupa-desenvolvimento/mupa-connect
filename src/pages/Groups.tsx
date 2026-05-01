@@ -88,22 +88,42 @@ export default function GroupsPage() {
   });
 
   const enrichedGroups = useMemo(() => {
-    if (!groups) return [];
+    if (!groups || !devices || !stores) return [];
     
-    return groups.map(group => {
-      // Find devices for this group
-      const groupStoreIds = new Set(group.linked_store_ids || []);
-      const groupStoreCodes = new Set(
-        stores?.filter(s => groupStoreIds.has(s.id)).map(s => s.code) || []
-      );
-      
+    // Memoize descendant data for efficiency
+    const memo = new Map<string, { storeCodes: Set<string>, directDeviceIds: Set<string> }>();
+
+    const getGroupDataRecursive = (groupId: string): { storeCodes: Set<string>, directDeviceIds: Set<string> } => {
+      if (memo.has(groupId)) return memo.get(groupId)!;
+
+      const group = groups.find(g => g.id === groupId);
+      if (!group) return { storeCodes: new Set(), directDeviceIds: new Set() };
+
+      const storeIds = new Set(group.linked_store_ids || []);
+      const storeCodes = new Set(stores.filter(s => storeIds.has(s.id)).map(s => s.code));
       const directDeviceIds = new Set(group.direct_device_ids || []);
 
+      // Get children
+      const children = groups.filter(g => g.parent_id === groupId);
+      children.forEach(child => {
+        const childData = getGroupDataRecursive(child.id);
+        childData.storeCodes.forEach(code => storeCodes.add(code));
+        childData.directDeviceIds.forEach(id => directDeviceIds.add(id));
+      });
+
+      const result = { storeCodes, directDeviceIds };
+      memo.set(groupId, result);
+      return result;
+    };
+
+    return groups.map(group => {
+      const { storeCodes, directDeviceIds } = getGroupDataRecursive(group.id);
+      
       const groupDevices = (devices || []).map(d => {
         // Direct via group_devices OR legacy column
         const isDirect = directDeviceIds.has(d.id.toString()) || d.grupo_dispositivos === group.id;
         // Inherited via store
-        const isFromStore = !!(d.num_filial && groupStoreCodes.has(d.num_filial));
+        const isFromStore = !!(d.num_filial && storeCodes.has(d.num_filial));
         
         if (isDirect || isFromStore) {
           return {
