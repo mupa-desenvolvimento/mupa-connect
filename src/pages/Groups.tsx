@@ -91,13 +91,13 @@ export default function GroupsPage() {
     if (!groups || !devices || !stores) return [];
     
     // Memoize descendant data for efficiency
-    const memo = new Map<string, { storeCodes: Set<string>, directDeviceIds: Set<string> }>();
+    const memo = new Map<string, { storeCodes: Set<string>, storeIds: Set<string>, directDeviceIds: Set<string> }>();
 
-    const getGroupDataRecursive = (groupId: string): { storeCodes: Set<string>, directDeviceIds: Set<string> } => {
+    const getGroupDataRecursive = (groupId: string): { storeCodes: Set<string>, storeIds: Set<string>, directDeviceIds: Set<string> } => {
       if (memo.has(groupId)) return memo.get(groupId)!;
 
       const group = groups.find(g => g.id === groupId);
-      if (!group) return { storeCodes: new Set(), directDeviceIds: new Set() };
+      if (!group) return { storeCodes: new Set(), storeIds: new Set(), directDeviceIds: new Set() };
 
       const storeIds = new Set(group.linked_store_ids || []);
       const storeCodes = new Set(stores.filter(s => storeIds.has(s.id)).map(s => s.code));
@@ -108,17 +108,18 @@ export default function GroupsPage() {
       children.forEach(child => {
         const childData = getGroupDataRecursive(child.id);
         childData.storeCodes.forEach(code => storeCodes.add(code));
+        childData.storeIds.forEach(id => storeIds.add(id));
         childData.directDeviceIds.forEach(id => directDeviceIds.add(id));
       });
 
-      const result = { storeCodes, directDeviceIds };
+      const result = { storeCodes, storeIds, directDeviceIds };
       memo.set(groupId, result);
       return result;
     };
 
     return groups.map(group => {
-      const { storeCodes, directDeviceIds } = getGroupDataRecursive(group.id);
-      
+      const { storeCodes, storeIds, directDeviceIds } = getGroupDataRecursive(group.id);
+
       const groupDevices = (devices || []).map(d => {
         // Direct via group_devices OR legacy column
         const isDirect = directDeviceIds.has(d.id.toString()) || d.grupo_dispositivos === group.id;
