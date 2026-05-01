@@ -235,7 +235,7 @@ export default function GroupsPage() {
           if (error) throw error;
           toast.success("Loja adicionada ao grupo!");
           fetchTreeData();
-          queryClient.invalidateQueries({ queryKey: ["available-stores"] });
+          queryClient.invalidateQueries({ queryKey: ["all-stores-panel"] });
         } catch (error: any) {
           toast.error("Erro ao mover loja: " + error.message);
         }
