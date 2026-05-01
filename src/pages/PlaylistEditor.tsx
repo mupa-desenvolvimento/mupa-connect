@@ -548,10 +548,10 @@ export default function PlaylistEditor() {
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden h-full">
         {/* Left Sidebar - Media Library */}
-        <aside className="w-80 border-r border-white/5 bg-[#0c0c0e] flex flex-col z-40">
-          <Tabs defaultValue="media" className="flex-1 flex flex-col">
+        <aside className="w-80 border-r border-white/5 bg-[#0c0c0e] flex flex-col z-40 h-full overflow-hidden">
+          <Tabs defaultValue="media" className="flex-1 flex flex-col h-full overflow-hidden">
             <div className="p-4 border-b border-white/5">
               <TabsList className="grid w-full grid-cols-2 bg-black/40 p-1 border border-white/5 h-10">
                 <TabsTrigger value="media" className="data-[state=active]:bg-[#085CF0] text-xs gap-2">
@@ -571,8 +571,8 @@ export default function PlaylistEditor() {
                 />
               </div>
             </div>
-            <TabsContent value="media" className="flex-1 m-0 p-0 border-none outline-none overflow-hidden">
-              <ScrollArea className="h-full">
+            <TabsContent value="media" className="flex-1 m-0 p-0 border-none outline-none overflow-hidden h-full flex flex-col">
+              <ScrollArea className="flex-1 w-full">
                 <div className="p-4 grid grid-cols-2 gap-3">
                   {medias?.filter(m => m.name.toLowerCase().includes(mediaSearch.toLowerCase())).map((media) => (
                     <motion.div
@@ -605,8 +605,8 @@ export default function PlaylistEditor() {
               </ScrollArea>
             </TabsContent>
             
-            <TabsContent value="campaigns" className="flex-1 m-0 p-0 border-none outline-none overflow-hidden">
-              <ScrollArea className="h-full">
+            <TabsContent value="campaigns" className="flex-1 m-0 p-0 border-none outline-none overflow-hidden h-full flex flex-col">
+              <ScrollArea className="flex-1 w-full">
                 <div className="p-4 text-center py-10 text-white/20 text-[10px] uppercase font-bold tracking-widest">
                   Nenhuma campanha disponível
                 </div>
