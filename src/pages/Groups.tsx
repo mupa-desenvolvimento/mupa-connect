@@ -93,7 +93,7 @@ export default function GroupsPage() {
     );
   }, [stores, searchQuery]);
 
-  const handleGroupAction = (type: string, group: any) => {
+  const handleGroupAction = async (type: string, group: any) => {
     if (type === 'create') {
       setGroupFormData({ name: "", playlistMode: "inherit", playlistId: "" });
       setGroupModal({ open: true, mode: 'create', parentId: group.id });
@@ -106,6 +106,66 @@ export default function GroupsPage() {
       setGroupModal({ open: true, mode: 'edit', group });
     } else if (type === 'delete') {
       handleDeleteGroup(group.id, group.name);
+    } else if (type === 'stores') {
+      // Fetch currently linked stores
+      const { data } = await supabase.from("group_stores").select("store_id").eq("group_id", group.id);
+      setLinkStoresModal({ 
+        open: true, 
+        group, 
+        selectedStoreIds: (data || []).map(d => d.store_id) 
+      });
+    } else if (type === 'devices') {
+      // Fetch currently linked devices
+      const { data } = await supabase.from("group_devices").select("device_id").eq("group_id", group.id);
+      setLinkDevicesModal({ 
+        open: true, 
+        group, 
+        selectedDeviceIds: (data || []).map(d => d.device_id) 
+      });
+    }
+  };
+
+  const handleSaveStoreLinks = async () => {
+    const groupId = linkStoresModal.group.id;
+    try {
+      // Simplistic sync: delete then insert
+      await supabase.from("group_stores").delete().eq("group_id", groupId);
+      if (linkStoresModal.selectedStoreIds.length > 0) {
+        const inserts = linkStoresModal.selectedStoreIds.map(storeId => ({
+          group_id: groupId,
+          store_id: storeId,
+          tenant_id: tenantId
+        }));
+        const { error } = await supabase.from("group_stores").insert(inserts as any);
+        if (error) throw error;
+      }
+      toast.success("Vínculo de lojas atualizado!");
+      setLinkStoresModal({ ...linkStoresModal, open: false });
+      refetchGroups();
+    } catch (e: any) {
+      toast.error("Erro ao vincular lojas: " + e.message);
+    }
+  };
+
+  const handleSaveDeviceLinks = async () => {
+    const groupId = linkDevicesModal.group.id;
+    try {
+      await supabase.from("group_devices").delete().eq("group_id", groupId);
+      if (linkDevicesModal.selectedDeviceIds.length > 0) {
+        const inserts = linkDevicesModal.selectedDeviceIds.map(deviceId => ({
+          group_id: groupId,
+          device_id: deviceId,
+          tenant_id: tenantId
+        }));
+        const { error } = await supabase.from("group_devices").insert(inserts as any);
+        if (error) throw error;
+      }
+      toast.success("Vínculo de dispositivos atualizado!");
+      setLinkDevicesModal({ ...linkDevicesModal, open: false });
+      refetchGroups();
+      refetchDevices();
+    } catch (e: any) {
+      toast.error("Erro ao vincular dispositivos: " + e.message);
     }
   };
 
