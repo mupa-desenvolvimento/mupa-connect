@@ -314,7 +314,7 @@ export default function GroupsPage() {
         toast.success(`${devicesToMove.length} dispositivo(s) atualizado(s) com sucesso!`);
         setSelectedDevices(new Set());
         fetchTreeData();
-        queryClient.invalidateQueries({ queryKey: ["available-devices"] });
+        queryClient.invalidateQueries({ queryKey: ["all-devices-panel"] });
       } catch (error: any) {
         console.error("Error moving devices:", error);
         toast.error("Erro ao atualizar dispositivos: " + error.message);
