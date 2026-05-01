@@ -165,7 +165,19 @@ export default function GroupsPage() {
         }
       });
 
-      const finalLocalDevices = Array.from(uniqueLocalDevicesMap.values());
+      // Fallback: if group has NO devices and NO stores, 
+      // check if it should show "free" devices (as a fallback behavior requested)
+      let finalLocalDevices = Array.from(uniqueLocalDevicesMap.values());
+      let finalRecursiveCount = uniqueRecursiveCount;
+
+      if (finalRecursiveCount === 0 && !group.parent_id) {
+        const freeDevices = (devices || []).filter(d => !d.grupo_dispositivos && !d.num_filial);
+        // Only apply fallback to groups that look like "General" or "Default" or if it's the only group
+        if (freeDevices.length > 0 && (group.name.toLowerCase().includes("padrão") || groups.length === 1)) {
+          finalLocalDevices = freeDevices.map(d => ({ ...d, origin: 'direto' }));
+          finalRecursiveCount = freeDevices.length;
+        }
+      }
 
       return {
         ...group,
