@@ -2,9 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Device {
-  id: string;
+  id: number;
+  device_uuid: string;
   nome: string;
   num_filial: string | null;
+  store_id: string | null;
   grupo_dispositivos: string | null; // Legacy device group
   last_online?: string;
   status?: string;
