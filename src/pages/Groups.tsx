@@ -362,7 +362,7 @@ export default function GroupsPage() {
                     <GroupTreeNode 
                       key={group.id} 
                       node={group} 
-                      allGroups={groups} 
+                      allGroups={enrichedGroups} 
                       onAction={handleGroupAction}
                     />
                   ))}
