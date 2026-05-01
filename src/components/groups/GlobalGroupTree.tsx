@@ -162,7 +162,7 @@ export function GroupTreeNode({ node, allGroups, allStores, allDevices, level = 
           ))}
           
           {childrenStores.map(store => {
-            const storeDevices = allDevices.filter(d => d.num_filial === store.code);
+            const storeDevices = allDevices.filter(d => d.store_id === store.id);
             return (
               <div 
                 key={store.id}
