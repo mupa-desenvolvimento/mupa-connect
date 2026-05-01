@@ -56,7 +56,7 @@ interface DeviceItemProps {
   onClick?: (groupId: string) => void;
 }
 
-export function DeviceItem({ device, isSelected, onToggle }: DeviceItemProps) {
+export function DeviceItem({ device, isSelected, onToggle, onClick }: DeviceItemProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `device-${device.id}`,
     data: {
