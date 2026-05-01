@@ -498,7 +498,7 @@ export function DeviceAvailablePanel({
               ))
             ) : filteredStores.length > 0 ? (
               filteredStores.map(store => (
-                <StoreItem key={store.id} store={store} />
+                <StoreItem key={store.id} store={store} onClick={onHighlightGroup} />
               ))
             ) : (
               <EmptyState type="loja" />
