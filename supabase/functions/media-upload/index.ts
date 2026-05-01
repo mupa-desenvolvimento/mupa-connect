@@ -14,18 +14,24 @@ serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      console.error('Authorization header ausente ou inválido')
+      return new Response(JSON.stringify({ error: 'Unauthorized', details: 'Missing Authorization header' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const token = authHeader.replace('Bearer ', '')
+
+    // Cliente com service role para operações de DB/Storage (bypassa RLS)
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { 
-        global: { 
-          headers: { Authorization: req.headers.get('Authorization')! } 
-        } 
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Verificar autenticação
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
+    // Verificar autenticação passando o token explicitamente
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token)
     if (authError || !user) {
       console.error('Erro de autenticação:', authError)
       return new Response(JSON.stringify({ error: 'Unauthorized', details: authError?.message }), {
