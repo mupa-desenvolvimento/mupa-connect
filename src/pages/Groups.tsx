@@ -64,6 +64,20 @@ export default function GroupsPage() {
     selectedStoreIds: [] as string[]
   });
 
+  // Link Stores (Segmentation) Modal
+  const [linkStoresModal, setLinkStoresModal] = useState({
+    open: false,
+    group: null as any,
+    selectedStoreIds: [] as string[]
+  });
+
+  // Link Devices Modal
+  const [linkDevicesModal, setLinkDevicesModal] = useState({
+    open: false,
+    group: null as any,
+    selectedDeviceIds: [] as string[]
+  });
+
   const filteredGroups = useMemo(() => {
     if (!groups) return [];
     if (!searchQuery) return groups.filter(g => !g.parent_id);
