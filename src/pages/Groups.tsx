@@ -256,62 +256,63 @@ export default function GroupsPage() {
     if (activeType === 'device') {
       const targetNode = over.data.current?.node;
       const isDroppingInPanel = over.data.current?.type === 'available-panel';
+      const device = active.data.current?.device;
 
-      const getDeviceId = (id: string) => {
-        if (typeof id === 'string' && id.startsWith('device-')) {
-          return parseInt(id.replace('device-', ''));
-        }
-        return parseInt(id);
-      };
-
-      const activeDeviceId = active.data.current?.device?.id || getDeviceId(active.id as string);
-
+      const activeDeviceId = device?.id || parseInt(String(active.id).replace('device-', ''));
       const devicesToMove = selectedDevices.has(activeDeviceId)
         ? Array.from(selectedDevices)
         : [activeDeviceId];
 
+      // Confirmation for already linked devices
+      if (device?.group_name && !isDroppingInPanel) {
+        const confirmed = window.confirm(`Este dispositivo já pertence ao grupo \"${device.group_name}\". Deseja movê-lo?`);
+        if (!confirmed) return;
+      }
+
       try {
-        let updateData: any = {};
-        
         if (isDroppingInPanel) {
-          // Remover do grupo/loja
-          updateData = { num_filial: null, grupo_dispositivos: null };
+          // Remove from all hierarchical group tables
+          await Promise.all(devicesToMove.map(id => 
+            supabase.from("group_devices").delete().eq("device_id", id)
+          ));
+          // Also reset legacy columns
+          await supabase.from("dispositivos").update({ num_filial: null, grupo_dispositivos: null }).in("id", devicesToMove);
+        } else if (targetNode?.type === 'store_group') {
+          // New hierarchy system
+          for (const devId of devicesToMove) {
+            await supabase.from("group_devices").upsert({ 
+              group_id: targetNode.id, 
+              device_id: devId,
+              tenant_id: tenantId 
+            }, { onConflict: 'device_id' });
+          }
         } else if (targetNode?.type === 'store') {
-          const { data: store } = await supabase
-            .from("stores")
-            .select("code")
-            .eq("id", targetNode.id)
-            .single();
-          
+          const { data: store } = await supabase.from("stores").select("code").eq("id", targetNode.id).single();
           if (store) {
-            updateData = { num_filial: store.code, grupo_dispositivos: null };
+            await supabase.from("dispositivos").update({ num_filial: store.code, grupo_dispositivos: null }).in("id", devicesToMove);
+            // Also remove from group_devices to keep only one link
+            await Promise.all(devicesToMove.map(id => 
+              supabase.from("group_devices").delete().eq("device_id", id)
+            ));
           }
         } else if (targetNode?.type === 'device_group') {
-          const { data: dg } = await supabase
-            .from("device_groups")
-            .select("id, store_id, stores(code)")
-            .eq("id", targetNode.id)
-            .single();
-          
+          const { data: dg } = await supabase.from("device_groups").select("id, stores(code)").eq("id", targetNode.id).single();
           if (dg) {
-            updateData = { 
+            await supabase.from("dispositivos").update({ 
               grupo_dispositivos: dg.id, 
               num_filial: (dg.stores as any)?.code || null 
-            };
+            }).in("id", devicesToMove);
+            // Also remove from group_devices
+            await Promise.all(devicesToMove.map(id => 
+              supabase.from("group_devices").delete().eq("device_id", id)
+            ));
           }
         } else {
-          toast.info("Por favor, solte o dispositivo em uma Loja, Grupo de Dispositivos ou no painel lateral.");
+          toast.info("Por favor, solte o dispositivo em um Grupo, Loja ou no painel lateral.");
           return;
         }
 
-        const { error } = await supabase
-          .from("dispositivos")
-          .update(updateData)
-          .in("id", devicesToMove);
-
-        if (error) throw error;
-
-        toast.success(`${devicesToMove.length} dispositivo(s) atualizado(s) com sucesso!`);
+        toast.success(`${devicesToMove.length} dispositivo(s) atualizado(s)!`);
         setSelectedDevices(new Set());
         fetchTreeData();
         queryClient.invalidateQueries({ queryKey: ["all-devices-panel"] });
