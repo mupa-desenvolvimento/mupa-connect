@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { GroupTreeView, TreeNode } from "@/components/GroupTreeView";
+import { GroupCard } from "@/components/GroupCard";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant, usePlaylists } from "@/hooks/use-playlist-data";
@@ -365,7 +366,7 @@ export default function GroupsPage() {
 
       if (error) throw error;
 
-      toast.success("Novo grupo pai criado!");
+      const isSubgroup = !!(window as any)._pendingParentId; toast.success(isSubgroup ? "Subgrupo criado!" : "Novo grupo pai criado!"); (window as any)._pendingParentId = null;
       setIsCreateDialogOpen(false);
       setNewGroupName("");
       fetchTreeData();
@@ -644,7 +645,7 @@ export default function GroupsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setIsCreateDialogOpen(false)}>Cancelar</Button>
+            <Button variant="ghost" onClick={() => { setIsCreateDialogOpen(false); (window as any)._pendingParentId = null; }}>Cancelar</Button>
             <Button 
               onClick={handleCreateGroup} 
               disabled={isCreatingGroup}
