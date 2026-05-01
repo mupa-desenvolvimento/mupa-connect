@@ -306,7 +306,7 @@ export default function GroupsPage() {
           for (const devId of devicesToMove) {
             await supabase.from("group_devices").upsert({ 
               group_id: targetNode.id, 
-              device_id: devId,
+              device_id: String(devId),
               tenant_id: tenantId 
             }, { onConflict: 'device_id' });
           }
@@ -494,7 +494,7 @@ export default function GroupsPage() {
                   const deviceId = parseInt(id);
                   
                   // 1. Remove from group_devices
-                  await supabase.from("group_devices").delete().eq("device_id", deviceId);
+                  await supabase.from("group_devices").delete().eq("device_id", String(deviceId));
                   
                   // 2. Clear legacy columns
                   const { error } = await supabase
