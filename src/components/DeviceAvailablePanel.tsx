@@ -274,11 +274,15 @@ export function DeviceAvailablePanel({
         }
       });
       
-      return allStores.map(s => ({
-        ...s,
-        group_name: storeLinkMap.get(s.id),
-        device_count: countMap.get(s.code) || 0
-      })) as StoreData[];
+      return allStores.map(s => {
+        const link = storeLinkMap.get(s.id);
+        return {
+          ...s,
+          group_id: link?.id,
+          group_name: link?.name,
+          device_count: countMap.get(s.code) || 0
+        };
+      }) as StoreData[];
     },
     enabled: !!tenantId && viewMode === "stores"
   });
