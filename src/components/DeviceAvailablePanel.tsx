@@ -282,15 +282,12 @@ export function DeviceAvailablePanel({
             vinculationType = 'legacy';
           }
 
-          // Priority 3: Transitive vinculation via store (num_filial -> store -> group)
-          if (!groupId && d.num_filial) {
-            const storeId = storeIdByCode.get(d.num_filial.toString().trim());
-            if (storeId) {
-              const transitiveGroupId = storeToGroupMap.get(storeId);
-              if (transitiveGroupId) {
-                groupId = transitiveGroupId;
-                vinculationType = 'transitive';
-              }
+          // Priority 3: Transitive vinculation via store
+          if (!groupId && d.store_id) {
+            const transitiveGroupId = storeToGroupMap.get(d.store_id);
+            if (transitiveGroupId) {
+              groupId = transitiveGroupId;
+              vinculationType = 'transitive';
             }
           }
 
