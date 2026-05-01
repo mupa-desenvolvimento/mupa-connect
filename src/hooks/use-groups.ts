@@ -11,6 +11,8 @@ export interface Group {
   device_count?: number;
   store_count?: number;
   playlist_name?: string;
+  linked_store_ids?: string[];
+  direct_device_ids?: string[];
 }
 
 export function useGroups(tenantId: string | null) {
