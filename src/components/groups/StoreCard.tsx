@@ -33,7 +33,7 @@ export function StoreCard({ store, playlists, onRefresh }: StoreCardProps) {
   const { data: allDevices, refetch: refetchDevices } = useDevices(null); // Passing null but it might work if we filter manually or use a specific hook
   
   // Filter devices belonging to this store
-  const storeDevices = allDevices?.filter(d => d.num_filial === store.code) || [];
+  const storeDevices = allDevices?.filter(d => d.store_id === store.id) || [];
   const devicesWithoutSector = storeDevices.filter(d => !d.internal_group_id);
 
   const handleStorePlaylistChange = async (playlistId: string) => {
