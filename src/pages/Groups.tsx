@@ -490,24 +490,33 @@ export default function GroupsPage() {
               onCreateGroup={() => setIsCreateDialogOpen(true)}
               onMoveNode={handleMoveNode}
               onRemoveDevice={async (id) => {
+                const confirmed = window.confirm("Deseja remover este dispositivo do grupo?");
+                if (!confirmed) return;
+
                 try {
                   const deviceId = parseInt(id);
                   
-                  // 1. Remove from group_devices
+                  // 1. Remove from group_devices (New system)
                   await supabase.from("group_devices").delete().eq("device_id", String(deviceId));
                   
-                  // 2. Clear legacy columns
+                  // 2. Clear legacy columns (Legacy system)
                   const { error } = await supabase
                     .from("dispositivos")
-                    .update({ num_filial: null, grupo_dispositivos: null })
+                    .update({ 
+                      num_filial: null, 
+                      grupo_dispositivos: null 
+                    })
                     .eq("id", deviceId);
                     
                   if (error) throw error;
                   
-                  toast.success("Dispositivo removido do grupo.");
+                  toast.success("Dispositivo removido com sucesso.");
+                  
+                  // 3. Refresh data
                   fetchTreeData();
                   queryClient.invalidateQueries({ queryKey: ["all-devices-panel"] });
                 } catch (error: any) {
+                  console.error("Erro ao remover dispositivo:", error);
                   toast.error("Erro ao remover: " + error.message);
                 }
               }}
