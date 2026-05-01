@@ -26,8 +26,10 @@ export function useDevices(tenantId: string | null) {
         .from("dispositivos")
         .select(`
           id,
+          device_uuid,
           nome,
           num_filial,
+          store_id,
           grupo_dispositivos,
           last_online,
           group_devices (
