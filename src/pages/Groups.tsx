@@ -560,7 +560,7 @@ export default function GroupsPage() {
           <div className="space-y-4 py-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="Buscar dispositivos..." className="pl-9 bg-white/5 border-white/10" />
+              <Input placeholder="Buscar por nome ou loja..." className="pl-9 bg-white/5 border-white/10" value={deviceSearchQuery} onChange={(e) => setDeviceSearchQuery(e.target.value)} />
             </div>
             <div className="grid grid-cols-1 gap-2 max-h-80 overflow-y-auto p-2 border border-white/10 rounded-md bg-white/5 custom-scrollbar">
               {filteredLinkDevices?.map(device => (
