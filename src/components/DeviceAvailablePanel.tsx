@@ -185,9 +185,9 @@ export function DeviceAvailablePanel({
   onClearSelection,
   onHighlightGroup
 }: { 
-  selectedIds: Set<number>,
-  onToggleSelection: (ids: number[]) => void,
-  onSelectAll: (ids: number[]) => void,
+  selectedIds: Set<string>,
+  onToggleSelection: (uuids: string[]) => void,
+  onSelectAll: (uuids: string[]) => void,
   onClearSelection: () => void,
   onHighlightGroup?: (groupId: string) => void
 }) {
