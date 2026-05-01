@@ -168,7 +168,7 @@ export function DeviceAvailablePanel({
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"devices" | "stores">("devices");
   const [filterMode, setFilterMode] = useState<"all" | "linked" | "unlinked">("all");
-  const { data: tenantId } = useTenant();
+  const { tenantId, companyId } = useTenant();
 
   const { data: devices, isLoading } = useQuery({
     queryKey: ["all-devices-panel", tenantId],
