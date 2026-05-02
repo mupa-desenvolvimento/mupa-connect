@@ -291,12 +291,12 @@ export default function PlayerPage() {
           </div>
           
           {appearance?.show_datetime !== false && (
-            <div className="text-right drop-shadow-md">
-              <div className="font-display text-3xl font-bold tabular-nums text-white">
+            <div className="text-right drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+              <div className="font-display text-4xl font-black tabular-nums text-white tracking-tighter">
                 {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
               </div>
-              <div className="text-[10px] uppercase tracking-widest text-white/60 font-mono">
-                {now.toLocaleDateString("pt-BR", { weekday: 'short', day: '2-digit', month: 'short' })}
+              <div className="text-[12px] uppercase tracking-[0.3em] text-[#085CF0] font-mono font-black mt-1">
+                {now.toLocaleDateString("pt-BR", { weekday: 'long', day: '2-digit', month: 'long' }).split(',')[0]}
               </div>
             </div>
           )}
