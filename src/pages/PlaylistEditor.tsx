@@ -250,14 +250,27 @@ export default function PlaylistEditor() {
       return;
     }
 
-    // Validação de UUID para playlists existentes
-    const isUuid = (val: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
-    
-    if (id !== "new" && !isUuid(id!)) {
+    // Validação de UUID (formato canônico) para IDs persistidos
+    const isUuid = (val: any): val is string =>
+      typeof val === "string" &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+
+    if (id !== "new" && !isUuid(id)) {
       toast.error("ID de playlist inválido", {
-        description: "O identificador da playlist deve ser um UUID válido."
+        description: `O identificador "${id}" não é um UUID válido. Reabra a playlist a partir da lista.`,
       });
       return;
+    }
+
+    // Valida media_id de cada item antes de tentar persistir (evita 22P02 no Postgres)
+    const invalidItems = updatedItems.filter((it) => !isUuid(it.mediaId));
+    if (invalidItems.length > 0) {
+      console.error("Itens com mediaId inválido:", invalidItems);
+      toast.error("Mídia inválida na playlist", {
+        description: `${invalidItems.length} item(ns) possuem ID de mídia inválido e foram ignorados. Remova-os e tente novamente.`,
+      });
+      // Filtra os itens inválidos para não bloquear o salvamento dos demais
+      updatedItems = updatedItems.filter((it) => isUuid(it.mediaId));
     }
 
     setIsSaving(true);
