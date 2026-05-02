@@ -204,77 +204,40 @@ export default function GroupsPage() {
   }, [tenantId, refetchGroups, refetchDevices, refetchStores]);
 
   const enrichedGroups = useMemo(() => {
-    if (!groups || !devices) return [];
+    if (!groups) return [];
+    const safeDevices = devices || [];
     
-    // Memoize descendant data for efficiency
-    // Use string IDs for the sets as expected by Group interface
-    const memo = new Map<string, { storeIds: Set<string>, directDeviceIds: Set<string> }>();
-
-    const getGroupDataRecursive = (groupId: string): { storeIds: Set<string>, directDeviceIds: Set<string> } => {
-      if (memo.has(groupId)) return memo.get(groupId)!;
-
-      const group = groups.find(g => g.id === groupId);
-      if (!group) return { storeIds: new Set(), directDeviceIds: new Set() };
-
-      const storeIds = new Set(group.linked_store_ids || []);
-      const directDeviceIds = new Set(group.direct_device_ids || []);
-
-      const children = groups.filter(g => g.parent_id === groupId);
-      children.forEach(child => {
-        const childData = getGroupDataRecursive(child.id);
-        childData.storeIds.forEach(id => storeIds.add(id));
-        childData.directDeviceIds.forEach(id => directDeviceIds.add(id));
-      });
-
-      const result = { storeIds, directDeviceIds };
-      memo.set(groupId, result);
-      return result;
-    };
-
     return groups.map(group => {
-      const { storeIds, directDeviceIds } = getGroupDataRecursive(group.id);
-
-      // Recursive total devices impacted
-      const impactedDevices = devices.filter(d => 
-        directDeviceIds.has(d.device_uuid) || (d.store_id && storeIds.has(d.store_id))
-      );
+      // 1. Direct devices linked to this group
+      const directDeviceIds = new Set(group.direct_device_ids || []);
       
-      const totalImpactedCount = new Set(impactedDevices.map(d => d.id)).size;
+      // 2. Devices from stores linked to this group
+      const linkedStoreIds = new Set(group.linked_store_ids || []);
+      
+      // Combine all devices for this specific group (non-recursive for safety)
+      const groupLevelDevices = safeDevices.filter(d => 
+        directDeviceIds.has(d.device_uuid) || (d.store_id && linkedStoreIds.has(d.store_id))
+      );
 
-      // Local devices for badges
-      const localStoreIds = new Set(group.linked_store_ids || []);
-      const localDirectDeviceIds = new Set(group.direct_device_ids || []);
+      // Create enriched device objects for display
+      const enrichedDevices = groupLevelDevices.map(d => ({
+        ...d,
+        origin: directDeviceIds.has(d.device_uuid) ? 'direto' as const : 'loja' as const
+      }));
 
-      const localDevices = devices.map(d => {
-        const isDirect = localDirectDeviceIds.has(d.device_uuid);
-        const isFromStoreId = !!(d.store_id && localStoreIds.has(d.store_id));
-        
-        if (isDirect || isFromStoreId) {
-          return {
-            ...d,
-            origin: (isDirect ? 'direto' : 'loja') as 'direto' | 'loja'
-          };
-        }
-        return null;
-      }).filter((d): d is any => d !== null);
-
-      const uniqueLocalDevicesMap = new Map();
-      localDevices.forEach(d => {
-        if (!uniqueLocalDevicesMap.has(d.id)) {
-          uniqueLocalDevicesMap.set(d.id, d);
-        } else {
-          const existing = uniqueLocalDevicesMap.get(d.id);
-          if (d.origin === 'direto' && existing.origin === 'loja') {
-            uniqueLocalDevicesMap.set(d.id, d);
-          }
+      // Deduplicate by ID
+      const uniqueDevicesMap = new Map();
+      enrichedDevices.forEach(d => {
+        if (!uniqueDevicesMap.has(d.id) || d.origin === 'direto') {
+          uniqueDevicesMap.set(d.id, d);
         }
       });
 
       return {
         ...group,
-        device_count: totalImpactedCount,
-        store_count: localStoreIds.size,
-        devices: Array.from(uniqueLocalDevicesMap.values())
+        device_count: uniqueDevicesMap.size,
+        store_count: linkedStoreIds.size,
+        devices: Array.from(uniqueDevicesMap.values())
       };
     });
   }, [groups, devices]);
