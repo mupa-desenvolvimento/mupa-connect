@@ -87,14 +87,16 @@ const SortableItem = ({
   isSelected, 
   onSelect,
   width,
-  isCurrent
+  isCurrent,
+  isLastDropped
 }: { 
   item: EditorPlaylistItem, 
   index: number, 
   isSelected: boolean,
   onSelect: (item: EditorPlaylistItem) => void,
   width: string,
-  isCurrent: boolean
+  isCurrent: boolean,
+  isLastDropped: boolean
 }) => {
   const {
     attributes,
