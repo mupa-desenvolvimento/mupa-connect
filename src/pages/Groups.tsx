@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Globe, Store, Plus, Search, Loader2, Package, Filter } from "lucide-react";
+import { Globe, Store, Plus, Search, Loader2, Package, Filter, Monitor } from "lucide-react";
 import { GroupTreeNode } from "@/components/groups/GlobalGroupTree";
 import { StoreCard } from "@/components/groups/StoreCard";
 import { Input } from "@/components/ui/input";
