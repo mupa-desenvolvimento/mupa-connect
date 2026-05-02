@@ -90,20 +90,8 @@ export default function GroupsPage() {
   const enrichedGroups = useMemo(() => {
     if (!groups || !devices || !stores) return [];
     
-    const normalize = (val: string | null | undefined) => {
-      if (!val) return "";
-      let normalized = val.replace(/FIL-/gi, "");
-      normalized = normalized.replace(/\s+/g, "");
-      normalized = normalized.replace(/^0+/, "");
-      if (normalized === "" && val.trim() !== "") {
-        const onlyDigits = val.replace(/[^0-9]/g, "");
-        if (onlyDigits.match(/^0+$/)) return "0";
-      }
-      return normalized.toLowerCase();
-    };
-
     // Memoize descendant data for efficiency
-    const memo = new Map<string, { storeCodes: Set<string>, storeIds: Set<string>, directDeviceIds: Set<string> }>();
+    const memo = new Map<string, { storeIds: Set<string>, directDeviceIds: Set<string> }>();
 
     const getGroupDataRecursive = (groupId: string): { storeCodes: Set<string>, storeIds: Set<string>, directDeviceIds: Set<string> } => {
       if (memo.has(groupId)) return memo.get(groupId)!;
