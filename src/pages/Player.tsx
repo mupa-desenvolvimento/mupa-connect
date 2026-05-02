@@ -4,6 +4,7 @@ import { useDeviceCommandChannel } from "@/hooks/useDeviceCommandChannel";
 import { supabase } from "@/integrations/supabase/client";
 import { PlayerEngine } from "@/components/PlayerEngine";
 import { ManifestManager, MediaCacheService, ScheduleResolver } from "@/components/PlayerServices";
+import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 
 export default function PlayerPage() {
   const { deviceCode } = useParams();
@@ -111,6 +112,17 @@ export default function PlayerPage() {
 
     initializePlayer();
   }, [deviceCode, reloadKey]);
+
+  // 1.5 Realtime Updates via Firebase
+  useEffect(() => {
+    if (!deviceCode) return;
+    
+    const unsubscribe = FirebaseRealtimeService.subscribeToDeviceUpdates(deviceCode, () => {
+      setReloadKey(k => k + 1);
+    });
+
+    return () => unsubscribe();
+  }, [deviceCode]);
 
   // 2. Schedule & Queue Resolver
   const activePlaylist = useMemo(() => {
