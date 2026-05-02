@@ -145,10 +145,10 @@ export default function PlayerPage() {
 
         if (!cachedManifest || cachedManifest.updated_at !== remoteUpdatedAt) {
           console.log("[Player] Update detected or no cache, fetching manifest...");
-          const newManifest = await ManifestService.fetchManifest(deviceCode);
-          setManifest(newManifest);
-          setDeviceInfo(device);
-          setDeviceUuid(device.id.toString());
+          const result = await ManifestService.fetchManifest(deviceCode);
+          setManifest(result.manifest);
+          setDeviceInfo(result.device || device);
+          setDeviceUuid((result.device?.id || device.id).toString());
         } else {
           console.log("[Player] No changes detected in background.");
           if (!deviceInfo) {
