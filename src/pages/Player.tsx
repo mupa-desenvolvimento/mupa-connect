@@ -155,7 +155,7 @@ export default function PlayerPage() {
       try {
         const { data: device, error } = await supabase
           .from("dispositivos")
-          .select("id, updated_at, playlist_id")
+          .select("id, atualizado, playlist_id")
           .or(`apelido_interno.eq."${deviceCode}",serial.eq."${deviceCode}"`)
           .maybeSingle();
 
@@ -167,7 +167,7 @@ export default function PlayerPage() {
           .eq("id", device.playlist_id)
           .maybeSingle();
 
-        const remoteUpdatedAt = playlistData?.updated_at || device.updated_at || "";
+        const remoteUpdatedAt = playlistData?.updated_at || device.atualizado || "";
         const cachedManifest = ManifestManager.getManifest(deviceCode);
 
         if (cachedManifest && cachedManifest.updated_at !== remoteUpdatedAt) {
