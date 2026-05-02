@@ -417,7 +417,7 @@ export function DeviceAvailablePanel({
       <div className="p-6 border-b border-white/5 bg-gradient-to-b from-white/[0.03] to-transparent">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
-            <div className="p-2.5 rounded-2xl bg-[#085CF0]/10 text-[#085CF0] shadow-inner">
+            <div className="p-2.5 rounded-2xl bg-primary/10 text-primary shadow-inner">
               {viewMode === "devices" ? <Monitor className="w-5 h-5" /> : <Store className="w-5 h-5" />}
             </div>
             <div>
