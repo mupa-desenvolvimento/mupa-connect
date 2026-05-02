@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, ExternalLink, Loader2, Save, Store, Wrench, Monitor } from "lucide-react";
 import { toast } from "sonner";
+import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 
 interface DeviceRow {
   id: string;
