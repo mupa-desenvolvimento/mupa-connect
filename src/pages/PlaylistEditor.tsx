@@ -65,6 +65,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { handlePlaylistError } from "@/utils/error-handlers";
 import { PlaylistErrorBanner } from "@/components/PlaylistErrorBanner";
+import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 
 // --- Types ---
 interface EditorPlaylistItem {
@@ -343,16 +344,19 @@ export default function PlaylistEditor() {
       await queryClient.refetchQueries({ queryKey: ["playlists"] });
       await queryClient.refetchQueries({ queryKey: ["playlist", currentPlaylistId] });
       
-      // 4. Enviar sinal de atualização global para dispositivos Comercial Zaffari (003ZAF)
+      // 4. Enviar sinal de atualização via Firebase Realtime
       try {
+        await FirebaseRealtimeService.notifyPlaylistUpdate(currentPlaylistId);
+        
+        // Mantemos o fallback legado de comando para compatibilidade se necessário
         await supabase
           .from("dispositivos")
           .update({ 
             comando: `reload:${Date.now()}` 
           } as any)
-          .ilike('empresa', '003ZAF');
+          .eq('playlist_id', currentPlaylistId as any);
       } catch (e) {
-        console.warn("Silent failure updating dispositivos:", e);
+        console.warn("Silent failure notifying devices:", e);
       }
       
       setSaveStatus("saved");

@@ -15,6 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import {
   Loader2,
   Send,
@@ -236,6 +237,11 @@ export function DeviceFirebaseCommandDrawer({
       console.error(error);
     } else {
       toast.success("Dispositivo atualizado com sucesso");
+      // Notificar via Firebase
+      const code = device?.serial || device?.apelido_interno;
+      if (code) {
+        FirebaseRealtimeService.notifyDeviceUpdate(code);
+      }
     }
     setSaving(false);
   };

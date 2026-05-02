@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { RefreshCw } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { useDeviceCommandChannel } from "@/hooks/useDeviceCommandChannel";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +16,8 @@ export default function PlayerPage() {
   const [reloadKey, setReloadKey] = useState<number>(0);
   const [volume, setVolume] = useState(0); // Default muted as requested
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
 
   // 1. Core Loader: Resolve Identity & Manifest (Offline-First)
   useEffect(() => {
@@ -118,7 +121,13 @@ export default function PlayerPage() {
     if (!deviceCode) return;
     
     const unsubscribe = FirebaseRealtimeService.subscribeToDeviceUpdates(deviceCode, () => {
+      console.log("[Player] Realtime update signal received");
+      setIsSyncing(true);
+      setLastSyncTime(new Date());
       setReloadKey(k => k + 1);
+      
+      // Discrete notification timeout
+      setTimeout(() => setIsSyncing(false), 3000);
     });
 
     return () => unsubscribe();
@@ -184,7 +193,10 @@ export default function PlayerPage() {
 
         if (cachedManifest && cachedManifest.updated_at !== remoteUpdatedAt) {
           console.log("[Player] Update detected in background, triggering silent reload...");
+          setIsSyncing(true);
+          setLastSyncTime(new Date());
           setReloadKey(k => k + 1);
+          setTimeout(() => setIsSyncing(false), 3000);
         } else {
           console.log("[Player] No changes detected in background.");
         }
@@ -266,8 +278,22 @@ export default function PlayerPage() {
         </div>
       </div>
 
-      <div className="absolute bottom-3 right-3 z-30 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-sm border border-white/10 font-mono text-xs text-white/80 tracking-wider select-none pointer-events-none">
-        ID: {deviceInfo?.serial || deviceCode}
+      <div className="absolute bottom-3 right-3 z-30 flex flex-col items-end gap-2 pointer-events-none">
+        {isSyncing && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/20 backdrop-blur-md border border-primary/30 text-primary animate-in fade-in zoom-in duration-300">
+            <RefreshCw className="h-3 w-3 animate-spin" />
+            <span className="text-[10px] font-mono uppercase tracking-widest font-bold">Sincronizando...</span>
+          </div>
+        )}
+        
+        <div className="px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-sm border border-white/10 font-mono text-xs text-white/80 tracking-wider select-none">
+          ID: {deviceInfo?.serial || deviceCode}
+          {lastSyncTime && (
+            <span className="ml-2 opacity-40 text-[9px]">
+              V.{lastSyncTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, ExternalLink, Loader2, Save, Store, Wrench, Monitor } from "lucide-react";
 import { toast } from "sonner";
+import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 
 interface DeviceRow {
   id: string;
@@ -86,6 +87,10 @@ export default function DeviceDetailPage() {
       console.error(error);
     } else {
       toast.success("Dispositivo atualizado com sucesso");
+      // Notificar via Firebase
+      if (device.device_code) {
+        FirebaseRealtimeService.notifyDeviceUpdate(device.device_code);
+      }
       setDevice(prev => prev ? { 
         ...prev, 
         name: deviceName,
