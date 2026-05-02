@@ -483,52 +483,58 @@ export default function GroupsPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-2rem)] flex flex-col gap-4 overflow-hidden">
-      <div className="flex justify-between items-center pr-2 shrink-0">
-        <PageHeader
-          title="Gestão de Grupos"
-          description="Administre a hierarquia global de lojas, setores e playlists de forma intuitiva."
-        />
-        <div className="flex items-center gap-3">
-          <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input 
-              placeholder="Buscar..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9 bg-white/5 border-white/10"
-            />
+    <DndContext 
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="h-[calc(100vh-2rem)] flex flex-col gap-4 overflow-hidden">
+        <div className="flex justify-between items-center pr-2 shrink-0">
+          <PageHeader
+            title="Gestão de Grupos"
+            description="Administre a hierarquia global de lojas, setores e playlists de forma intuitiva."
+          />
+          <div className="flex items-center gap-3">
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input 
+                placeholder="Buscar..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9 bg-white/5 border-white/10"
+              />
+            </div>
+            <Button 
+              className="bg-primary hover:bg-primary/90 h-9"
+              onClick={() => {
+                setGroupFormData({ name: "", playlistMode: "inherit", playlistId: "" });
+                setGroupModal({ open: true, mode: 'create', parentId: null });
+              }}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Grupo
+            </Button>
           </div>
-          <Button 
-            className="bg-primary hover:bg-primary/90 h-9"
-            onClick={() => {
-              setGroupFormData({ name: "", playlistMode: "inherit", playlistId: "" });
-              setGroupModal({ open: true, mode: 'create', parentId: null });
-            }}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Grupo
-          </Button>
         </div>
-      </div>
 
-      <div className="flex-1 flex gap-6 overflow-hidden">
-        <div className="flex-[3] min-w-0 flex flex-col gap-4 overflow-hidden">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-            <TabsList className="bg-white/5 border border-white/10 p-1 w-fit">
-              <TabsTrigger value="groups" className="gap-2 data-[state=active]:bg-primary">
-                <Globe className="w-4 h-4" /> Grupos Globais
-              </TabsTrigger>
-              <TabsTrigger value="stores" className="gap-2 data-[state=active]:bg-primary">
-                <Store className="w-4 h-4" /> Lojas & Setores
-              </TabsTrigger>
-            </TabsList>
+        <div className="flex-1 flex gap-6 overflow-hidden">
+          <div className="flex-[3] min-w-0 flex flex-col gap-4 overflow-hidden">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+              <TabsList className="bg-white/5 border border-white/10 p-1 w-fit shrink-0">
+                <TabsTrigger value="groups" className="gap-2 data-[state=active]:bg-primary">
+                  <Globe className="w-4 h-4" /> Grupos Globais
+                </TabsTrigger>
+                <TabsTrigger value="stores" className="gap-2 data-[state=active]:bg-primary">
+                  <Store className="w-4 h-4" /> Lojas & Setores
+                </TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="groups" className="flex-1 mt-4 border-t border-white/5 pt-4 overflow-y-auto custom-scrollbar pr-2">
-              {loadingGroups ? (
-                <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
-              ) : groups && groups.length > 0 ? (
-                <div className="space-y-1">
+              <TabsContent value="groups" className="flex-1 mt-4 border-t border-white/5 pt-4 overflow-y-auto custom-scrollbar pr-2">
+                {loadingGroups ? (
+                  <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+                ) : groups && groups.length > 0 ? (
+                  <div className="space-y-1 pb-20">
                   {filteredGroups.map(group => (
                     <GroupTreeNode 
                       key={group.id} 
