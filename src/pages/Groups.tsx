@@ -208,27 +208,31 @@ export default function GroupsPage() {
     const safeDevices = devices || [];
     
     return groups.map(group => {
-      // 1. Direct devices linked to this group
+      // 1. Direct devices linked to this group (via its direct_device_ids array)
       const directDeviceIds = new Set(group.direct_device_ids || []);
       
-      // 2. Devices from stores linked to this group
+      // 2. Stores linked to this group (via its linked_store_ids array)
       const linkedStoreIds = new Set(group.linked_store_ids || []);
       
-      // Combine all devices for this specific group (non-recursive for safety)
+      // Combine all devices for this specific group
+      // - Direct devices (matched by device_uuid)
+      // - Devices belonging to linked stores (matched by store_id)
       const groupLevelDevices = safeDevices.filter(d => 
         directDeviceIds.has(d.device_uuid) || (d.store_id && linkedStoreIds.has(d.store_id))
       );
 
-      // Create enriched device objects for display
+      // Create enriched device objects for display with origin tracking
       const enrichedDevices = groupLevelDevices.map(d => ({
         ...d,
         origin: directDeviceIds.has(d.device_uuid) ? 'direto' as const : 'loja' as const
       }));
 
-      // Deduplicate by ID
+      // Deduplicate devices (a device could be both direct and from a store)
+      // Prioritize 'direto' origin for visual feedback
       const uniqueDevicesMap = new Map();
       enrichedDevices.forEach(d => {
-        if (!uniqueDevicesMap.has(d.id) || d.origin === 'direto') {
+        const existing = uniqueDevicesMap.get(d.id);
+        if (!existing || (d.origin === 'direto' && existing.origin === 'loja')) {
           uniqueDevicesMap.set(d.id, d);
         }
       });
