@@ -593,7 +593,7 @@ export default function GroupsPage() {
         </div>
 
         {/* Sidebar Panel */}
-        <div className="w-[340px] flex flex-col overflow-hidden">
+        <div className="w-[340px] flex flex-col overflow-hidden bg-card p-4 rounded-xl border border-border/60 shadow-sm">
           <DeviceAvailablePanel 
             selectedIds={selectedDevices}
             onToggleSelection={(ids: string[]) => {
