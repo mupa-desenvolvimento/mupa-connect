@@ -160,7 +160,7 @@ export default function GroupsPage() {
       // Debug mandatory logs
       console.log(`group: ${group.id} (${group.name})`);
       console.log(`devices direct: ${localDirectDeviceIds.size}`);
-      console.log(`devices store: ${localStoreCodes.size} codes, ${localDevices.length} devices found`);
+      console.log(`devices store: ${localDevices.length} devices found via store_id`);
 
       // Deduplicate local devices
       const uniqueLocalDevicesMap = new Map();
