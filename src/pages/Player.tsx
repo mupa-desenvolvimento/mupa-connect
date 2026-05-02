@@ -275,7 +275,10 @@ export default function PlayerPage() {
   }, []);
 
   if (isLoading && !activePlaylist.length) {
-    return <div className="fixed inset-0 bg-black flex items-center justify-center text-white/40 font-mono text-xs uppercase tracking-widest">Iniciando Engine Profissional...</div>;
+    return <div className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-4">
+      <div className="text-white/40 font-mono text-xs uppercase tracking-widest">Iniciando Player...</div>
+      <div className="text-[8px] text-white/20 font-mono">ID: {deviceCode}</div>
+    </div>;
   }
 
   if (!activePlaylist.length) {
