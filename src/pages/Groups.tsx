@@ -93,7 +93,7 @@ export default function GroupsPage() {
     // Memoize descendant data for efficiency
     const memo = new Map<string, { storeIds: Set<string>, directDeviceIds: Set<string> }>();
 
-    const getGroupDataRecursive = (groupId: string): { storeCodes: Set<string>, storeIds: Set<string>, directDeviceIds: Set<string> } => {
+    const getGroupDataRecursive = (groupId: string): { storeIds: Set<string>, directDeviceIds: Set<string> } => {
       if (memo.has(groupId)) return memo.get(groupId)!;
 
       const group = groups.find(g => g.id === groupId);
