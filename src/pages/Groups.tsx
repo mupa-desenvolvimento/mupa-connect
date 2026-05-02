@@ -489,39 +489,39 @@ export default function GroupsPage() {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="h-screen flex flex-col gap-4 overflow-hidden p-6">
-        <div className="flex justify-between items-center pr-2 shrink-0">
-          <PageHeader
-            title="Gestão de Grupos"
-            description="Administre a hierarquia global de lojas, setores e playlists de forma intuitiva."
-          />
-          <div className="flex items-center gap-3">
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input 
-                placeholder="Buscar..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 bg-white/5 border-white/10"
-              />
-            </div>
-            <Button 
-              className="bg-primary hover:bg-primary/90 h-9"
-              onClick={() => {
-                setGroupFormData({ name: "", playlistMode: "inherit", playlistId: "" });
-                setGroupModal({ open: true, mode: 'create', parentId: null });
-              }}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Novo Grupo
-            </Button>
+    <div className="h-[calc(100vh-8rem)] flex flex-col gap-4 overflow-hidden">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-card p-4 rounded-xl border border-border/60 shadow-sm shrink-0">
+        <PageHeader
+          title="Gestão de Grupos"
+          description="Administre a hierarquia global de lojas, setores e playlists de forma intuitiva."
+        />
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="relative flex-1 md:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input 
+              placeholder="Buscar..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-10 bg-background/50 border-border/40 focus:bg-background"
+            />
           </div>
+          <Button 
+            className="bg-gradient-primary shadow-glow h-10"
+            onClick={() => {
+              setGroupFormData({ name: "", playlistMode: "inherit", playlistId: "" });
+              setGroupModal({ open: true, mode: 'create', parentId: null });
+            }}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Grupo
+          </Button>
         </div>
+      </div>
 
-        <div className="flex-1 flex gap-6 overflow-hidden">
-          <div className="flex-[3] min-w-0 flex flex-col gap-4 overflow-hidden">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-              <TabsList className="bg-white/5 border border-white/10 p-1 w-fit shrink-0">
+        <div className="flex-1 min-h-0 flex gap-6 overflow-hidden">
+          <div className="flex-[3] min-w-0 flex flex-col gap-4 overflow-hidden bg-card p-4 rounded-xl border border-border/60 shadow-sm">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+              <TabsList className="bg-background/50 border border-border/40 p-1 w-fit shrink-0">
                 <TabsTrigger value="groups" className="gap-2 data-[state=active]:bg-primary">
                   <Globe className="w-4 h-4" /> Grupos Globais
                 </TabsTrigger>
@@ -530,7 +530,7 @@ export default function GroupsPage() {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="groups" className="flex-1 mt-4 border-t border-white/5 pt-4 overflow-hidden flex flex-col">
+              <TabsContent value="groups" className="flex-1 mt-4 border-t border-border/40 pt-4 overflow-hidden flex flex-col">
                 <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
                 {loadingGroups ? (
                   <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
@@ -557,8 +557,8 @@ export default function GroupsPage() {
                 </div>
               </TabsContent>
 
-            <TabsContent value="stores" className="flex-1 mt-4 flex flex-col overflow-hidden">
-              <div className="flex items-center justify-between mb-4 px-1">
+            <TabsContent value="stores" className="flex-1 mt-4 border-t border-border/40 pt-4 flex flex-col overflow-hidden">
+              <div className="flex items-center justify-between mb-4 shrink-0">
                 <h3 className="text-sm font-semibold flex items-center gap-2">
                   <Filter className="w-4 h-4 text-primary" /> Listagem de Unidades
                 </h3>
@@ -593,7 +593,7 @@ export default function GroupsPage() {
         </div>
 
         {/* Sidebar Panel */}
-        <div className="w-[340px] flex flex-col overflow-hidden">
+        <div className="w-[340px] flex flex-col overflow-hidden bg-card p-4 rounded-xl border border-border/60 shadow-sm">
           <DeviceAvailablePanel 
             selectedIds={selectedDevices}
             onToggleSelection={(ids: string[]) => {

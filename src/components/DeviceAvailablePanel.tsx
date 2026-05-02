@@ -410,11 +410,11 @@ export function DeviceAvailablePanel({
     <div 
       ref={setNodeRef}
       className={cn(
-        "flex flex-1 flex-col bg-background/50 backdrop-blur-xl border transition-all duration-300 rounded-[2rem] overflow-hidden shadow-2xl relative",
+        "flex flex-1 flex-col bg-card/50 backdrop-blur-xl border border-border/60 transition-all duration-300 rounded-xl overflow-hidden shadow-sm relative",
         isOver ? "border-primary ring-4 ring-primary/10 bg-primary/5" : "border-white/5"
       )}
     >
-      <div className="p-6 border-b border-white/5 bg-gradient-to-b from-white/[0.03] to-transparent">
+      <div className="p-4 border-b border-border/40 bg-gradient-to-b from-white/[0.03] to-transparent">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <div className="p-2.5 rounded-2xl bg-primary/10 text-primary shadow-inner">
@@ -461,7 +461,7 @@ export function DeviceAvailablePanel({
         </div>
 
         <div className="flex flex-col gap-4">
-          <div className="flex p-1 bg-black/40 rounded-xl border border-white/5 h-11">
+          <div className="flex p-1 bg-background/40 rounded-xl border border-border/40 h-11">
             <button
               onClick={() => { setViewMode("devices"); setFilterMode("all"); }}
               className={cn(
@@ -491,12 +491,12 @@ export function DeviceAvailablePanel({
                 placeholder={viewMode === "devices" ? "Buscar nome ou serial..." : "Buscar nome ou código..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-11 bg-black/40 border-white/5 focus:border-primary/50 h-10 rounded-xl text-sm"
+                className="pl-11 bg-background/40 border-border/40 focus:border-primary/50 h-10 rounded-xl text-sm"
               />
             </div>
             
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 p-1 bg-white/[0.02] border border-white/5 rounded-lg flex-1">
+              <div className="flex items-center gap-1.5 p-1 bg-background/[0.02] border border-border/40 rounded-lg flex-1">
                 {(["all", "linked", "unlinked"] as const).map((mode) => (
                   <button
                     key={mode}
@@ -519,7 +519,7 @@ export function DeviceAvailablePanel({
                   size="icon" 
                   onClick={handleSelectAll}
                   className={cn(
-                    "h-9 w-9 rounded-lg border border-white/5 bg-white/[0.02] transition-colors",
+                    "h-9 w-9 rounded-lg border border-border/40 bg-background/[0.02] transition-colors",
                     selectedIds.size > 0 ? "text-primary border-primary/30" : "text-white/20 hover:text-white/40"
                   )}
                   title="Selecionar/Desmarcar todos"
@@ -568,7 +568,7 @@ export function DeviceAvailablePanel({
         </div>
       </div>
 
-      <div className="p-4 bg-black/40 border-t border-white/5 flex items-center justify-center gap-2.5 text-white/20">
+      <div className="p-4 bg-background/40 border-t border-border/40 flex items-center justify-center gap-2.5 text-white/20">
         <MousePointer2 className="w-3.5 h-3.5" />
         <span className="text-[10px] font-bold uppercase tracking-widest">
           Arraste para organizar sua estrutura
