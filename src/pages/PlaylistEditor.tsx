@@ -586,12 +586,14 @@ export default function PlaylistEditor() {
   };
 
   const updateItemDuration = (id: string, newDuration: number) => {
+    // Implementar snap para múltiplos de 0.5s para precisão (Requisito)
+    const snappedDuration = Math.round(newDuration * 2) / 2;
     const newItems = items.map(item => 
-      item.id === id ? { ...item, duration: newDuration } : item
+      item.id === id ? { ...item, duration: snappedDuration } : item
     );
     setItems(newItems);
     if (selectedItem?.id === id) {
-      setSelectedItem({ ...selectedItem, duration: newDuration });
+      setSelectedItem({ ...selectedItem, duration: snappedDuration });
     }
     triggerAutoSave(newItems, playlistName);
   };
