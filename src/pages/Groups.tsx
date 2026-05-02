@@ -711,6 +711,7 @@ export default function GroupsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </ScrollArea>
   );
 }
