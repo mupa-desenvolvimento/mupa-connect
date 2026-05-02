@@ -956,9 +956,8 @@ export default function PlaylistEditor() {
                     collisionDetection={closestCenter}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
-                    modifiers={[restrictToHorizontalAxis]} 
+                    modifiers={[restrictToHorizontalAxis]}
                     onDragOver={(event) => {
-                      // Implementar auto-scroll horizontal durante o drag
                       const { activatorEvent } = event;
                       if (!activatorEvent || !timelineRef.current) return;
                       
@@ -968,16 +967,16 @@ export default function PlaylistEditor() {
                       if (!clientX) return;
 
                       const scrollContainer = timelineRef.current.parentElement;
-                      if (!scrollContainer) return;
+                      if (scrollContainer) {
+                        const rect = scrollContainer.getBoundingClientRect();
+                        const buffer = 150; 
+                        const speed = 25; 
 
-                      const rect = scrollContainer.getBoundingClientRect();
-                      const buffer = 100; // Distância da borda para ativar scroll
-                      const speed = 15; // Velocidade do scroll
-
-                      if (clientX < rect.left + buffer) {
-                        scrollContainer.scrollBy({ left: -speed, behavior: 'auto' });
-                      } else if (clientX > rect.right - buffer) {
-                        scrollContainer.scrollBy({ left: speed, behavior: 'auto' });
+                        if (clientX < rect.left + buffer) {
+                          scrollContainer.scrollBy({ left: -speed, behavior: 'auto' });
+                        } else if (clientX > rect.right - buffer) {
+                          scrollContainer.scrollBy({ left: speed, behavior: 'auto' });
+                        }
                       }
                     }}
                   >
@@ -985,46 +984,60 @@ export default function PlaylistEditor() {
                       items={items.map(i => i.id)}
                       strategy={horizontalListSortingStrategy}
                     >
-                      <AnimatePresence>
-                        {items.map((item, index) => (
-                          <SortableItem 
-                            key={item.id} 
-                            item={item} 
-                            index={index}
-                            isSelected={selectedItem?.id === item.id}
-                            onSelect={setSelectedItem}
-                            width={totalDuration > 0 ? `${(item.duration / totalDuration) * 100}%` : '200px'}
-                            isCurrent={index === currentIndex && isPlaying}
-                            isLastDropped={lastDroppedId === item.id}
-                          />
-                        ))}
-                      </AnimatePresence>
+                      <div className="flex items-center h-full min-w-full">
+                        <AnimatePresence>
+                          {items.map((item, index) => (
+                            <SortableItem 
+                              key={item.id} 
+                              item={item} 
+                              index={index}
+                              isSelected={selectedItem?.id === item.id}
+                              onSelect={setSelectedItem}
+                              width={totalDuration > 0 ? `${(item.duration / totalDuration) * 100}%` : '200px'}
+                              isCurrent={index === currentIndex && isPlaying}
+                              isLastDropped={lastDroppedId === item.id}
+                            />
+                          ))}
+                        </AnimatePresence>
+                      </div>
                     </SortableContext>
 
-                    <DragOverlay dropAnimation={{
-                      sideEffects: defaultDropAnimationSideEffects({
-                        styles: { active: { opacity: '0.5' } }
-                      })
-                    }}>
+                    <DragOverlay 
+                      dropAnimation={{
+                        duration: 500,
+                        easing: 'cubic-bezier(0.18, 0.89, 0.32, 1.28)',
+                        sideEffects: defaultDropAnimationSideEffects({
+                          styles: {
+                            active: {
+                              opacity: '0.3',
+                            },
+                          },
+                        }),
+                      }}
+                    >
                       {activeId ? (
                         <div 
-                          className="rounded-xl border-4 border-[#085CF0] bg-black/40 backdrop-blur-3xl shadow-[0_0_50px_rgba(8,92,240,0.6)] flex items-center justify-center overflow-hidden ring-4 ring-white/20 ring-inset"
+                          className="rounded-xl border-4 border-[#085CF0] bg-black/60 backdrop-blur-3xl shadow-[0_0_80px_rgba(8,92,240,0.8)] flex items-center justify-center overflow-hidden ring-4 ring-white/20 pointer-events-none"
                           style={{ 
                             width: `${(items.find(i => i.id === activeId)?.duration / totalDuration) * (timelineRef.current?.offsetWidth || 0)}px`,
-                            height: '128px',
-                            transform: 'rotate(2deg) scale(1.05)',
-                            transformOrigin: 'center center'
+                            height: '140px',
+                            transform: 'scale(1.05) rotate(1.5deg)',
                           }}
                         >
-                           <div className="absolute inset-0 bg-gradient-to-br from-[#085CF0]/40 via-transparent to-black/60 z-10" />
-                           <div className="absolute top-0 left-0 right-0 p-2 bg-[#085CF0] text-white text-[10px] font-bold uppercase tracking-widest text-center z-20">
-                             Movendo Item
+                           <div className="absolute inset-0 bg-gradient-to-br from-[#085CF0]/50 via-transparent to-black/90 z-10" />
+                           <div className="absolute top-0 left-0 right-0 p-2.5 bg-[#085CF0] text-white text-[10px] font-black uppercase tracking-widest text-center z-20 shadow-xl border-b border-white/10">
+                             Reposicionando Mídia
                            </div>
                            <img 
                              src={items.find(i => i.id === activeId)?.media?.thumbnail_url || items.find(i => i.id === activeId)?.media?.file_url} 
-                             className="absolute inset-0 w-full h-full object-cover opacity-60"
+                             className="absolute inset-0 w-full h-full object-cover opacity-80"
                            />
-                           <GripVertical className="h-8 w-8 text-white relative z-30 drop-shadow-[0_0_10px_rgba(0,0,0,0.5)]" />
+                           <div className="relative z-30 flex flex-col items-center gap-2">
+                             <GripVertical className="h-10 w-10 text-white drop-shadow-[0_0_15px_rgba(0,0,0,0.8)] animate-pulse" />
+                             <span className="text-[10px] font-black text-white bg-[#085CF0] px-3 py-1 rounded-full shadow-lg border border-white/20">
+                               {items.find(i => i.id === activeId)?.duration}s
+                             </span>
+                           </div>
                         </div>
                       ) : null}
                     </DragOverlay>
