@@ -134,19 +134,26 @@ export default function PlayerPage() {
         const remoteUpdatedAt = playlistData?.updated_at || device.atualizado || "";
         const cachedManifest = ManifestManager.getManifest(deviceCode);
 
-        if (cachedManifest && cachedManifest.updated_at !== remoteUpdatedAt) {
-          console.log("[Player] Update detected in background, triggering silent reload...");
-          setReloadKey(k => k + 1);
+        if (!cachedManifest || cachedManifest.updated_at !== remoteUpdatedAt) {
+          console.log("[Player] Update detected or no cache, fetching manifest...");
+          const newManifest = await ManifestService.fetchManifest(deviceCode);
+          setManifest(newManifest);
+          setDeviceInfo(device);
+          setDeviceUuid(device.id.toString());
         } else {
           console.log("[Player] No changes detected in background.");
+          if (!deviceInfo) {
+            setDeviceInfo(device);
+            setDeviceUuid(device.id.toString());
+          }
         }
       } catch (err) {
         console.warn("[Player] Background sync failed", err);
       }
     };
 
-    // Initial check after 30s, then every 60s (configurable)
-    const initialTimer = setTimeout(backgroundSync, 30000);
+    // Initial check immediately, then every 60s
+    backgroundSync();
     const interval = setInterval(backgroundSync, 60000);
     
     return () => {
