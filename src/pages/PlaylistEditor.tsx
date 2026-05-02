@@ -960,7 +960,6 @@ export default function PlaylistEditor() {
                     collisionDetection={closestCenter}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
-                    modifiers={[restrictToHorizontalAxis]}
                     onDragOver={(event) => {
                       const { activatorEvent } = event;
                       if (!activatorEvent || !timelineRef.current) return;
