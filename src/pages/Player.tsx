@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PlayerEngine } from "@/components/PlayerEngine";
 import { ManifestManager, MediaCacheService, ScheduleResolver } from "@/components/PlayerServices";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
+import { ManifestService } from "@/services/ManifestService";
 
 export default function PlayerPage() {
   const { deviceCode } = useParams();
@@ -46,64 +47,9 @@ export default function PlayerPage() {
         setDeviceUuid(device.id.toString());
         setDeviceInfo(device);
 
-        // Step C: Fetch Latest Manifest Data (including Schedules and Fallbacks)
-        const { data: deviceManifest, error: manifestError } = await supabase
-          .from("dispositivos")
-          .select(`
-            *,
-            playlists (
-              id,
-              name,
-              updated_at,
-              playlist_items (
-                id, position, duracao,
-                media_items (*)
-              )
-            )
-          `)
-          .eq("id", device.id)
-          .single();
-
-        if (deviceManifest && deviceManifest.playlists) {
-          const mainPlaylist = deviceManifest.playlists;
-          const remoteUpdatedAt = (mainPlaylist as any).updated_at || (deviceManifest as any).atualizado || new Date().toISOString();
-          
-          // Optimization: Only update if the remote manifest is newer than the cached one
-          if (cachedManifest && cachedManifest.updated_at === remoteUpdatedAt) {
-            console.log("[Player] Manifest is up to date, skipping heavy re-processing");
-            setDeviceInfo(device);
-            setDeviceUuid(device.id.toString());
-            return;
-          }
-
-          console.log("[Player] Manifest changed, updating local cache...");
-          
-          // Map helper to standardize items
-          const mapItems = (items: any[]) => (items || [])
-            .sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0))
-            .map((i: any) => ({
-              id: i.media_id || i.id,
-              type: i.media_items?.type || "image",
-              url: i.media_items?.file_url,
-              duration: i.duracao || 10,
-              name: i.media_items?.name || "Sem nome"
-            }))
-            .filter((x: any) => x.url);
-
-          const newManifest = {
-            playlist_id: mainPlaylist.id,
-            name: mainPlaylist.name,
-            updated_at: remoteUpdatedAt,
-            items: mapItems(mainPlaylist.playlist_items),
-            // Support for advanced scheduling
-            schedules: (deviceManifest as any).schedules || [], 
-            fallback_items: mapItems((deviceManifest as any).fallback_playlist_items)
-          };
-
-          setManifest(newManifest);
-          ManifestManager.saveManifest(deviceCode, newManifest);
-          if (device.serial) ManifestManager.saveManifest(device.serial, newManifest);
-        }
+        // Step C: Manifest is now handled by BackgroundSync and Realtime updates
+        // We rely on the local cache for immediate playback to ensure zero-flicker startups
+        setIsLoading(false);
       } catch (err) {
         console.error("[Player] Sync error:", err);
       } finally {
@@ -188,26 +134,32 @@ export default function PlayerPage() {
         const remoteUpdatedAt = playlistData?.updated_at || device.atualizado || "";
         const cachedManifest = ManifestManager.getManifest(deviceCode);
 
-        if (cachedManifest && cachedManifest.updated_at !== remoteUpdatedAt) {
-          console.log("[Player] Update detected in background, triggering silent reload...");
-          setReloadKey(k => k + 1);
+        if (!cachedManifest || cachedManifest.updated_at !== remoteUpdatedAt) {
+          console.log("[Player] Update detected or no cache, fetching manifest...");
+          const newManifest = await ManifestService.fetchManifest(deviceCode);
+          setManifest(newManifest);
+          setDeviceInfo(device);
+          setDeviceUuid(device.id.toString());
         } else {
           console.log("[Player] No changes detected in background.");
+          if (!deviceInfo) {
+            setDeviceInfo(device);
+            setDeviceUuid(device.id.toString());
+          }
         }
       } catch (err) {
         console.warn("[Player] Background sync failed", err);
       }
     };
 
-    // Initial check after 30s, then every 60s (configurable)
-    const initialTimer = setTimeout(backgroundSync, 30000);
+    // Initial check immediately, then every 60s
+    backgroundSync();
     const interval = setInterval(backgroundSync, 60000);
     
     return () => {
-      clearTimeout(initialTimer);
       clearInterval(interval);
     };
-  }, [deviceCode]);
+  }, [deviceCode, reloadKey]);
 
   // 5. Heartbeat
   useEffect(() => {
