@@ -123,11 +123,11 @@ const SortableItem = ({
         e.stopPropagation();
         onSelect(item);
       }}
-      className={`relative shrink-0 h-32 rounded-xl border transition-all cursor-pointer group overflow-hidden ${
+      className={`relative shrink-0 h-32 rounded-xl border transition-all duration-300 ease-in-out cursor-pointer group overflow-hidden ${
         isSelected 
-          ? 'border-[#085CF0] ring-2 ring-[#085CF0]/20 bg-[#085CF0]/5 shadow-xl shadow-[#085CF0]/10' 
-          : 'border-border/40 bg-card/40 hover:border-[#085CF0]/30'
-      } ${isCurrent ? 'ring-2 ring-yellow-500/50 bg-yellow-500/5' : ''} ${isDragging ? 'shadow-2xl' : ''}`}
+          ? 'border-[#085CF0] ring-2 ring-[#085CF0]/20 bg-[#085CF0]/5 shadow-xl shadow-[#085CF0]/10 scale-[1.02]' 
+          : 'border-border/40 bg-card/40 hover:border-[#085CF0]/30 hover:scale-[1.01]'
+      } ${isCurrent ? 'ring-2 ring-yellow-500/50 bg-yellow-500/5' : ''} ${isDragging ? 'shadow-2xl z-50 opacity-0' : ''}`}
     >
       <div className="absolute inset-0">
         <img 
@@ -283,11 +283,11 @@ export default function PlaylistEditor() {
     console.log("ITEMS STATE UPDATED. Count:", items.length, items);
   }, [items]);
 
-  // DND Sensors
+  // DND Sensors - Otimizado para Timeline
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 4, // Snap mais reativo ao começar a arrastar
       },
     }),
     useSensor(KeyboardSensor, {
@@ -537,6 +537,8 @@ export default function PlaylistEditor() {
 
   const handleDragStart = (event: any) => {
     setActiveId(event.active.id);
+    // Feedback tátil discreto ao começar o drag
+    if (window.navigator.vibrate) window.navigator.vibrate(5);
   };
 
   const handleDragEnd = (event: any) => {
@@ -912,7 +914,10 @@ export default function PlaylistEditor() {
                       })
                     }}>
                       {activeId ? (
-                        <div className="w-48 h-32 rounded-xl border border-[#085CF0] bg-[#085CF0]/20 backdrop-blur-xl shadow-2xl scale-105" />
+                        <div className="w-56 h-36 rounded-xl border-2 border-[#085CF0] bg-[#085CF0]/30 backdrop-blur-2xl shadow-[0_0_30px_rgba(8,92,240,0.4)] scale-110 flex items-center justify-center transition-transform duration-200">
+                           <div className="absolute inset-0 bg-gradient-to-br from-[#085CF0]/20 to-transparent" />
+                           <GripVertical className="h-6 w-6 text-white animate-pulse" />
+                        </div>
                       ) : null}
                     </DragOverlay>
                   </DndContext>
