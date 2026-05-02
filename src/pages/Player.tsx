@@ -19,6 +19,29 @@ export default function PlayerPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
 
+  // 0. Global Error Recovery (Requisito 5 e 6)
+  useEffect(() => {
+    const handleError = (event: ErrorEvent | PromiseRejectionEvent) => {
+      const msg = 'reason' in event ? event.reason : event.message;
+      console.error("[Critical Error]", msg);
+      
+      // Se houver erro fatal no WebView, tenta dar um feedback visual mínimo
+      if (document.body) {
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = "position:fixed;bottom:10px;left:10px;background:rgba(0,0,0,0.8);color:red;font-size:8px;z-index:9999;padding:4px;border-radius:4px;";
+        errorDiv.innerText = "Err: " + String(msg).substring(0, 50);
+        document.body.appendChild(errorDiv);
+      }
+    };
+
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleError);
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleError);
+    };
+  }, []);
+
   // 1. Core Loader: Resolve Identity & Manifest (Offline-First)
   const [appearance, setAppearance] = useState<any>(null);
 
@@ -26,6 +49,11 @@ export default function PlayerPage() {
     if (!deviceCode) return;
 
     async function initializePlayer() {
+      // 0.1 Global Debug Info for WebView
+      if (typeof window !== 'undefined') {
+        (window as any).__MUPA_PLAYER_V = "3.1.0-android-fix";
+      }
+
       // Step A: Load Local Cache Immediately
       const cachedManifest = ManifestManager.getManifest(deviceCode);
       if (cachedManifest) {
@@ -258,7 +286,7 @@ export default function PlayerPage() {
   }
 
   return (
-    <div className="fixed inset-0 bg-black overflow-hidden text-white">
+    <div className="fixed inset-0 bg-black overflow-hidden text-white" style={{ minHeight: '100vh' }}>
       <PlayerEngine 
         playlist={activePlaylist} 
         volume={volume}
@@ -268,7 +296,7 @@ export default function PlayerPage() {
 
       {/* HUD overlay - Zero flickering absolute layers */}
       {(appearance?.show_device_name !== false || appearance?.show_datetime !== false) && (
-        <div className="absolute top-0 left-0 right-0 p-8 flex items-start justify-between bg-gradient-to-b from-black/90 via-black/40 to-transparent z-40 pointer-events-none transition-all duration-500">
+        <div className="absolute top-0 left-0 right-0 p-8 flex items-start justify-between bg-black/60 z-40 pointer-events-none transition-all duration-500">
           <div className="flex items-center gap-4">
             {appearance?.show_device_name !== false && (
               <>
@@ -280,7 +308,7 @@ export default function PlayerPage() {
                     {deviceInfo?.apelido_interno || "Player Profissional"}
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <div className="px-2 py-0.5 rounded bg-white/10 backdrop-blur-md border border-white/10 text-[10px] uppercase font-mono font-bold text-white/90 flex items-center gap-1.5">
+                    <div className="px-2 py-0.5 rounded bg-white/10 border border-white/10 text-[10px] uppercase font-mono font-bold text-white/90 flex items-center gap-1.5">
                       <MapPin className="h-3 w-3 text-[#085CF0]" />
                       Filial {deviceInfo?.num_filial || "—"}
                     </div>
@@ -305,14 +333,14 @@ export default function PlayerPage() {
 
       <div className="absolute bottom-3 right-3 z-[70] flex flex-col items-end gap-2 pointer-events-none">
         {isSyncing && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/20 backdrop-blur-md border border-primary/30 text-primary animate-in fade-in zoom-in duration-300">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/20 border border-primary/30 text-primary animate-in fade-in zoom-in duration-300">
             <RefreshCw className="h-3 w-3 animate-spin" />
             <span className="text-[10px] font-mono uppercase tracking-widest font-bold">Sincronizando...</span>
           </div>
         )}
         
         {appearance?.show_serial !== false && (
-          <div className="px-3 py-1.5 rounded-md bg-black/40 backdrop-blur-sm border border-white/5 font-mono text-[10px] text-white/40 tracking-wider select-none">
+          <div className="px-3 py-1.5 rounded-md bg-black/40 border border-white/5 font-mono text-[10px] text-white/40 tracking-wider select-none">
             SERIAL: {deviceInfo?.serial || deviceCode}
             {lastSyncTime && (
               <span className="ml-2 opacity-30">
