@@ -28,21 +28,23 @@ export function useGroups(tenantId: string | null) {
           *,
           playlists (name)
         `)
-        .or(`company_id.eq.${tenantId},tenant_id.eq.${tenantId}`);
+        .eq("tenant_id", tenantId);
 
       if (groupsError) throw groupsError;
 
       // Fetch device links per group
       const { data: deviceLinks, error: devicesError } = await supabase
         .from("group_devices")
-        .select("group_id, device_id");
+        .select("group_id, device_id")
+        .eq("tenant_id", tenantId);
 
       if (devicesError) throw devicesError;
 
       // Fetch store links per group
       const { data: storeLinks, error: storesError } = await supabase
         .from("group_stores")
-        .select("group_id, store_id");
+        .select("group_id, store_id")
+        .eq("tenant_id", tenantId);
 
       if (storesError) throw storesError;
 
