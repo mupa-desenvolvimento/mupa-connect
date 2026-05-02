@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Sheet,
   SheetContent,
@@ -12,7 +12,9 @@ import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2,
   Send,
@@ -27,6 +29,8 @@ import {
   Hash,
   Activity,
   Layers,
+  Wrench,
+  Save,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +44,7 @@ interface DeviceLike {
   grupo_dispositivos?: string | null;
   last_heartbeat_at?: string | null;
   last_proof_at?: string | null;
+  is_maintenance?: boolean;
 }
 
 interface Props {
@@ -144,6 +149,20 @@ export function DeviceFirebaseCommandDrawer({
 }: Props) {
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [sending, setSending] = useState<CommandKey | null>(null);
+  
+  // States for device editing
+  const [deviceName, setDeviceName] = useState("");
+  const [numFilial, setNumFilial] = useState("");
+  const [isMaintenance, setIsMaintenance] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (device) {
+      setDeviceName(device.apelido_interno || "");
+      setNumFilial(device.num_filial || "");
+      setIsMaintenance(!!device.is_maintenance);
+    }
+  }, [device]);
 
   const setInput = (key: CommandKey, value: string) =>
     setInputs((prev) => ({ ...prev, [key]: value }));
@@ -199,6 +218,46 @@ export function DeviceFirebaseCommandDrawer({
     }
   };
 
+  const handleUpdateDevice = async () => {
+    if (!device?.id) return;
+    
+    setSaving(true);
+    const { error } = await supabase
+      .from("dispositivos")
+      .update({ 
+        apelido_interno: deviceName,
+        num_filial: numFilial,
+        is_maintenance: isMaintenance
+      })
+      .eq("id", Number(device.id));
+
+    if (error) {
+      toast.error("Erro ao atualizar o dispositivo");
+      console.error(error);
+    } else {
+      toast.success("Dispositivo atualizado com sucesso");
+    }
+    setSaving(false);
+  };
+
+  const toggleMaintenance = async (checked: boolean) => {
+    if (!device?.id) return;
+    
+    setIsMaintenance(checked);
+    const { error } = await supabase
+      .from("dispositivos")
+      .update({ is_maintenance: checked })
+      .eq("id", Number(device.id));
+
+    if (error) {
+      toast.error("Erro ao atualizar modo manutenção");
+      setIsMaintenance(!checked);
+      console.error(error);
+    } else {
+      toast.success(checked ? "Modo manutenção ativado" : "Modo manutenção desativado");
+    }
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -213,7 +272,7 @@ export function DeviceFirebaseCommandDrawer({
               </div>
               <div className="min-w-0">
                 <SheetTitle className="font-display text-lg truncate">
-                  {device?.apelido_interno || "Dispositivo"}
+                  {deviceName || "Dispositivo"}
                 </SheetTitle>
                 <SheetDescription className="text-xs">
                   Painel de controle remoto
@@ -226,10 +285,77 @@ export function DeviceFirebaseCommandDrawer({
 
         <ScrollArea className="flex-1">
           <div className="p-6 space-y-6">
-            {/* DETALHES */}
+            {isMaintenance && (
+              <div className="animate-in fade-in slide-in-from-top-4 duration-500 rounded-lg overflow-hidden border border-yellow-500/50 bg-yellow-500/5">
+                <img 
+                  src="https://pub-0e15cc358ba84ff2a24226b12278433b.r2.dev/Banner%20Manutenc%CC%A7a%CC%83o.jpg" 
+                  alt="Banner Manutenção" 
+                  className="w-full h-auto object-cover max-h-[150px]"
+                />
+                <div className="p-3 flex items-center gap-2 text-yellow-700 dark:text-yellow-400">
+                  <Wrench className="h-4 w-4 animate-pulse" />
+                  <p className="text-xs font-medium">Em modo de manutenção.</p>
+                </div>
+              </div>
+            )}
+
+            {/* EDIÇÃO RÁPIDA */}
+            <section className="space-y-4">
+              <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                Configurações
+              </h3>
+              <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="drawer_device_name" className="text-xs">Nome do Dispositivo</Label>
+                  <Input
+                    id="drawer_device_name"
+                    placeholder="Ex: Terminal 01"
+                    value={deviceName}
+                    onChange={(e) => setDeviceName(e.target.value)}
+                    className="h-9 text-sm"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="drawer_num_filial" className="text-xs">Número da Filial / Loja</Label>
+                  <Input
+                    id="drawer_num_filial"
+                    placeholder="Ex: 001"
+                    value={numFilial}
+                    onChange={(e) => setNumFilial(e.target.value)}
+                    className="h-9 text-sm"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between py-2 border-t mt-2">
+                  <div className="space-y-0.5">
+                    <Label className="text-xs font-medium flex items-center gap-2">
+                      <Wrench className="h-3 w-3" /> Modo Manutenção
+                    </Label>
+                  </div>
+                  <Switch 
+                    checked={isMaintenance}
+                    onCheckedChange={toggleMaintenance}
+                  />
+                </div>
+
+                <Button 
+                  className="w-full h-9 text-xs"
+                  onClick={handleUpdateDevice} 
+                  disabled={saving || (deviceName === device?.apelido_interno && numFilial === device?.num_filial && isMaintenance === !!device?.is_maintenance)}
+                >
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                  Salvar Alterações
+                </Button>
+              </div>
+            </section>
+
+            <Separator />
+
+            {/* DETALHES TÉCNICOS */}
             <section className="space-y-3">
               <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                Detalhes
+                Informações Técnicas
               </h3>
               <div className="grid grid-cols-1 gap-2 rounded-lg border bg-muted/30 p-3 text-sm">
                 <DetailRow
@@ -237,11 +363,6 @@ export function DeviceFirebaseCommandDrawer({
                   label="Serial"
                   value={device?.serial || "—"}
                   mono
-                />
-                <DetailRow
-                  icon={Store}
-                  label="Loja"
-                  value={device?.num_filial ? `Loja ${device.num_filial}` : "—"}
                 />
                 <DetailRow
                   icon={Layers}
@@ -261,7 +382,7 @@ export function DeviceFirebaseCommandDrawer({
             {/* COMANDOS */}
             <section className="space-y-3">
               <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                Comandos
+                Comandos de Diagnóstico
               </h3>
               <div className="space-y-3">
                 {COMMANDS.map((cfg) => {
@@ -332,6 +453,35 @@ export function DeviceFirebaseCommandDrawer({
         </ScrollArea>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function DetailRow({
+  icon: Icon,
+  label,
+  value,
+  mono,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-1">
+      <div className="flex items-center gap-2 text-muted-foreground text-xs">
+        <Icon className="h-3.5 w-3.5" />
+        <span>{label}</span>
+      </div>
+      <span
+        className={cn(
+          "text-sm text-right truncate max-w-[60%]",
+          mono && "font-mono text-xs"
+        )}
+      >
+        {value}
+      </span>
+    </div>
   );
 }
 
