@@ -1018,31 +1018,50 @@ export default function PlaylistEditor() {
                         }),
                       }}
                     >
-                      {activeId ? (
-                        <div 
-                          className="rounded-xl border-4 border-[#085CF0] bg-black/60 backdrop-blur-3xl shadow-[0_0_80px_rgba(8,92,240,0.8)] flex items-center justify-center overflow-hidden ring-4 ring-white/20 pointer-events-none"
-                          style={{ 
-                            width: `${(items.find(i => i.id === activeId)?.duration / totalDuration) * (timelineRef.current?.offsetWidth || 0)}px`,
-                            height: '140px',
-                            transform: 'scale(1.05) rotate(1.5deg)',
-                          }}
-                        >
-                           <div className="absolute inset-0 bg-gradient-to-br from-[#085CF0]/50 via-transparent to-black/90 z-10" />
-                           <div className="absolute top-0 left-0 right-0 p-2.5 bg-[#085CF0] text-white text-[10px] font-black uppercase tracking-widest text-center z-20 shadow-xl border-b border-white/10">
-                             Reposicionando Mídia
-                           </div>
-                           <img 
-                             src={items.find(i => i.id === activeId)?.media?.thumbnail_url || items.find(i => i.id === activeId)?.media?.file_url} 
-                             className="absolute inset-0 w-full h-full object-cover opacity-80"
-                           />
-                           <div className="relative z-30 flex flex-col items-center gap-2">
-                             <GripVertical className="h-10 w-10 text-white drop-shadow-[0_0_15px_rgba(0,0,0,0.8)] animate-pulse" />
-                             <span className="text-[10px] font-black text-white bg-[#085CF0] px-3 py-1 rounded-full shadow-lg border border-white/20">
-                               {items.find(i => i.id === activeId)?.duration}s
-                             </span>
-                           </div>
-                        </div>
-                      ) : null}
+                      {activeId && items.find(i => i.id === activeId) ? (() => {
+                        const draggedItem = items.find(i => i.id === activeId)!;
+                        const media = draggedItem.media;
+                        return (
+                          <div 
+                            className="rounded-xl border-4 border-[#085CF0] bg-black/80 backdrop-blur-3xl shadow-[0_0_50px_rgba(8,92,240,0.6)] flex items-center justify-center overflow-hidden pointer-events-none z-[9999]"
+                            style={{ 
+                              width: `${draggedItem.duration * pxPerSecond}px`,
+                              height: '128px',
+                              transform: 'scale(1.05) rotate(1deg)',
+                              opacity: 0.85,
+                            }}
+                          >
+                             {/* Preview Image */}
+                             <div className="absolute inset-0">
+                               <img 
+                                 src={media?.thumbnail_url || media?.file_url} 
+                                 className="w-full h-full object-cover opacity-90"
+                                 alt=""
+                               />
+                               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                             </div>
+
+                             {/* Header Label */}
+                             <div className="absolute top-0 left-0 right-0 p-2 bg-[#085CF0] text-white text-[9px] font-black uppercase tracking-widest text-center z-20 border-b border-white/10 flex items-center justify-center gap-2">
+                               <GripVertical className="h-3 w-3" />
+                               Movendo Item
+                             </div>
+                             
+                             {/* Center Info */}
+                             <div className="relative z-30 flex flex-col items-center gap-1">
+                               <div className="bg-[#085CF0] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg border border-white/20">
+                                 {draggedItem.duration}s
+                               </div>
+                               <span className="text-[8px] font-bold text-white/70 uppercase tracking-tighter truncate max-w-[120px]">
+                                 {media?.name || 'Mídia'}
+                               </span>
+                             </div>
+
+                             {/* Selection Border Glow */}
+                             <div className="absolute inset-0 border-2 border-white/20 rounded-lg pointer-events-none" />
+                          </div>
+                        );
+                      })() : null}
                     </DragOverlay>
                   </DndContext>
                   
