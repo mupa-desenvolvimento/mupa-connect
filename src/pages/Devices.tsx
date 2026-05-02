@@ -224,7 +224,7 @@ export default function DevicesPage() {
                 {filteredDevices.map((d) => {
                   const status = getStatus(d.last_heartbeat_at, d.last_proof_at);
                   return (
-                    <TableRow key={d.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => openDeviceDrawer(d)}>
+                    <TableRow key={d.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => openDeviceDrawer({ ...d, status })}>
                       <TableCell><div className="flex items-center gap-3"><Monitor className="h-4 w-4 text-primary opacity-70" />{d.apelido_interno}</div></TableCell>
                       <TableCell className="font-mono text-xs text-muted-foreground">{d.serial}</TableCell>
                       <TableCell><span className="text-xs px-2 py-1 bg-muted rounded-md">Loja {d.num_filial}</span></TableCell>
