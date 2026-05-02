@@ -322,7 +322,8 @@ export function DeviceAvailablePanel({
       // 3. Get device counts per store code
       const { data: deviceCounts } = await supabase
         .from("dispositivos")
-        .select("num_filial");
+        .select("num_filial")
+        .eq("tenant_id", tenantId);
       
       const countMap = new Map<string, number>();
       deviceCounts?.forEach(d => {
