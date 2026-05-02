@@ -32,40 +32,5 @@ export const FirebaseRealtimeService = {
     });
 
     return unsubscribe;
-  },
-
-  notifyDeviceUpdate: async (deviceCode: string) => {
-    if (!deviceCode) return;
-    try {
-      const { set } = await import("firebase/database");
-      const deviceRef = ref(database, `devices/${deviceCode}/last_update`);
-      await set(deviceRef, Date.now());
-      console.log(`[Firebase] Update signal sent for device: ${deviceCode}`);
-    } catch (err) {
-      console.error(`[Firebase] Failed to send update signal for ${deviceCode}:`, err);
-    }
-  },
-
-  notifyPlaylistUpdate: async (playlistId: string) => {
-    if (!playlistId) return;
-    try {
-      const { supabase } = await import("@/integrations/supabase/client");
-      // Find all devices using this playlist
-      const { data: devices } = await supabase
-        .from("dispositivos")
-        .select("serial, apelido_interno")
-        .eq("playlist_id", playlistId as any);
-
-      if (devices && devices.length > 0) {
-        for (const device of devices) {
-          const code = device.serial || device.apelido_interno;
-          if (code) {
-            await FirebaseRealtimeService.notifyDeviceUpdate(code);
-          }
-        }
-      }
-    } catch (err) {
-      console.error(`[Firebase] Failed to notify playlist update for ${playlistId}:`, err);
-    }
   }
 };

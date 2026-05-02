@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { RefreshCw, MapPin, Play } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { useDeviceCommandChannel } from "@/hooks/useDeviceCommandChannel";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,55 +13,19 @@ export default function PlayerPage() {
   const [manifest, setManifest] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState<number>(0);
-  const [initialPlay, setInitialPlay] = useState(false);
   const [volume, setVolume] = useState(0); // Default muted as requested
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
-
-  // 0. Global Error Recovery (Requisito 5 e 6)
-  useEffect(() => {
-    const handleError = (event: ErrorEvent | PromiseRejectionEvent) => {
-      const msg = 'reason' in event ? event.reason : event.message;
-      console.error("[Critical Error]", msg);
-      
-      // Se houver erro fatal no WebView, tenta dar um feedback visual mínimo
-      if (document.body) {
-        const errorDiv = document.createElement('div');
-        errorDiv.style.cssText = "position:fixed;bottom:10px;left:10px;background:rgba(0,0,0,0.8);color:red;font-size:8px;z-index:9999;padding:4px;border-radius:4px;";
-        errorDiv.innerText = "Err: " + String(msg).substring(0, 50);
-        document.body.appendChild(errorDiv);
-      }
-    };
-
-    window.addEventListener('error', handleError);
-    window.addEventListener('unhandledrejection', handleError);
-    return () => {
-      window.removeEventListener('error', handleError);
-      window.removeEventListener('unhandledrejection', handleError);
-    };
-  }, []);
 
   // 1. Core Loader: Resolve Identity & Manifest (Offline-First)
-  const [appearance, setAppearance] = useState<any>(null);
-
   useEffect(() => {
     if (!deviceCode) return;
 
     async function initializePlayer() {
-      // 0.1 Global Debug Info for WebView
-      if (typeof window !== 'undefined') {
-        (window as any).__MUPA_PLAYER_V = "3.1.0-android-fix";
-      }
-
       // Step A: Load Local Cache Immediately
       const cachedManifest = ManifestManager.getManifest(deviceCode);
       if (cachedManifest) {
-        console.log("[Player] Resuming from offline manifest", cachedManifest);
+        console.log("[Player] Resuming from offline manifest");
         setManifest(cachedManifest);
-        if (cachedManifest.appearance_config) {
-          setAppearance(cachedManifest.appearance_config);
-        }
         setIsLoading(false);
       }
 
@@ -87,11 +50,10 @@ export default function PlayerPage() {
           .from("dispositivos")
           .select(`
             *,
-            playlists!dispositivos_playlist_id_fkey (
+            playlists (
               id,
               name,
               updated_at,
-              appearance_config,
               playlist_items (
                 id, position, duracao,
                 media_items (*)
@@ -102,8 +64,8 @@ export default function PlayerPage() {
           .single();
 
         if (deviceManifest && deviceManifest.playlists) {
-          const mainPlaylist = deviceManifest.playlists as any;
-          const remoteUpdatedAt = mainPlaylist.updated_at || (deviceManifest as any).atualizado || new Date().toISOString();
+          const mainPlaylist = deviceManifest.playlists;
+          const remoteUpdatedAt = (mainPlaylist as any).updated_at || (deviceManifest as any).atualizado || new Date().toISOString();
           
           // Optimization: Only update if the remote manifest is newer than the cached one
           if (cachedManifest && cachedManifest.updated_at === remoteUpdatedAt) {
@@ -134,13 +96,10 @@ export default function PlayerPage() {
             items: mapItems(mainPlaylist.playlist_items),
             // Support for advanced scheduling
             schedules: (deviceManifest as any).schedules || [], 
-            fallback_items: mapItems((deviceManifest as any).fallback_playlist_items),
-            appearance_config: mainPlaylist.appearance_config || (deviceManifest as any).appearance_config || {}
+            fallback_items: mapItems((deviceManifest as any).fallback_playlist_items)
           };
 
-          setAppearance(newManifest.appearance_config);
           setManifest(newManifest);
-          console.log("[Player] New manifest applied:", newManifest);
           ManifestManager.saveManifest(deviceCode, newManifest);
           if (device.serial) ManifestManager.saveManifest(device.serial, newManifest);
         }
@@ -159,13 +118,7 @@ export default function PlayerPage() {
     if (!deviceCode) return;
     
     const unsubscribe = FirebaseRealtimeService.subscribeToDeviceUpdates(deviceCode, () => {
-      console.log("[Player] Realtime update signal received");
-      setIsSyncing(true);
-      setLastSyncTime(new Date());
       setReloadKey(k => k + 1);
-      
-      // Discrete notification timeout
-      setTimeout(() => setIsSyncing(false), 3000);
     });
 
     return () => unsubscribe();
@@ -231,10 +184,7 @@ export default function PlayerPage() {
 
         if (cachedManifest && cachedManifest.updated_at !== remoteUpdatedAt) {
           console.log("[Player] Update detected in background, triggering silent reload...");
-          setIsSyncing(true);
-          setLastSyncTime(new Date());
           setReloadKey(k => k + 1);
-          setTimeout(() => setIsSyncing(false), 3000);
         } else {
           console.log("[Player] No changes detected in background.");
         }
@@ -276,102 +226,48 @@ export default function PlayerPage() {
   }, []);
 
   if (isLoading && !activePlaylist.length) {
-    return <div className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-4">
-      <div className="text-white/40 font-mono text-xs uppercase tracking-widest">Iniciando Player...</div>
-      <div className="text-[8px] text-white/20 font-mono">ID: {deviceCode}</div>
-    </div>;
+    return <div className="fixed inset-0 bg-black flex items-center justify-center text-white/40 font-mono text-xs uppercase tracking-widest">Iniciando Engine Profissional...</div>;
   }
 
   if (!activePlaylist.length) {
     return (
       <div className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-4 text-white/40 font-mono text-xs uppercase tracking-widest">
-        <div className="animate-pulse">Aguardando Programação</div>
-        <div className="px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-white/30 text-[10px]">
-          {deviceCode}
+        <div>Manifesto Vazio</div>
+        <div className="px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-white/70 tracking-wider">
+          ID: {deviceCode}
         </div>
-        {isLoading && <div className="text-[10px] text-primary/50">Sincronizando...</div>}
-      </div>
-    );
-  }
-
-  if (!initialPlay) {
-    return (
-      <div 
-        className="fixed inset-0 bg-black flex flex-col items-center justify-center cursor-pointer group"
-        onClick={() => setInitialPlay(true)}
-      >
-        <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-           <Play className="h-8 w-8 text-white/40 group-hover:text-primary transition-colors" />
-        </div>
-        <p className="mt-6 text-white/20 font-mono text-[10px] uppercase tracking-[0.2em]">Toque para Iniciar Reprodução</p>
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 bg-black overflow-hidden text-white" style={{ minHeight: '100vh' }}>
+    <div className="fixed inset-0 bg-black overflow-hidden text-white">
       <PlayerEngine 
         playlist={activePlaylist} 
         volume={volume}
-        appearance={appearance}
         onMediaChange={handleMediaChange}
       />
 
       {/* HUD overlay - Zero flickering absolute layers */}
-      {(appearance?.show_device_name !== false || appearance?.show_datetime !== false) && (
-        <div className="absolute top-0 left-0 right-0 p-8 flex items-start justify-between bg-black/60 z-40 pointer-events-none transition-all duration-500">
-          <div className="flex items-center gap-4">
-            {appearance?.show_device_name !== false && (
-              <>
-                <div className="h-12 w-12 rounded-xl bg-[#085CF0] grid place-items-center font-display font-black text-white text-2xl shadow-[0_0_20px_rgba(8,92,240,0.4)]">
-                  {deviceInfo?.apelido_interno?.charAt(0) || "M"}
-                </div>
-                <div className="leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                  <div className="font-display font-black text-2xl text-white tracking-tight">
-                    {deviceInfo?.apelido_interno || "Player Profissional"}
-                  </div>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <div className="px-2 py-0.5 rounded bg-white/10 border border-white/10 text-[10px] uppercase font-mono font-bold text-white/90 flex items-center gap-1.5">
-                      <MapPin className="h-3 w-3 text-[#085CF0]" />
-                      Filial {deviceInfo?.num_filial || "—"}
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-          
-          {appearance?.show_datetime !== false && (
-            <div className="text-right drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-              <div className="font-display text-4xl font-black tabular-nums text-white tracking-tighter">
-                {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-              </div>
-              <div className="text-[12px] uppercase tracking-[0.3em] text-[#085CF0] font-mono font-black mt-1">
-                {now.toLocaleDateString("pt-BR", { weekday: 'long', day: '2-digit', month: 'long' }).split(',')[0]}
-              </div>
+      <div className="absolute top-0 left-0 right-0 p-4 flex items-start justify-between bg-gradient-to-b from-black/60 to-transparent z-20 pointer-events-none">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-lg bg-gradient-primary grid place-items-center font-display font-bold text-primary-foreground">M</div>
+          <div className="leading-tight">
+            <div className="font-display font-semibold">{deviceInfo?.apelido_interno || "Player Profissional"}</div>
+            <div className="text-[11px] uppercase tracking-widest opacity-70 font-mono">
+              {deviceInfo ? `Filial ${deviceInfo.num_filial}` : `Cache Local · ${deviceCode}`}
             </div>
-          )}
+          </div>
         </div>
-      )}
+        <div className="text-right">
+          <div className="font-display text-2xl tabular-nums">
+            {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+          </div>
+        </div>
+      </div>
 
-      <div className="absolute bottom-3 right-3 z-[70] flex flex-col items-end gap-2 pointer-events-none">
-        {isSyncing && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/20 border border-primary/30 text-primary animate-in fade-in zoom-in duration-300">
-            <RefreshCw className="h-3 w-3 animate-spin" />
-            <span className="text-[10px] font-mono uppercase tracking-widest font-bold">Sincronizando...</span>
-          </div>
-        )}
-        
-        {appearance?.show_serial !== false && (
-          <div className="px-3 py-1.5 rounded-md bg-black/40 border border-white/5 font-mono text-[10px] text-white/40 tracking-wider select-none">
-            SERIAL: {deviceInfo?.serial || deviceCode}
-            {lastSyncTime && (
-              <span className="ml-2 opacity-30">
-                V.{lastSyncTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-              </span>
-            )}
-          </div>
-        )}
+      <div className="absolute bottom-3 right-3 z-30 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-sm border border-white/10 font-mono text-xs text-white/80 tracking-wider select-none pointer-events-none">
+        ID: {deviceInfo?.serial || deviceCode}
       </div>
     </div>
   );

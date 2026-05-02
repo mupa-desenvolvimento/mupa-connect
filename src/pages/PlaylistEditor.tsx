@@ -23,7 +23,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   ChevronLeft, 
   Play, 
-  Pause,
   Save, 
   Plus, 
   Search, 
@@ -66,8 +65,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { handlePlaylistError } from "@/utils/error-handlers";
 import { PlaylistErrorBanner } from "@/components/PlaylistErrorBanner";
-import { PlaylistAppearanceDrawer } from "@/components/PlaylistAppearanceDrawer";
-import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 
 // --- Types ---
 interface EditorPlaylistItem {
@@ -85,18 +82,12 @@ const SortableItem = ({
   item, 
   index, 
   isSelected, 
-  onSelect,
-  width,
-  isCurrent,
-  isLastDropped
+  onSelect 
 }: { 
   item: EditorPlaylistItem, 
   index: number, 
   isSelected: boolean,
-  onSelect: (item: EditorPlaylistItem) => void,
-  width: string,
-  isCurrent: boolean,
-  isLastDropped: boolean
+  onSelect: (item: EditorPlaylistItem) => void
 }) => {
   const {
     attributes,
@@ -110,39 +101,23 @@ const SortableItem = ({
   const media = item.media;
 
   const style = {
-    transform: CSS.Translate.toString(transform),
-    transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28)', 
-    zIndex: isDragging ? 0 : 1,
-    opacity: isDragging ? 0.4 : 1,
-    width: width,
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : 1,
+    opacity: isDragging ? 0.5 : 1,
   };
 
   return (
     <div 
       ref={setNodeRef} 
       style={style}
-      className={cn(
-        "relative shrink-0 h-32 rounded-xl border cursor-pointer group overflow-hidden transition-all duration-300",
+      onClick={() => onSelect(item)}
+      className={`relative shrink-0 w-48 h-32 rounded-xl border transition-all cursor-pointer group overflow-hidden ${
         isSelected 
           ? 'border-[#085CF0] ring-2 ring-[#085CF0]/20 bg-[#085CF0]/5 shadow-xl shadow-[#085CF0]/10' 
-          : 'border-border/40 bg-card/40 hover:border-[#085CF0]/30',
-        isCurrent && 'ring-2 ring-yellow-500/50 bg-yellow-500/5',
-        isDragging && 'opacity-30 scale-95 blur-[1px] border-[#085CF0]/50 border-dashed',
-        isLastDropped && 'animate-[pulse-success_1s_ease-out] ring-4 ring-green-500/50'
-      )}
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelect(item);
-      }}
+          : 'border-border/40 bg-card/40 hover:border-[#085CF0]/30'
+      } ${isDragging ? 'shadow-2xl' : ''}`}
     >
-      {/* Ghost/Placeholder Effect during Dragging */}
-      {isDragging && (
-        <div className="absolute inset-0 bg-[#085CF0]/20 border-2 border-dashed border-[#085CF0] flex items-center justify-center z-50">
-          <div className="bg-[#085CF0] text-white text-[8px] font-bold px-2 py-0.5 rounded-full animate-pulse">
-            SOLTAR AQUI
-          </div>
-        </div>
-      )}
       <div className="absolute inset-0">
         <img 
           src={media?.thumbnail_url || media?.file_url} 
@@ -208,104 +183,20 @@ export default function PlaylistEditor() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [lastDroppedId, setLastDroppedId] = useState<string | null>(null);
   const [debugData, setDebugData] = useState<any>(null);
   const [showDebug, setShowDebug] = useState(false);
   const [mediaSearch, setMediaSearch] = useState("");
-  const [appearanceConfig, setAppearanceConfig] = useState<any>({});
-  
-  const pxPerSecond = 20; // Escala global da timeline 
-
-
-  // Timeline Engine State
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const playheadRef = React.useRef<HTMLDivElement>(null);
-  const timelineRef = React.useRef<HTMLDivElement>(null);
-  const scrollAreaRef = React.useRef<HTMLDivElement>(null);
-  const requestRef = React.useRef<number>();
-  const lastTimeRef = React.useRef<number>();
-
-  const totalDuration = items.reduce((acc, curr) => acc + (curr.duration || 0), 0);
-
-  // Playback Logic
-  const animate = useCallback((time: number) => {
-    if (lastTimeRef.current !== undefined) {
-      const deltaTime = (time - lastTimeRef.current) / 1000;
-      setCurrentTime(prevTime => {
-        const newTime = prevTime + deltaTime;
-        if (newTime >= totalDuration) {
-          return 0; // Loop
-        }
-        return newTime;
-      });
-    }
-    lastTimeRef.current = time;
-    requestRef.current = requestAnimationFrame(animate);
-  }, [totalDuration]);
-
-  useEffect(() => {
-    if (isPlaying) {
-      lastTimeRef.current = performance.now();
-      requestRef.current = requestAnimationFrame(animate);
-    } else {
-      if (requestRef.current) cancelAnimationFrame(requestRef.current);
-    }
-    return () => {
-      if (requestRef.current) cancelAnimationFrame(requestRef.current);
-    };
-  }, [isPlaying, animate]);
-
-  // Update currentIndex based on currentTime
-  useEffect(() => {
-    let accumulatedTime = 0;
-    const index = items.findIndex(item => {
-      accumulatedTime += item.duration;
-      return currentTime < accumulatedTime;
-    });
-    
-    if (index !== -1 && index !== currentIndex) {
-      setCurrentIndex(index);
-      if (items[index]) {
-        setSelectedItem(items[index]);
-      }
-    }
-  }, [currentTime, items, currentIndex]);
-
-  // Direct DOM update for playhead performance
-  useEffect(() => {
-    if (playheadRef.current && totalDuration > 0) {
-      const progress = (currentTime / totalDuration) * 100;
-      playheadRef.current.style.left = `${progress}%`;
-      
-      // Auto-scroll logic
-      if (timelineRef.current && isPlaying) {
-        const container = timelineRef.current.parentElement;
-        if (container) {
-          const scrollPos = (progress / 100) * timelineRef.current.offsetWidth - (container.offsetWidth / 2);
-          container.scrollTo({ left: scrollPos, behavior: 'auto' });
-        }
-      }
-    }
-  }, [currentTime, totalDuration, isPlaying]);
-
-  const togglePlayback = () => setIsPlaying(!isPlaying);
-
-  const seekTo = (percent: number) => {
-    setCurrentTime(percent * totalDuration);
-  };
 
   // Monitorar mudanças no estado de itens
   useEffect(() => {
     console.log("ITEMS STATE UPDATED. Count:", items.length, items);
   }, [items]);
 
-  // DND Sensors - Otimizado para Timeline com Snap Magnético
+  // DND Sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 3, 
+        distance: 8,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -313,41 +204,21 @@ export default function PlaylistEditor() {
     })
   );
 
-  // Implementação de modificador de snap suave (ímã)
-  const createSnapModifier = (gridSize: number) => {
-    return ({ transform }: { transform: any }) => ({
-      ...transform,
-      x: Math.round(transform.x / gridSize) * gridSize,
-    });
-  };
-
-  const snapModifier = useCallback(createSnapModifier(pxPerSecond / 2), [pxPerSecond]);
-
   useEffect(() => {
     if (playlistData) {
       console.log("Loading playlist data:", playlistData);
       setPlaylistName(playlistData.name);
-      setAppearanceConfig(playlistData.appearance_config || {});
       
       if (playlistData.playlist_items && playlistData.playlist_items.length > 0) {
-        const mappedItems = playlistData.playlist_items.map((it: any) => {
-          // Garantir que estamos pegando o media_id (UUID) do banco de dados
-          const mediaId = it.media_id;
-          
-          if (typeof mediaId === 'string' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(mediaId)) {
-            console.error("ALERTA: media_id inválido carregado do banco:", mediaId);
-          }
-
-          return {
-            id: it.id, // ID único do item na playlist (UUID)
-            dbId: it.id,
-            mediaId: mediaId, // UUID da mídia
-            duration: Number(it.duracao),
-            priority: Number(it.prioridade || 1),
-            type: it.tipo,
-            media: medias?.find(m => m.id === mediaId)
-          };
-        });
+        const mappedItems = playlistData.playlist_items.map((it: any) => ({
+          id: it.id,
+          dbId: it.id,
+          mediaId: it.media_id,
+          duration: it.duracao,
+          priority: it.prioridade || 1,
+          type: it.tipo,
+          media: medias?.find(m => m.id === it.media_id)
+        }));
         setItems(mappedItems);
         if (!selectedItem) {
           setSelectedItem(mappedItems[0]);
@@ -362,7 +233,7 @@ export default function PlaylistEditor() {
     }
   }, [playlistData, medias, id]);
 
-  const savePlaylist = async (updatedItems: EditorPlaylistItem[], updatedName: string, updatedAppearance?: any) => {
+  const savePlaylist = async (updatedItems: EditorPlaylistItem[], updatedName: string) => {
     if (isSaving) return;
     
     if (!tenantId) {
@@ -375,47 +246,9 @@ export default function PlaylistEditor() {
       return;
     }
 
-    // Validação estrita de UUID (Requisito 5)
-    const isUuid = (val: any): val is string =>
-      typeof val === "string" &&
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
-
-    if (id !== "new" && !isUuid(id)) {
-      console.error("ERRO: ID da playlist inválido (não é UUID):", id);
-      toast.error("Erro crítico: ID da playlist inválido", {
-        description: `O identificador "${id}" não é um UUID. Por favor, volte e abra a playlist novamente.`,
-      });
-      return;
-    }
-
-    // Validação estrita dos itens antes de salvar (Requisito 2 e 5)
-    const invalidItems = updatedItems.filter((it) => !isUuid(it.mediaId));
-    if (invalidItems.length > 0) {
-      console.error("ERRO: Itens com IDs inválidos detectados:", invalidItems);
-      toast.error("Erro de validação", {
-        description: `${invalidItems.length} item(ns) possuem IDs de mídia inválidos. Remova-os e tente novamente.`,
-      });
-      return; // Interrompe o salvamento se houver IDs inválidos
-    }
-
-    const safeItems = updatedItems;
-
     setIsSaving(true);
     setSaveStatus("saving");
     const startTime = Date.now();
-    
-    // Log do payload completo antes do save (Requisito 6)
-    console.log("CRITICAL DEBUG: Salvando playlist", {
-      playlist_id: id,
-      name: updatedName,
-      itemCount: safeItems.length,
-      payload_preview: safeItems.map((it, idx) => ({ 
-        media_id: it.mediaId, 
-        media_id_type: typeof it.mediaId,
-        visual_order: idx + 1,
-        duration: it.duration
-      }))
-    });
     
     try {
       let currentPlaylistId = id;
@@ -446,10 +279,9 @@ export default function PlaylistEditor() {
           .from("playlists")
           .insert({ 
             name: updatedName, 
-            tenant_id: String(tenantId), 
+            tenant_id: tenantId as any, 
             company_id: companyId || companyData.id,
-            is_active: true,
-            appearance_config: updatedAppearance || appearanceConfig 
+            is_active: true 
           })
           .select().single();
           
@@ -465,12 +297,8 @@ export default function PlaylistEditor() {
       } else {
         const { error: updateError } = await supabase
           .from("playlists")
-          .update({ 
-            name: updatedName, 
-            appearance_config: updatedAppearance || appearanceConfig,
-            updated_at: new Date().toISOString() 
-          })
-          .eq("id", id);
+          .update({ name: updatedName, updated_at: new Date().toISOString() })
+          .eq("id", id as any);
         if (updateError) throw updateError;
       }
 
@@ -478,55 +306,29 @@ export default function PlaylistEditor() {
       const { error: deleteError } = await supabase
         .from("playlist_items")
         .delete()
-        .eq("playlist_id", currentPlaylistId);
+        .eq("playlist_id", currentPlaylistId as any);
       
       if (deleteError) throw deleteError;
 
-      // 2. Inserir novos itens se existirem (Requisito 2 e 3)
-      if (safeItems.length > 0) {
-        const itemsToInsert = safeItems.map((it, idx) => {
-          const mediaId = String(it.mediaId);
-          const playlistId = currentPlaylistId;
-          
-          if (!isUuid(mediaId)) {
-            console.error("ERRO CRÍTICO: media_id inválido (não é UUID):", mediaId);
-            throw new Error(`Item na posição ${idx + 1} possui ID de mídia inválido ("${mediaId}").`);
-          }
-
-          if (!isUuid(playlistId)) {
-            console.error("ERRO CRÍTICO: playlist_id inválido (não é UUID):", playlistId);
-            throw new Error("ID da playlist é inválido.");
-          }
-
-          // Montagem explícita e limpa (Requisito 4 e 5)
-          // Geramos um novo UUID para a chave primária do item para evitar conflitos (Requisito 2)
-          return {
-            id: crypto.randomUUID(),
-            playlist_id: playlistId,
-            media_id: mediaId,
-            duracao: Number(it.duration),
-            prioridade: Number(it.priority || 1),
-            tipo: String(it.type || 'image'),
-            ordem: idx, 
-            position: idx,
-            conteudo_id: mediaId,
-            ativo: true
-          };
-        });
-
-        // Log detalhado do payload final (Requisito 1 e 5)
-        console.log("Playlist payload pronto para inserção (JSON):", JSON.stringify(itemsToInsert, null, 2));
+      // 2. Inserir novos itens se existirem
+      if (updatedItems.length > 0) {
+        const itemsToInsert = updatedItems.map((it, idx) => ({
+          playlist_id: currentPlaylistId as any,
+          media_id: it.mediaId,
+          duracao: it.duration,
+          prioridade: it.priority,
+          tipo: it.type,
+          ordem: idx + 1,
+          position: idx + 1,
+          conteudo_id: it.mediaId,
+          ativo: true
+        }));
         
-        if (itemsToInsert.length > 0) {
-          const { error: insertError } = await supabase
-            .from("playlist_items")
-            .insert(itemsToInsert);
-            
-          if (insertError) {
-            console.error("Erro do Supabase ao inserir itens:", insertError);
-            throw insertError;
-          }
-        }
+        const { error: insertError } = await supabase
+          .from("playlist_items")
+          .insert(itemsToInsert);
+          
+        if (insertError) throw insertError;
       }
 
       setDebugData({
@@ -541,19 +343,16 @@ export default function PlaylistEditor() {
       await queryClient.refetchQueries({ queryKey: ["playlists"] });
       await queryClient.refetchQueries({ queryKey: ["playlist", currentPlaylistId] });
       
-      // 4. Enviar sinal de atualização via Firebase Realtime
+      // 4. Enviar sinal de atualização global para dispositivos Comercial Zaffari (003ZAF)
       try {
-        await FirebaseRealtimeService.notifyPlaylistUpdate(currentPlaylistId);
-        
-        // Mantemos o fallback legado de comando para compatibilidade se necessário
         await supabase
           .from("dispositivos")
           .update({ 
             comando: `reload:${Date.now()}` 
           } as any)
-          .eq('playlist_id', currentPlaylistId);
+          .ilike('empresa', '003ZAF');
       } catch (e) {
-        console.warn("Silent failure notifying devices:", e);
+        console.warn("Silent failure updating dispositivos:", e);
       }
       
       setSaveStatus("saved");
@@ -593,18 +392,11 @@ export default function PlaylistEditor() {
 
   const handleDragStart = (event: any) => {
     setActiveId(event.active.id);
-    // Feedback tátil discreto ao começar o drag
-    if (window.navigator.vibrate) window.navigator.vibrate(5);
   };
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
     setActiveId(null);
-    setLastDroppedId(active.id);
-    
-    // Reset o flash após 1 segundo
-    setTimeout(() => setLastDroppedId(null), 1000);
-
     if (over && active.id !== over.id) {
       const oldIndex = items.findIndex((i) => i.id === active.id);
       const newIndex = items.findIndex((i) => i.id === over.id);
@@ -623,20 +415,12 @@ export default function PlaylistEditor() {
     }
     const newItem: EditorPlaylistItem = {
       id: `temp-${Date.now()}-${Math.random()}`,
-      mediaId: media.id, // O media.id vindo de useMedias DEVE ser um UUID
-      duration: Number(media.duration || 10),
+      mediaId: media.id,
+      duration: media.duration || 10,
       priority: 1,
       type: media.type === 'video' ? 'video' : 'image',
       media: media
     };
-    
-    // Verificação extra antes de adicionar ao estado (Requisito 5)
-    if (typeof media.id === 'string' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(media.id)) {
-      console.error("ERRO: Tentando adicionar mídia com ID não-UUID:", media.id);
-      toast.error("Erro interno: A mídia selecionada possui um identificador inválido.");
-      return;
-    }
-
     const newItems = [...items, newItem];
     console.log("New items state will be:", newItems);
     setItems(newItems);
@@ -655,14 +439,12 @@ export default function PlaylistEditor() {
   };
 
   const updateItemDuration = (id: string, newDuration: number) => {
-    // Implementar snap para múltiplos de 0.5s para precisão (Requisito)
-    const snappedDuration = Math.round(newDuration * 2) / 2;
     const newItems = items.map(item => 
-      item.id === id ? { ...item, duration: snappedDuration } : item
+      item.id === id ? { ...item, duration: newDuration } : item
     );
     setItems(newItems);
     if (selectedItem?.id === id) {
-      setSelectedItem({ ...selectedItem, duration: snappedDuration });
+      setSelectedItem({ ...selectedItem, duration: newDuration });
     }
     triggerAutoSave(newItems, playlistName);
   };
@@ -678,6 +460,8 @@ export default function PlaylistEditor() {
     triggerAutoSave(newItems, playlistName);
   };
 
+  const totalDuration = items.reduce((acc, curr) => acc + curr.duration, 0);
+
   if (isLoadingPlaylist && id !== "new") {
     return (
       <div className="h-screen flex items-center justify-center bg-[#09090b]">
@@ -686,10 +470,8 @@ export default function PlaylistEditor() {
     );
   }
 
-  // pxPerSecond já definido globalmente no escopo do componente
-
   return (
-    <div className="flex flex-col h-screen bg-[#09090b] text-white overflow-hidden">
+    <div className="flex flex-col h-screen bg-[#09090b] text-white">
       <PlaylistErrorBanner error={playlistData === null && id !== 'new' ? "Playlist não encontrada ou sem permissão de acesso." : null} className="m-4" />
       
       {/* Header */}
@@ -739,17 +521,8 @@ export default function PlaylistEditor() {
               Alterações pendentes
             </span>
           )}
-          
-          <PlaylistAppearanceDrawer 
-            config={appearanceConfig} 
-            onChange={(newConfig) => {
-              setAppearanceConfig(newConfig);
-              setHasUnsavedChanges(true);
-            }}
-          />
-
           <Button 
-            onClick={() => savePlaylist(items, playlistName, appearanceConfig)}
+            onClick={() => savePlaylist(items, playlistName)}
             disabled={isSaving}
             className={cn(
               "h-9 px-4 gap-2 font-bold text-xs transition-all",
@@ -769,13 +542,7 @@ export default function PlaylistEditor() {
           <Button variant="outline" className="border-white/10 hover:bg-white/5 gap-2 h-9 px-4 text-white">
             <Play className="h-4 w-4 fill-current" /> Preview
           </Button>
-          <Button 
-            className="bg-[#085CF0] hover:bg-[#0750d4] text-white h-9 px-4 gap-2"
-            onClick={async () => {
-              await savePlaylist(items, playlistName, appearanceConfig);
-              toast.success("Comando de atualização enviado para as telas");
-            }}
-          >
+          <Button className="bg-[#085CF0] hover:bg-[#0750d4] text-white h-9 px-4 gap-2">
             <RefreshCw className="h-4 w-4" /> Atualizar Telas
           </Button>
         </div>
@@ -883,29 +650,15 @@ export default function PlaylistEditor() {
                 )}
                 
                 {/* Overlay Controls */}
-                <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-all z-10">
+                <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-all">
                    <div className="flex items-center gap-4">
-                      <Button 
-                        size="icon" 
-                        className="h-10 w-10 rounded-full bg-white text-black hover:bg-white/90"
-                        onClick={(e) => { e.stopPropagation(); togglePlayback(); }}
-                      >
-                         {isPlaying ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 fill-current" />}
+                      <Button size="icon" className="h-10 w-10 rounded-full bg-white text-black hover:bg-white/90">
+                         <Play className="h-5 w-5 fill-current" />
                       </Button>
-                      <div 
-                        className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden cursor-pointer group/progress" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          seekTo((e.clientX - rect.left) / rect.width);
-                        }}
-                      >
-                         <div 
-                           className="h-full bg-[#085CF0] transition-all duration-100 ease-linear" 
-                           style={{ width: `${totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0}%` }} 
-                         />
+                      <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
+                         <div className="h-full bg-[#085CF0] w-1/3" />
                       </div>
-                      <span className="text-xs font-mono font-bold">{Math.floor(currentTime)}s / {totalDuration}s</span>
+                      <span className="text-xs font-mono font-bold">03:20 / {totalDuration}S</span>
                       <Button size="icon" variant="ghost" className="text-white hover:bg-white/10">
                          <Maximize2 className="h-5 w-5" />
                       </Button>
@@ -915,8 +668,8 @@ export default function PlaylistEditor() {
           </div>
 
           {/* Horizontal Timeline Container */}
-          <div className="h-64 border-t border-white/5 bg-[#0c0c0e]/80 backdrop-blur-md flex flex-col overflow-hidden">
-             <div className="px-6 py-3 flex items-center justify-between border-b border-white/5 bg-black/20 shrink-0">
+          <div className="h-64 border-t border-white/5 bg-[#0c0c0e]/80 backdrop-blur-md flex flex-col">
+             <div className="px-6 py-3 flex items-center justify-between border-b border-white/5 bg-black/20">
                 <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
                   Timeline de Exibição <Badge variant="outline" className="text-[9px] border-white/10">{items.length} Itens</Badge>
                 </h3>
@@ -936,152 +689,47 @@ export default function PlaylistEditor() {
                 </div>
              </div>
 
-             <ScrollArea className="flex-1 w-full" ref={scrollAreaRef}>
-                <div 
-                  ref={timelineRef}
-                  className="p-6 relative flex gap-0 min-w-full h-[180px] cursor-crosshair bg-[#0c0c0e]/40"
-                  style={{ width: `${Math.max(totalDuration * pxPerSecond, 800)}px` }}
-                  onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    seekTo((e.clientX - rect.left) / rect.width);
-                  }}
-                >
-                  {/* Grid Lines para Snap Visual */}
-                  <div className="absolute inset-0 pointer-events-none opacity-20 flex">
-                    {Array.from({ length: Math.ceil(totalDuration) }).map((_, i) => (
-                      <div 
-                        key={i} 
-                        className="h-full border-l border-white/10" 
-                        style={{ width: `${pxPerSecond}px` }} 
-                      />
-                    ))}
-                  </div>
-
-                  {/* Playhead */}
-                  <div 
-                    ref={playheadRef}
-                    className="absolute top-0 bottom-0 w-1 bg-yellow-500 z-50 pointer-events-none shadow-[0_0_15px_rgba(234,179,8,0.8)] before:content-[''] before:absolute before:top-0 before:left-1/2 before:-translate-x-1/2 before:w-3 before:h-3 before:bg-yellow-500 before:rounded-full"
-                    style={{ left: `${totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0}%`, transform: 'translateX(-50%)' }}
-                  />
-
+             <ScrollArea className="flex-1 w-full">
+                <div className="p-6 flex gap-4 min-w-full">
                   <DndContext 
                     sensors={sensors}
                     collisionDetection={closestCenter}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
-                    onDragOver={(event) => {
-                      const { activatorEvent } = event;
-                      if (!activatorEvent || !timelineRef.current) return;
-                      
-                      const clientX = (activatorEvent as MouseEvent).clientX || 
-                                     ((activatorEvent as TouchEvent).touches && (activatorEvent as TouchEvent).touches[0].clientX);
-                      
-                      if (!clientX) return;
-
-                      const scrollContainer = timelineRef.current.parentElement;
-                      if (scrollContainer) {
-                        const rect = scrollContainer.getBoundingClientRect();
-                        const buffer = 150; 
-                        const speed = 25; 
-
-                        if (clientX < rect.left + buffer) {
-                          scrollContainer.scrollBy({ left: -speed, behavior: 'auto' });
-                        } else if (clientX > rect.right - buffer) {
-                          scrollContainer.scrollBy({ left: speed, behavior: 'auto' });
-                        }
-                      }
-                    }}
+                    modifiers={[restrictToHorizontalAxis]}
                   >
                     <SortableContext 
                       items={items.map(i => i.id)}
                       strategy={horizontalListSortingStrategy}
                     >
-                      <div className="flex items-center h-full min-w-full">
-                        <AnimatePresence>
-                          {items.map((item, index) => (
-                            <SortableItem 
-                              key={item.id} 
-                              item={item} 
-                              index={index}
-                              isSelected={selectedItem?.id === item.id}
-                              onSelect={setSelectedItem}
-                              width={totalDuration > 0 ? `${(item.duration / totalDuration) * 100}%` : '200px'}
-                              isCurrent={index === currentIndex && isPlaying}
-                              isLastDropped={lastDroppedId === item.id}
-                            />
-                          ))}
-                        </AnimatePresence>
-                      </div>
+                      <AnimatePresence>
+                        {items.map((item, index) => (
+                          <SortableItem 
+                            key={item.id} 
+                            item={item} 
+                            index={index}
+                            isSelected={selectedItem?.id === item.id}
+                            onSelect={setSelectedItem}
+                          />
+                        ))}
+                      </AnimatePresence>
                     </SortableContext>
 
-                    <DragOverlay 
-                      dropAnimation={{
-                        duration: 500,
-                        easing: 'cubic-bezier(0.18, 0.89, 0.32, 1.28)',
-                        sideEffects: defaultDropAnimationSideEffects({
-                          styles: {
-                            active: {
-                              opacity: '0.3',
-                            },
-                          },
-                        }),
-                      }}
-                    >
-                      {activeId && items.find(i => i.id === activeId) ? (() => {
-                        const draggedItem = items.find(i => i.id === activeId)!;
-                        const media = draggedItem.media;
-                        // Calcular largura exata baseada na lógica da timeline
-                        const timelineWidth = Math.max(totalDuration * pxPerSecond, 800);
-                        const calculatedWidth = totalDuration > 0 ? (draggedItem.duration / totalDuration) * timelineWidth : 200;
-                        
-                        return (
-                          <div 
-                            className="rounded-xl border-4 border-[#085CF0] bg-black/80 backdrop-blur-3xl shadow-[0_0_50px_rgba(8,92,240,0.6)] flex items-center justify-center overflow-hidden pointer-events-none z-[9999]"
-                            style={{ 
-                              width: `${calculatedWidth}px`,
-                              height: '128px',
-                              transform: 'scale(1.05) rotate(1deg)',
-                              opacity: 0.9,
-                            }}
-                          >
-                             {/* Preview Image */}
-                             <div className="absolute inset-0">
-                               <img 
-                                 src={media?.thumbnail_url || media?.file_url} 
-                                 className="w-full h-full object-cover opacity-90"
-                                 alt=""
-                               />
-                               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-                             </div>
-
-                             {/* Header Label */}
-                             <div className="absolute top-0 left-0 right-0 p-2 bg-[#085CF0] text-white text-[9px] font-black uppercase tracking-widest text-center z-20 border-b border-white/10 flex items-center justify-center gap-2">
-                               <GripVertical className="h-3 w-3" />
-                               Movendo Item
-                             </div>
-                             
-                             {/* Center Info */}
-                             <div className="relative z-30 flex flex-col items-center gap-1">
-                               <div className="bg-[#085CF0] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg border border-white/20">
-                                 {draggedItem.duration}s
-                               </div>
-                               <span className="text-[8px] font-bold text-white/70 uppercase tracking-tighter truncate max-w-[150px]">
-                                 {media?.name || 'Mídia'}
-                               </span>
-                             </div>
-
-                             {/* Selection Border Glow */}
-                             <div className="absolute inset-0 border-2 border-white/20 rounded-lg pointer-events-none" />
-                          </div>
-                        );
-                      })() : null}
+                    <DragOverlay dropAnimation={{
+                      sideEffects: defaultDropAnimationSideEffects({
+                        styles: { active: { opacity: '0.5' } }
+                      })
+                    }}>
+                      {activeId ? (
+                        <div className="w-48 h-32 rounded-xl border border-[#085CF0] bg-[#085CF0]/20 backdrop-blur-xl shadow-2xl scale-105" />
+                      ) : null}
                     </DragOverlay>
                   </DndContext>
                   
                   {/* Quick Add Button at the end of timeline */}
                   <Button 
                     variant="outline" 
-                    className="shrink-0 w-48 h-32 ml-4 rounded-xl border-2 border-dashed border-white/5 bg-white/5 hover:bg-white/10 hover:border-[#085CF0]/30 transition-all flex flex-col items-center justify-center gap-2"
+                    className="shrink-0 w-48 h-32 rounded-xl border-2 border-dashed border-white/5 bg-white/5 hover:bg-white/10 hover:border-[#085CF0]/30 transition-all flex flex-col items-center justify-center gap-2"
                   >
                     <Plus className="h-6 w-6 text-white/20" />
                     <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">Adicionar</span>
@@ -1149,7 +797,7 @@ export default function PlaylistEditor() {
                               value={[selectedItem.duration]} 
                               min={1} 
                               max={60} 
-                              step={0.5}
+                              step={1}
                               onValueChange={(val) => updateItemDuration(selectedItem.id, val[0])}
                               className="py-4"
                             />
