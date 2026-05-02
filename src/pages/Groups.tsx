@@ -109,6 +109,100 @@ export default function GroupsPage() {
     hasStores: boolean;
   }>({ open: false, groupId: "", groupName: "", hasChildren: false, hasStores: false });
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
+  const [activeDragItem, setActiveDragItem] = useState<any>(null);
+
+  const handleDragStart = (event: any) => {
+    setActiveDragItem(event.active.data.current);
+  };
+
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    setActiveDragItem(null);
+    const { active, over } = event;
+
+    if (!over) return;
+
+    const activeData = active.data.current;
+    const overData = over.data.current;
+
+    if (!activeData || !overData) return;
+
+    // Cases:
+    // 1. Device -> Group
+    if (activeData.type === 'device' && overData.type === 'group') {
+      const device = activeData.device;
+      const group = overData.group;
+      
+      try {
+        // Link device directly to group
+        await supabase.from('group_devices').delete().eq('device_id', device.device_uuid);
+        const { error } = await supabase.from('group_devices').insert({
+          group_id: group.id,
+          device_id: device.device_uuid,
+          tenant_id: tenantId
+        });
+        
+        if (error) throw error;
+        toast.success(`${device.apelido_interno} vinculado ao grupo ${group.name}`);
+        refetchGroups();
+        refetchDevices();
+      } catch (e: any) {
+        toast.error("Erro ao vincular dispositivo: " + e.message);
+      }
+    }
+    
+    // 2. Device -> Store
+    else if (activeData.type === 'device' && overData.type === 'store') {
+      const device = activeData.device;
+      const store = overData.store;
+      
+      try {
+        // Update store_id of the device
+        const { error } = await supabase
+          .from('dispositivos')
+          .update({ store_id: store.id } as any)
+          .eq('device_uuid', device.device_uuid);
+        
+        if (error) throw error;
+        toast.success(`${device.apelido_interno} movido para ${store.name}`);
+        refetchDevices();
+        refetchStores();
+      } catch (e: any) {
+        toast.error("Erro ao mover dispositivo: " + e.message);
+      }
+    }
+    
+    // 3. Store -> Group
+    else if (activeData.type === 'store' && overData.type === 'group') {
+      const store = activeData.store;
+      const group = overData.group;
+      
+      try {
+        // Link store to group
+        await supabase.from('group_stores').delete().eq('store_id', store.id);
+        const { error } = await supabase.from('group_stores').insert({
+          group_id: group.id,
+          store_id: store.id,
+          tenant_id: tenantId
+        });
+        
+        if (error) throw error;
+        toast.success(`${store.name} vinculado ao grupo ${group.name}`);
+        refetchGroups();
+        refetchStores();
+      } catch (e: any) {
+        toast.error("Erro ao vincular loja: " + e.message);
+      }
+    }
+  }, [tenantId, refetchGroups, refetchDevices, refetchStores]);
+
   const enrichedGroups = useMemo(() => {
     if (!groups) return [];
     const safeDevices = devices || [];
