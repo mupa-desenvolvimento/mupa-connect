@@ -198,6 +198,9 @@ export default function PlaylistEditor() {
   const [showDebug, setShowDebug] = useState(false);
   const [mediaSearch, setMediaSearch] = useState("");
   const [appearanceConfig, setAppearanceConfig] = useState<any>({});
+  
+  const pxPerSecond = 20; // Escala global da timeline 
+
 
   // Timeline Engine State
   const [isPlaying, setIsPlaying] = useState(false);
@@ -283,17 +286,27 @@ export default function PlaylistEditor() {
     console.log("ITEMS STATE UPDATED. Count:", items.length, items);
   }, [items]);
 
-  // DND Sensors - Otimizado para Timeline
+  // DND Sensors - Otimizado para Timeline com Snap Magnético
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 4, // Snap mais reativo ao começar a arrastar
+        distance: 3, 
       },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  // Implementação de modificador de snap suave (ímã)
+  const createSnapModifier = (gridSize: number) => {
+    return ({ transform }: { transform: any }) => ({
+      ...transform,
+      x: Math.round(transform.x / gridSize) * gridSize,
+    });
+  };
+
+  const snapModifier = useCallback(createSnapModifier(pxPerSecond / 2), [pxPerSecond]);
 
   useEffect(() => {
     if (playlistData) {
@@ -617,7 +630,7 @@ export default function PlaylistEditor() {
     );
   }
 
-  const pxPerSecond = 20; // Scale: 20px per second
+  // pxPerSecond já definido globalmente no escopo do componente
 
   return (
     <div className="flex flex-col h-screen bg-[#09090b] text-white overflow-hidden">
@@ -900,7 +913,7 @@ export default function PlaylistEditor() {
                     collisionDetection={closestCenter}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
-                    modifiers={[restrictToHorizontalAxis]}
+                    modifiers={[restrictToHorizontalAxis, snapModifier]}
                   >
                     <SortableContext 
                       items={items.map(i => i.id)}
