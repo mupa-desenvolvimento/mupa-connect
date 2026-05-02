@@ -913,7 +913,7 @@ export default function PlaylistEditor() {
                     collisionDetection={closestCenter}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
-                    modifiers={[restrictToHorizontalAxis, snapModifier]}
+                    modifiers={[restrictToHorizontalAxis]} // Removido o snapModifier temporariamente para testar fluidez
                   >
                     <SortableContext 
                       items={items.map(i => i.id)}
