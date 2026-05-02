@@ -97,7 +97,7 @@ export default function GroupsPage() {
       if (memo.has(groupId)) return memo.get(groupId)!;
 
       const group = groups.find(g => g.id === groupId);
-      if (!group) return { storeCodes: new Set(), storeIds: new Set(), directDeviceIds: new Set() };
+      if (!group) return { storeIds: new Set(), directDeviceIds: new Set() };
 
       const storeIds = new Set(group.linked_store_ids || []);
       const directDeviceIds = new Set(group.direct_device_ids || []);
@@ -110,7 +110,7 @@ export default function GroupsPage() {
         childData.directDeviceIds.forEach(id => directDeviceIds.add(id));
       });
 
-      const result = { storeCodes: new Set<string>(), storeIds, directDeviceIds };
+      const result = { storeIds, directDeviceIds };
       memo.set(groupId, result);
       return result;
     };
