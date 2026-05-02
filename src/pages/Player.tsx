@@ -262,28 +262,43 @@ export default function PlayerPage() {
       <PlayerEngine 
         playlist={activePlaylist} 
         volume={volume}
+        appearance={appearance}
         onMediaChange={handleMediaChange}
       />
 
       {/* HUD overlay - Zero flickering absolute layers */}
-      <div className="absolute top-0 left-0 right-0 p-4 flex items-start justify-between bg-gradient-to-b from-black/60 to-transparent z-20 pointer-events-none">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-gradient-primary grid place-items-center font-display font-bold text-primary-foreground">M</div>
-          <div className="leading-tight">
-            <div className="font-display font-semibold">{deviceInfo?.apelido_interno || "Player Profissional"}</div>
-            <div className="text-[11px] uppercase tracking-widest opacity-70 font-mono">
-              {deviceInfo ? `Filial ${deviceInfo.num_filial}` : `Cache Local · ${deviceCode}`}
+      {(appearance?.show_device_name !== false || appearance?.show_datetime !== false) && (
+        <div className="absolute top-0 left-0 right-0 p-6 flex items-start justify-between bg-gradient-to-b from-black/80 to-transparent z-40 pointer-events-none">
+          <div className="flex items-center gap-3">
+            {appearance?.show_device_name !== false && (
+              <>
+                <div className="h-10 w-10 rounded-lg bg-gradient-primary grid place-items-center font-display font-bold text-primary-foreground text-xl shadow-lg">M</div>
+                <div className="leading-tight drop-shadow-md">
+                  <div className="font-display font-bold text-lg text-white">
+                    {deviceInfo?.apelido_interno || "Player Profissional"}
+                  </div>
+                  <div className="text-[11px] uppercase tracking-[0.2em] text-white/70 font-mono font-bold">
+                    {deviceInfo ? `Filial ${deviceInfo.num_filial}` : `Offline · ${deviceCode}`}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          
+          {appearance?.show_datetime !== false && (
+            <div className="text-right drop-shadow-md">
+              <div className="font-display text-3xl font-bold tabular-nums text-white">
+                {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+              </div>
+              <div className="text-[10px] uppercase tracking-widest text-white/60 font-mono">
+                {now.toLocaleDateString("pt-BR", { weekday: 'short', day: '2-digit', month: 'short' })}
+              </div>
             </div>
-          </div>
+          )}
         </div>
-        <div className="text-right">
-          <div className="font-display text-2xl tabular-nums">
-            {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-          </div>
-        </div>
-      </div>
+      )}
 
-      <div className="absolute bottom-3 right-3 z-30 flex flex-col items-end gap-2 pointer-events-none">
+      <div className="absolute bottom-3 right-3 z-[70] flex flex-col items-end gap-2 pointer-events-none">
         {isSyncing && (
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/20 backdrop-blur-md border border-primary/30 text-primary animate-in fade-in zoom-in duration-300">
             <RefreshCw className="h-3 w-3 animate-spin" />
@@ -291,14 +306,16 @@ export default function PlayerPage() {
           </div>
         )}
         
-        <div className="px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-sm border border-white/10 font-mono text-xs text-white/80 tracking-wider select-none">
-          ID: {deviceInfo?.serial || deviceCode}
-          {lastSyncTime && (
-            <span className="ml-2 opacity-40 text-[9px]">
-              V.{lastSyncTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-            </span>
-          )}
-        </div>
+        {appearance?.show_serial !== false && (
+          <div className="px-3 py-1.5 rounded-md bg-black/40 backdrop-blur-sm border border-white/5 font-mono text-[10px] text-white/40 tracking-wider select-none">
+            SERIAL: {deviceInfo?.serial || deviceCode}
+            {lastSyncTime && (
+              <span className="ml-2 opacity-30">
+                V.{lastSyncTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
