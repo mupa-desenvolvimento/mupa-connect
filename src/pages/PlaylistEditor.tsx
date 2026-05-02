@@ -630,7 +630,7 @@ export default function PlaylistEditor() {
     );
   }
 
-  const pxPerSecond = 20; // Scale: 20px per second
+  // pxPerSecond já definido globalmente no escopo do componente
 
   return (
     <div className="flex flex-col h-screen bg-[#09090b] text-white overflow-hidden">
