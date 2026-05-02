@@ -250,6 +250,16 @@ export default function PlaylistEditor() {
       return;
     }
 
+    // Validação de UUID para playlists existentes
+    const isUuid = (val: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+    
+    if (id !== "new" && !isUuid(id!)) {
+      toast.error("ID de playlist inválido", {
+        description: "O identificador da playlist deve ser um UUID válido."
+      });
+      return;
+    }
+
     setIsSaving(true);
     setSaveStatus("saving");
     const startTime = Date.now();
