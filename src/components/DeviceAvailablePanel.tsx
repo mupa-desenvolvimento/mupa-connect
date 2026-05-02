@@ -454,7 +454,7 @@ export function DeviceAvailablePanel({
             </div>
           </div>
           {viewMode === "devices" && selectedIds.size > 0 && (
-            <Badge className="bg-[#085CF0] text-white border-none shadow-lg shadow-[#085CF0]/20 animate-in zoom-in-95 font-bold px-2 py-0.5">
+            <Badge className="bg-primary text-white border-none shadow-lg shadow-primary/20 animate-in zoom-in-95 font-bold px-2 py-0.5">
               {selectedIds.size} SELECIONADOS
             </Badge>
           )}
