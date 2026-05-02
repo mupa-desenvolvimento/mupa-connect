@@ -198,6 +198,9 @@ export default function PlaylistEditor() {
   const [showDebug, setShowDebug] = useState(false);
   const [mediaSearch, setMediaSearch] = useState("");
   const [appearanceConfig, setAppearanceConfig] = useState<any>({});
+  
+  const pxPerSecond = 20; // Escala global da timeline 
+
 
   // Timeline Engine State
   const [isPlaying, setIsPlaying] = useState(false);
