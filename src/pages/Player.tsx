@@ -57,8 +57,11 @@ export default function PlayerPage() {
       // Step A: Load Local Cache Immediately
       const cachedManifest = ManifestManager.getManifest(deviceCode);
       if (cachedManifest) {
-        console.log("[Player] Resuming from offline manifest");
+        console.log("[Player] Resuming from offline manifest", cachedManifest);
         setManifest(cachedManifest);
+        if (cachedManifest.appearance_config) {
+          setAppearance(cachedManifest.appearance_config);
+        }
         setIsLoading(false);
       }
 
