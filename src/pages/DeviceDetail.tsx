@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, ExternalLink, Loader2, Save, Store } from "lucide-react";
+import { ArrowLeft, ExternalLink, Loader2, Save, Store, Wrench, Monitor } from "lucide-react";
 import { toast } from "sonner";
 
 interface DeviceRow {
@@ -17,6 +18,7 @@ interface DeviceRow {
   status: string;
   resolution: string | null;
   num_filial: string | null;
+  is_maintenance: boolean;
 }
 
 export default function DeviceDetailPage() {
@@ -25,13 +27,15 @@ export default function DeviceDetailPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [numFilial, setNumFilial] = useState("");
+  const [deviceName, setDeviceName] = useState("");
+  const [isMaintenance, setIsMaintenance] = useState(false);
 
   const fetchDevice = async () => {
     if (!id) return;
     setLoading(true);
     const { data, error } = await supabase
       .from("dispositivos")
-      .select("id, apelido_interno, serial, online, num_filial")
+      .select("id, apelido_interno, serial, online, num_filial, is_maintenance")
       .eq("id", Number(id))
       .maybeSingle();
 
@@ -49,8 +53,11 @@ export default function DeviceDetailPage() {
         status: data.online ? "online" : "offline",
         resolution: null,
         num_filial: data.num_filial ?? "",
+        is_maintenance: !!data.is_maintenance,
       });
       setNumFilial(data.num_filial ?? "");
+      setDeviceName(data.apelido_interno ?? "");
+      setIsMaintenance(!!data.is_maintenance);
     } else {
       setDevice(null);
     }
@@ -61,23 +68,51 @@ export default function DeviceDetailPage() {
     fetchDevice();
   }, [id]);
 
-  const handleUpdateStore = async () => {
+  const handleUpdateDevice = async () => {
     if (!id || !device) return;
     
     setSaving(true);
     const { error } = await supabase
       .from("dispositivos")
-      .update({ num_filial: numFilial })
+      .update({ 
+        apelido_interno: deviceName,
+        num_filial: numFilial,
+        is_maintenance: isMaintenance
+      })
       .eq("id", Number(id));
 
     if (error) {
-      toast.error("Erro ao atualizar a loja");
+      toast.error("Erro ao atualizar o dispositivo");
       console.error(error);
     } else {
-      toast.success("Loja atualizada com sucesso");
-      setDevice(prev => prev ? { ...prev, num_filial: numFilial } : null);
+      toast.success("Dispositivo atualizado com sucesso");
+      setDevice(prev => prev ? { 
+        ...prev, 
+        name: deviceName,
+        num_filial: numFilial,
+        is_maintenance: isMaintenance
+      } : null);
     }
     setSaving(false);
+  };
+
+  const toggleMaintenance = async (checked: boolean) => {
+    if (!id || !device) return;
+    
+    setIsMaintenance(checked);
+    const { error } = await supabase
+      .from("dispositivos")
+      .update({ is_maintenance: checked })
+      .eq("id", Number(id));
+
+    if (error) {
+      toast.error("Erro ao atualizar modo manutenção");
+      setIsMaintenance(!checked);
+      console.error(error);
+    } else {
+      toast.success(checked ? "Modo manutenção ativado" : "Modo manutenção desativado");
+      setDevice(prev => prev ? { ...prev, is_maintenance: checked } : null);
+    }
   };
 
   if (loading) {
@@ -105,7 +140,7 @@ export default function DeviceDetailPage() {
     <>
       <PageHeader
         title={device.name}
-        description={`${device.device_code ?? "—"} · ${device.resolution ?? "—"} · ${device.status}`}
+        description={`${device.device_code ?? "—"} · ${device.status}`}
         actions={
           <>
             <Button asChild variant="outline">
@@ -122,44 +157,91 @@ export default function DeviceDetailPage() {
         }
       />
 
-      <div className="grid gap-6">
+      {device.is_maintenance && (
+        <div className="mb-6 animate-in fade-in slide-in-from-top-4 duration-500">
+          <Card className="overflow-hidden border-yellow-500/50 bg-yellow-500/5">
+            <img 
+              src="https://pub-0e15cc358ba84ff2a24226b12278433b.r2.dev/Banner%20Manutenc%CC%A7a%CC%83o.jpg" 
+              alt="Banner Manutenção" 
+              className="w-full h-auto object-cover max-h-[300px]"
+            />
+            <CardContent className="p-4 flex items-center gap-3 text-yellow-700 dark:text-yellow-400">
+              <Wrench className="h-5 w-5 animate-pulse" />
+              <p className="font-medium text-lg">Este dispositivo está em modo de manutenção.</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <Store className="h-5 w-5" />
-              Configuração da Loja
+              <Monitor className="h-5 w-5 text-primary" />
+              Informações do Dispositivo
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="flex flex-col gap-4 max-w-sm">
-              <div className="space-y-2">
-                <Label htmlFor="num_filial">Número da Filial / Loja</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="num_filial"
-                    placeholder="Ex: 001"
-                    value={numFilial}
-                    onChange={(e) => setNumFilial(e.target.value)}
-                  />
-                  <Button 
-                    onClick={handleUpdateStore} 
-                    disabled={saving || numFilial === device.num_filial}
-                  >
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-                    Salvar
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Altere o número da loja associada a este dispositivo.
-                </p>
-              </div>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="device_name">Nome do Dispositivo</Label>
+              <Input
+                id="device_name"
+                placeholder="Ex: Terminal 01"
+                value={deviceName}
+                onChange={(e) => setDeviceName(e.target.value)}
+              />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="num_filial">Número da Filial / Loja</Label>
+              <Input
+                id="num_filial"
+                placeholder="Ex: 001"
+                value={numFilial}
+                onChange={(e) => setNumFilial(e.target.value)}
+              />
+            </div>
+
+            <Button 
+              className="w-full"
+              onClick={handleUpdateDevice} 
+              disabled={saving || (deviceName === device.name && numFilial === device.num_filial)}
+            >
+              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+              Salvar Alterações
+            </Button>
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Wrench className="h-5 w-5 text-primary" />
+              Estado de Manutenção
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
+              <div className="space-y-0.5">
+                <Label className="text-base">Bloquear para manutenção</Label>
+                <p className="text-sm text-muted-foreground">
+                  Quando ativo, o dispositivo exibirá o banner de manutenção e suspenderá as operações normais.
+                </p>
+              </div>
+              <Switch 
+                checked={isMaintenance}
+                onCheckedChange={toggleMaintenance}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mt-6">
         <DeviceCommandPanel deviceId={device.id} deviceName={device.name} />
       </div>
     </>
   );
 }
+
 
