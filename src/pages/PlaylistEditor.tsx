@@ -318,15 +318,20 @@ export default function PlaylistEditor() {
       setAppearanceConfig(playlistData.appearance_config || {});
       
       if (playlistData.playlist_items && playlistData.playlist_items.length > 0) {
-        const mappedItems = playlistData.playlist_items.map((it: any) => ({
-          id: it.id,
-          dbId: it.id,
-          mediaId: it.media_id,
-          duration: it.duracao,
-          priority: it.prioridade || 1,
-          type: it.tipo,
-          media: medias?.find(m => m.id === it.media_id)
-        }));
+        const mappedItems = playlistData.playlist_items.map((it: any) => {
+          // Garante que o mediaId extraído seja o UUID (media_id)
+          const mediaId = it.media_id;
+          
+          return {
+            id: it.id,
+            dbId: it.id,
+            mediaId: mediaId,
+            duration: it.duracao,
+            priority: it.prioridade || 1,
+            type: it.tipo,
+            media: medias?.find(m => m.id === mediaId)
+          };
+        });
         setItems(mappedItems);
         if (!selectedItem) {
           setSelectedItem(mappedItems[0]);
@@ -354,28 +359,30 @@ export default function PlaylistEditor() {
       return;
     }
 
-    // Validação de UUID (formato canônico) para IDs persistidos
+    // Validação estrita de UUID (Requisito 5)
     const isUuid = (val: any): val is string =>
       typeof val === "string" &&
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
 
     if (id !== "new" && !isUuid(id)) {
-      toast.error("ID de playlist inválido", {
-        description: `O identificador "${id}" não é um UUID válido. Reabra a playlist a partir da lista.`,
+      console.error("ERRO: ID da playlist inválido (não é UUID):", id);
+      toast.error("Erro crítico: ID da playlist inválido", {
+        description: `O identificador "${id}" não é um UUID. Por favor, volte e abra a playlist novamente.`,
       });
       return;
     }
 
-    // Valida media_id de cada item antes de tentar persistir (evita 22P02 no Postgres)
+    // Validação estrita dos itens antes de salvar (Requisito 2 e 5)
     const invalidItems = updatedItems.filter((it) => !isUuid(it.mediaId));
-    let safeItems = updatedItems;
     if (invalidItems.length > 0) {
-      console.error("Itens com mediaId inválido:", invalidItems);
-      toast.error("Mídia inválida na playlist", {
-        description: `${invalidItems.length} item(ns) possuem ID de mídia inválido e foram ignorados. Remova-os e tente novamente.`,
+      console.error("ERRO: Itens com IDs inválidos detectados:", invalidItems);
+      toast.error("Erro de validação", {
+        description: `${invalidItems.length} item(ns) possuem IDs de mídia inválidos. Remova-os e tente novamente.`,
       });
-      safeItems = updatedItems.filter((it) => isUuid(it.mediaId));
+      return; // Interrompe o salvamento se houver IDs inválidos
     }
+
+    const safeItems = updatedItems;
 
     setIsSaving(true);
     setSaveStatus("saving");
@@ -457,14 +464,15 @@ export default function PlaylistEditor() {
       
       if (deleteError) throw deleteError;
 
-      // 2. Inserir novos itens se existirem
+      // 2. Inserir novos itens se existirem (Requisito 2 e 3)
       if (safeItems.length > 0) {
-        // Garantir que todos os campos *_id sejam UUID válidos (Requisito 2 e 3)
         const itemsToInsert = safeItems.map((it, idx) => {
-          // Validação extra redundante para segurança (Requisito 4)
+          // Double-check de segurança (Requisito 5)
           if (!isUuid(it.mediaId)) {
-            console.warn(`Aviso: media_id ignorado pois não é UUID: ${it.mediaId}`);
-            return null;
+            throw new Error(`ID de mídia inválido (não é UUID): ${it.mediaId}`);
+          }
+          if (!isUuid(currentPlaylistId)) {
+            throw new Error(`ID da playlist inválido (não é UUID): ${currentPlaylistId}`);
           }
           
           return {
@@ -473,12 +481,12 @@ export default function PlaylistEditor() {
             duracao: Number(it.duration),
             prioridade: Number(it.priority || 1),
             tipo: it.type,
-            ordem: idx + 1,
-            position: idx + 1,
-            conteudo_id: String(it.mediaId), // Mantendo como string mas garantindo que o valor é o UUID
+            ordem: idx + 1, // Ordem numérica correta
+            position: idx + 1, // Posição numérica correta
+            conteudo_id: String(it.mediaId), // Mantendo como string para o campo conteudo_id
             ativo: true
           };
-        }).filter(item => item !== null);
+        });
         
         if (itemsToInsert.length > 0) {
           const { error: insertError } = await supabase
