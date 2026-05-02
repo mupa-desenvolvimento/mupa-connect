@@ -72,9 +72,18 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, appearance =
     if (item.type === "video") {
       const video = layer === "A" ? videoARef.current : videoBRef.current;
       if (video) {
+        // WebView compat: Force load/reset
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
+        
+        const source = getDisplayUrl(item);
+        video.src = source;
         video.currentTime = 0;
+        
         video.play()
           .then(() => {
+            console.log("[PlayerEngine] Video playing successfully");
             const safetyDuration = ((item.duration || 10) + 5) * 1000;
             timerRef.current = setTimeout(() => {
               console.warn("[PlayerEngine] Video safety timeout reached");
@@ -82,8 +91,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, appearance =
             }, safetyDuration);
           })
           .catch(err => {
-            console.warn("[PlayerEngine] Video play failed, skipping in 2s", err);
-            timerRef.current = setTimeout(moveToNext, 2000);
+            console.warn("[PlayerEngine] Video play failed, showing image or skipping", err);
+            // Fallback for video error on old Android: skip or try next
+            timerRef.current = setTimeout(moveToNext, 3000);
           });
       }
     } else {
@@ -91,7 +101,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, appearance =
       const duration = (item.duration || 10) * 1000;
       timerRef.current = setTimeout(moveToNext, duration);
     }
-  }, [playlist]);
+  }, [playlist, getDisplayUrl, moveToNext]);
 
   const moveToNext = useCallback(() => {
     if (isTransitioningRef.current || !playlist.length) return;
