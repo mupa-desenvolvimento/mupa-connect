@@ -184,7 +184,6 @@ export default function GroupsPage() {
         store_count: storeIds.size
       };
     });
-    console.log("DEBUG: GroupsPage - enrichedGroups total:", result.length);
     return result;
   }, [groups, devices, stores]);
 
