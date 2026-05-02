@@ -520,7 +520,7 @@ export function DeviceAvailablePanel({
                   onClick={handleSelectAll}
                   className={cn(
                     "h-9 w-9 rounded-lg border border-white/5 bg-white/[0.02] transition-colors",
-                    selectedIds.size > 0 ? "text-[#085CF0] border-[#085CF0]/30" : "text-white/20 hover:text-white/40"
+                    selectedIds.size > 0 ? "text-primary border-primary/30" : "text-white/20 hover:text-white/40"
                   )}
                   title="Selecionar/Desmarcar todos"
                 >
