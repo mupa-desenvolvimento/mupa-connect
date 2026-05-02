@@ -788,15 +788,29 @@ export default function PlaylistEditor() {
                 )}
                 
                 {/* Overlay Controls */}
-                <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-all">
+                <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-all z-10">
                    <div className="flex items-center gap-4">
-                      <Button size="icon" className="h-10 w-10 rounded-full bg-white text-black hover:bg-white/90">
-                         <Play className="h-5 w-5 fill-current" />
+                      <Button 
+                        size="icon" 
+                        className="h-10 w-10 rounded-full bg-white text-black hover:bg-white/90"
+                        onClick={(e) => { e.stopPropagation(); togglePlayback(); }}
+                      >
+                         {isPlaying ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 fill-current" />}
                       </Button>
-                      <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
-                         <div className="h-full bg-[#085CF0] w-1/3" />
+                      <div 
+                        className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden cursor-pointer group/progress" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          seekTo((e.clientX - rect.left) / rect.width);
+                        }}
+                      >
+                         <div 
+                           className="h-full bg-[#085CF0] transition-all duration-100 ease-linear" 
+                           style={{ width: `${totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0}%` }} 
+                         />
                       </div>
-                      <span className="text-xs font-mono font-bold">03:20 / {totalDuration}S</span>
+                      <span className="text-xs font-mono font-bold">{Math.floor(currentTime)}s / {totalDuration}s</span>
                       <Button size="icon" variant="ghost" className="text-white hover:bg-white/10">
                          <Maximize2 className="h-5 w-5" />
                       </Button>
@@ -806,8 +820,8 @@ export default function PlaylistEditor() {
           </div>
 
           {/* Horizontal Timeline Container */}
-          <div className="h-64 border-t border-white/5 bg-[#0c0c0e]/80 backdrop-blur-md flex flex-col">
-             <div className="px-6 py-3 flex items-center justify-between border-b border-white/5 bg-black/20">
+          <div className="h-64 border-t border-white/5 bg-[#0c0c0e]/80 backdrop-blur-md flex flex-col overflow-hidden">
+             <div className="px-6 py-3 flex items-center justify-between border-b border-white/5 bg-black/20 shrink-0">
                 <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
                   Timeline de Exibição <Badge variant="outline" className="text-[9px] border-white/10">{items.length} Itens</Badge>
                 </h3>
@@ -827,8 +841,23 @@ export default function PlaylistEditor() {
                 </div>
              </div>
 
-             <ScrollArea className="flex-1 w-full">
-                <div className="p-6 flex gap-4 min-w-full">
+             <ScrollArea className="flex-1 w-full" ref={scrollAreaRef}>
+                <div 
+                  ref={timelineRef}
+                  className="p-6 relative flex gap-0 min-w-full h-[180px] cursor-crosshair bg-[#0c0c0e]/40"
+                  style={{ width: `${Math.max(totalDuration * pxPerSecond, 800)}px` }}
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    seekTo((e.clientX - rect.left) / rect.width);
+                  }}
+                >
+                  {/* Playhead */}
+                  <div 
+                    ref={playheadRef}
+                    className="absolute top-0 bottom-0 w-1 bg-yellow-500 z-50 pointer-events-none shadow-[0_0_15px_rgba(234,179,8,0.8)] before:content-[''] before:absolute before:top-0 before:left-1/2 before:-translate-x-1/2 before:w-3 before:h-3 before:bg-yellow-500 before:rounded-full"
+                    style={{ left: `${totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0}%`, transform: 'translateX(-50%)' }}
+                  />
+
                   <DndContext 
                     sensors={sensors}
                     collisionDetection={closestCenter}
@@ -848,6 +877,8 @@ export default function PlaylistEditor() {
                             index={index}
                             isSelected={selectedItem?.id === item.id}
                             onSelect={setSelectedItem}
+                            width={totalDuration > 0 ? `${(item.duration / totalDuration) * 100}%` : '200px'}
+                            isCurrent={index === currentIndex && isPlaying}
                           />
                         ))}
                       </AnimatePresence>
@@ -867,7 +898,7 @@ export default function PlaylistEditor() {
                   {/* Quick Add Button at the end of timeline */}
                   <Button 
                     variant="outline" 
-                    className="shrink-0 w-48 h-32 rounded-xl border-2 border-dashed border-white/5 bg-white/5 hover:bg-white/10 hover:border-[#085CF0]/30 transition-all flex flex-col items-center justify-center gap-2"
+                    className="shrink-0 w-48 h-32 ml-4 rounded-xl border-2 border-dashed border-white/5 bg-white/5 hover:bg-white/10 hover:border-[#085CF0]/30 transition-all flex flex-col items-center justify-center gap-2"
                   >
                     <Plus className="h-6 w-6 text-white/20" />
                     <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">Adicionar</span>
