@@ -100,6 +100,8 @@ export default function PlayerPage() {
     setVolume: (v) => setVolume(v),
     clearCache: () => { caches.keys().then(ks => ks.map(k => caches.delete(k))); },
     reboot: () => window.location.reload(),
+    playCampaign: (id) => console.log("Play campaign", id),
+    screenshot: () => Promise.resolve(""),
   });
 
   const handleMediaChange = useCallback((idx: number) => {
