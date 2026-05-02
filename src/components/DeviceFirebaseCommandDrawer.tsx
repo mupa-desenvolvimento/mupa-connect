@@ -304,26 +304,26 @@ export function DeviceFirebaseCommandDrawer({
               <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
                 Configurações
               </h3>
-              <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
+              <div className="space-y-4 rounded-lg border bg-muted/30 p-4 shadow-inner">
                 <div className="space-y-2">
-                  <Label htmlFor="drawer_device_name" className="text-xs">Nome do Dispositivo</Label>
+                  <Label htmlFor="drawer_device_name" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Nome do Dispositivo</Label>
                   <Input
                     id="drawer_device_name"
                     placeholder="Ex: Terminal 01"
                     value={deviceName}
                     onChange={(e) => setDeviceName(e.target.value)}
-                    className="h-9 text-sm"
+                    className="h-9 text-sm bg-background border-primary/20 focus:border-primary/50"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="drawer_num_filial" className="text-xs">Número da Filial / Loja</Label>
+                  <Label htmlFor="drawer_num_filial" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Número da Filial / Loja</Label>
                   <Input
                     id="drawer_num_filial"
                     placeholder="Ex: 001"
                     value={numFilial}
                     onChange={(e) => setNumFilial(e.target.value)}
-                    className="h-9 text-sm"
+                    className="h-9 text-sm bg-background border-primary/20 focus:border-primary/50"
                   />
                 </div>
 
