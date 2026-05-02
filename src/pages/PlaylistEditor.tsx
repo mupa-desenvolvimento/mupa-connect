@@ -108,10 +108,10 @@ const SortableItem = ({
   const media = item.media;
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: CSS.Translate.toString(transform), // Usar Translate para evitar distorção de escala em itens proporcionais
     transition,
-    zIndex: isDragging ? 50 : 1,
-    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 100 : 1,
+    opacity: isDragging ? 0.3 : 1, // Opacidade menor no original para destacar o arrasto
     width: width,
   };
 
