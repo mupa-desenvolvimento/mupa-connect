@@ -520,7 +520,7 @@ export default function GroupsPage() {
 
         <div className="flex-1 min-h-0 flex gap-6 overflow-hidden">
           <div className="flex-[3] min-w-0 flex flex-col gap-4 overflow-hidden bg-card p-4 rounded-xl border border-border/60 shadow-sm">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-h-0 flex flex-col overflow-hidden">
               <TabsList className="bg-background/50 border border-border/40 p-1 w-fit shrink-0">
                 <TabsTrigger value="groups" className="gap-2 data-[state=active]:bg-primary">
                   <Globe className="w-4 h-4" /> Grupos Globais
@@ -530,12 +530,12 @@ export default function GroupsPage() {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="groups" className="flex-1 mt-4 border-t border-border/40 pt-4 overflow-hidden flex flex-col">
-                <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+              <TabsContent value="groups" className="flex-1 min-h-0 mt-0 border-t border-border/40 data-[state=active]:flex data-[state=active]:flex-col overflow-hidden">
+                <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-2 pt-4">
                 {loadingGroups ? (
                   <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
                 ) : groups && groups.length > 0 ? (
-                  <div className="space-y-1 pb-20">
+                  <div className="space-y-1 pb-2">
                   {filteredGroups.map(group => (
                     <GroupTreeNode 
                       key={group.id} 
@@ -557,8 +557,8 @@ export default function GroupsPage() {
                 </div>
               </TabsContent>
 
-            <TabsContent value="stores" className="flex-1 mt-4 border-t border-border/40 pt-4 flex flex-col overflow-hidden">
-              <div className="flex items-center justify-between mb-4 shrink-0">
+            <TabsContent value="stores" className="flex-1 min-h-0 mt-0 border-t border-border/40 data-[state=active]:flex data-[state=active]:flex-col overflow-hidden">
+              <div className="flex items-center justify-between mb-4 pt-4 shrink-0">
                 <h3 className="text-sm font-semibold flex items-center gap-2">
                   <Filter className="w-4 h-4 text-primary" /> Listagem de Unidades
                 </h3>
@@ -567,11 +567,11 @@ export default function GroupsPage() {
                 </Button>
               </div>
               
-              <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+              <div className="flex-1 min-h-0 overflow-y-auto pr-2 custom-scrollbar">
                 {loadingStores ? (
                   <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
                 ) : filteredStores.length > 0 ? (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 pb-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 pb-2">
                     {filteredStores.map(store => (
                       <StoreCard 
                         key={store.id} 
