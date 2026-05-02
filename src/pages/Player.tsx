@@ -19,6 +19,29 @@ export default function PlayerPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
 
+  // 0. Global Error Recovery (Requisito 5 e 6)
+  useEffect(() => {
+    const handleError = (event: ErrorEvent | PromiseRejectionEvent) => {
+      const msg = 'reason' in event ? event.reason : event.message;
+      console.error("[Critical Error]", msg);
+      
+      // Se houver erro fatal no WebView, tenta dar um feedback visual mínimo
+      if (document.body) {
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = "position:fixed;bottom:10px;left:10px;background:rgba(0,0,0,0.8);color:red;font-size:8px;z-index:9999;padding:4px;border-radius:4px;";
+        errorDiv.innerText = "Err: " + String(msg).substring(0, 50);
+        document.body.appendChild(errorDiv);
+      }
+    };
+
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleError);
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleError);
+    };
+  }, []);
+
   // 1. Core Loader: Resolve Identity & Manifest (Offline-First)
   const [appearance, setAppearance] = useState<any>(null);
 
