@@ -6,6 +6,7 @@ import { useGroups } from "@/hooks/use-groups";
 import { useStores } from "@/hooks/use-stores";
 import { useDevices } from "@/hooks/use-devices";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Globe, Store, Plus, Search, Loader2, Package, Filter } from "lucide-react";
