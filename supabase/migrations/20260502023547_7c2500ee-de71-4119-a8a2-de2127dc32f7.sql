@@ -1,0 +1,1 @@
+ALTER TABLE public.dispositivos ADD COLUMN IF NOT EXISTS is_maintenance BOOLEAN DEFAULT false;
