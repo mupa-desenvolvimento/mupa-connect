@@ -159,7 +159,7 @@ export default function PlayerPage() {
     return () => {
       clearInterval(interval);
     };
-  }, [deviceCode]);
+  }, [deviceCode, reloadKey]);
 
   // 5. Heartbeat
   useEffect(() => {
