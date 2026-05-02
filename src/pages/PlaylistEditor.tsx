@@ -327,15 +327,19 @@ export default function PlaylistEditor() {
       
       if (playlistData.playlist_items && playlistData.playlist_items.length > 0) {
         const mappedItems = playlistData.playlist_items.map((it: any) => {
-          // Garante que o mediaId extraído seja o UUID (media_id)
+          // Garantir que estamos pegando o media_id (UUID) do banco de dados
           const mediaId = it.media_id;
           
+          if (!isUuid(mediaId)) {
+            console.error("ALERTA: media_id inválido carregado do banco:", mediaId);
+          }
+
           return {
-            id: it.id,
+            id: it.id, // ID único do item na playlist (UUID)
             dbId: it.id,
-            mediaId: mediaId,
-            duration: it.duracao,
-            priority: it.prioridade || 1,
+            mediaId: mediaId, // UUID da mídia
+            duration: Number(it.duracao),
+            priority: Number(it.prioridade || 1),
             type: it.tipo,
             media: medias?.find(m => m.id === mediaId)
           };
