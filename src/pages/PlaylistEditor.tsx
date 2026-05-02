@@ -941,18 +941,23 @@ export default function PlaylistEditor() {
                     }}>
                       {activeId ? (
                         <div 
-                          className="rounded-xl border-2 border-[#085CF0] bg-[#085CF0]/30 backdrop-blur-2xl shadow-[0_0_30px_rgba(8,92,240,0.4)] flex items-center justify-center overflow-hidden"
+                          className="rounded-xl border-4 border-[#085CF0] bg-black/40 backdrop-blur-3xl shadow-[0_0_50px_rgba(8,92,240,0.6)] flex items-center justify-center overflow-hidden ring-4 ring-white/20 ring-inset"
                           style={{ 
                             width: `${(items.find(i => i.id === activeId)?.duration / totalDuration) * (timelineRef.current?.offsetWidth || 0)}px`,
-                            height: '128px' 
+                            height: '128px',
+                            transform: 'rotate(2deg) scale(1.05)',
+                            transformOrigin: 'center center'
                           }}
                         >
-                           <div className="absolute inset-0 bg-gradient-to-br from-[#085CF0]/20 to-transparent" />
+                           <div className="absolute inset-0 bg-gradient-to-br from-[#085CF0]/40 via-transparent to-black/60 z-10" />
+                           <div className="absolute top-0 left-0 right-0 p-2 bg-[#085CF0] text-white text-[10px] font-bold uppercase tracking-widest text-center z-20">
+                             Movendo Item
+                           </div>
                            <img 
                              src={items.find(i => i.id === activeId)?.media?.thumbnail_url || items.find(i => i.id === activeId)?.media?.file_url} 
-                             className="absolute inset-0 w-full h-full object-cover opacity-40"
+                             className="absolute inset-0 w-full h-full object-cover opacity-60"
                            />
-                           <GripVertical className="h-6 w-6 text-white relative z-10" />
+                           <GripVertical className="h-8 w-8 text-white relative z-30 drop-shadow-[0_0_10px_rgba(0,0,0,0.5)]" />
                         </div>
                       ) : null}
                     </DragOverlay>
