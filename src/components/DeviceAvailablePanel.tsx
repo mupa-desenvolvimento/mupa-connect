@@ -410,7 +410,7 @@ export function DeviceAvailablePanel({
     <div 
       ref={setNodeRef}
       className={cn(
-        "flex flex-col bg-[#0c0c0e] border transition-all duration-300 rounded-3xl shadow-2xl relative",
+        "flex flex-col h-full bg-[#0c0c0e] border transition-all duration-300 rounded-3xl overflow-hidden shadow-2xl relative",
         isOver ? "border-[#085CF0] ring-4 ring-[#085CF0]/10 bg-[#085CF0]/5" : "border-white/5"
       )}
     >
@@ -532,7 +532,7 @@ export function DeviceAvailablePanel({
         </div>
       </div>
 
-      <div className="px-4 py-4">
+      <ScrollArea className="flex-1 px-4 py-4">
         <div className="space-y-3 pb-8">
           {viewMode === "devices" ? (
             isLoading ? (
@@ -566,7 +566,7 @@ export function DeviceAvailablePanel({
             )
           )}
         </div>
-      </div>
+      </ScrollArea>
 
       <div className="p-4 bg-black/40 border-t border-white/5 flex items-center justify-center gap-2.5 text-white/20">
         <MousePointer2 className="w-3.5 h-3.5" />
