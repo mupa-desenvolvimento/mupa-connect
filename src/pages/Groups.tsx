@@ -373,7 +373,7 @@ export default function GroupsPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex flex-col gap-4 overflow-hidden">
+    <div className="h-[calc(100vh-180px)] flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar">
       <div className="flex justify-between items-center pr-2">
         <PageHeader
           title="Gestão de Grupos"
@@ -402,9 +402,9 @@ export default function GroupsPage() {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 flex gap-6 overflow-hidden">
+      <div className="flex gap-6">
         <div className="flex-[3] min-w-0 flex flex-col gap-4">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col">
             <TabsList className="bg-white/5 border border-white/10 p-1 w-fit">
               <TabsTrigger value="groups" className="gap-2 data-[state=active]:bg-primary">
                 <Globe className="w-4 h-4" /> Grupos Globais
@@ -414,7 +414,7 @@ export default function GroupsPage() {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="groups" className="flex-1 mt-4 overflow-y-auto pr-2 custom-scrollbar border-t border-white/5 pt-4">
+            <TabsContent value="groups" className="mt-4 border-t border-white/5 pt-4">
               {loadingGroups ? (
                 <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
               ) : groups && groups.length > 0 ? (
@@ -439,7 +439,7 @@ export default function GroupsPage() {
               )}
             </TabsContent>
 
-            <TabsContent value="stores" className="flex-1 mt-4 flex flex-col min-h-0">
+            <TabsContent value="stores" className="mt-4 flex flex-col">
               <div className="flex items-center justify-between mb-4 px-1">
                 <h3 className="text-sm font-semibold flex items-center gap-2">
                   <Filter className="w-4 h-4 text-primary" /> Listagem de Unidades
@@ -449,7 +449,7 @@ export default function GroupsPage() {
                 </Button>
               </div>
               
-              <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+              <div className="pr-2">
                 {loadingStores ? (
                   <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
                 ) : filteredStores.length > 0 ? (
@@ -475,7 +475,7 @@ export default function GroupsPage() {
         </div>
 
         {/* Sidebar Panel */}
-        <div className="flex-1 min-w-[320px] max-w-[400px] h-full overflow-hidden flex flex-col">
+        <div className="flex-1 min-w-[320px] max-w-[400px] flex flex-col">
           <DeviceAvailablePanel 
             selectedIds={selectedDevices}
             onToggleSelection={(ids: string[]) => {
