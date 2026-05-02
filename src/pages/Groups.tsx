@@ -490,33 +490,33 @@ export default function GroupsPage() {
       onDragEnd={handleDragEnd}
     >
       <div className="h-[calc(100vh-8rem)] flex flex-col gap-4 overflow-hidden">
-        <div className="flex justify-between items-center pr-2 shrink-0">
-          <PageHeader
-            title="Gestão de Grupos"
-            description="Administre a hierarquia global de lojas, setores e playlists de forma intuitiva."
-          />
-          <div className="flex items-center gap-3">
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input 
-                placeholder="Buscar..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 bg-white/5 border-white/10"
-              />
-            </div>
-            <Button 
-              className="bg-primary hover:bg-primary/90 h-9"
-              onClick={() => {
-                setGroupFormData({ name: "", playlistMode: "inherit", playlistId: "" });
-                setGroupModal({ open: true, mode: 'create', parentId: null });
-              }}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Novo Grupo
-            </Button>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-card p-4 rounded-xl border border-border/60 shadow-sm shrink-0">
+        <PageHeader
+          title="Gestão de Grupos"
+          description="Administre a hierarquia global de lojas, setores e playlists de forma intuitiva."
+        />
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="relative flex-1 md:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input 
+              placeholder="Buscar..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-10 bg-background/50 border-border/40 focus:bg-background"
+            />
           </div>
+          <Button 
+            className="bg-gradient-primary shadow-glow h-10"
+            onClick={() => {
+              setGroupFormData({ name: "", playlistMode: "inherit", playlistId: "" });
+              setGroupModal({ open: true, mode: 'create', parentId: null });
+            }}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Grupo
+          </Button>
         </div>
+      </div>
 
         <div className="flex-1 min-h-0 flex gap-6 overflow-hidden">
           <div className="flex-[3] min-w-0 flex flex-col gap-4 overflow-hidden bg-card p-4 rounded-xl border border-border/60 shadow-sm">
