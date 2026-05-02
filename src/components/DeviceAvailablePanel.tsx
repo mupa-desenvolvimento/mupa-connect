@@ -461,7 +461,7 @@ export function DeviceAvailablePanel({
         </div>
 
         <div className="flex flex-col gap-4">
-          <div className="flex p-1 bg-black/40 rounded-xl border border-white/5 h-11">
+          <div className="flex p-1 bg-background/40 rounded-xl border border-border/40 h-11">
             <button
               onClick={() => { setViewMode("devices"); setFilterMode("all"); }}
               className={cn(
