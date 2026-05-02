@@ -100,7 +100,6 @@ export const ScheduleResolver = {
     if (!manifest) return [];
     
     const now = new Date();
-    const now = new Date();
     const currentTime = now.getHours() * 100 + now.getMinutes(); // HHMM format
     const currentDay = now.getDay(); // 0-6 (Sunday is 0)
 
