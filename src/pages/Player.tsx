@@ -101,9 +101,11 @@ export default function PlayerPage() {
             items: mapItems(mainPlaylist.playlist_items),
             // Support for advanced scheduling
             schedules: (deviceManifest as any).schedules || [], 
-            fallback_items: mapItems((deviceManifest as any).fallback_playlist_items)
+            fallback_items: mapItems((deviceManifest as any).fallback_playlist_items),
+            appearance_config: mainPlaylist.appearance_config || (deviceManifest as any).appearance_config || {}
           };
 
+          setAppearance(newManifest.appearance_config);
           setManifest(newManifest);
           ManifestManager.saveManifest(deviceCode, newManifest);
           if (device.serial) ManifestManager.saveManifest(device.serial, newManifest);
