@@ -396,14 +396,16 @@ export default function PlaylistEditor() {
     setSaveStatus("saving");
     const startTime = Date.now();
     
-    // Log do payload para debug (Requisito 5)
-    console.log("DEBUG: Salvando playlist", {
-      id,
+    // Log do payload completo antes do save (Requisito 6)
+    console.log("CRITICAL DEBUG: Salvando playlist", {
+      playlist_id: id,
       name: updatedName,
       itemCount: safeItems.length,
-      items: safeItems.map((it, idx) => ({ 
+      payload_preview: safeItems.map((it, idx) => ({ 
         media_id: it.mediaId, 
-        order: idx + 1 
+        media_id_type: typeof it.mediaId,
+        visual_order: idx + 1,
+        duration: it.duration
       }))
     });
     
