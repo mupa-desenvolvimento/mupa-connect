@@ -153,9 +153,9 @@ export default function PlayerPage() {
     const backgroundSync = async () => {
       console.log("[Player] Background sync checking for updates...");
       try {
-        const { data: device, error } = await supabase
+        const { data: device, error } = await (supabase
           .from("dispositivos")
-          .select("id, atualizado, playlist_id") as any;
+          .select("id, atualizado, playlist_id") as any)
           .or(`apelido_interno.eq."${deviceCode}",serial.eq."${deviceCode}"`)
           .maybeSingle();
 
