@@ -532,7 +532,7 @@ export function DeviceAvailablePanel({
         </div>
       </div>
 
-      <ScrollArea className="flex-1 px-4 py-4">
+      <div className="flex-1 overflow-y-auto px-4 py-4 custom-scrollbar">
         <div className="space-y-3 pb-8">
           {viewMode === "devices" ? (
             isLoading ? (
@@ -566,7 +566,7 @@ export function DeviceAvailablePanel({
             )
           )}
         </div>
-      </ScrollArea>
+      </div>
 
       <div className="p-4 bg-black/40 border-t border-white/5 flex items-center justify-center gap-2.5 text-white/20">
         <MousePointer2 className="w-3.5 h-3.5" />
