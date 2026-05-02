@@ -530,7 +530,7 @@ export default function GroupsPage() {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="groups" className="flex-1 mt-4 border-t border-white/5 pt-4 overflow-hidden flex flex-col">
+              <TabsContent value="groups" className="flex-1 mt-4 border-t border-border/40 pt-4 overflow-hidden flex flex-col">
                 <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
                 {loadingGroups ? (
                   <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
