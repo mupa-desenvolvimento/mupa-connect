@@ -995,7 +995,7 @@ export default function PlaylistEditor() {
                               value={[selectedItem.duration]} 
                               min={1} 
                               max={60} 
-                              step={1}
+                              step={0.5}
                               onValueChange={(val) => updateItemDuration(selectedItem.id, val[0])}
                               className="py-4"
                             />
