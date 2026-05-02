@@ -211,6 +211,7 @@ export default function PlaylistEditor() {
     if (playlistData) {
       console.log("Loading playlist data:", playlistData);
       setPlaylistName(playlistData.name);
+      setAppearanceConfig(playlistData.appearance_config || {});
       
       if (playlistData.playlist_items && playlistData.playlist_items.length > 0) {
         const mappedItems = playlistData.playlist_items.map((it: any) => ({
