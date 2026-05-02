@@ -281,7 +281,7 @@ export default function PlayerPage() {
   }
 
   return (
-    <div className="fixed inset-0 bg-black overflow-hidden text-white">
+    <div className="fixed inset-0 bg-black overflow-hidden text-white" style={{ minHeight: '100vh' }}>
       <PlayerEngine 
         playlist={activePlaylist} 
         volume={volume}
