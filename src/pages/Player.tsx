@@ -192,7 +192,10 @@ export default function PlayerPage() {
 
         if (cachedManifest && cachedManifest.updated_at !== remoteUpdatedAt) {
           console.log("[Player] Update detected in background, triggering silent reload...");
+          setIsSyncing(true);
+          setLastSyncTime(new Date());
           setReloadKey(k => k + 1);
+          setTimeout(() => setIsSyncing(false), 3000);
         } else {
           console.log("[Player] No changes detected in background.");
         }
