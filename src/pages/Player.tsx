@@ -328,14 +328,14 @@ export default function PlayerPage() {
 
       <div className="absolute bottom-3 right-3 z-[70] flex flex-col items-end gap-2 pointer-events-none">
         {isSyncing && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/20 backdrop-blur-md border border-primary/30 text-primary animate-in fade-in zoom-in duration-300">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/20 border border-primary/30 text-primary animate-in fade-in zoom-in duration-300">
             <RefreshCw className="h-3 w-3 animate-spin" />
             <span className="text-[10px] font-mono uppercase tracking-widest font-bold">Sincronizando...</span>
           </div>
         )}
         
         {appearance?.show_serial !== false && (
-          <div className="px-3 py-1.5 rounded-md bg-black/40 backdrop-blur-sm border border-white/5 font-mono text-[10px] text-white/40 tracking-wider select-none">
+          <div className="px-3 py-1.5 rounded-md bg-black/40 border border-white/5 font-mono text-[10px] text-white/40 tracking-wider select-none">
             SERIAL: {deviceInfo?.serial || deviceCode}
             {lastSyncTime && (
               <span className="ml-2 opacity-30">
