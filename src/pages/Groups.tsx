@@ -374,7 +374,8 @@ export default function GroupsPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-180px)] flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar">
+    <ScrollArea className="h-[calc(100vh-180px)]">
+      <div className="flex flex-col gap-4 pr-4">
       <div className="flex justify-between items-center pr-2">
         <PageHeader
           title="Gestão de Grupos"
