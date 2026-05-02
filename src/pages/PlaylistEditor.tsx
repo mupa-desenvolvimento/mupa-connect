@@ -459,14 +459,15 @@ export default function PlaylistEditor() {
       
       if (deleteError) throw deleteError;
 
-      // 2. Inserir novos itens se existirem
+      // 2. Inserir novos itens se existirem (Requisito 2 e 3)
       if (safeItems.length > 0) {
-        // Garantir que todos os campos *_id sejam UUID válidos (Requisito 2 e 3)
         const itemsToInsert = safeItems.map((it, idx) => {
-          // Validação extra redundante para segurança (Requisito 4)
+          // Double-check de segurança (Requisito 5)
           if (!isUuid(it.mediaId)) {
-            console.warn(`Aviso: media_id ignorado pois não é UUID: ${it.mediaId}`);
-            return null;
+            throw new Error(`ID de mídia inválido (não é UUID): ${it.mediaId}`);
+          }
+          if (!isUuid(currentPlaylistId)) {
+            throw new Error(`ID da playlist inválido (não é UUID): ${currentPlaylistId}`);
           }
           
           return {
@@ -475,12 +476,12 @@ export default function PlaylistEditor() {
             duracao: Number(it.duration),
             prioridade: Number(it.priority || 1),
             tipo: it.type,
-            ordem: idx + 1,
-            position: idx + 1,
-            conteudo_id: String(it.mediaId), // Mantendo como string mas garantindo que o valor é o UUID
+            ordem: idx + 1, // Ordem numérica correta
+            position: idx + 1, // Posição numérica correta
+            conteudo_id: String(it.mediaId), // Mantendo como string para o campo conteudo_id
             ativo: true
           };
-        }).filter(item => item !== null);
+        });
         
         if (itemsToInsert.length > 0) {
           const { error: insertError } = await supabase
