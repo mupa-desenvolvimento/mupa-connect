@@ -119,15 +119,15 @@ const SortableItem = ({
     <div 
       ref={setNodeRef} 
       style={style}
+      className={`relative shrink-0 h-32 rounded-xl border cursor-pointer group overflow-hidden ${
+        isSelected 
+          ? 'border-[#085CF0] ring-2 ring-[#085CF0]/20 bg-[#085CF0]/5 shadow-xl shadow-[#085CF0]/10' 
+          : 'border-border/40 bg-card/40 hover:border-[#085CF0]/30'
+      } ${isCurrent ? 'ring-2 ring-yellow-500/50 bg-yellow-500/5' : ''} ${isDragging ? 'opacity-0' : ''}`}
       onClick={(e) => {
         e.stopPropagation();
         onSelect(item);
       }}
-      className={`relative shrink-0 h-32 rounded-xl border transition-all duration-300 ease-in-out cursor-pointer group overflow-hidden ${
-        isSelected 
-          ? 'border-[#085CF0] ring-2 ring-[#085CF0]/20 bg-[#085CF0]/5 shadow-xl shadow-[#085CF0]/10 scale-[1.02]' 
-          : 'border-border/40 bg-card/40 hover:border-[#085CF0]/30 hover:scale-[1.01]'
-      } ${isCurrent ? 'ring-2 ring-yellow-500/50 bg-yellow-500/5' : ''} ${isDragging ? 'shadow-2xl z-50 opacity-0' : ''}`}
     >
       <div className="absolute inset-0">
         <img 
