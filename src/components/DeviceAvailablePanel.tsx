@@ -466,7 +466,7 @@ export function DeviceAvailablePanel({
               onClick={() => { setViewMode("devices"); setFilterMode("all"); }}
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all duration-300",
-                viewMode === "devices" ? "bg-[#085CF0] text-white shadow-xl" : "text-white/30 hover:text-white/60 hover:bg-white/5"
+                viewMode === "devices" ? "bg-primary text-white shadow-xl shadow-primary/20" : "text-white/30 hover:text-white/60 hover:bg-white/5"
               )}
             >
               <Monitor className="w-3.5 h-3.5" />
