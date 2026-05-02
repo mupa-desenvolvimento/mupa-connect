@@ -61,6 +61,7 @@ import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 import { usePlaylist, useMedias, useTenant } from "@/hooks/use-playlist-data";
 import { supabase } from "@/integrations/supabase/client";
+import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { handlePlaylistError } from "@/utils/error-handlers";
@@ -353,6 +354,11 @@ export default function PlaylistEditor() {
           .ilike('empresa', '003ZAF');
       } catch (e) {
         console.warn("Silent failure updating dispositivos:", e);
+      }
+
+      // 5. Notificar dispositivos vinculados via Firebase Realtime (instantâneo)
+      if (currentPlaylistId) {
+        FirebaseRealtimeService.notifyPlaylistDevices(currentPlaylistId).catch(() => {});
       }
       
       setSaveStatus("saved");

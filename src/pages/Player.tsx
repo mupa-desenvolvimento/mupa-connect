@@ -15,6 +15,7 @@ export default function PlayerPage() {
   const [reloadKey, setReloadKey] = useState<number>(0);
   const [volume, setVolume] = useState(0); // Default muted as requested
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [syncToast, setSyncToast] = useState<{ msg: string; ts: number } | null>(null);
 
   // 1. Core Loader: Resolve Identity & Manifest (Offline-First)
   useEffect(() => {
@@ -117,8 +118,13 @@ export default function PlayerPage() {
   useEffect(() => {
     if (!deviceCode) return;
     
-    const unsubscribe = FirebaseRealtimeService.subscribeToDeviceUpdates(deviceCode, () => {
+    const unsubscribe = FirebaseRealtimeService.subscribeToDeviceUpdates(deviceCode, (payload) => {
+      setSyncToast({ msg: "Sincronizando conteúdo...", ts: Date.now() });
       setReloadKey(k => k + 1);
+      // auto-hide after 3.5s
+      setTimeout(() => {
+        setSyncToast(s => (s && Date.now() - s.ts >= 3000 ? null : s));
+      }, 3500);
     });
 
     return () => unsubscribe();
@@ -269,6 +275,14 @@ export default function PlayerPage() {
       <div className="absolute bottom-3 right-3 z-30 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-sm border border-white/10 font-mono text-xs text-white/80 tracking-wider select-none pointer-events-none">
         ID: {deviceInfo?.serial || deviceCode}
       </div>
+
+      {/* Discreet sync notification */}
+      {syncToast && (
+        <div className="absolute bottom-3 left-3 z-30 flex items-center gap-2 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-sm border border-white/10 font-mono text-xs text-white/80 tracking-wider select-none pointer-events-none animate-fade-in">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          {syncToast.msg}
+        </div>
+      )}
     </div>
   );
 }
