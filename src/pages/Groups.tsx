@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { DeviceAvailablePanel } from "@/components/DeviceAvailablePanel";
 import { useTenant, usePlaylists } from "@/hooks/use-playlist-data";
@@ -13,6 +13,7 @@ import { Globe, Store, Plus, Search, Loader2, Package, Filter, Monitor } from "l
 import { GroupTreeNode } from "@/components/groups/GlobalGroupTree";
 import { StoreCard } from "@/components/groups/StoreCard";
 import { Input } from "@/components/ui/input";
+import { DndContext, DragOverlay, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { 
   Dialog, 
   DialogContent, 
