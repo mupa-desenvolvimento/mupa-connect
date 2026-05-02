@@ -87,14 +87,16 @@ const SortableItem = ({
   isSelected, 
   onSelect,
   width,
-  isCurrent
+  isCurrent,
+  isLastDropped
 }: { 
   item: EditorPlaylistItem, 
   index: number, 
   isSelected: boolean,
   onSelect: (item: EditorPlaylistItem) => void,
   width: string,
-  isCurrent: boolean
+  isCurrent: boolean,
+  isLastDropped: boolean
 }) => {
   const {
     attributes,
@@ -108,10 +110,10 @@ const SortableItem = ({
   const media = item.media;
 
   const style = {
-    transform: CSS.Translate.toString(transform), // Usar Translate para evitar distorção de escala em itens proporcionais
-    transition,
+    transform: CSS.Translate.toString(transform),
+    transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28)', 
     zIndex: isDragging ? 100 : 1,
-    opacity: isDragging ? 0.3 : 1, // Opacidade menor no original para destacar o arrasto
+    opacity: isDragging ? 0.3 : 1,
     width: width,
   };
 
@@ -123,7 +125,7 @@ const SortableItem = ({
         isSelected 
           ? 'border-[#085CF0] ring-2 ring-[#085CF0]/20 bg-[#085CF0]/5 shadow-xl shadow-[#085CF0]/10' 
           : 'border-border/40 bg-card/40 hover:border-[#085CF0]/30'
-      } ${isCurrent ? 'ring-2 ring-yellow-500/50 bg-yellow-500/5' : ''} ${isDragging ? 'opacity-20 ring-4 ring-[#085CF0] border-[#085CF0] scale-95 transition-transform duration-200' : ''}`}
+      } ${isCurrent ? 'ring-2 ring-yellow-500/50 bg-yellow-500/5' : ''} ${isDragging ? 'opacity-20 ring-4 ring-[#085CF0] border-[#085CF0] scale-95 transition-transform duration-200' : ''} ${isLastDropped ? 'animate-[pulse-success_1s_ease-out] ring-4 ring-green-500/50' : ''}`}
       onClick={(e) => {
         e.stopPropagation();
         onSelect(item);
@@ -194,6 +196,7 @@ export default function PlaylistEditor() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [lastDroppedId, setLastDroppedId] = useState<string | null>(null);
   const [debugData, setDebugData] = useState<any>(null);
   const [showDebug, setShowDebug] = useState(false);
   const [mediaSearch, setMediaSearch] = useState("");
@@ -557,6 +560,11 @@ export default function PlaylistEditor() {
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
     setActiveId(null);
+    setLastDroppedId(active.id);
+    
+    // Reset o flash após 1 segundo
+    setTimeout(() => setLastDroppedId(null), 1000);
+
     if (over && active.id !== over.id) {
       const oldIndex = items.findIndex((i) => i.id === active.id);
       const newIndex = items.findIndex((i) => i.id === over.id);
@@ -929,6 +937,7 @@ export default function PlaylistEditor() {
                             onSelect={setSelectedItem}
                             width={totalDuration > 0 ? `${(item.duration / totalDuration) * 100}%` : '200px'}
                             isCurrent={index === currentIndex && isPlaying}
+                            isLastDropped={lastDroppedId === item.id}
                           />
                         ))}
                       </AnimatePresence>
