@@ -89,7 +89,9 @@ export default function GroupsPage() {
 
   const enrichedGroups = useMemo(() => {
     console.log("DEBUG: GroupsPage - groups:", groups?.length, "devices:", devices?.length, "stores:", stores?.length);
-    if (!groups || !devices || !stores) return [];
+    if (!groups) return [];
+    const safeDevices = devices || [];
+    const safeStores = stores || [];
     
     // Memoize descendant data for efficiency
     const memo = new Map<string, { storeIds: Set<string>, directDeviceIds: Set<string> }>();
