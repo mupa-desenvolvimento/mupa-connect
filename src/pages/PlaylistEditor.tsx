@@ -188,6 +188,7 @@ export default function PlaylistEditor() {
   const [debugData, setDebugData] = useState<any>(null);
   const [showDebug, setShowDebug] = useState(false);
   const [mediaSearch, setMediaSearch] = useState("");
+  const [appearanceConfig, setAppearanceConfig] = useState<any>({});
 
   // Monitorar mudanças no estado de itens
   useEffect(() => {
