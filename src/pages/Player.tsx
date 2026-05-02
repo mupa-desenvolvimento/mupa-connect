@@ -113,6 +113,17 @@ export default function PlayerPage() {
     initializePlayer();
   }, [deviceCode, reloadKey]);
 
+  // 1.5 Realtime Updates via Firebase
+  useEffect(() => {
+    if (!deviceCode) return;
+    
+    const unsubscribe = FirebaseRealtimeService.subscribeToDeviceUpdates(deviceCode, () => {
+      setReloadKey(k => k + 1);
+    });
+
+    return () => unsubscribe();
+  }, [deviceCode]);
+
   // 2. Schedule & Queue Resolver
   const activePlaylist = useMemo(() => {
     return ScheduleResolver.getActivePlaylist(manifest);
