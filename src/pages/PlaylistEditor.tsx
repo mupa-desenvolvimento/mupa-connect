@@ -1021,14 +1021,18 @@ export default function PlaylistEditor() {
                       {activeId && items.find(i => i.id === activeId) ? (() => {
                         const draggedItem = items.find(i => i.id === activeId)!;
                         const media = draggedItem.media;
+                        // Calcular largura exata baseada na lógica da timeline
+                        const timelineWidth = Math.max(totalDuration * pxPerSecond, 800);
+                        const calculatedWidth = totalDuration > 0 ? (draggedItem.duration / totalDuration) * timelineWidth : 200;
+                        
                         return (
                           <div 
                             className="rounded-xl border-4 border-[#085CF0] bg-black/80 backdrop-blur-3xl shadow-[0_0_50px_rgba(8,92,240,0.6)] flex items-center justify-center overflow-hidden pointer-events-none z-[9999]"
                             style={{ 
-                              width: `${draggedItem.duration * pxPerSecond}px`,
+                              width: `${calculatedWidth}px`,
                               height: '128px',
                               transform: 'scale(1.05) rotate(1deg)',
-                              opacity: 0.85,
+                              opacity: 0.9,
                             }}
                           >
                              {/* Preview Image */}
@@ -1052,7 +1056,7 @@ export default function PlaylistEditor() {
                                <div className="bg-[#085CF0] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg border border-white/20">
                                  {draggedItem.duration}s
                                </div>
-                               <span className="text-[8px] font-bold text-white/70 uppercase tracking-tighter truncate max-w-[120px]">
+                               <span className="text-[8px] font-bold text-white/70 uppercase tracking-tighter truncate max-w-[150px]">
                                  {media?.name || 'Mídia'}
                                </span>
                              </div>
