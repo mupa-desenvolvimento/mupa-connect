@@ -537,6 +537,8 @@ export default function PlaylistEditor() {
 
   const handleDragStart = (event: any) => {
     setActiveId(event.active.id);
+    // Feedback tátil discreto ao começar o drag
+    if (window.navigator.vibrate) window.navigator.vibrate(5);
   };
 
   const handleDragEnd = (event: any) => {
