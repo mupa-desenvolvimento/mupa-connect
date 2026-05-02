@@ -439,7 +439,7 @@ export default function GroupsPage() {
               )}
             </TabsContent>
 
-            <TabsContent value="stores" className="flex-1 mt-4 flex flex-col min-h-0">
+            <TabsContent value="stores" className="mt-4 flex flex-col">
               <div className="flex items-center justify-between mb-4 px-1">
                 <h3 className="text-sm font-semibold flex items-center gap-2">
                   <Filter className="w-4 h-4 text-primary" /> Listagem de Unidades
