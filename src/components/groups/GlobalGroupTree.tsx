@@ -157,7 +157,7 @@ export function GroupTreeNode({ node, allGroups, allStores, allDevices, level = 
             >
               <div className={cn(
                 "w-1 h-1 rounded-full",
-                device.origin === 'direto' ? 'bg-blue-400' : 'bg-yellow-400'
+                device.last_online && (new Date().getTime() - new Date(device.last_online).getTime() < 300000) ? "bg-green-500" : "bg-red-500"
               )} />
               {device.nome}
               <span className="opacity-40 font-normal">({device.num_filial || 'Livre'})</span>
