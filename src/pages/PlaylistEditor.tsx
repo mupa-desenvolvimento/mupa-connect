@@ -485,13 +485,12 @@ export default function PlaylistEditor() {
       // 2. Inserir novos itens se existirem (Requisito 2 e 3)
       if (safeItems.length > 0) {
         const itemsToInsert = safeItems.map((it, idx) => {
-          // Validação rigorosa de UUID (Requisito 2, 3 e 4)
-          const mediaId = it.mediaId;
+          const mediaId = String(it.mediaId);
           const playlistId = currentPlaylistId;
           
           if (!isUuid(mediaId)) {
             console.error("ERRO CRÍTICO: media_id inválido (não é UUID):", mediaId);
-            throw new Error(`Item na posição ${idx + 1} possui ID de mídia inválido. Remova-o e adicione novamente.`);
+            throw new Error(`Item na posição ${idx + 1} possui ID de mídia inválido ("${mediaId}").`);
           }
 
           if (!isUuid(playlistId)) {
@@ -499,29 +498,34 @@ export default function PlaylistEditor() {
             throw new Error("ID da playlist é inválido.");
           }
 
-          // Montagem explícita do objeto para evitar spread perigoso (Requisito 5)
+          // Montagem explícita e limpa (Requisito 4 e 5)
+          // Geramos um novo UUID para a chave primária do item para evitar conflitos (Requisito 2)
           return {
+            id: crypto.randomUUID(),
             playlist_id: playlistId,
             media_id: mediaId,
             duracao: Number(it.duration),
             prioridade: Number(it.priority || 1),
-            tipo: it.type || 'image',
-            ordem: idx, // Base zero para consistência
+            tipo: String(it.type || 'image'),
+            ordem: idx, 
             position: idx,
             conteudo_id: mediaId,
             ativo: true
           };
         });
 
-        // Log do payload final formatado corretamente para debug (Requisito 1)
-        console.log("Playlist payload pronto para inserção:", itemsToInsert);
+        // Log detalhado do payload final (Requisito 1 e 5)
+        console.log("Playlist payload pronto para inserção (JSON):", JSON.stringify(itemsToInsert, null, 2));
         
         if (itemsToInsert.length > 0) {
           const { error: insertError } = await supabase
             .from("playlist_items")
             .insert(itemsToInsert);
             
-          if (insertError) throw insertError;
+          if (insertError) {
+            console.error("Erro do Supabase ao inserir itens:", insertError);
+            throw insertError;
+          }
         }
       }
 
