@@ -264,13 +264,13 @@ export default function PlaylistEditor() {
 
     // Valida media_id de cada item antes de tentar persistir (evita 22P02 no Postgres)
     const invalidItems = updatedItems.filter((it) => !isUuid(it.mediaId));
+    let safeItems = updatedItems;
     if (invalidItems.length > 0) {
       console.error("Itens com mediaId inválido:", invalidItems);
       toast.error("Mídia inválida na playlist", {
         description: `${invalidItems.length} item(ns) possuem ID de mídia inválido e foram ignorados. Remova-os e tente novamente.`,
       });
-      // Filtra os itens inválidos para não bloquear o salvamento dos demais
-      updatedItems = updatedItems.filter((it) => isUuid(it.mediaId));
+      safeItems = updatedItems.filter((it) => isUuid(it.mediaId));
     }
 
     setIsSaving(true);
