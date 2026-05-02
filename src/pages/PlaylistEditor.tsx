@@ -914,7 +914,10 @@ export default function PlaylistEditor() {
                       })
                     }}>
                       {activeId ? (
-                        <div className="w-48 h-32 rounded-xl border border-[#085CF0] bg-[#085CF0]/20 backdrop-blur-xl shadow-2xl scale-105" />
+                        <div className="w-56 h-36 rounded-xl border-2 border-[#085CF0] bg-[#085CF0]/30 backdrop-blur-2xl shadow-[0_0_30px_rgba(8,92,240,0.4)] scale-110 flex items-center justify-center transition-transform duration-200">
+                           <div className="absolute inset-0 bg-gradient-to-br from-[#085CF0]/20 to-transparent" />
+                           <GripVertical className="h-6 w-6 text-white animate-pulse" />
+                        </div>
                       ) : null}
                     </DragOverlay>
                   </DndContext>
