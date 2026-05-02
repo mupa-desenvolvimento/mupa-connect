@@ -557,7 +557,7 @@ export default function GroupsPage() {
                 </div>
               </TabsContent>
 
-            <TabsContent value="stores" className="flex-1 mt-4 flex flex-col overflow-hidden">
+            <TabsContent value="stores" className="flex-1 mt-4 border-t border-border/40 pt-4 flex flex-col overflow-hidden">
               <div className="flex items-center justify-between mb-4 px-1">
                 <h3 className="text-sm font-semibold flex items-center gap-2">
                   <Filter className="w-4 h-4 text-primary" /> Listagem de Unidades
