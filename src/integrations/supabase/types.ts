@@ -3816,6 +3816,7 @@ export type Database = {
       }
       playlists: {
         Row: {
+          appearance_config: Json | null
           channel_id: string | null
           company_id: string
           content_scale: string | null
@@ -3839,6 +3840,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          appearance_config?: Json | null
           channel_id?: string | null
           company_id: string
           content_scale?: string | null
@@ -3862,6 +3864,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          appearance_config?: Json | null
           channel_id?: string | null
           company_id?: string
           content_scale?: string | null
