@@ -120,7 +120,13 @@ export default function PlayerPage() {
     if (!deviceCode) return;
     
     const unsubscribe = FirebaseRealtimeService.subscribeToDeviceUpdates(deviceCode, () => {
+      console.log("[Player] Realtime update signal received");
+      setIsSyncing(true);
+      setLastSyncTime(new Date());
       setReloadKey(k => k + 1);
+      
+      // Discrete notification timeout
+      setTimeout(() => setIsSyncing(false), 3000);
     });
 
     return () => unsubscribe();
