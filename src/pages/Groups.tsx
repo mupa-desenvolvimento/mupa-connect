@@ -640,8 +640,14 @@ export default function GroupsPage() {
       <Dialog open={linkStoresModal.open} onOpenChange={(o) => setLinkStoresModal({ ...linkStoresModal, open: o })}>
         <DialogContent className="bg-card border-white/10 text-white max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Vincular Lojas ao Grupo: {linkStoresModal.group?.name}</DialogTitle>
-            <DialogDescription>As lojas selecionadas herdarão a playlist deste grupo se não tiverem uma própria.</DialogDescription>
+            <DialogTitle className="text-xl flex items-center gap-2">
+              <Store className="w-5 h-5 text-primary" /> 
+              Vincular Unidades ao Grupo: <span className="text-primary">{linkStoresModal.group?.name}</span>
+            </DialogTitle>
+            <DialogDescription className="text-white/60">
+              As unidades selecionadas herdarão dinamicamente as configurações e a playlist deste grupo. 
+              Dispositivos vinculados a estas lojas responderão automaticamente a esta hierarquia.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="relative">
