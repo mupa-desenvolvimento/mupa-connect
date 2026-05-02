@@ -304,8 +304,7 @@ export default function GroupsPage() {
           name: groupFormData.name,
           parent_id: groupModal.parentId,
           playlist_id: playlistId,
-          tenant_id: tenantId,
-          company_id: companyId
+          tenant_id: tenantId
         } as any);
         if (error) throw error;
         toast.success("Grupo criado com sucesso!");
