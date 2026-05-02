@@ -33,27 +33,28 @@ export default function PlayerPage() {
       }
 
       try {
-        // Step B: Resolve Device Identity (Background)
+        if (!cachedManifest) {
+          console.log("[Player] No cache found, fetching initial manifest...");
+          const result = await ManifestService.fetchManifest(deviceCode);
+          setManifest(result.manifest);
+          if (result.device) {
+            setDeviceUuid(result.device.id?.toString());
+            setDeviceInfo(result.device);
+          }
+          setIsLoading(false);
+          return;
+        }
+
+        // Step B: Resolve Device Identity in background without blocking playback
         const { data: device, error } = await supabase
           .from("dispositivos")
           .select("*")
           .or(`apelido_interno.eq."${deviceCode}",serial.eq."${deviceCode}"`)
           .maybeSingle();
 
-        if (error || !device) {
-          console.warn("[Player] Device identity not found online, staying offline.");
-          return;
-        }
-
-        setDeviceUuid(device.id.toString());
-        setDeviceInfo(device);
-        
-        // Initial fetch if we have no manifest yet
-        if (!cachedManifest) {
-          console.log("[Player] No cache found, fetching manifest...");
-          const newManifest = await ManifestService.fetchManifest(deviceCode);
-          setManifest(newManifest);
-          setIsLoading(false);
+        if (!error && device) {
+          setDeviceUuid(device.id.toString());
+          setDeviceInfo(device);
         }
       } catch (err) {
         console.error("[Player] Initial resolve error:", err);
