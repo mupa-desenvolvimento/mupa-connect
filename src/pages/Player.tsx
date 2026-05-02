@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PlayerEngine } from "@/components/PlayerEngine";
 import { ManifestManager, MediaCacheService, ScheduleResolver } from "@/components/PlayerServices";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
+import { ManifestService } from "@/services/ManifestService";
 
 export default function PlayerPage() {
   const { deviceCode } = useParams();
