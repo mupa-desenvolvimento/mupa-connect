@@ -554,7 +554,8 @@ export default function GroupsPage() {
                   <p className="text-white/40">Nenhum grupo global configurado</p>
                 </div>
               )}
-            </TabsContent>
+                </div>
+              </TabsContent>
 
             <TabsContent value="stores" className="flex-1 mt-4 flex flex-col overflow-hidden">
               <div className="flex items-center justify-between mb-4 px-1">
