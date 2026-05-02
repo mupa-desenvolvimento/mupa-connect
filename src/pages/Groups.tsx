@@ -450,7 +450,7 @@ export default function GroupsPage() {
                 </Button>
               </div>
               
-              <div className="pr-2">
+              <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
                 {loadingStores ? (
                   <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
                 ) : filteredStores.length > 0 ? (
