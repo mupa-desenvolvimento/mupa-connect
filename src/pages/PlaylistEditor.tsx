@@ -583,8 +583,6 @@ export default function PlaylistEditor() {
     triggerAutoSave(newItems, playlistName);
   };
 
-  const totalDuration = items.reduce((acc, curr) => acc + curr.duration, 0);
-
   if (isLoadingPlaylist && id !== "new") {
     return (
       <div className="h-screen flex items-center justify-center bg-[#09090b]">
@@ -593,8 +591,10 @@ export default function PlaylistEditor() {
     );
   }
 
+  const pxPerSecond = 20; // Scale: 20px per second
+
   return (
-    <div className="flex flex-col h-screen bg-[#09090b] text-white">
+    <div className="flex flex-col h-screen bg-[#09090b] text-white overflow-hidden">
       <PlaylistErrorBanner error={playlistData === null && id !== 'new' ? "Playlist não encontrada ou sem permissão de acesso." : null} className="m-4" />
       
       {/* Header */}
