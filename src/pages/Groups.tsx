@@ -191,11 +191,9 @@ export default function GroupsPage() {
     if (!enrichedGroups) return [];
     if (!searchQuery) {
       const roots = enrichedGroups.filter(g => !g.parent_id || !enrichedGroups.some(pg => pg.id === g.parent_id));
-      console.log("DEBUG: GroupsPage - root groups count:", roots.length);
       return roots;
     }
     const filtered = enrichedGroups.filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    console.log("DEBUG: GroupsPage - searched groups count:", filtered.length);
     return filtered;
   }, [enrichedGroups, searchQuery]);
 
