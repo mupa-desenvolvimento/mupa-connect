@@ -207,6 +207,7 @@ export default function GroupsPage() {
     if (!groups || !devices) return [];
     
     // Memoize descendant data for efficiency
+    // Use string IDs for the sets as expected by Group interface
     const memo = new Map<string, { storeIds: Set<string>, directDeviceIds: Set<string> }>();
 
     const getGroupDataRecursive = (groupId: string): { storeIds: Set<string>, directDeviceIds: Set<string> } => {
@@ -235,7 +236,7 @@ export default function GroupsPage() {
 
       // Recursive total devices impacted
       const impactedDevices = devices.filter(d => 
-        directDeviceIds.has(d.id) || (d.store_id && storeIds.has(d.store_id))
+        directDeviceIds.has(d.device_uuid) || (d.store_id && storeIds.has(d.store_id))
       );
       
       const totalImpactedCount = new Set(impactedDevices.map(d => d.id)).size;
@@ -245,7 +246,7 @@ export default function GroupsPage() {
       const localDirectDeviceIds = new Set(group.direct_device_ids || []);
 
       const localDevices = devices.map(d => {
-        const isDirect = localDirectDeviceIds.has(d.id);
+        const isDirect = localDirectDeviceIds.has(d.device_uuid);
         const isFromStoreId = !!(d.store_id && localStoreIds.has(d.store_id));
         
         if (isDirect || isFromStoreId) {
