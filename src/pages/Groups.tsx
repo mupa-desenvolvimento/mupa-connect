@@ -99,6 +99,15 @@ export default function GroupsPage() {
     selectedDeviceIds: [] as string[]
   });
 
+  // Delete Confirmation State
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    open: boolean;
+    groupId: string;
+    groupName: string;
+    hasChildren: boolean;
+    hasStores: boolean;
+  }>({ open: false, groupId: "", groupName: "", hasChildren: false, hasStores: false });
+
   const enrichedGroups = useMemo(() => {
     if (!groups) return [];
     const safeDevices = devices || [];
