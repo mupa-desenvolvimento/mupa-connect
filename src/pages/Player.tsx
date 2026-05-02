@@ -64,7 +64,7 @@ export default function PlayerPage() {
 
         if (deviceManifest && deviceManifest.playlists) {
           const mainPlaylist = deviceManifest.playlists;
-          const remoteUpdatedAt = mainPlaylist.updated_at || (deviceManifest as any).updated_at || new Date().toISOString();
+          const remoteUpdatedAt = (mainPlaylist as any).updated_at || (deviceManifest as any).atualizado || new Date().toISOString();
           
           // Optimization: Only update if the remote manifest is newer than the cached one
           if (cachedManifest && cachedManifest.updated_at === remoteUpdatedAt) {
@@ -146,11 +146,49 @@ export default function PlayerPage() {
     }
   }, [activePlaylist, deviceInfo?.serial, manifest]);
 
-  // 4. Background Sync (Polling)
+  // 4. Background Sync (Polling) - Silent & Efficient
   useEffect(() => {
     if (!deviceCode) return;
-    const interval = setInterval(() => setReloadKey(k => k + 1), 60000);
-    return () => clearInterval(interval);
+    
+    const backgroundSync = async () => {
+      console.log("[Player] Background sync checking for updates...");
+      try {
+        const { data: device, error } = await (supabase
+          .from("dispositivos")
+          .select("id, atualizado, playlist_id") as any)
+          .or(`apelido_interno.eq."${deviceCode}",serial.eq."${deviceCode}"`)
+          .maybeSingle();
+
+        if (error || !device) return;
+
+        const { data: playlistData } = await supabase
+          .from("playlists")
+          .select("updated_at")
+          .eq("id", device.playlist_id)
+          .maybeSingle();
+
+        const remoteUpdatedAt = playlistData?.updated_at || device.atualizado || "";
+        const cachedManifest = ManifestManager.getManifest(deviceCode);
+
+        if (cachedManifest && cachedManifest.updated_at !== remoteUpdatedAt) {
+          console.log("[Player] Update detected in background, triggering silent reload...");
+          setReloadKey(k => k + 1);
+        } else {
+          console.log("[Player] No changes detected in background.");
+        }
+      } catch (err) {
+        console.warn("[Player] Background sync failed", err);
+      }
+    };
+
+    // Initial check after 30s, then every 60s (configurable)
+    const initialTimer = setTimeout(backgroundSync, 30000);
+    const interval = setInterval(backgroundSync, 60000);
+    
+    return () => {
+      clearTimeout(initialTimer);
+      clearInterval(interval);
+    };
   }, [deviceCode]);
 
   // 5. Heartbeat
