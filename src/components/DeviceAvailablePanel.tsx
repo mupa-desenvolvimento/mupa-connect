@@ -414,7 +414,7 @@ export function DeviceAvailablePanel({
         isOver ? "border-primary ring-4 ring-primary/10 bg-primary/5" : "border-white/5"
       )}
     >
-      <div className="p-6 border-b border-white/5 bg-gradient-to-b from-white/[0.03] to-transparent">
+      <div className="p-4 border-b border-border/40 bg-gradient-to-b from-white/[0.03] to-transparent">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <div className="p-2.5 rounded-2xl bg-primary/10 text-primary shadow-inner">
