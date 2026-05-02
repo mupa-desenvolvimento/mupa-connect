@@ -485,31 +485,36 @@ export default function PlaylistEditor() {
       // 2. Inserir novos itens se existirem (Requisito 2 e 3)
       if (safeItems.length > 0) {
         const itemsToInsert = safeItems.map((it, idx) => {
-          // Double-check de segurança (Requisito 5)
-          const mediaId = String(it.mediaId);
+          // Validação rigorosa de UUID (Requisito 2, 3 e 4)
+          const mediaId = it.mediaId;
+          const playlistId = currentPlaylistId;
           
           if (!isUuid(mediaId)) {
-            console.error("FALHA DE VALIDAÇÃO: mediaId não é UUID válido:", mediaId);
-            throw new Error(`O item na posição ${idx + 1} possui um ID de mídia inválido ("${mediaId}"). Remova-o e adicione novamente.`);
+            console.error("ERRO CRÍTICO: media_id inválido (não é UUID):", mediaId);
+            throw new Error(`Item na posição ${idx + 1} possui ID de mídia inválido. Remova-o e adicione novamente.`);
           }
 
-          if (!isUuid(currentPlaylistId)) {
-            console.error("FALHA DE VALIDAÇÃO: playlistId não é UUID válido:", currentPlaylistId);
-            throw new Error(`O identificador da playlist ("${currentPlaylistId}") é inválido.`);
+          if (!isUuid(playlistId)) {
+            console.error("ERRO CRÍTICO: playlist_id inválido (não é UUID):", playlistId);
+            throw new Error("ID da playlist é inválido.");
           }
-          
+
+          // Montagem explícita do objeto para evitar spread perigoso (Requisito 5)
           return {
-            playlist_id: currentPlaylistId, // UUID
-            media_id: mediaId, // UUID
+            playlist_id: playlistId,
+            media_id: mediaId,
             duracao: Number(it.duration),
             prioridade: Number(it.priority || 1),
-            tipo: it.type,
-            ordem: idx + 1, // Inteiro
-            position: idx + 1, // Inteiro
-            conteudo_id: mediaId, // Mantendo o UUID como string
+            tipo: it.type || 'image',
+            ordem: idx, // Base zero para consistência
+            position: idx,
+            conteudo_id: mediaId,
             ativo: true
           };
         });
+
+        // Log do payload final formatado corretamente para debug (Requisito 1)
+        console.log("Playlist payload pronto para inserção:", itemsToInsert);
         
         if (itemsToInsert.length > 0) {
           const { error: insertError } = await supabase
