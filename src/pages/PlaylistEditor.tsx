@@ -365,6 +365,17 @@ export default function PlaylistEditor() {
     setSaveStatus("saving");
     const startTime = Date.now();
     
+    // Log do payload para debug (Requisito 5)
+    console.log("DEBUG: Salvando playlist", {
+      id,
+      name: updatedName,
+      itemCount: safeItems.length,
+      items: safeItems.map((it, idx) => ({ 
+        media_id: it.mediaId, 
+        order: idx + 1 
+      }))
+    });
+    
     try {
       let currentPlaylistId = id;
 
