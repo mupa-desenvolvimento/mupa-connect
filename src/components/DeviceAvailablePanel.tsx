@@ -532,7 +532,7 @@ export function DeviceAvailablePanel({
         </div>
       </div>
 
-      <ScrollArea className="px-4 py-4">
+      <div className="px-4 py-4">
         <div className="space-y-3 pb-8">
           {viewMode === "devices" ? (
             isLoading ? (
