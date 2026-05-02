@@ -88,6 +88,7 @@ export default function GroupsPage() {
   });
 
   const enrichedGroups = useMemo(() => {
+    console.log("DEBUG: GroupsPage - groups:", groups?.length, "devices:", devices?.length, "stores:", stores?.length);
     if (!groups || !devices || !stores) return [];
     
     // Memoize descendant data for efficiency
@@ -115,7 +116,7 @@ export default function GroupsPage() {
       return result;
     };
 
-    return groups.map(group => {
+    const result = groups.map(group => {
       const { storeIds, directDeviceIds } = getGroupDataRecursive(group.id);
 
       // Recursive devices for total count
