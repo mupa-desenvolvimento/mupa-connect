@@ -54,17 +54,18 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
       const video = layer === "A" ? videoARef.current : videoBRef.current;
       if (video) {
         video.currentTime = 0;
-        video.play().catch(err => {
-          console.warn("[PlayerEngine] Video play failed, skipping in 2s", err);
-          timerRef.current = setTimeout(moveToNext, 2000);
-        });
-        
-        // Safety fallback: if video doesn't end or error, move to next after duration + 5s
-        const safetyDuration = ((item.duration || 10) + 5) * 1000;
-        timerRef.current = setTimeout(() => {
-          console.warn("[PlayerEngine] Video safety timeout reached");
-          moveToNext();
-        }, safetyDuration);
+        video.play()
+          .then(() => {
+            const safetyDuration = ((item.duration || 10) + 5) * 1000;
+            timerRef.current = setTimeout(() => {
+              console.warn("[PlayerEngine] Video safety timeout reached");
+              moveToNext();
+            }, safetyDuration);
+          })
+          .catch(err => {
+            console.warn("[PlayerEngine] Video play failed, skipping in 2s", err);
+            timerRef.current = setTimeout(moveToNext, 2000);
+          });
       }
     } else {
       // For images, use the duration
