@@ -491,7 +491,7 @@ export function DeviceAvailablePanel({
                 placeholder={viewMode === "devices" ? "Buscar nome ou serial..." : "Buscar nome ou código..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-11 bg-black/40 border-white/5 focus:border-[#085CF0]/50 h-10 rounded-xl text-sm"
+                className="pl-11 bg-black/40 border-white/5 focus:border-primary/50 h-10 rounded-xl text-sm"
               />
             </div>
             
