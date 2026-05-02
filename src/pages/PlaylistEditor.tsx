@@ -322,7 +322,7 @@ export default function PlaylistEditor() {
       // 2. Inserir novos itens se existirem
       if (updatedItems.length > 0) {
         const itemsToInsert = updatedItems.map((it, idx) => ({
-          playlist_id: currentPlaylistId as any,
+          playlist_id: currentPlaylistId,
           media_id: it.mediaId,
           duracao: it.duration,
           prioridade: it.priority,
