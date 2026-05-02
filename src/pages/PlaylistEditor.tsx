@@ -307,7 +307,7 @@ export default function PlaylistEditor() {
             appearance_config: updatedAppearance || appearanceConfig,
             updated_at: new Date().toISOString() 
           })
-          .eq("id", id as any);
+          .eq("id", id);
         if (updateError) throw updateError;
       }
 
@@ -315,14 +315,14 @@ export default function PlaylistEditor() {
       const { error: deleteError } = await supabase
         .from("playlist_items")
         .delete()
-        .eq("playlist_id", currentPlaylistId as any);
+        .eq("playlist_id", currentPlaylistId);
       
       if (deleteError) throw deleteError;
 
       // 2. Inserir novos itens se existirem
       if (updatedItems.length > 0) {
         const itemsToInsert = updatedItems.map((it, idx) => ({
-          playlist_id: currentPlaylistId as any,
+          playlist_id: currentPlaylistId,
           media_id: it.mediaId,
           duracao: it.duration,
           prioridade: it.priority,
@@ -362,7 +362,7 @@ export default function PlaylistEditor() {
           .update({ 
             comando: `reload:${Date.now()}` 
           } as any)
-          .eq('playlist_id', currentPlaylistId as any);
+          .eq('playlist_id', currentPlaylistId);
       } catch (e) {
         console.warn("Silent failure notifying devices:", e);
       }
