@@ -232,8 +232,6 @@ export function DeviceAvailablePanel({
         .select("id, name, code")
         .eq("tenant_id", tenantId);
       
-      const storeMap = new Map(stores?.map(s => [s.code?.toString().trim(), s.name]) || []);
-      const storeIdByCode = new Map(stores?.map(s => [s.code?.toString().trim(), s.id]) || []);
 
 
       // Fetch explicit group_devices links (New hierarchy system)
