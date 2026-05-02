@@ -44,40 +44,51 @@ export default function PlayerPage() {
         setDeviceUuid(device.id.toString());
         setDeviceInfo(device);
 
-        // Step C: Fetch Latest Manifest Data
-        const playlistId = device.playlist_id || 'e8dab79a-0612-4859-94e0-5e1a6be50756';
-        const { data: playlistData } = await supabase
-          .from("playlists")
+        // Step C: Fetch Latest Manifest Data (including Schedules and Fallbacks)
+        const { data: deviceManifest, error: manifestError } = await supabase
+          .from("dispositivos")
           .select(`
             *,
-            playlist_items (
-              *,
-              media_items (*)
+            playlists (
+              id,
+              name,
+              playlist_items (
+                id, position, duracao,
+                media_items (*)
+              )
             )
           `)
-          .eq("id", playlistId)
+          .eq("id", device.id)
           .single();
 
-        if (playlistData) {
+        if (deviceManifest && deviceManifest.playlists) {
+          const mainPlaylist = deviceManifest.playlists;
+          
+          // Map helper to standardize items
+          const mapItems = (items: any[]) => (items || [])
+            .sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0))
+            .map((i: any) => ({
+              id: i.media_id || i.id,
+              type: i.media_items?.type || "image",
+              url: i.media_items?.file_url,
+              duration: i.duracao || 10,
+              name: i.media_items?.name || "Sem nome"
+            }))
+            .filter((x: any) => x.url);
+
           const newManifest = {
-            playlist_id: playlistId,
-            name: playlistData.name,
-            items: playlistData.playlist_items
-              .sort((a: any, b: any) => (a.position ?? a.ordem ?? 0) - (b.position ?? b.ordem ?? 0))
-              .map((i: any) => ({
-                id: i.media_id,
-                type: i.media_items?.type || "image",
-                url: i.media_items?.file_url,
-                duration: i.duracao || 10,
-                name: i.media_items?.name
-              }))
-              .filter((x: any) => x.url),
-            updated_at: new Date().toISOString()
+            playlist_id: mainPlaylist.id,
+            name: mainPlaylist.name,
+            updated_at: new Date().toISOString(),
+            items: mapItems(mainPlaylist.playlist_items),
+            // Support for advanced scheduling
+            schedules: deviceManifest.schedules || [], 
+            fallback_items: mapItems(deviceManifest.fallback_playlist_items)
           };
 
           setManifest(newManifest);
           ManifestManager.saveManifest(deviceCode, newManifest);
-          ManifestManager.saveManifest(device.serial, newManifest);
+          if (device.serial) ManifestManager.saveManifest(device.serial, newManifest);
         }
       } catch (err) {
         console.error("[Player] Sync error:", err);
