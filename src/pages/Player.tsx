@@ -303,7 +303,7 @@ export default function PlayerPage() {
                     {deviceInfo?.apelido_interno || "Player Profissional"}
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <div className="px-2 py-0.5 rounded bg-white/10 backdrop-blur-md border border-white/10 text-[10px] uppercase font-mono font-bold text-white/90 flex items-center gap-1.5">
+                    <div className="px-2 py-0.5 rounded bg-white/10 border border-white/10 text-[10px] uppercase font-mono font-bold text-white/90 flex items-center gap-1.5">
                       <MapPin className="h-3 w-3 text-[#085CF0]" />
                       Filial {deviceInfo?.num_filial || "—"}
                     </div>
