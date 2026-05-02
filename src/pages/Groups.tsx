@@ -520,7 +520,7 @@ export default function GroupsPage() {
 
         <div className="flex-1 min-h-0 flex gap-6 overflow-hidden">
           <div className="flex-[3] min-w-0 flex flex-col gap-4 overflow-hidden bg-card p-4 rounded-xl border border-border/60 shadow-sm">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-h-0 flex flex-col overflow-hidden">
               <TabsList className="bg-background/50 border border-border/40 p-1 w-fit shrink-0">
                 <TabsTrigger value="groups" className="gap-2 data-[state=active]:bg-primary">
                   <Globe className="w-4 h-4" /> Grupos Globais
