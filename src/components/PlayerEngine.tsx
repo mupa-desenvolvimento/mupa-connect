@@ -123,9 +123,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, appearance =
     setTimeout(() => {
       isTransitioningRef.current = false;
       setLayers(prev => ({ ...prev, isTransitioning: false }));
-    }, 600); // Match CSS transition duration
+    }, transitionDuration); 
 
-  }, [playlist, layers.active, startMedia, onMediaChange]);
+  }, [playlist, layers.active, startMedia, onMediaChange, transitionDuration]);
 
   // Initial load and playlist changes
   useEffect(() => {
