@@ -285,7 +285,8 @@ export default function PlaylistEditor() {
             name: updatedName, 
             tenant_id: tenantId as any, 
             company_id: companyId || companyData.id,
-            is_active: true 
+            is_active: true,
+            appearance_config: updatedAppearance || appearanceConfig 
           })
           .select().single();
           
