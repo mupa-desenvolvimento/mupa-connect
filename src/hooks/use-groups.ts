@@ -29,8 +29,13 @@ export function useGroups(tenantId: string | null) {
           playlists (name)
         `)
         .eq("tenant_id", tenantId);
+      
+      console.log("DEBUG: Groups loaded for tenant:", tenantId, groups);
 
-      if (groupsError) throw groupsError;
+      if (groupsError) {
+        console.error("DEBUG: Error loading groups:", groupsError);
+        throw groupsError;
+      }
 
       // Fetch device links per group
       const { data: deviceLinks, error: devicesError } = await supabase
