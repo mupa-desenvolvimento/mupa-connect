@@ -198,6 +198,85 @@ export default function PlaylistEditor() {
   const [mediaSearch, setMediaSearch] = useState("");
   const [appearanceConfig, setAppearanceConfig] = useState<any>({});
 
+  // Timeline Engine State
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const playheadRef = React.useRef<HTMLDivElement>(null);
+  const timelineRef = React.useRef<HTMLDivElement>(null);
+  const scrollAreaRef = React.useRef<HTMLDivElement>(null);
+  const requestRef = React.useRef<number>();
+  const lastTimeRef = React.useRef<number>();
+
+  const totalDuration = items.reduce((acc, curr) => acc + (curr.duration || 0), 0);
+
+  // Playback Logic
+  const animate = useCallback((time: number) => {
+    if (lastTimeRef.current !== undefined) {
+      const deltaTime = (time - lastTimeRef.current) / 1000;
+      setCurrentTime(prevTime => {
+        const newTime = prevTime + deltaTime;
+        if (newTime >= totalDuration) {
+          return 0; // Loop
+        }
+        return newTime;
+      });
+    }
+    lastTimeRef.current = time;
+    requestRef.current = requestAnimationFrame(animate);
+  }, [totalDuration]);
+
+  useEffect(() => {
+    if (isPlaying) {
+      lastTimeRef.current = performance.now();
+      requestRef.current = requestAnimationFrame(animate);
+    } else {
+      if (requestRef.current) cancelAnimationFrame(requestRef.current);
+    }
+    return () => {
+      if (requestRef.current) cancelAnimationFrame(requestRef.current);
+    };
+  }, [isPlaying, animate]);
+
+  // Update currentIndex based on currentTime
+  useEffect(() => {
+    let accumulatedTime = 0;
+    const index = items.findIndex(item => {
+      accumulatedTime += item.duration;
+      return currentTime < accumulatedTime;
+    });
+    
+    if (index !== -1 && index !== currentIndex) {
+      setCurrentIndex(index);
+      if (items[index]) {
+        setSelectedItem(items[index]);
+      }
+    }
+  }, [currentTime, items, currentIndex]);
+
+  // Direct DOM update for playhead performance
+  useEffect(() => {
+    if (playheadRef.current && totalDuration > 0) {
+      const progress = (currentTime / totalDuration) * 100;
+      playheadRef.current.style.left = `${progress}%`;
+      
+      // Auto-scroll logic
+      if (timelineRef.current && isPlaying) {
+        const container = timelineRef.current.parentElement;
+        if (container) {
+          const scrollPos = (progress / 100) * timelineRef.current.offsetWidth - (container.offsetWidth / 2);
+          container.scrollTo({ left: scrollPos, behavior: 'auto' });
+        }
+      }
+    }
+  }, [currentTime, totalDuration, isPlaying]);
+
+  const togglePlayback = () => setIsPlaying(!isPlaying);
+
+  const seekTo = (percent: number) => {
+    setCurrentTime(percent * totalDuration);
+  };
+
   // Monitorar mudanças no estado de itens
   useEffect(() => {
     console.log("ITEMS STATE UPDATED. Count:", items.length, items);
