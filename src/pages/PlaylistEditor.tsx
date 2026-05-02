@@ -956,7 +956,30 @@ export default function PlaylistEditor() {
                     collisionDetection={closestCenter}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
-                    modifiers={[restrictToHorizontalAxis]} // Removido o snapModifier temporariamente para testar fluidez
+                    modifiers={[restrictToHorizontalAxis]} 
+                    onDragOver={(event) => {
+                      // Implementar auto-scroll horizontal durante o drag
+                      const { activatorEvent } = event;
+                      if (!activatorEvent || !timelineRef.current) return;
+                      
+                      const clientX = (activatorEvent as MouseEvent).clientX || 
+                                     ((activatorEvent as TouchEvent).touches && (activatorEvent as TouchEvent).touches[0].clientX);
+                      
+                      if (!clientX) return;
+
+                      const scrollContainer = timelineRef.current.parentElement;
+                      if (!scrollContainer) return;
+
+                      const rect = scrollContainer.getBoundingClientRect();
+                      const buffer = 100; // Distância da borda para ativar scroll
+                      const speed = 15; // Velocidade do scroll
+
+                      if (clientX < rect.left + buffer) {
+                        scrollContainer.scrollBy({ left: -speed, behavior: 'auto' });
+                      } else if (clientX > rect.right - buffer) {
+                        scrollContainer.scrollBy({ left: speed, behavior: 'auto' });
+                      }
+                    }}
                   >
                     <SortableContext 
                       items={items.map(i => i.id)}
