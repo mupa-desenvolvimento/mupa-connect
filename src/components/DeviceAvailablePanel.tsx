@@ -99,7 +99,7 @@ export function DeviceItem({ device, isSelected, onToggle, onClick }: DeviceItem
         <Checkbox 
           checked={isSelected} 
           onCheckedChange={() => {}} // Controlled by div onClick for shiftKey support
-          className="border-white/20 data-[state=checked]:bg-[#085CF0] data-[state=checked]:border-[#085CF0]"
+          className="border-white/20 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
         />
         
         <div 
