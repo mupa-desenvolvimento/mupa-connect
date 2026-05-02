@@ -139,6 +139,7 @@ export default function PlayerPage() {
 
           setAppearance(newManifest.appearance_config);
           setManifest(newManifest);
+          console.log("[Player] New manifest applied:", newManifest);
           ManifestManager.saveManifest(deviceCode, newManifest);
           if (device.serial) ManifestManager.saveManifest(device.serial, newManifest);
         }
