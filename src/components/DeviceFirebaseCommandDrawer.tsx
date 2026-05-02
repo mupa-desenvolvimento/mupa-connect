@@ -15,6 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import {
   Loader2,
   Send,
