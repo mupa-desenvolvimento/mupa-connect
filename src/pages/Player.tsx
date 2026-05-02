@@ -64,7 +64,7 @@ export default function PlayerPage() {
 
         if (deviceManifest && deviceManifest.playlists) {
           const mainPlaylist = deviceManifest.playlists;
-          const remoteUpdatedAt = mainPlaylist.updated_at || deviceManifest.updated_at || new Date().toISOString();
+          const remoteUpdatedAt = mainPlaylist.updated_at || (deviceManifest as any).updated_at || new Date().toISOString();
           
           // Optimization: Only update if the remote manifest is newer than the cached one
           if (cachedManifest && cachedManifest.updated_at === remoteUpdatedAt) {
