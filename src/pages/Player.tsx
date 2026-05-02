@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { RefreshCw, MapPin } from "lucide-react";
+import { RefreshCw, MapPin, Play } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { useDeviceCommandChannel } from "@/hooks/useDeviceCommandChannel";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,7 @@ export default function PlayerPage() {
   const [manifest, setManifest] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState<number>(0);
+  const [initialPlay, setInitialPlay] = useState(false);
   const [volume, setVolume] = useState(0); // Default muted as requested
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -57,8 +58,11 @@ export default function PlayerPage() {
       // Step A: Load Local Cache Immediately
       const cachedManifest = ManifestManager.getManifest(deviceCode);
       if (cachedManifest) {
-        console.log("[Player] Resuming from offline manifest");
+        console.log("[Player] Resuming from offline manifest", cachedManifest);
         setManifest(cachedManifest);
+        if (cachedManifest.appearance_config) {
+          setAppearance(cachedManifest.appearance_config);
+        }
         setIsLoading(false);
       }
 
@@ -136,6 +140,7 @@ export default function PlayerPage() {
 
           setAppearance(newManifest.appearance_config);
           setManifest(newManifest);
+          console.log("[Player] New manifest applied:", newManifest);
           ManifestManager.saveManifest(deviceCode, newManifest);
           if (device.serial) ManifestManager.saveManifest(device.serial, newManifest);
         }
@@ -271,16 +276,34 @@ export default function PlayerPage() {
   }, []);
 
   if (isLoading && !activePlaylist.length) {
-    return <div className="fixed inset-0 bg-black flex items-center justify-center text-white/40 font-mono text-xs uppercase tracking-widest">Iniciando Engine Profissional...</div>;
+    return <div className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-4">
+      <div className="text-white/40 font-mono text-xs uppercase tracking-widest">Iniciando Player...</div>
+      <div className="text-[8px] text-white/20 font-mono">ID: {deviceCode}</div>
+    </div>;
   }
 
   if (!activePlaylist.length) {
     return (
       <div className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-4 text-white/40 font-mono text-xs uppercase tracking-widest">
-        <div>Manifesto Vazio</div>
-        <div className="px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-white/70 tracking-wider">
-          ID: {deviceCode}
+        <div className="animate-pulse">Aguardando Programação</div>
+        <div className="px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-white/30 text-[10px]">
+          {deviceCode}
         </div>
+        {isLoading && <div className="text-[10px] text-primary/50">Sincronizando...</div>}
+      </div>
+    );
+  }
+
+  if (!initialPlay) {
+    return (
+      <div 
+        className="fixed inset-0 bg-black flex flex-col items-center justify-center cursor-pointer group"
+        onClick={() => setInitialPlay(true)}
+      >
+        <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+           <Play className="h-8 w-8 text-white/40 group-hover:text-primary transition-colors" />
+        </div>
+        <p className="mt-6 text-white/20 font-mono text-[10px] uppercase tracking-[0.2em]">Toque para Iniciar Reprodução</p>
       </div>
     );
   }
