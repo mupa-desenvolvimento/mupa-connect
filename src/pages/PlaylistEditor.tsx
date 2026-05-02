@@ -237,7 +237,7 @@ export default function PlaylistEditor() {
     }
   }, [playlistData, medias, id]);
 
-  const savePlaylist = async (updatedItems: EditorPlaylistItem[], updatedName: string) => {
+  const savePlaylist = async (updatedItems: EditorPlaylistItem[], updatedName: string, updatedAppearance?: any) => {
     if (isSaving) return;
     
     if (!tenantId) {
