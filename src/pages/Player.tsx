@@ -49,6 +49,11 @@ export default function PlayerPage() {
     if (!deviceCode) return;
 
     async function initializePlayer() {
+      // 0.1 Global Debug Info for WebView
+      if (typeof window !== 'undefined') {
+        (window as any).__MUPA_PLAYER_V = "3.1.0-android-fix";
+      }
+
       // Step A: Load Local Cache Immediately
       const cachedManifest = ManifestManager.getManifest(deviceCode);
       if (cachedManifest) {
