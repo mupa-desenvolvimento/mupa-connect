@@ -557,8 +557,8 @@ export default function GroupsPage() {
                 </div>
               </TabsContent>
 
-            <TabsContent value="stores" className="flex-1 mt-4 border-t border-border/40 pt-4 flex flex-col overflow-hidden">
-              <div className="flex items-center justify-between mb-4 shrink-0">
+            <TabsContent value="stores" className="flex-1 min-h-0 mt-0 border-t border-border/40 data-[state=active]:flex data-[state=active]:flex-col overflow-hidden">
+              <div className="flex items-center justify-between mb-4 pt-4 shrink-0">
                 <h3 className="text-sm font-semibold flex items-center gap-2">
                   <Filter className="w-4 h-4 text-primary" /> Listagem de Unidades
                 </h3>
@@ -567,11 +567,11 @@ export default function GroupsPage() {
                 </Button>
               </div>
               
-              <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+              <div className="flex-1 min-h-0 overflow-y-auto pr-2 custom-scrollbar">
                 {loadingStores ? (
                   <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
                 ) : filteredStores.length > 0 ? (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 pb-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 pb-2">
                     {filteredStores.map(store => (
                       <StoreCard 
                         key={store.id} 
