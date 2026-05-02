@@ -134,9 +134,23 @@ export function StoreCard({ store, playlists, onRefresh }: StoreCardProps) {
     }
   };
 
+  const { setNodeRef, isOver } = useDroppable({
+    id: `card-store-${store.id}`,
+    data: {
+      type: 'store',
+      store: store
+    }
+  });
+
   return (
     <>
-    <Card className="bg-card/50 backdrop-blur-sm border-white/5 hover:border-white/10 transition-all overflow-hidden group">
+    <Card 
+      ref={setNodeRef}
+      className={cn(
+        "bg-card/50 backdrop-blur-sm border-white/5 hover:border-white/10 transition-all overflow-hidden group",
+        isOver && "border-primary ring-2 ring-primary/20 bg-primary/5"
+      )}
+    >
       <CardHeader className="p-4 pb-2 border-b border-white/5">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
