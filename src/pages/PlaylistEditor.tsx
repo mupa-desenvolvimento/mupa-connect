@@ -8,7 +8,8 @@ import {
   useSensor,
   useSensors,
   DragOverlay,
-  defaultDropAnimationSideEffects
+  defaultDropAnimationSideEffects,
+  SnapCenterModifier
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -287,13 +288,23 @@ export default function PlaylistEditor() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 3, // Início quase imediato
+        distance: 3, 
       },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  // Implementação de modificador de snap suave (ímã)
+  const createSnapModifier = (gridSize: number) => {
+    return ({ transform }: { transform: any }) => ({
+      ...transform,
+      x: Math.round(transform.x / gridSize) * gridSize,
+    });
+  };
+
+  const snapModifier = useCallback(createSnapModifier(pxPerSecond / 2), [pxPerSecond]);
 
   useEffect(() => {
     if (playlistData) {
@@ -900,7 +911,7 @@ export default function PlaylistEditor() {
                     collisionDetection={closestCenter}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
-                    modifiers={[restrictToHorizontalAxis]}
+                    modifiers={[restrictToHorizontalAxis, snapModifier]}
                   >
                     <SortableContext 
                       items={items.map(i => i.id)}
