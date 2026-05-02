@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { DeviceAvailablePanel } from "@/components/DeviceAvailablePanel";
 import { useTenant, usePlaylists } from "@/hooks/use-playlist-data";
@@ -13,6 +13,7 @@ import { Globe, Store, Plus, Search, Loader2, Package, Filter, Monitor } from "l
 import { GroupTreeNode } from "@/components/groups/GlobalGroupTree";
 import { StoreCard } from "@/components/groups/StoreCard";
 import { Input } from "@/components/ui/input";
+import { DndContext, DragOverlay, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { 
   Dialog, 
   DialogContent, 
@@ -107,6 +108,100 @@ export default function GroupsPage() {
     hasChildren: boolean;
     hasStores: boolean;
   }>({ open: false, groupId: "", groupName: "", hasChildren: false, hasStores: false });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
+  const [activeDragItem, setActiveDragItem] = useState<any>(null);
+
+  const handleDragStart = (event: any) => {
+    setActiveDragItem(event.active.data.current);
+  };
+
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    setActiveDragItem(null);
+    const { active, over } = event;
+
+    if (!over) return;
+
+    const activeData = active.data.current;
+    const overData = over.data.current;
+
+    if (!activeData || !overData) return;
+
+    // Cases:
+    // 1. Device -> Group
+    if (activeData.type === 'device' && overData.type === 'group') {
+      const device = activeData.device;
+      const group = overData.group;
+      
+      try {
+        // Link device directly to group
+        await supabase.from('group_devices').delete().eq('device_id', device.device_uuid);
+        const { error } = await supabase.from('group_devices').insert({
+          group_id: group.id,
+          device_id: device.device_uuid,
+          tenant_id: tenantId
+        });
+        
+        if (error) throw error;
+        toast.success(`${device.apelido_interno} vinculado ao grupo ${group.name}`);
+        refetchGroups();
+        refetchDevices();
+      } catch (e: any) {
+        toast.error("Erro ao vincular dispositivo: " + e.message);
+      }
+    }
+    
+    // 2. Device -> Store
+    else if (activeData.type === 'device' && overData.type === 'store') {
+      const device = activeData.device;
+      const store = overData.store;
+      
+      try {
+        // Update store_id of the device
+        const { error } = await supabase
+          .from('dispositivos')
+          .update({ store_id: store.id } as any)
+          .eq('device_uuid', device.device_uuid);
+        
+        if (error) throw error;
+        toast.success(`${device.apelido_interno} movido para ${store.name}`);
+        refetchDevices();
+        refetchStores();
+      } catch (e: any) {
+        toast.error("Erro ao mover dispositivo: " + e.message);
+      }
+    }
+    
+    // 3. Store -> Group
+    else if (activeData.type === 'store' && overData.type === 'group') {
+      const store = activeData.store;
+      const group = overData.group;
+      
+      try {
+        // Link store to group
+        await supabase.from('group_stores').delete().eq('store_id', store.id);
+        const { error } = await supabase.from('group_stores').insert({
+          group_id: group.id,
+          store_id: store.id,
+          tenant_id: tenantId
+        });
+        
+        if (error) throw error;
+        toast.success(`${store.name} vinculado ao grupo ${group.name}`);
+        refetchGroups();
+        refetchStores();
+      } catch (e: any) {
+        toast.error("Erro ao vincular loja: " + e.message);
+      }
+    }
+  }, [tenantId, refetchGroups, refetchDevices, refetchStores]);
 
   const enrichedGroups = useMemo(() => {
     if (!groups) return [];
@@ -388,52 +483,58 @@ export default function GroupsPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-2rem)] flex flex-col gap-4 overflow-hidden">
-      <div className="flex justify-between items-center pr-2 shrink-0">
-        <PageHeader
-          title="Gestão de Grupos"
-          description="Administre a hierarquia global de lojas, setores e playlists de forma intuitiva."
-        />
-        <div className="flex items-center gap-3">
-          <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input 
-              placeholder="Buscar..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9 bg-white/5 border-white/10"
-            />
+    <DndContext 
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="h-[calc(100vh-2rem)] flex flex-col gap-4 overflow-hidden">
+        <div className="flex justify-between items-center pr-2 shrink-0">
+          <PageHeader
+            title="Gestão de Grupos"
+            description="Administre a hierarquia global de lojas, setores e playlists de forma intuitiva."
+          />
+          <div className="flex items-center gap-3">
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input 
+                placeholder="Buscar..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9 bg-white/5 border-white/10"
+              />
+            </div>
+            <Button 
+              className="bg-primary hover:bg-primary/90 h-9"
+              onClick={() => {
+                setGroupFormData({ name: "", playlistMode: "inherit", playlistId: "" });
+                setGroupModal({ open: true, mode: 'create', parentId: null });
+              }}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Grupo
+            </Button>
           </div>
-          <Button 
-            className="bg-primary hover:bg-primary/90 h-9"
-            onClick={() => {
-              setGroupFormData({ name: "", playlistMode: "inherit", playlistId: "" });
-              setGroupModal({ open: true, mode: 'create', parentId: null });
-            }}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Grupo
-          </Button>
         </div>
-      </div>
 
-      <div className="flex-1 flex gap-6 overflow-hidden">
-        <div className="flex-[3] min-w-0 flex flex-col gap-4 overflow-hidden">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-            <TabsList className="bg-white/5 border border-white/10 p-1 w-fit">
-              <TabsTrigger value="groups" className="gap-2 data-[state=active]:bg-primary">
-                <Globe className="w-4 h-4" /> Grupos Globais
-              </TabsTrigger>
-              <TabsTrigger value="stores" className="gap-2 data-[state=active]:bg-primary">
-                <Store className="w-4 h-4" /> Lojas & Setores
-              </TabsTrigger>
-            </TabsList>
+        <div className="flex-1 flex gap-6 overflow-hidden">
+          <div className="flex-[3] min-w-0 flex flex-col gap-4 overflow-hidden">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+              <TabsList className="bg-white/5 border border-white/10 p-1 w-fit shrink-0">
+                <TabsTrigger value="groups" className="gap-2 data-[state=active]:bg-primary">
+                  <Globe className="w-4 h-4" /> Grupos Globais
+                </TabsTrigger>
+                <TabsTrigger value="stores" className="gap-2 data-[state=active]:bg-primary">
+                  <Store className="w-4 h-4" /> Lojas & Setores
+                </TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="groups" className="flex-1 mt-4 border-t border-white/5 pt-4 overflow-y-auto custom-scrollbar pr-2">
-              {loadingGroups ? (
-                <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
-              ) : groups && groups.length > 0 ? (
-                <div className="space-y-1">
+              <TabsContent value="groups" className="flex-1 mt-4 border-t border-white/5 pt-4 overflow-y-auto custom-scrollbar pr-2">
+                {loadingGroups ? (
+                  <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+                ) : groups && groups.length > 0 ? (
+                  <div className="space-y-1 pb-20">
                   {filteredGroups.map(group => (
                     <GroupTreeNode 
                       key={group.id} 
@@ -768,6 +869,7 @@ export default function GroupsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+      </div>
+    </DndContext>
   );
 }

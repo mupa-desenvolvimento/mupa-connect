@@ -86,7 +86,7 @@ export function DeviceItem({ device, isSelected, onToggle, onClick }: DeviceItem
       className={cn(
         "group relative flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 cursor-pointer",
         isSelected 
-          ? "bg-[#085CF0]/10 border-[#085CF0]/30 shadow-[0_0_15px_rgba(8,92,240,0.1)]" 
+          ? "bg-primary/10 border-primary/30 shadow-[0_0_15px_rgba(var(--primary),0.1)]" 
           : "bg-white/5 border-white/5 hover:border-white/10 hover:bg-white/[0.07]",
         isDragging && "opacity-0"
       )}
@@ -99,7 +99,7 @@ export function DeviceItem({ device, isSelected, onToggle, onClick }: DeviceItem
         <Checkbox 
           checked={isSelected} 
           onCheckedChange={() => {}} // Controlled by div onClick for shiftKey support
-          className="border-white/20 data-[state=checked]:bg-[#085CF0] data-[state=checked]:border-[#085CF0]"
+          className="border-white/20 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
         />
         
         <div 
@@ -113,8 +113,8 @@ export function DeviceItem({ device, isSelected, onToggle, onClick }: DeviceItem
         <div className="flex flex-col min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className={cn(
-              "text-sm font-bold truncate",
-              isSelected ? "text-white" : "text-white/80"
+              "text-sm font-bold truncate transition-colors",
+              isSelected ? "text-white" : "text-white/80 group-hover:text-white"
             )}>
               {device.apelido_interno || "Sem nome"}
             </span>
@@ -136,7 +136,7 @@ export function DeviceItem({ device, isSelected, onToggle, onClick }: DeviceItem
           <div className="flex flex-wrap gap-1.5 mt-2">
             {device.status_label === "Vinculado" ? (
               <div className="flex items-center gap-1.5">
-                <Badge variant="secondary" className="bg-[#085CF0]/10 text-[#085CF0] border-[#085CF0]/20 text-[9px] h-4 uppercase tracking-tighter">
+                <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-[9px] h-4 uppercase tracking-tighter">
                   {device.group_name || "Vinculado"}
                 </Badge>
                 <TooltipProvider>
@@ -410,14 +410,14 @@ export function DeviceAvailablePanel({
     <div 
       ref={setNodeRef}
       className={cn(
-        "flex flex-col h-full bg-[#0c0c0e] border transition-all duration-300 rounded-3xl overflow-hidden shadow-2xl relative",
-        isOver ? "border-[#085CF0] ring-4 ring-[#085CF0]/10 bg-[#085CF0]/5" : "border-white/5"
+        "flex flex-col h-full bg-background/50 backdrop-blur-xl border transition-all duration-300 rounded-[2rem] overflow-hidden shadow-2xl relative",
+        isOver ? "border-primary ring-4 ring-primary/10 bg-primary/5" : "border-white/5"
       )}
     >
       <div className="p-6 border-b border-white/5 bg-gradient-to-b from-white/[0.03] to-transparent">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
-            <div className="p-2.5 rounded-2xl bg-[#085CF0]/10 text-[#085CF0] shadow-inner">
+            <div className="p-2.5 rounded-2xl bg-primary/10 text-primary shadow-inner">
               {viewMode === "devices" ? <Monitor className="w-5 h-5" /> : <Store className="w-5 h-5" />}
             </div>
             <div>
@@ -454,7 +454,7 @@ export function DeviceAvailablePanel({
             </div>
           </div>
           {viewMode === "devices" && selectedIds.size > 0 && (
-            <Badge className="bg-[#085CF0] text-white border-none shadow-lg shadow-[#085CF0]/20 animate-in zoom-in-95 font-bold px-2 py-0.5">
+            <Badge className="bg-primary text-white border-none shadow-lg shadow-primary/20 animate-in zoom-in-95 font-bold px-2 py-0.5">
               {selectedIds.size} SELECIONADOS
             </Badge>
           )}
@@ -466,7 +466,7 @@ export function DeviceAvailablePanel({
               onClick={() => { setViewMode("devices"); setFilterMode("all"); }}
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all duration-300",
-                viewMode === "devices" ? "bg-[#085CF0] text-white shadow-xl" : "text-white/30 hover:text-white/60 hover:bg-white/5"
+                viewMode === "devices" ? "bg-primary text-white shadow-xl shadow-primary/20" : "text-white/30 hover:text-white/60 hover:bg-white/5"
               )}
             >
               <Monitor className="w-3.5 h-3.5" />
@@ -476,7 +476,7 @@ export function DeviceAvailablePanel({
               onClick={() => { setViewMode("stores"); setFilterMode("all"); }}
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all duration-300",
-                viewMode === "stores" ? "bg-[#085CF0] text-white shadow-xl" : "text-white/30 hover:text-white/60 hover:bg-white/5"
+                viewMode === "stores" ? "bg-primary text-white shadow-xl shadow-primary/20" : "text-white/30 hover:text-white/60 hover:bg-white/5"
               )}
             >
               <Store className="w-3.5 h-3.5" />
@@ -491,7 +491,7 @@ export function DeviceAvailablePanel({
                 placeholder={viewMode === "devices" ? "Buscar nome ou serial..." : "Buscar nome ou código..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-11 bg-black/40 border-white/5 focus:border-[#085CF0]/50 h-10 rounded-xl text-sm"
+                className="pl-11 bg-black/40 border-white/5 focus:border-primary/50 h-10 rounded-xl text-sm"
               />
             </div>
             
@@ -520,7 +520,7 @@ export function DeviceAvailablePanel({
                   onClick={handleSelectAll}
                   className={cn(
                     "h-9 w-9 rounded-lg border border-white/5 bg-white/[0.02] transition-colors",
-                    selectedIds.size > 0 ? "text-[#085CF0] border-[#085CF0]/30" : "text-white/20 hover:text-white/40"
+                    selectedIds.size > 0 ? "text-primary border-primary/30" : "text-white/20 hover:text-white/40"
                   )}
                   title="Selecionar/Desmarcar todos"
                 >
@@ -601,7 +601,7 @@ function StoreItem({ store, onClick }: { store: StoreData, onClick?: (groupId: s
       style={style}
       className={cn(
         "group relative flex items-center gap-3 p-3 rounded-xl border transition-all duration-300 cursor-pointer",
-        "bg-white/5 border-white/5 hover:border-[#085CF0]/30 hover:bg-[#085CF0]/5",
+        "bg-white/5 border-white/5 hover:border-primary/30 hover:bg-primary/5",
         isDragging && "opacity-0"
       )}
       onClick={() => store.group_id && onClick?.(store.group_id)}
@@ -626,7 +626,7 @@ function StoreItem({ store, onClick }: { store: StoreData, onClick?: (groupId: s
         
         <div className="flex items-center gap-1.5 mt-2">
           {isLinked ? (
-            <Badge variant="secondary" className="bg-[#085CF0]/10 text-[#085CF0] border-[#085CF0]/20 text-[9px] h-4 uppercase tracking-tighter">
+            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-[9px] h-4 uppercase tracking-tighter">
               {store.group_name || "Vinculado"}
             </Badge>
           ) : (
