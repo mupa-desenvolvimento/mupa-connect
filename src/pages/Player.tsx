@@ -15,6 +15,8 @@ export default function PlayerPage() {
   const [reloadKey, setReloadKey] = useState<number>(0);
   const [volume, setVolume] = useState(0); // Default muted as requested
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
 
   // 1. Core Loader: Resolve Identity & Manifest (Offline-First)
   useEffect(() => {
