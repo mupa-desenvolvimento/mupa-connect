@@ -123,7 +123,7 @@ const SortableItem = ({
         isSelected 
           ? 'border-[#085CF0] ring-2 ring-[#085CF0]/20 bg-[#085CF0]/5 shadow-xl shadow-[#085CF0]/10' 
           : 'border-border/40 bg-card/40 hover:border-[#085CF0]/30'
-      } ${isCurrent ? 'ring-2 ring-yellow-500/50 bg-yellow-500/5' : ''} ${isDragging ? 'opacity-0' : ''}`}
+      } ${isCurrent ? 'ring-2 ring-yellow-500/50 bg-yellow-500/5' : ''} ${isDragging ? 'opacity-20 ring-4 ring-[#085CF0] border-[#085CF0] scale-95 transition-transform duration-200' : ''}`}
       onClick={(e) => {
         e.stopPropagation();
         onSelect(item);
@@ -941,18 +941,23 @@ export default function PlaylistEditor() {
                     }}>
                       {activeId ? (
                         <div 
-                          className="rounded-xl border-2 border-[#085CF0] bg-[#085CF0]/30 backdrop-blur-2xl shadow-[0_0_30px_rgba(8,92,240,0.4)] flex items-center justify-center overflow-hidden"
+                          className="rounded-xl border-4 border-[#085CF0] bg-black/40 backdrop-blur-3xl shadow-[0_0_50px_rgba(8,92,240,0.6)] flex items-center justify-center overflow-hidden ring-4 ring-white/20 ring-inset"
                           style={{ 
                             width: `${(items.find(i => i.id === activeId)?.duration / totalDuration) * (timelineRef.current?.offsetWidth || 0)}px`,
-                            height: '128px' 
+                            height: '128px',
+                            transform: 'rotate(2deg) scale(1.05)',
+                            transformOrigin: 'center center'
                           }}
                         >
-                           <div className="absolute inset-0 bg-gradient-to-br from-[#085CF0]/20 to-transparent" />
+                           <div className="absolute inset-0 bg-gradient-to-br from-[#085CF0]/40 via-transparent to-black/60 z-10" />
+                           <div className="absolute top-0 left-0 right-0 p-2 bg-[#085CF0] text-white text-[10px] font-bold uppercase tracking-widest text-center z-20">
+                             Movendo Item
+                           </div>
                            <img 
                              src={items.find(i => i.id === activeId)?.media?.thumbnail_url || items.find(i => i.id === activeId)?.media?.file_url} 
-                             className="absolute inset-0 w-full h-full object-cover opacity-40"
+                             className="absolute inset-0 w-full h-full object-cover opacity-60"
                            />
-                           <GripVertical className="h-6 w-6 text-white relative z-10" />
+                           <GripVertical className="h-8 w-8 text-white relative z-30 drop-shadow-[0_0_10px_rgba(0,0,0,0.5)]" />
                         </div>
                       ) : null}
                     </DragOverlay>
