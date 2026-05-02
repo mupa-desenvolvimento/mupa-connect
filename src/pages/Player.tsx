@@ -20,6 +20,8 @@ export default function PlayerPage() {
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
 
   // 1. Core Loader: Resolve Identity & Manifest (Offline-First)
+  const [appearance, setAppearance] = useState<any>(null);
+
   useEffect(() => {
     if (!deviceCode) return;
 
