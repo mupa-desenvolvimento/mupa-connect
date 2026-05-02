@@ -689,8 +689,14 @@ export default function GroupsPage() {
       <Dialog open={linkDevicesModal.open} onOpenChange={(o) => setLinkDevicesModal({ ...linkDevicesModal, open: o })}>
         <DialogContent className="bg-card border-white/10 text-white max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Vincular Dispositivos: {linkDevicesModal.group?.name}</DialogTitle>
-            <DialogDescription>Selecione os dispositivos que devem responder diretamente a este grupo.</DialogDescription>
+            <DialogTitle className="text-xl flex items-center gap-2">
+              <Monitor className="w-5 h-5 text-primary" />
+              Gestão de Dispositivos Diretos: <span className="text-primary">{linkDevicesModal.group?.name}</span>
+            </DialogTitle>
+            <DialogDescription className="text-white/60">
+              Vincule dispositivos específicos diretamente a este grupo. 
+              Estes dispositivos priorizarão a playlist deste grupo sobre as configurações da loja.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="relative">
