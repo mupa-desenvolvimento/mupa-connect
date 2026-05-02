@@ -291,7 +291,7 @@ export default function PlayerPage() {
 
       {/* HUD overlay - Zero flickering absolute layers */}
       {(appearance?.show_device_name !== false || appearance?.show_datetime !== false) && (
-        <div className="absolute top-0 left-0 right-0 p-8 flex items-start justify-between bg-gradient-to-b from-black/90 via-black/40 to-transparent z-40 pointer-events-none transition-all duration-500">
+        <div className="absolute top-0 left-0 right-0 p-8 flex items-start justify-between bg-black/60 z-40 pointer-events-none transition-all duration-500">
           <div className="flex items-center gap-4">
             {appearance?.show_device_name !== false && (
               <>
