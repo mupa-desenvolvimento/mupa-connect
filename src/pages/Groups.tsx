@@ -300,7 +300,6 @@ export default function GroupsPage() {
 
   const handleSaveDeviceLinks = async () => {
     const groupId = linkDevicesModal.group.id;
-    if (!confirm(`Deseja salvar as alterações de vínculo para ${linkDevicesModal.selectedDeviceIds.length} dispositivo(s) no grupo "${linkDevicesModal.group.name}"?`)) return;
     try {
       await supabase.from("group_devices").delete().eq("group_id", groupId);
       if (linkDevicesModal.selectedDeviceIds.length > 0) {
