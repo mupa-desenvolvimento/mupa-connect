@@ -206,35 +206,25 @@ export default function GroupsPage() {
   const enrichedGroups = useMemo(() => {
     if (!groups) return [];
     const safeDevices = devices || [];
-    const safeGroupStores = groupStores || [];
-    const safeGroupDevices = groupDevices || [];
     
     return groups.map(group => {
-      // 1. Direct devices linked to this group (via group_devices table)
-      const directDeviceIds = new Set(
-        safeGroupDevices
-          .filter(gd => gd.group_id === group.id)
-          .map(gd => gd.device_id)
-      );
+      // 1. Direct devices linked to this group (via its direct_device_ids array)
+      const directDeviceIds = new Set(group.direct_device_ids || []);
       
-      // 2. Stores linked to this group (via group_stores table)
-      const linkedStoreIds = new Set(
-        safeGroupStores
-          .filter(gs => gs.group_id === group.id)
-          .map(gs => gs.store_id)
-      );
+      // 2. Stores linked to this group (via its linked_store_ids array)
+      const linkedStoreIds = new Set(group.linked_store_ids || []);
       
       // Combine all devices for this specific group
-      // - Direct devices
-      // - Devices belonging to linked stores
+      // - Direct devices (matched by device_uuid)
+      // - Devices belonging to linked stores (matched by store_id)
       const groupLevelDevices = safeDevices.filter(d => 
-        directDeviceIds.has(d.id) || (d.store_id && linkedStoreIds.has(d.store_id))
+        directDeviceIds.has(d.device_uuid) || (d.store_id && linkedStoreIds.has(d.store_id))
       );
 
       // Create enriched device objects for display with origin tracking
       const enrichedDevices = groupLevelDevices.map(d => ({
         ...d,
-        origin: directDeviceIds.has(d.id) ? 'direto' as const : 'loja' as const
+        origin: directDeviceIds.has(d.device_uuid) ? 'direto' as const : 'loja' as const
       }));
 
       // Deduplicate devices (a device could be both direct and from a store)
@@ -254,7 +244,7 @@ export default function GroupsPage() {
         devices: Array.from(uniqueDevicesMap.values())
       };
     });
-  }, [groups, devices, groupStores, groupDevices]);
+  }, [groups, devices]);
 
   const filteredGroups = useMemo(() => {
     if (!enrichedGroups) return [];
