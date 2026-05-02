@@ -6,6 +6,7 @@ import { useGroups } from "@/hooks/use-groups";
 import { useStores } from "@/hooks/use-stores";
 import { useDevices } from "@/hooks/use-devices";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Globe, Store, Plus, Search, Loader2, Package, Filter } from "lucide-react";
@@ -373,7 +374,8 @@ export default function GroupsPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-180px)] flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar">
+    <ScrollArea className="h-[calc(100vh-180px)]">
+      <div className="flex flex-col gap-4 pr-4">
       <div className="flex justify-between items-center pr-2">
         <PageHeader
           title="Gestão de Grupos"
@@ -709,6 +711,7 @@ export default function GroupsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </ScrollArea>
   );
 }
