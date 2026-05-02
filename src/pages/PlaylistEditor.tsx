@@ -327,15 +327,19 @@ export default function PlaylistEditor() {
       
       if (playlistData.playlist_items && playlistData.playlist_items.length > 0) {
         const mappedItems = playlistData.playlist_items.map((it: any) => {
-          // Garante que o mediaId extraído seja o UUID (media_id)
+          // Garantir que estamos pegando o media_id (UUID) do banco de dados
           const mediaId = it.media_id;
           
+          if (typeof mediaId === 'string' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(mediaId)) {
+            console.error("ALERTA: media_id inválido carregado do banco:", mediaId);
+          }
+
           return {
-            id: it.id,
+            id: it.id, // ID único do item na playlist (UUID)
             dbId: it.id,
-            mediaId: mediaId,
-            duration: it.duracao,
-            priority: it.prioridade || 1,
+            mediaId: mediaId, // UUID da mídia
+            duration: Number(it.duracao),
+            priority: Number(it.prioridade || 1),
             type: it.tipo,
             media: medias?.find(m => m.id === mediaId)
           };
@@ -396,14 +400,16 @@ export default function PlaylistEditor() {
     setSaveStatus("saving");
     const startTime = Date.now();
     
-    // Log do payload para debug (Requisito 5)
-    console.log("DEBUG: Salvando playlist", {
-      id,
+    // Log do payload completo antes do save (Requisito 6)
+    console.log("CRITICAL DEBUG: Salvando playlist", {
+      playlist_id: id,
       name: updatedName,
       itemCount: safeItems.length,
-      items: safeItems.map((it, idx) => ({ 
+      payload_preview: safeItems.map((it, idx) => ({ 
         media_id: it.mediaId, 
-        order: idx + 1 
+        media_id_type: typeof it.mediaId,
+        visual_order: idx + 1,
+        duration: it.duration
       }))
     });
     
@@ -476,22 +482,27 @@ export default function PlaylistEditor() {
       if (safeItems.length > 0) {
         const itemsToInsert = safeItems.map((it, idx) => {
           // Double-check de segurança (Requisito 5)
-          if (!isUuid(it.mediaId)) {
-            throw new Error(`ID de mídia inválido (não é UUID): ${it.mediaId}`);
+          const mediaId = String(it.mediaId);
+          
+          if (!isUuid(mediaId)) {
+            console.error("FALHA DE VALIDAÇÃO: mediaId não é UUID válido:", mediaId);
+            throw new Error(`O item na posição ${idx + 1} possui um ID de mídia inválido ("${mediaId}"). Remova-o e adicione novamente.`);
           }
+
           if (!isUuid(currentPlaylistId)) {
-            throw new Error(`ID da playlist inválido (não é UUID): ${currentPlaylistId}`);
+            console.error("FALHA DE VALIDAÇÃO: playlistId não é UUID válido:", currentPlaylistId);
+            throw new Error(`O identificador da playlist ("${currentPlaylistId}") é inválido.`);
           }
           
           return {
-            playlist_id: currentPlaylistId,
-            media_id: it.mediaId,
+            playlist_id: currentPlaylistId, // UUID
+            media_id: mediaId, // UUID
             duracao: Number(it.duration),
             prioridade: Number(it.priority || 1),
             tipo: it.type,
-            ordem: idx + 1, // Ordem numérica correta
-            position: idx + 1, // Posição numérica correta
-            conteudo_id: String(it.mediaId), // Mantendo como string para o campo conteudo_id
+            ordem: idx + 1, // Inteiro
+            position: idx + 1, // Inteiro
+            conteudo_id: mediaId, // Mantendo o UUID como string
             ativo: true
           };
         });
@@ -599,12 +610,20 @@ export default function PlaylistEditor() {
     }
     const newItem: EditorPlaylistItem = {
       id: `temp-${Date.now()}-${Math.random()}`,
-      mediaId: media.id,
-      duration: media.duration || 10,
+      mediaId: media.id, // O media.id vindo de useMedias DEVE ser um UUID
+      duration: Number(media.duration || 10),
       priority: 1,
       type: media.type === 'video' ? 'video' : 'image',
       media: media
     };
+    
+    // Verificação extra antes de adicionar ao estado (Requisito 5)
+    if (typeof media.id === 'string' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(media.id)) {
+      console.error("ERRO: Tentando adicionar mídia com ID não-UUID:", media.id);
+      toast.error("Erro interno: A mídia selecionada possui um identificador inválido.");
+      return;
+    }
+
     const newItems = [...items, newItem];
     console.log("New items state will be:", newItems);
     setItems(newItems);
