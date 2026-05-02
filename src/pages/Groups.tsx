@@ -353,13 +353,11 @@ export default function GroupsPage() {
     }
   };
 
-  const handleDeleteGroup = async (id: string, name: string) => {
-    if (!confirm(`Deseja realmente excluir o grupo "${name}"? Todos os subgrupos também serão afetados.`)) return;
-
+  const handleDeleteGroup = async (id: string) => {
     try {
       const { error } = await supabase.from("groups").delete().eq("id", id);
       if (error) throw error;
-      toast.success("Grupo excluído");
+      toast.success("Grupo excluído com sucesso");
       refetchGroups();
     } catch (e: any) {
       toast.error("Erro ao excluir grupo: " + e.message);
