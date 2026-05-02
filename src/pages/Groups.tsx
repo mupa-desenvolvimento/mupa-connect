@@ -414,7 +414,7 @@ export default function GroupsPage() {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="groups" className="flex-1 mt-4 overflow-y-auto pr-2 custom-scrollbar border-t border-white/5 pt-4">
+            <TabsContent value="groups" className="mt-4 border-t border-white/5 pt-4">
               {loadingGroups ? (
                 <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
               ) : groups && groups.length > 0 ? (
