@@ -566,7 +566,7 @@ export function DeviceAvailablePanel({
             )
           )}
         </div>
-      </div>
+      </ScrollArea>
 
       <div className="p-4 bg-black/40 border-t border-white/5 flex items-center justify-center gap-2.5 text-white/20">
         <MousePointer2 className="w-3.5 h-3.5" />
