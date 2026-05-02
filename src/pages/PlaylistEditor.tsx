@@ -330,7 +330,7 @@ export default function PlaylistEditor() {
           // Garantir que estamos pegando o media_id (UUID) do banco de dados
           const mediaId = it.media_id;
           
-          if (!isUuid(mediaId)) {
+          if (typeof mediaId === 'string' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(mediaId)) {
             console.error("ALERTA: media_id inválido carregado do banco:", mediaId);
           }
 
