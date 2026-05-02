@@ -13,6 +13,26 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter,
+  DialogDescription
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -23,6 +43,8 @@ interface StoreCardProps {
     code: string;
     playlist_id: string | null;
     playlist_name?: string;
+    group_id?: string | null;
+    group_name?: string | null;
   };
   playlists: any[];
   onRefresh: () => void;
@@ -31,7 +53,9 @@ interface StoreCardProps {
 export function StoreCard({ store, playlists, onRefresh }: StoreCardProps) {
   const { data: sectors, refetch: refetchSectors } = useStoreInternalGroups(store.id);
   const { data: allDevices, refetch: refetchDevices } = useDevices(null);
-  
+  const [isSectorDialogOpen, setIsSectorDialogOpen] = useState(false);
+  const [newSectorName, setNewSectorName] = useState("");
+  const [deleteSectorConfirm, setDeleteSectorConfirm] = useState<{ open: boolean, id: string, name: string }>({ open: false, id: "", name: "" });
   const normalize = (val: string | null | undefined) => {
     if (!val) return "";
     let normalized = val.replace(/FIL-/gi, "");
@@ -74,27 +98,26 @@ export function StoreCard({ store, playlists, onRefresh }: StoreCardProps) {
   };
 
   const handleCreateSector = async () => {
-    const name = window.prompt("Nome do novo setor:");
-    if (!name) return;
+    if (!newSectorName.trim()) return;
 
     const { error } = await supabase
       .from("store_internal_groups")
       .insert({
         store_id: store.id,
-        name
+        name: newSectorName
       } as any);
 
     if (error) {
       toast.error("Erro ao criar setor");
     } else {
-      toast.success("Setor criado!");
+      toast.success("Setor criado com sucesso!");
+      setNewSectorName("");
+      setIsSectorDialogOpen(false);
       refetchSectors();
     }
   };
 
   const handleDeleteSector = async (id: string) => {
-    if (!confirm("Deseja realmente excluir este setor?")) return;
-
     const { error } = await supabase
       .from("store_internal_groups")
       .delete()
@@ -103,12 +126,14 @@ export function StoreCard({ store, playlists, onRefresh }: StoreCardProps) {
     if (error) {
       toast.error("Erro ao excluir setor");
     } else {
-      toast.success("Setor excluído");
+      toast.success("Setor removido com sucesso");
+      setDeleteSectorConfirm({ open: false, id: "", name: "" });
       refetchSectors();
     }
   };
 
   return (
+    <>
     <Card className="bg-card/50 backdrop-blur-sm border-white/5 hover:border-white/10 transition-all overflow-hidden group">
       <CardHeader className="p-4 pb-2 border-b border-white/5">
         <div className="flex items-start justify-between">
@@ -117,7 +142,14 @@ export function StoreCard({ store, playlists, onRefresh }: StoreCardProps) {
               <Store className="w-5 h-5" />
             </div>
             <div>
-              <CardTitle className="text-lg font-semibold">{store.name}</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-lg font-semibold">{store.name}</CardTitle>
+                {store.group_name && (
+                  <Badge variant="outline" className="text-[9px] bg-blue-500/5 text-blue-400 border-blue-500/10">
+                    GRUPO: {store.group_name}
+                  </Badge>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Código: {store.code}</p>
             </div>
           </div>
@@ -130,23 +162,32 @@ export function StoreCard({ store, playlists, onRefresh }: StoreCardProps) {
       <CardContent className="p-4 space-y-4">
         <div className="space-y-2">
           <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest px-1">Playlist da Loja</label>
-          <Select defaultValue={store.playlist_id || "none"} onValueChange={handleStorePlaylistChange}>
-            <SelectTrigger className="h-9 bg-white/5 border-white/10">
-              <SelectValue placeholder="Selecione uma playlist" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Nenhuma (Sem reprodução)</SelectItem>
-              {playlists.map(p => (
-                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2">
+            <Select defaultValue={store.playlist_id || "none"} onValueChange={handleStorePlaylistChange}>
+              <SelectTrigger className="h-9 bg-white/5 border-white/10 flex-1">
+                <SelectValue placeholder="Selecione uma playlist" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Nenhuma (Sem reprodução)</SelectItem>
+                {playlists.map(p => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {!store.playlist_id && store.group_name && (
+              <PlaylistBadge 
+                playlistName={store.playlist_name || 'Playlist do Grupo'}
+                isInherited={true}
+                inheritedFromName={store.group_name}
+              />
+            )}
+          </div>
         </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between px-1">
             <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Setores Internos</label>
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCreateSector}>
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsSectorDialogOpen(true)}>
               <Plus className="w-4 h-4" />
             </Button>
           </div>
@@ -160,7 +201,7 @@ export function StoreCard({ store, playlists, onRefresh }: StoreCardProps) {
                     <PlaylistBadge 
                       playlistName={sector.playlist_name || store.playlist_name || null} 
                       isInherited={!sector.playlist_id}
-                      inheritedFromName={!sector.playlist_id ? "Loja" : null}
+                      inheritedFromName={!sector.playlist_id ? (store.playlist_id ? "Loja" : store.group_name || "Superior") : null}
                     />
                     <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                       <Monitor className="w-3 h-3" /> {sector.device_count}
@@ -175,7 +216,7 @@ export function StoreCard({ store, playlists, onRefresh }: StoreCardProps) {
                     variant="ghost" 
                     size="icon" 
                     className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                    onClick={() => handleDeleteSector(sector.id)}
+                    onClick={() => setDeleteSectorConfirm({ open: true, id: sector.id, name: sector.name })}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </Button>
@@ -202,5 +243,48 @@ export function StoreCard({ store, playlists, onRefresh }: StoreCardProps) {
         )}
       </CardContent>
     </Card>
+
+    <Dialog open={isSectorDialogOpen} onOpenChange={setIsSectorDialogOpen}>
+      <DialogContent className="bg-card border-white/10 text-white">
+        <DialogHeader>
+          <DialogTitle>Criar Novo Setor</DialogTitle>
+          <DialogDescription>Defina um nome para o setor interno da loja {store.name}.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="sector-name">Nome do Setor</Label>
+            <Input 
+              id="sector-name"
+              placeholder="Ex: Padaria, Açougue..."
+              value={newSectorName}
+              onChange={(e) => setNewSectorName(e.target.value)}
+              className="bg-white/5 border-white/10"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setIsSectorDialogOpen(false)}>Cancelar</Button>
+          <Button onClick={handleCreateSector} disabled={!newSectorName.trim()}>Criar Setor</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <AlertDialog open={deleteSectorConfirm.open} onOpenChange={(o) => setDeleteSectorConfirm({ ...deleteSectorConfirm, open: o })}>
+      <AlertDialogContent className="bg-card border-white/10 text-white">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir setor?</AlertDialogTitle>
+          <AlertDialogDescription className="text-white/60">
+            Deseja realmente excluir o setor "{deleteSectorConfirm.name}"? Esta ação não pode ser desfeita.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel className="bg-white/5 border-white/10">Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={() => handleDeleteSector(deleteSectorConfirm.id)} className="bg-destructive hover:bg-destructive/90">
+            Excluir
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

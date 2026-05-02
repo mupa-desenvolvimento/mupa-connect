@@ -29,10 +29,7 @@ export function useGroups(tenantId: string | null) {
         `)
         .eq("tenant_id", tenantId);
       
-      console.log("DEBUG: Groups loaded for tenant:", tenantId, groups);
-
       if (groupsError) {
-        console.error("DEBUG: Error loading groups:", groupsError);
         throw groupsError;
       }
 

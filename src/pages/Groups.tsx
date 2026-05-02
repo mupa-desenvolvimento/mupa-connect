@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Globe, Store, Plus, Search, Loader2, Package, Filter } from "lucide-react";
+import { Globe, Store, Plus, Search, Loader2, Package, Filter, Monitor } from "lucide-react";
 import { GroupTreeNode } from "@/components/groups/GlobalGroupTree";
 import { StoreCard } from "@/components/groups/StoreCard";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,16 @@ import {
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { 
@@ -44,7 +54,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 export default function GroupsPage() {
   const { tenantId } = useTenant();
-  console.log("DEBUG: GroupsPage - current tenantId:", tenantId);
+
   const { data: playlists } = usePlaylists(tenantId || undefined);
   const { data: groups, isLoading: loadingGroups, refetch: refetchGroups } = useGroups(tenantId);
   const { data: stores, isLoading: loadingStores, refetch: refetchStores } = useStores(tenantId);
@@ -89,8 +99,16 @@ export default function GroupsPage() {
     selectedDeviceIds: [] as string[]
   });
 
+  // Delete Confirmation State
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    open: boolean;
+    groupId: string;
+    groupName: string;
+    hasChildren: boolean;
+    hasStores: boolean;
+  }>({ open: false, groupId: "", groupName: "", hasChildren: false, hasStores: false });
+
   const enrichedGroups = useMemo(() => {
-    console.log("DEBUG: GroupsPage - groups:", groups?.length, "devices:", devices?.length, "stores:", stores?.length);
     if (!groups) return [];
     const safeDevices = devices || [];
     const safeStores = stores || [];
@@ -150,10 +168,6 @@ export default function GroupsPage() {
         return null;
       }).filter((d): d is any => d !== null);
 
-      // Debug mandatory logs
-      console.log(`group: ${group.id} (${group.name})`);
-      console.log(`devices direct: ${localDirectDeviceIds.size}`);
-      console.log(`devices store: ${localDevices.length} devices found via store_id`);
 
       // Deduplicate local devices
       const uniqueLocalDevicesMap = new Map();
@@ -189,20 +203,16 @@ export default function GroupsPage() {
         store_count: storeIds.size
       };
     });
-    console.log("DEBUG: GroupsPage - enrichedGroups total:", result.length);
     return result;
   }, [groups, devices, stores]);
 
   const filteredGroups = useMemo(() => {
-    console.log("DEBUG: GroupsPage - filtering groups. Total enriched:", enrichedGroups.length, "searchQuery:", searchQuery);
     if (!enrichedGroups) return [];
     if (!searchQuery) {
       const roots = enrichedGroups.filter(g => !g.parent_id || !enrichedGroups.some(pg => pg.id === g.parent_id));
-      console.log("DEBUG: GroupsPage - root groups count:", roots.length);
       return roots;
     }
     const filtered = enrichedGroups.filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    console.log("DEBUG: GroupsPage - searched groups count:", filtered.length);
     return filtered;
   }, [enrichedGroups, searchQuery]);
 
@@ -229,7 +239,15 @@ export default function GroupsPage() {
       });
       setGroupModal({ open: true, mode: 'edit', group });
     } else if (type === 'delete') {
-      handleDeleteGroup(group.id, group.name);
+      const children = groups?.filter(g => g.parent_id === group.id) || [];
+      const storesLinked = group.linked_store_ids?.length > 0;
+      setDeleteConfirm({
+        open: true,
+        groupId: group.id,
+        groupName: group.name,
+        hasChildren: children.length > 0,
+        hasStores: storesLinked
+      });
     } else if (type === 'stores') {
       // Fetch currently linked stores
       const { data } = await supabase.from("group_stores").select("store_id").eq("group_id", group.id);
@@ -260,7 +278,6 @@ export default function GroupsPage() {
 
   const handleSaveStoreLinks = async () => {
     const groupId = linkStoresModal.group.id;
-    if (!confirm(`Deseja salvar as alterações de vínculo das lojas para o grupo "${linkStoresModal.group.name}"?`)) return;
     try {
       // Simplistic sync: delete then insert
       await supabase.from("group_stores").delete().eq("group_id", groupId);
@@ -283,7 +300,6 @@ export default function GroupsPage() {
 
   const handleSaveDeviceLinks = async () => {
     const groupId = linkDevicesModal.group.id;
-    if (!confirm(`Deseja salvar as alterações de vínculo para ${linkDevicesModal.selectedDeviceIds.length} dispositivo(s) no grupo "${linkDevicesModal.group.name}"?`)) return;
     try {
       await supabase.from("group_devices").delete().eq("group_id", groupId);
       if (linkDevicesModal.selectedDeviceIds.length > 0) {
@@ -337,13 +353,11 @@ export default function GroupsPage() {
     }
   };
 
-  const handleDeleteGroup = async (id: string, name: string) => {
-    if (!confirm(`Deseja realmente excluir o grupo "${name}"? Todos os subgrupos também serão afetados.`)) return;
-
+  const handleDeleteGroup = async (id: string) => {
     try {
       const { error } = await supabase.from("groups").delete().eq("id", id);
       if (error) throw error;
-      toast.success("Grupo excluído");
+      toast.success("Grupo excluído com sucesso");
       refetchGroups();
     } catch (e: any) {
       toast.error("Erro ao excluir grupo: " + e.message);
@@ -626,8 +640,14 @@ export default function GroupsPage() {
       <Dialog open={linkStoresModal.open} onOpenChange={(o) => setLinkStoresModal({ ...linkStoresModal, open: o })}>
         <DialogContent className="bg-card border-white/10 text-white max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Vincular Lojas ao Grupo: {linkStoresModal.group?.name}</DialogTitle>
-            <DialogDescription>As lojas selecionadas herdarão a playlist deste grupo se não tiverem uma própria.</DialogDescription>
+            <DialogTitle className="text-xl flex items-center gap-2">
+              <Store className="w-5 h-5 text-primary" /> 
+              Vincular Unidades ao Grupo: <span className="text-primary">{linkStoresModal.group?.name}</span>
+            </DialogTitle>
+            <DialogDescription className="text-white/60">
+              As unidades selecionadas herdarão dinamicamente as configurações e a playlist deste grupo. 
+              Dispositivos vinculados a estas lojas responderão automaticamente a esta hierarquia.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="relative">
@@ -669,8 +689,14 @@ export default function GroupsPage() {
       <Dialog open={linkDevicesModal.open} onOpenChange={(o) => setLinkDevicesModal({ ...linkDevicesModal, open: o })}>
         <DialogContent className="bg-card border-white/10 text-white max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Vincular Dispositivos: {linkDevicesModal.group?.name}</DialogTitle>
-            <DialogDescription>Selecione os dispositivos que devem responder diretamente a este grupo.</DialogDescription>
+            <DialogTitle className="text-xl flex items-center gap-2">
+              <Monitor className="w-5 h-5 text-primary" />
+              Gestão de Dispositivos Diretos: <span className="text-primary">{linkDevicesModal.group?.name}</span>
+            </DialogTitle>
+            <DialogDescription className="text-white/60">
+              Vincule dispositivos específicos diretamente a este grupo. 
+              Estes dispositivos priorizarão a playlist deste grupo sobre as configurações da loja.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="relative">
@@ -710,6 +736,38 @@ export default function GroupsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Delete Group Alert Dialog */}
+      <AlertDialog open={deleteConfirm.open} onOpenChange={(o) => setDeleteConfirm({ ...deleteConfirm, open: o })}>
+        <AlertDialogContent className="bg-card border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl">Excluir grupo?</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60 space-y-3">
+              <p>
+                Essa ação removerá o grupo <span className="text-white font-semibold">"{deleteConfirm.groupName}"</span> e desvinculará lojas e dispositivos vinculados. 
+                <span className="text-destructive block mt-2 font-medium italic">Esta ação não pode ser desfeita.</span>
+              </p>
+              {(deleteConfirm.hasChildren || deleteConfirm.hasStores) && (
+                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-xs text-destructive-foreground">
+                  <p className="font-bold mb-1 uppercase tracking-wider">Atenção:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    {deleteConfirm.hasChildren && <li>Este grupo possui subgrupos que também serão afetados.</li>}
+                    {deleteConfirm.hasStores && <li>Existem lojas vinculadas que perderão a herança de playlist.</li>}
+                  </ul>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => handleDeleteGroup(deleteConfirm.groupId)}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              Confirmar exclusão
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
