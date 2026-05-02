@@ -52,6 +52,7 @@ export default function PlayerPage() {
             playlists (
               id,
               name,
+              updated_at,
               playlist_items (
                 id, position, duracao,
                 media_items (*)
@@ -63,6 +64,17 @@ export default function PlayerPage() {
 
         if (deviceManifest && deviceManifest.playlists) {
           const mainPlaylist = deviceManifest.playlists;
+          const remoteUpdatedAt = mainPlaylist.updated_at || deviceManifest.updated_at || new Date().toISOString();
+          
+          // Optimization: Only update if the remote manifest is newer than the cached one
+          if (cachedManifest && cachedManifest.updated_at === remoteUpdatedAt) {
+            console.log("[Player] Manifest is up to date, skipping heavy re-processing");
+            setDeviceInfo(device);
+            setDeviceUuid(device.id.toString());
+            return;
+          }
+
+          console.log("[Player] Manifest changed, updating local cache...");
           
           // Map helper to standardize items
           const mapItems = (items: any[]) => (items || [])
@@ -79,7 +91,7 @@ export default function PlayerPage() {
           const newManifest = {
             playlist_id: mainPlaylist.id,
             name: mainPlaylist.name,
-            updated_at: new Date().toISOString(),
+            updated_at: remoteUpdatedAt,
             items: mapItems(mainPlaylist.playlist_items),
             // Support for advanced scheduling
             schedules: (deviceManifest as any).schedules || [], 
