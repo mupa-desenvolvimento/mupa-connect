@@ -249,7 +249,7 @@ export default function DevicesPage() {
 
       <DeviceFirebaseCommandDrawer
         device={selectedDevice}
-        status={selectedDevice ? getStatus(selectedDevice.last_heartbeat_at, selectedDevice.last_proof_at) : "offline"}
+        status={selectedDevice?.status || "offline"}
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
         formatDate={formatDate}
