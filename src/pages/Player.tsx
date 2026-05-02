@@ -278,8 +278,22 @@ export default function PlayerPage() {
         </div>
       </div>
 
-      <div className="absolute bottom-3 right-3 z-30 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-sm border border-white/10 font-mono text-xs text-white/80 tracking-wider select-none pointer-events-none">
-        ID: {deviceInfo?.serial || deviceCode}
+      <div className="absolute bottom-3 right-3 z-30 flex flex-col items-end gap-2 pointer-events-none">
+        {isSyncing && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/20 backdrop-blur-md border border-primary/30 text-primary animate-in fade-in zoom-in duration-300">
+            <RefreshCw className="h-3 w-3 animate-spin" />
+            <span className="text-[10px] font-mono uppercase tracking-widest font-bold">Sincronizando...</span>
+          </div>
+        )}
+        
+        <div className="px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-sm border border-white/10 font-mono text-xs text-white/80 tracking-wider select-none">
+          ID: {deviceInfo?.serial || deviceCode}
+          {lastSyncTime && (
+            <span className="ml-2 opacity-40 text-[9px]">
+              V.{lastSyncTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
