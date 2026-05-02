@@ -6,9 +6,8 @@ export interface Group {
   name: string;
   parent_id: string | null;
   playlist_id: string | null;
-  tenant_id: string;
-  company_id: string | null;
-  device_count?: number;
+   tenant_id: string;
+   device_count?: number;
   store_count?: number;
   playlist_name?: string;
   linked_store_ids?: string[];
