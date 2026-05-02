@@ -410,7 +410,7 @@ export function DeviceAvailablePanel({
     <div 
       ref={setNodeRef}
       className={cn(
-        "flex flex-col h-full bg-background/50 backdrop-blur-xl border transition-all duration-300 rounded-[2rem] overflow-hidden shadow-2xl relative",
+        "flex flex-1 flex-col bg-background/50 backdrop-blur-xl border transition-all duration-300 rounded-[2rem] overflow-hidden shadow-2xl relative",
         isOver ? "border-primary ring-4 ring-primary/10 bg-primary/5" : "border-white/5"
       )}
     >
