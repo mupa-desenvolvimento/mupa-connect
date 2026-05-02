@@ -112,8 +112,8 @@ const SortableItem = ({
   const style = {
     transform: CSS.Translate.toString(transform),
     transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28)', 
-    zIndex: isDragging ? 100 : 1,
-    opacity: isDragging ? 0.3 : 1,
+    zIndex: isDragging ? 0 : 1,
+    opacity: isDragging ? 0.4 : 1,
     width: width,
   };
 
