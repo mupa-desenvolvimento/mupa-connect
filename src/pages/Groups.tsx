@@ -188,7 +188,6 @@ export default function GroupsPage() {
   }, [groups, devices, stores]);
 
   const filteredGroups = useMemo(() => {
-    console.log("DEBUG: GroupsPage - filtering groups. Total enriched:", enrichedGroups.length, "searchQuery:", searchQuery);
     if (!enrichedGroups) return [];
     if (!searchQuery) {
       const roots = enrichedGroups.filter(g => !g.parent_id || !enrichedGroups.some(pg => pg.id === g.parent_id));
