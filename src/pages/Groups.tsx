@@ -723,7 +723,38 @@ export default function GroupsPage() {
             <Button onClick={handleSaveDeviceLinks} className="bg-primary hover:bg-primary/90">Salvar Vínculos</Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      {/* Delete Group Alert Dialog */}
+      <AlertDialog open={deleteConfirm.open} onOpenChange={(o) => setDeleteConfirm({ ...deleteConfirm, open: o })}>
+        <AlertDialogContent className="bg-card border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl">Excluir grupo?</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60 space-y-3">
+              <p>
+                Essa ação removerá o grupo <span className="text-white font-semibold">"{deleteConfirm.groupName}"</span> e desvinculará lojas e dispositivos vinculados. 
+                <span className="text-destructive block mt-2 font-medium italic">Esta ação não pode ser desfeita.</span>
+              </p>
+              {(deleteConfirm.hasChildren || deleteConfirm.hasStores) && (
+                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-xs text-destructive-foreground">
+                  <p className="font-bold mb-1 uppercase tracking-wider">Atenção:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    {deleteConfirm.hasChildren && <li>Este grupo possui subgrupos que também serão afetados.</li>}
+                    {deleteConfirm.hasStores && <li>Existem lojas vinculadas que perderão a herança de playlist.</li>}
+                  </ul>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => handleDeleteGroup(deleteConfirm.groupId)}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              Confirmar exclusão
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
