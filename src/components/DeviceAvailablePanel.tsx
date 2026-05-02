@@ -113,8 +113,8 @@ export function DeviceItem({ device, isSelected, onToggle, onClick }: DeviceItem
         <div className="flex flex-col min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className={cn(
-              "text-sm font-bold truncate",
-              isSelected ? "text-white" : "text-white/80"
+              "text-sm font-bold truncate transition-colors",
+              isSelected ? "text-white" : "text-white/80 group-hover:text-white"
             )}>
               {device.apelido_interno || "Sem nome"}
             </span>
