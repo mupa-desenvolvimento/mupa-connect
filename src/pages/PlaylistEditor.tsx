@@ -108,10 +108,10 @@ const SortableItem = ({
   const media = item.media;
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: CSS.Translate.toString(transform), // Usar Translate para evitar distorção de escala em itens proporcionais
     transition,
-    zIndex: isDragging ? 50 : 1,
-    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 100 : 1,
+    opacity: isDragging ? 0.3 : 1, // Opacidade menor no original para destacar o arrasto
     width: width,
   };
 
@@ -119,15 +119,15 @@ const SortableItem = ({
     <div 
       ref={setNodeRef} 
       style={style}
+      className={`relative shrink-0 h-32 rounded-xl border cursor-pointer group overflow-hidden ${
+        isSelected 
+          ? 'border-[#085CF0] ring-2 ring-[#085CF0]/20 bg-[#085CF0]/5 shadow-xl shadow-[#085CF0]/10' 
+          : 'border-border/40 bg-card/40 hover:border-[#085CF0]/30'
+      } ${isCurrent ? 'ring-2 ring-yellow-500/50 bg-yellow-500/5' : ''} ${isDragging ? 'opacity-0' : ''}`}
       onClick={(e) => {
         e.stopPropagation();
         onSelect(item);
       }}
-      className={`relative shrink-0 h-32 rounded-xl border transition-all duration-300 ease-in-out cursor-pointer group overflow-hidden ${
-        isSelected 
-          ? 'border-[#085CF0] ring-2 ring-[#085CF0]/20 bg-[#085CF0]/5 shadow-xl shadow-[#085CF0]/10 scale-[1.02]' 
-          : 'border-border/40 bg-card/40 hover:border-[#085CF0]/30 hover:scale-[1.01]'
-      } ${isCurrent ? 'ring-2 ring-yellow-500/50 bg-yellow-500/5' : ''} ${isDragging ? 'shadow-2xl z-50 opacity-0' : ''}`}
     >
       <div className="absolute inset-0">
         <img 
@@ -913,7 +913,7 @@ export default function PlaylistEditor() {
                     collisionDetection={closestCenter}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
-                    modifiers={[restrictToHorizontalAxis, snapModifier]}
+                    modifiers={[restrictToHorizontalAxis]} // Removido o snapModifier temporariamente para testar fluidez
                   >
                     <SortableContext 
                       items={items.map(i => i.id)}
@@ -940,9 +940,19 @@ export default function PlaylistEditor() {
                       })
                     }}>
                       {activeId ? (
-                        <div className="w-56 h-36 rounded-xl border-2 border-[#085CF0] bg-[#085CF0]/30 backdrop-blur-2xl shadow-[0_0_30px_rgba(8,92,240,0.4)] scale-110 flex items-center justify-center transition-transform duration-200">
+                        <div 
+                          className="rounded-xl border-2 border-[#085CF0] bg-[#085CF0]/30 backdrop-blur-2xl shadow-[0_0_30px_rgba(8,92,240,0.4)] flex items-center justify-center overflow-hidden"
+                          style={{ 
+                            width: `${(items.find(i => i.id === activeId)?.duration / totalDuration) * (timelineRef.current?.offsetWidth || 0)}px`,
+                            height: '128px' 
+                          }}
+                        >
                            <div className="absolute inset-0 bg-gradient-to-br from-[#085CF0]/20 to-transparent" />
-                           <GripVertical className="h-6 w-6 text-white animate-pulse" />
+                           <img 
+                             src={items.find(i => i.id === activeId)?.media?.thumbnail_url || items.find(i => i.id === activeId)?.media?.file_url} 
+                             className="absolute inset-0 w-full h-full object-cover opacity-40"
+                           />
+                           <GripVertical className="h-6 w-6 text-white relative z-10" />
                         </div>
                       ) : null}
                     </DragOverlay>
