@@ -6,9 +6,8 @@ export interface Group {
   name: string;
   parent_id: string | null;
   playlist_id: string | null;
-  tenant_id: string;
-  company_id: string | null;
-  device_count?: number;
+   tenant_id: string;
+   device_count?: number;
   store_count?: number;
   playlist_name?: string;
   linked_store_ids?: string[];
@@ -29,8 +28,13 @@ export function useGroups(tenantId: string | null) {
           playlists (name)
         `)
         .eq("tenant_id", tenantId);
+      
+      console.log("DEBUG: Groups loaded for tenant:", tenantId, groups);
 
-      if (groupsError) throw groupsError;
+      if (groupsError) {
+        console.error("DEBUG: Error loading groups:", groupsError);
+        throw groupsError;
+      }
 
       // Fetch device links per group
       const { data: deviceLinks, error: devicesError } = await supabase

@@ -42,7 +42,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 
 export default function GroupsPage() {
-  const { tenantId, companyId } = useTenant();
+  const { tenantId } = useTenant();
+  console.log("DEBUG: GroupsPage - current tenantId:", tenantId);
   const { data: playlists } = usePlaylists(tenantId || undefined);
   const { data: groups, isLoading: loadingGroups, refetch: refetchGroups } = useGroups(tenantId);
   const { data: stores, isLoading: loadingStores, refetch: refetchStores } = useStores(tenantId);
@@ -88,7 +89,10 @@ export default function GroupsPage() {
   });
 
   const enrichedGroups = useMemo(() => {
-    if (!groups || !devices || !stores) return [];
+    console.log("DEBUG: GroupsPage - groups:", groups?.length, "devices:", devices?.length, "stores:", stores?.length);
+    if (!groups) return [];
+    const safeDevices = devices || [];
+    const safeStores = stores || [];
     
     // Memoize descendant data for efficiency
     const memo = new Map<string, { storeIds: Set<string>, directDeviceIds: Set<string> }>();
@@ -115,7 +119,7 @@ export default function GroupsPage() {
       return result;
     };
 
-    return groups.map(group => {
+    const result = groups.map(group => {
       const { storeIds, directDeviceIds } = getGroupDataRecursive(group.id);
 
       // Recursive devices for total count
@@ -184,12 +188,21 @@ export default function GroupsPage() {
         store_count: storeIds.size
       };
     });
+    console.log("DEBUG: GroupsPage - enrichedGroups total:", result.length);
+    return result;
   }, [groups, devices, stores]);
 
   const filteredGroups = useMemo(() => {
+    console.log("DEBUG: GroupsPage - filtering groups. Total enriched:", enrichedGroups.length, "searchQuery:", searchQuery);
     if (!enrichedGroups) return [];
-    if (!searchQuery) return enrichedGroups.filter(g => !g.parent_id || !enrichedGroups.some(pg => pg.id === g.parent_id));
-    return enrichedGroups.filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    if (!searchQuery) {
+      const roots = enrichedGroups.filter(g => !g.parent_id || !enrichedGroups.some(pg => pg.id === g.parent_id));
+      console.log("DEBUG: GroupsPage - root groups count:", roots.length);
+      return roots;
+    }
+    const filtered = enrichedGroups.filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    console.log("DEBUG: GroupsPage - searched groups count:", filtered.length);
+    return filtered;
   }, [enrichedGroups, searchQuery]);
 
   const [deviceSearchQuery, setDeviceSearchQuery] = useState("");
@@ -304,8 +317,7 @@ export default function GroupsPage() {
           name: groupFormData.name,
           parent_id: groupModal.parentId,
           playlist_id: playlistId,
-          tenant_id: tenantId,
-          company_id: companyId
+          tenant_id: tenantId
         } as any);
         if (error) throw error;
         toast.success("Grupo criado com sucesso!");
