@@ -285,10 +285,25 @@ export default function PlayerPage() {
   if (!activePlaylist.length) {
     return (
       <div className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-4 text-white/40 font-mono text-xs uppercase tracking-widest">
-        <div>Manifesto Vazio</div>
-        <div className="px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-white/70 tracking-wider">
-          ID: {deviceCode}
+        <div className="animate-pulse">Aguardando Programação</div>
+        <div className="px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-white/30 text-[10px]">
+          {deviceCode}
         </div>
+        {isLoading && <div className="text-[10px] text-primary/50">Sincronizando...</div>}
+      </div>
+    );
+  }
+
+  if (!initialPlay) {
+    return (
+      <div 
+        className="fixed inset-0 bg-black flex flex-col items-center justify-center cursor-pointer group"
+        onClick={() => setInitialPlay(true)}
+      >
+        <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+           <Play className="h-8 w-8 text-white/40 group-hover:text-primary transition-colors" />
+        </div>
+        <p className="mt-6 text-white/20 font-mono text-[10px] uppercase tracking-[0.2em]">Toque para Iniciar Reprodução</p>
       </div>
     );
   }
