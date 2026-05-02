@@ -43,6 +43,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 export default function GroupsPage() {
   const { tenantId } = useTenant();
+  console.log("DEBUG: GroupsPage - current tenantId:", tenantId);
   const { data: playlists } = usePlaylists(tenantId || undefined);
   const { data: groups, isLoading: loadingGroups, refetch: refetchGroups } = useGroups(tenantId);
   const { data: stores, isLoading: loadingStores, refetch: refetchStores } = useStores(tenantId);
