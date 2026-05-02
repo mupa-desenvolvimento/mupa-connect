@@ -937,6 +937,7 @@ export default function PlaylistEditor() {
                             onSelect={setSelectedItem}
                             width={totalDuration > 0 ? `${(item.duration / totalDuration) * 100}%` : '200px'}
                             isCurrent={index === currentIndex && isPlaying}
+                            isLastDropped={lastDroppedId === item.id}
                           />
                         ))}
                       </AnimatePresence>
