@@ -362,7 +362,7 @@ export default function PlaylistEditor() {
           .update({ 
             comando: `reload:${Date.now()}` 
           } as any)
-          .eq('playlist_id', currentPlaylistId as any);
+          .eq('playlist_id', currentPlaylistId);
       } catch (e) {
         console.warn("Silent failure notifying devices:", e);
       }
