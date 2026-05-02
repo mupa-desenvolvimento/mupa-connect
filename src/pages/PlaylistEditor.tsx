@@ -307,7 +307,7 @@ export default function PlaylistEditor() {
             appearance_config: updatedAppearance || appearanceConfig,
             updated_at: new Date().toISOString() 
           })
-          .eq("id", id as any);
+          .eq("id", id);
         if (updateError) throw updateError;
       }
 
