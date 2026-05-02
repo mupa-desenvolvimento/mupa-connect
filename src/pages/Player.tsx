@@ -3,227 +3,186 @@ import { useParams } from "react-router-dom";
 import { useDeviceCommandChannel } from "@/hooks/useDeviceCommandChannel";
 import { supabase } from "@/integrations/supabase/client";
 import { PlayerEngine } from "@/components/PlayerEngine";
-import { ManifestManager, MediaCacheService } from "@/components/PlayerServices";
+import { ManifestManager, MediaCacheService, ScheduleResolver } from "@/components/PlayerServices";
 
 export default function PlayerPage() {
   const { deviceCode } = useParams();
   const [deviceUuid, setDeviceUuid] = useState<string | undefined>();
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
-  const [playlist, setPlaylist] = useState<any>(null);
+  const [manifest, setManifest] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState<number>(0);
-  const [volume, setVolume] = useState(60);
+  const [volume, setVolume] = useState(0); // Default muted as requested
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // 1. Resolve Device and Playlist
+  // 1. Core Loader: Resolve Identity & Manifest (Offline-First)
   useEffect(() => {
     if (!deviceCode) return;
 
-    async function resolvePlaylist() {
-      setIsLoading(true);
-      try {
-        // Try to load from manifest first for speed/offline
-        const localManifest = ManifestManager.getManifest(deviceCode);
-        if (localManifest && localManifest.items) {
-          console.log("[Player] Loading from local manifest");
-          setPlaylist({
-            id: localManifest.playlist_id,
-            playlist_items: localManifest.items.map((item: any) => ({
-              media_id: item.media_id,
-              duracao: item.duration,
-              media_items: {
-                name: item.name,
-                file_url: item.url,
-                type: item.type
-              }
-            }))
-          });
-          setIsLoading(false);
-        }
+    async function initializePlayer() {
+      // Step A: Load Local Cache Immediately
+      const cachedManifest = ManifestManager.getManifest(deviceCode);
+      if (cachedManifest) {
+        console.log("[Player] Resuming from offline manifest");
+        setManifest(cachedManifest);
+        setIsLoading(false);
+      }
 
-        const { data: device, error: devError } = await supabase
+      try {
+        // Step B: Resolve Device Identify
+        const { data: device, error } = await supabase
           .from("dispositivos")
-          .select("id, num_filial, grupo_dispositivos, empresa, apelido_interno, serial, playlist_id")
-          .eq("apelido_interno", deviceCode)
+          .select("*")
+          .or(`apelido_interno.eq."${deviceCode}",serial.eq."${deviceCode}"`)
           .maybeSingle();
 
-        let targetDevice = device;
-
-        if (devError || !device) {
-          const { data: deviceBySerial } = await supabase
-            .from("dispositivos")
-            .select("id, num_filial, grupo_dispositivos, empresa, apelido_interno, serial, playlist_id")
-            .eq("serial", deviceCode)
-            .maybeSingle();
-            
-          if (!deviceBySerial) {
-            console.error("Device not found:", deviceCode);
-            if (!localManifest) setIsLoading(false);
-            return;
-          }
-          targetDevice = deviceBySerial;
+        if (error || !device) {
+          console.warn("[Player] Device identity not found online, staying offline.");
+          return;
         }
 
-        setDeviceUuid(targetDevice.id.toString());
-        setDeviceInfo(targetDevice);
-        
-        const playlistId = targetDevice.playlist_id || 'e8dab79a-0612-4859-94e0-5e1a6be50756';
-        await loadPlaylist(playlistId, targetDevice.serial);
+        setDeviceUuid(device.id.toString());
+        setDeviceInfo(device);
+
+        // Step C: Fetch Latest Manifest Data
+        const playlistId = device.playlist_id || 'e8dab79a-0612-4859-94e0-5e1a6be50756';
+        const { data: playlistData } = await supabase
+          .from("playlists")
+          .select(`
+            *,
+            playlist_items (
+              *,
+              media_items (*)
+            )
+          `)
+          .eq("id", playlistId)
+          .single();
+
+        if (playlistData) {
+          const newManifest = {
+            playlist_id: playlistId,
+            name: playlistData.name,
+            items: playlistData.playlist_items
+              .sort((a: any, b: any) => (a.position ?? a.ordem ?? 0) - (b.position ?? b.ordem ?? 0))
+              .map((i: any) => ({
+                id: i.media_id,
+                type: i.media_items?.type || "image",
+                url: i.media_items?.file_url,
+                duration: i.duracao || 10,
+                name: i.media_items?.name
+              }))
+              .filter((x: any) => x.url),
+            updated_at: new Date().toISOString()
+          };
+
+          setManifest(newManifest);
+          ManifestManager.saveManifest(deviceCode, newManifest);
+          ManifestManager.saveManifest(device.serial, newManifest);
+        }
       } catch (err) {
-        console.error("Resolution error:", err);
+        console.error("[Player] Sync error:", err);
       } finally {
         setIsLoading(false);
       }
     }
 
-    async function loadPlaylist(playlistId: string, serial: string) {
-      const { data: playlistData } = await supabase
-        .from("playlists")
-        .select(`
-          *,
-          playlist_items (
-            *,
-            media_items (*)
-          )
-        `)
-        .eq("id", playlistId)
-        .single();
-        
-      if (playlistData) {
-        setPlaylist(playlistData);
-        // Save to offline manifest
-        const manifest = {
-          playlist_id: playlistId,
-          items: playlistData.playlist_items.map((i: any) => ({
-            media_id: i.media_id,
-            type: i.media_items?.type,
-            url: i.media_items?.file_url,
-            duration: i.duracao,
-            name: i.media_items?.name
-          }))
-        };
-        ManifestManager.saveManifest(serial, manifest);
-        ManifestManager.saveManifest(deviceCode, manifest); // Also save by deviceCode
-      }
-    }
-
-    resolvePlaylist();
+    initializePlayer();
   }, [deviceCode, reloadKey]);
 
+  // 2. Schedule & Queue Resolver
+  const activePlaylist = useMemo(() => {
+    return ScheduleResolver.getActivePlaylist(manifest);
+  }, [manifest]);
+
+  // 3. System Commands (Control Plane)
   useDeviceCommandChannel(deviceUuid, {
-    reloadPlaylist: async () => {
-      console.log("[Player] Reload command received");
-      setReloadKey(k => k + 1);
-    },
-    playCampaign:   (id) => console.info("[player] play_campaign", id),
-    setVolume:      (v) => setVolume(v),
-    screenshot:     () => Promise.resolve(),
-    clearCache:     async () => { try { await caches.keys().then(ks => Promise.all(ks.map(k => caches.delete(k)))); } catch {} },
-    reboot:         () => { window.location.reload(); return Promise.resolve(); },
+    reloadPlaylist: () => setReloadKey(k => k + 1),
+    setVolume: (v) => setVolume(v),
+    clearCache: () => { caches.keys().then(ks => ks.map(k => caches.delete(k))); },
+    reboot: () => window.location.reload(),
+    playCampaign: (id) => console.log("Play campaign", id),
+    screenshot: () => Promise.resolve(""),
   });
 
-  const formattedPlaylist = useMemo(() => {
-    if (playlist?.playlist_items?.length) {
-      return playlist.playlist_items
-        .sort((a: any, b: any) => (a.position ?? a.ordem ?? 0) - (b.position ?? b.ordem ?? 0))
-        .map((i: any) => ({ 
-          id: i.media_id || i.id, // Use media_id if available
-          name: i.media_items?.name || "Sem nome",
-          url: i.media_items?.file_url,
-          type: i.media_items?.type || "image",
-          duration: i.duracao || 10 
-        }))
-        .filter((x: any) => x.url);
-    }
-    return [];
-  }, [playlist]);
-
-  const currentMedia = useMemo(() => formattedPlaylist[currentIndex] || null, [formattedPlaylist, currentIndex]);
-
-  const handleMediaChange = useCallback((idx: number) => setCurrentIndex(idx), []);
-
-  const [now, setNow] = useState(new Date());
-
-  useEffect(() => {
-    document.documentElement.classList.add("dark");
-    document.body.style.background = "#000";
-    return () => {
-      document.body.style.background = "";
-    };
-  }, []);
-
-  useEffect(() => {
-    const t = window.setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(t);
-  }, []);
-
-  // Heartbeat logic
-  useEffect(() => {
-    if (!deviceInfo?.serial) return;
-    const sendHeartbeat = async () => {
-      try {
-        await supabase.functions.invoke('device-api/heartbeat', {
-          body: { serial: deviceInfo.serial }
-        });
-      } catch (err) {
-        console.error("Heartbeat error:", err);
-      }
-    };
-    sendHeartbeat();
-    const t = window.setInterval(sendHeartbeat, 30000);
-    return () => clearInterval(t);
-  }, [deviceInfo?.serial]);
-
-  // Proof of Play logic
-  useEffect(() => {
-    if (formattedPlaylist.length > 0 && deviceInfo?.serial && currentMedia) {
+  const handleMediaChange = useCallback((idx: number) => {
+    setCurrentIndex(idx);
+    
+    // Proof of Play Log (Background, non-blocking)
+    if (activePlaylist[idx] && deviceInfo?.serial) {
       supabase.functions.invoke('device-api/proof', {
         body: { 
           serial: deviceInfo.serial,
-          playlist_id: playlist?.id,
-          media_id: currentMedia.id,
+          playlist_id: manifest?.playlist_id,
+          media_id: activePlaylist[idx].id,
           payload: {
-            media_name: currentMedia.name,
-            playlist_name: playlist?.name
+            media_name: activePlaylist[idx].name,
+            playlist_name: manifest?.name
           }
         }
-      }).catch(err => console.error("Proof error:", err));
+      }).catch(() => {});
     }
-  }, [currentIndex, formattedPlaylist.length, deviceInfo?.serial, currentMedia, playlist?.id]);
+  }, [activePlaylist, deviceInfo?.serial, manifest]);
 
-  if (isLoading && !formattedPlaylist.length) {
-    return <div className="fixed inset-0 bg-black flex items-center justify-center text-white/40 font-mono text-xs uppercase tracking-widest">Iniciando Player Mupa...</div>;
+  // 4. Background Sync (Polling)
+  useEffect(() => {
+    if (!deviceCode) return;
+    const interval = setInterval(() => setReloadKey(k => k + 1), 60000);
+    return () => clearInterval(interval);
+  }, [deviceCode]);
+
+  // 5. Heartbeat
+  useEffect(() => {
+    if (!deviceInfo?.serial) return;
+    const beat = () => supabase.functions.invoke('device-api/heartbeat', { body: { serial: deviceInfo.serial } }).catch(() => {});
+    beat();
+    const interval = setInterval(beat, 30000);
+    return () => clearInterval(interval);
+  }, [deviceInfo?.serial]);
+
+  // UI Setup
+  useEffect(() => {
+    document.documentElement.classList.add("dark");
+    document.body.style.background = "#000";
+    return () => { document.body.style.background = ""; };
+  }, []);
+
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  if (isLoading && !activePlaylist.length) {
+    return <div className="fixed inset-0 bg-black flex items-center justify-center text-white/40 font-mono text-xs uppercase tracking-widest">Iniciando Engine Profissional...</div>;
   }
 
-  if (!formattedPlaylist.length) {
+  if (!activePlaylist.length) {
     return (
       <div className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-4 text-white/40 font-mono text-xs uppercase tracking-widest">
-        <div>Nenhum conteúdo para exibir</div>
-        <div className="px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-white/70 normal-case tracking-wider">
-          ID: {deviceInfo?.serial || deviceUuid || deviceCode || "—"}
+        <div>Manifesto Vazio</div>
+        <div className="px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-white/70 tracking-wider">
+          ID: {deviceCode}
         </div>
       </div>
     );
   }
 
-  // currentMedia already defined via useMemo above
-
   return (
     <div className="fixed inset-0 bg-black overflow-hidden text-white">
       <PlayerEngine 
-        playlist={formattedPlaylist} 
+        playlist={activePlaylist} 
         volume={volume}
         onMediaChange={handleMediaChange}
       />
 
-      {/* HUD overlay */}
-      <div className="absolute top-0 left-0 right-0 p-4 flex items-start justify-between bg-gradient-to-b from-black/60 to-transparent z-20">
+      {/* HUD overlay - Zero flickering absolute layers */}
+      <div className="absolute top-0 left-0 right-0 p-4 flex items-start justify-between bg-gradient-to-b from-black/60 to-transparent z-20 pointer-events-none">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-lg bg-gradient-primary grid place-items-center font-display font-bold text-primary-foreground">M</div>
           <div className="leading-tight">
-            <div className="font-display font-semibold">{deviceInfo?.apelido_interno || "Player Mupa"}</div>
+            <div className="font-display font-semibold">{deviceInfo?.apelido_interno || "Player Profissional"}</div>
             <div className="text-[11px] uppercase tracking-widest opacity-70 font-mono">
-              {deviceInfo ? `Filial ${deviceInfo.num_filial}` : `Modo demo · code=${deviceCode ?? "—"}`}
+              {deviceInfo ? `Filial ${deviceInfo.num_filial}` : `Cache Local · ${deviceCode}`}
             </div>
           </div>
         </div>
@@ -231,19 +190,12 @@ export default function PlayerPage() {
           <div className="font-display text-2xl tabular-nums">
             {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
           </div>
-          <div className="text-[11px] uppercase tracking-widest opacity-70">
-            {now.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" })}
-          </div>
         </div>
       </div>
 
-      {/* Device ID badge */}
       <div className="absolute bottom-3 right-3 z-30 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-sm border border-white/10 font-mono text-xs text-white/80 tracking-wider select-none pointer-events-none">
-        ID: {deviceInfo?.serial || deviceUuid || deviceCode || "—"}
+        ID: {deviceInfo?.serial || deviceCode}
       </div>
-
-      <style>{`@keyframes mupaProgress { from { width: 0% } to { width: 100% } }`}</style>
     </div>
   );
 }
-
