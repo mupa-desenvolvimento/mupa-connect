@@ -97,6 +97,11 @@ export default {
           "0%, 100%": { opacity: "1", transform: "scale(1)" },
           "50%": { opacity: "0.7", transform: "scale(1.05)" },
         },
+        "pulse-success": {
+          "0%": { boxShadow: "0 0 0 0 rgba(34, 197, 94, 0.4)", transform: "scale(1)" },
+          "50%": { boxShadow: "0 0 0 15px rgba(34, 197, 94, 0)", transform: "scale(1.02)" },
+          "100%": { boxShadow: "0 0 0 0 rgba(34, 197, 94, 0)", transform: "scale(1)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
