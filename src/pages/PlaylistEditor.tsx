@@ -65,6 +65,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { handlePlaylistError } from "@/utils/error-handlers";
 import { PlaylistErrorBanner } from "@/components/PlaylistErrorBanner";
+import { PlaylistAppearanceDrawer } from "@/components/PlaylistAppearanceDrawer";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 
 // --- Types ---
@@ -187,6 +188,7 @@ export default function PlaylistEditor() {
   const [debugData, setDebugData] = useState<any>(null);
   const [showDebug, setShowDebug] = useState(false);
   const [mediaSearch, setMediaSearch] = useState("");
+  const [appearanceConfig, setAppearanceConfig] = useState<any>({});
 
   // Monitorar mudanças no estado de itens
   useEffect(() => {
@@ -209,6 +211,7 @@ export default function PlaylistEditor() {
     if (playlistData) {
       console.log("Loading playlist data:", playlistData);
       setPlaylistName(playlistData.name);
+      setAppearanceConfig(playlistData.appearance_config || {});
       
       if (playlistData.playlist_items && playlistData.playlist_items.length > 0) {
         const mappedItems = playlistData.playlist_items.map((it: any) => ({
@@ -234,7 +237,7 @@ export default function PlaylistEditor() {
     }
   }, [playlistData, medias, id]);
 
-  const savePlaylist = async (updatedItems: EditorPlaylistItem[], updatedName: string) => {
+  const savePlaylist = async (updatedItems: EditorPlaylistItem[], updatedName: string, updatedAppearance?: any) => {
     if (isSaving) return;
     
     if (!tenantId) {
@@ -282,7 +285,8 @@ export default function PlaylistEditor() {
             name: updatedName, 
             tenant_id: tenantId as any, 
             company_id: companyId || companyData.id,
-            is_active: true 
+            is_active: true,
+            appearance_config: updatedAppearance || appearanceConfig 
           })
           .select().single();
           
@@ -298,7 +302,11 @@ export default function PlaylistEditor() {
       } else {
         const { error: updateError } = await supabase
           .from("playlists")
-          .update({ name: updatedName, updated_at: new Date().toISOString() })
+          .update({ 
+            name: updatedName, 
+            appearance_config: updatedAppearance || appearanceConfig,
+            updated_at: new Date().toISOString() 
+          })
           .eq("id", id as any);
         if (updateError) throw updateError;
       }
@@ -525,8 +533,17 @@ export default function PlaylistEditor() {
               Alterações pendentes
             </span>
           )}
+          
+          <PlaylistAppearanceDrawer 
+            config={appearanceConfig} 
+            onChange={(newConfig) => {
+              setAppearanceConfig(newConfig);
+              setHasUnsavedChanges(true);
+            }}
+          />
+
           <Button 
-            onClick={() => savePlaylist(items, playlistName)}
+            onClick={() => savePlaylist(items, playlistName, appearanceConfig)}
             disabled={isSaving}
             className={cn(
               "h-9 px-4 gap-2 font-bold text-xs transition-all",
@@ -546,7 +563,13 @@ export default function PlaylistEditor() {
           <Button variant="outline" className="border-white/10 hover:bg-white/5 gap-2 h-9 px-4 text-white">
             <Play className="h-4 w-4 fill-current" /> Preview
           </Button>
-          <Button className="bg-[#085CF0] hover:bg-[#0750d4] text-white h-9 px-4 gap-2">
+          <Button 
+            className="bg-[#085CF0] hover:bg-[#0750d4] text-white h-9 px-4 gap-2"
+            onClick={async () => {
+              await savePlaylist(items, playlistName, appearanceConfig);
+              toast.success("Comando de atualização enviado para as telas");
+            }}
+          >
             <RefreshCw className="h-4 w-4" /> Atualizar Telas
           </Button>
         </div>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, MapPin } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { useDeviceCommandChannel } from "@/hooks/useDeviceCommandChannel";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,8 @@ export default function PlayerPage() {
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
 
   // 1. Core Loader: Resolve Identity & Manifest (Offline-First)
+  const [appearance, setAppearance] = useState<any>(null);
+
   useEffect(() => {
     if (!deviceCode) return;
 
@@ -53,10 +55,11 @@ export default function PlayerPage() {
           .from("dispositivos")
           .select(`
             *,
-            playlists (
+            playlists!dispositivos_playlist_id_fkey (
               id,
               name,
               updated_at,
+              appearance_config,
               playlist_items (
                 id, position, duracao,
                 media_items (*)
@@ -67,8 +70,8 @@ export default function PlayerPage() {
           .single();
 
         if (deviceManifest && deviceManifest.playlists) {
-          const mainPlaylist = deviceManifest.playlists;
-          const remoteUpdatedAt = (mainPlaylist as any).updated_at || (deviceManifest as any).atualizado || new Date().toISOString();
+          const mainPlaylist = deviceManifest.playlists as any;
+          const remoteUpdatedAt = mainPlaylist.updated_at || (deviceManifest as any).atualizado || new Date().toISOString();
           
           // Optimization: Only update if the remote manifest is newer than the cached one
           if (cachedManifest && cachedManifest.updated_at === remoteUpdatedAt) {
@@ -99,9 +102,11 @@ export default function PlayerPage() {
             items: mapItems(mainPlaylist.playlist_items),
             // Support for advanced scheduling
             schedules: (deviceManifest as any).schedules || [], 
-            fallback_items: mapItems((deviceManifest as any).fallback_playlist_items)
+            fallback_items: mapItems((deviceManifest as any).fallback_playlist_items),
+            appearance_config: mainPlaylist.appearance_config || (deviceManifest as any).appearance_config || {}
           };
 
+          setAppearance(newManifest.appearance_config);
           setManifest(newManifest);
           ManifestManager.saveManifest(deviceCode, newManifest);
           if (device.serial) ManifestManager.saveManifest(device.serial, newManifest);
@@ -257,28 +262,48 @@ export default function PlayerPage() {
       <PlayerEngine 
         playlist={activePlaylist} 
         volume={volume}
+        appearance={appearance}
         onMediaChange={handleMediaChange}
       />
 
       {/* HUD overlay - Zero flickering absolute layers */}
-      <div className="absolute top-0 left-0 right-0 p-4 flex items-start justify-between bg-gradient-to-b from-black/60 to-transparent z-20 pointer-events-none">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-gradient-primary grid place-items-center font-display font-bold text-primary-foreground">M</div>
-          <div className="leading-tight">
-            <div className="font-display font-semibold">{deviceInfo?.apelido_interno || "Player Profissional"}</div>
-            <div className="text-[11px] uppercase tracking-widest opacity-70 font-mono">
-              {deviceInfo ? `Filial ${deviceInfo.num_filial}` : `Cache Local · ${deviceCode}`}
+      {(appearance?.show_device_name !== false || appearance?.show_datetime !== false) && (
+        <div className="absolute top-0 left-0 right-0 p-8 flex items-start justify-between bg-gradient-to-b from-black/90 via-black/40 to-transparent z-40 pointer-events-none transition-all duration-500">
+          <div className="flex items-center gap-4">
+            {appearance?.show_device_name !== false && (
+              <>
+                <div className="h-12 w-12 rounded-xl bg-[#085CF0] grid place-items-center font-display font-black text-white text-2xl shadow-[0_0_20px_rgba(8,92,240,0.4)]">
+                  {deviceInfo?.apelido_interno?.charAt(0) || "M"}
+                </div>
+                <div className="leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                  <div className="font-display font-black text-2xl text-white tracking-tight">
+                    {deviceInfo?.apelido_interno || "Player Profissional"}
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <div className="px-2 py-0.5 rounded bg-white/10 backdrop-blur-md border border-white/10 text-[10px] uppercase font-mono font-bold text-white/90 flex items-center gap-1.5">
+                      <MapPin className="h-3 w-3 text-[#085CF0]" />
+                      Filial {deviceInfo?.num_filial || "—"}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          
+          {appearance?.show_datetime !== false && (
+            <div className="text-right drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+              <div className="font-display text-4xl font-black tabular-nums text-white tracking-tighter">
+                {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+              </div>
+              <div className="text-[12px] uppercase tracking-[0.3em] text-[#085CF0] font-mono font-black mt-1">
+                {now.toLocaleDateString("pt-BR", { weekday: 'long', day: '2-digit', month: 'long' }).split(',')[0]}
+              </div>
             </div>
-          </div>
+          )}
         </div>
-        <div className="text-right">
-          <div className="font-display text-2xl tabular-nums">
-            {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-          </div>
-        </div>
-      </div>
+      )}
 
-      <div className="absolute bottom-3 right-3 z-30 flex flex-col items-end gap-2 pointer-events-none">
+      <div className="absolute bottom-3 right-3 z-[70] flex flex-col items-end gap-2 pointer-events-none">
         {isSyncing && (
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/20 backdrop-blur-md border border-primary/30 text-primary animate-in fade-in zoom-in duration-300">
             <RefreshCw className="h-3 w-3 animate-spin" />
@@ -286,14 +311,16 @@ export default function PlayerPage() {
           </div>
         )}
         
-        <div className="px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-sm border border-white/10 font-mono text-xs text-white/80 tracking-wider select-none">
-          ID: {deviceInfo?.serial || deviceCode}
-          {lastSyncTime && (
-            <span className="ml-2 opacity-40 text-[9px]">
-              V.{lastSyncTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-            </span>
-          )}
-        </div>
+        {appearance?.show_serial !== false && (
+          <div className="px-3 py-1.5 rounded-md bg-black/40 backdrop-blur-sm border border-white/5 font-mono text-[10px] text-white/40 tracking-wider select-none">
+            SERIAL: {deviceInfo?.serial || deviceCode}
+            {lastSyncTime && (
+              <span className="ml-2 opacity-30">
+                V.{lastSyncTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

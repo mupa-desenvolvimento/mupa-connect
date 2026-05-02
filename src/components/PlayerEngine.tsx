@@ -14,9 +14,28 @@ interface PlayerEngineProps {
   playlist: MediaItem[];
   onMediaChange?: (index: number) => void;
   volume?: number;
+  appearance?: any;
 }
 
-export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngineProps) {
+const TRANSITION_TYPES = {
+  fade: "opacity-100",
+  "slide-left": "translate-x-0",
+  "slide-right": "translate-x-0",
+  zoom: "scale-100 opacity-100",
+  none: "opacity-100"
+};
+
+const TRANSITION_HIDDEN = {
+  fade: "opacity-0",
+  "slide-left": "-translate-x-full",
+  "slide-right": "translate-x-full",
+  zoom: "scale-90 opacity-0",
+  none: "opacity-0"
+};
+
+export function PlayerEngine({ playlist, onMediaChange, volume = 0, appearance = {} }: PlayerEngineProps) {
+  const transitionType = appearance.transition_type || "fade";
+  const transitionDuration = appearance.transition_duration || 600;
   // UI State - only used for rendering the layers
   const [layers, setLayers] = useState({
     active: "A" as "A" | "B",
@@ -104,9 +123,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
     setTimeout(() => {
       isTransitioningRef.current = false;
       setLayers(prev => ({ ...prev, isTransitioning: false }));
-    }, 600); // Match CSS transition duration
+    }, transitionDuration); 
 
-  }, [playlist, layers.active, startMedia, onMediaChange]);
+  }, [playlist, layers.active, startMedia, onMediaChange, transitionDuration]);
 
   // Initial load and playlist changes
   useEffect(() => {
@@ -180,12 +199,32 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
   const mediaA = playlist[layers.indexA];
   const mediaB = playlist[layers.indexB];
 
+  const getTransitionStyle = (isActive: boolean) => {
+    const base = "absolute inset-0 transition-all ease-in-out";
+    const duration = `duration-${transitionDuration}`;
+    const state = isActive ? TRANSITION_TYPES[transitionType as keyof typeof TRANSITION_TYPES] || TRANSITION_TYPES.fade : TRANSITION_HIDDEN[transitionType as keyof typeof TRANSITION_HIDDEN] || TRANSITION_HIDDEN.fade;
+    const zIndex = isActive ? "z-10" : "z-0";
+    
+    return `${base} ${duration} ${state} ${zIndex}`;
+  };
+
+  const getLogoPosition = () => {
+    const pos = appearance.logo?.position || "top-left";
+    const base = "absolute m-6 pointer-events-none z-50";
+    switch(pos) {
+      case "top-right": return `${base} top-0 right-0`;
+      case "bottom-left": return `${base} bottom-0 left-0`;
+      case "bottom-right": return `${base} bottom-0 right-0`;
+      default: return `${base} top-0 left-0`;
+    }
+  };
+
   return (
-    <div className="relative w-full h-full bg-black overflow-hidden">
+    <div className="relative w-full h-full bg-black overflow-hidden select-none">
       {/* Layer A */}
       <div 
-        className={`absolute inset-0 transition-opacity duration-600 ease-in-out ${layers.active === "A" ? "opacity-100 z-10" : "opacity-0 z-0"}`}
-        style={{ willChange: 'opacity' }}
+        className={getTransitionStyle(layers.active === "A")}
+        style={{ transitionDuration: `${transitionDuration}ms`, willChange: 'opacity, transform' }}
       >
         {mediaA?.type === "video" ? (
           <video
@@ -209,8 +248,8 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
 
       {/* Layer B */}
       <div 
-        className={`absolute inset-0 transition-opacity duration-600 ease-in-out ${layers.active === "B" ? "opacity-100 z-10" : "opacity-0 z-0"}`}
-        style={{ willChange: 'opacity' }}
+        className={getTransitionStyle(layers.active === "B")}
+        style={{ transitionDuration: `${transitionDuration}ms`, willChange: 'opacity, transform' }}
       >
         {mediaB?.type === "video" ? (
           <video
@@ -231,6 +270,36 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
           />
         )}
       </div>
+
+      {/* FOOTER OVERLAY */}
+      {appearance.footer?.enabled && (
+        <div 
+          className="absolute bottom-0 left-0 right-0 z-[60] flex items-center justify-center px-10 text-center font-display font-bold uppercase tracking-widest overflow-hidden"
+          style={{ 
+            height: `${appearance.footer.height || 60}px`,
+            backgroundColor: appearance.footer.background_color || "rgba(0,0,0,0.6)",
+            color: appearance.footer.text_color || "#ffffff",
+            fontSize: `${(appearance.footer.height || 60) * 0.4}px`
+          }}
+        >
+          {appearance.footer.text}
+        </div>
+      )}
+
+      {/* LOGO OVERLAY */}
+      {appearance.logo?.enabled && appearance.logo?.url && (
+        <div className={getLogoPosition()}>
+          <img 
+            src={appearance.logo.url} 
+            alt="Logo"
+            style={{ 
+              width: `${appearance.logo.size || 80}px`,
+              opacity: appearance.logo.opacity ?? 1,
+            }}
+            className="h-auto object-contain"
+          />
+        </div>
+      )}
     </div>
   );
 }
