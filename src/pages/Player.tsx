@@ -55,10 +55,11 @@ export default function PlayerPage() {
           .from("dispositivos")
           .select(`
             *,
-            playlists (
+            playlists!dispositivos_playlist_id_fkey (
               id,
               name,
               updated_at,
+              appearance_config,
               playlist_items (
                 id, position, duracao,
                 media_items (*)
@@ -69,8 +70,8 @@ export default function PlayerPage() {
           .single();
 
         if (deviceManifest && deviceManifest.playlists) {
-          const mainPlaylist = deviceManifest.playlists;
-          const remoteUpdatedAt = (mainPlaylist as any).updated_at || (deviceManifest as any).atualizado || new Date().toISOString();
+          const mainPlaylist = deviceManifest.playlists as any;
+          const remoteUpdatedAt = mainPlaylist.updated_at || (deviceManifest as any).atualizado || new Date().toISOString();
           
           // Optimization: Only update if the remote manifest is newer than the cached one
           if (cachedManifest && cachedManifest.updated_at === remoteUpdatedAt) {
