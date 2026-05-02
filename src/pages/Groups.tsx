@@ -723,6 +723,7 @@ export default function GroupsPage() {
             <Button onClick={handleSaveDeviceLinks} className="bg-primary hover:bg-primary/90">Salvar Vínculos</Button>
           </DialogFooter>
         </DialogContent>
+      </Dialog>
       {/* Delete Group Alert Dialog */}
       <AlertDialog open={deleteConfirm.open} onOpenChange={(o) => setDeleteConfirm({ ...deleteConfirm, open: o })}>
         <AlertDialogContent className="bg-card border-white/10 text-white">
