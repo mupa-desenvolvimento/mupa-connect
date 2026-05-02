@@ -410,8 +410,8 @@ export function DeviceAvailablePanel({
     <div 
       ref={setNodeRef}
       className={cn(
-        "flex flex-1 flex-col bg-card/50 backdrop-blur-xl transition-all duration-300 rounded-xl overflow-hidden relative",
-        isOver ? "ring-4 ring-primary/10 bg-primary/5" : ""
+        "flex flex-1 flex-col bg-card/50 backdrop-blur-xl border border-border/60 transition-all duration-300 rounded-xl overflow-hidden shadow-sm relative",
+        isOver ? "border-primary ring-4 ring-primary/10 bg-primary/5" : "border-white/5"
       )}
     >
       <div className="p-4 border-b border-border/40 bg-gradient-to-b from-white/[0.03] to-transparent">

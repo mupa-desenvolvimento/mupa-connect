@@ -489,7 +489,7 @@ export default function GroupsPage() {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-    <div className="h-screen flex flex-col gap-4 overflow-hidden p-6 bg-background">
+    <div className="h-[calc(100vh-8rem)] flex flex-col gap-4 overflow-hidden">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-card p-4 rounded-xl border border-border/60 shadow-sm shrink-0">
         <PageHeader
           title="Gestão de Grupos"
@@ -530,7 +530,7 @@ export default function GroupsPage() {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="groups" className="flex-1 border-t border-border/40 pt-4 overflow-hidden flex flex-col">
+              <TabsContent value="groups" className="flex-1 mt-4 border-t border-border/40 pt-4 overflow-hidden flex flex-col">
                 <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
                 {loadingGroups ? (
                   <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
@@ -557,7 +557,7 @@ export default function GroupsPage() {
                 </div>
               </TabsContent>
 
-            <TabsContent value="stores" className="flex-1 border-t border-border/40 pt-4 flex flex-col overflow-hidden">
+            <TabsContent value="stores" className="flex-1 mt-4 border-t border-border/40 pt-4 flex flex-col overflow-hidden">
               <div className="flex items-center justify-between mb-4 shrink-0">
                 <h3 className="text-sm font-semibold flex items-center gap-2">
                   <Filter className="w-4 h-4 text-primary" /> Listagem de Unidades
@@ -593,7 +593,7 @@ export default function GroupsPage() {
         </div>
 
         {/* Sidebar Panel */}
-        <div className="w-[345px] flex flex-col overflow-hidden bg-card p-4 rounded-xl border-none">
+        <div className="w-[340px] flex flex-col overflow-hidden bg-card p-4 rounded-xl border border-border/60 shadow-sm">
           <DeviceAvailablePanel 
             selectedIds={selectedDevices}
             onToggleSelection={(ids: string[]) => {
