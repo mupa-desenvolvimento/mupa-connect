@@ -14,9 +14,28 @@ interface PlayerEngineProps {
   playlist: MediaItem[];
   onMediaChange?: (index: number) => void;
   volume?: number;
+  appearance?: any;
 }
 
-export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngineProps) {
+const TRANSITION_TYPES = {
+  fade: "opacity-100",
+  "slide-left": "translate-x-0",
+  "slide-right": "translate-x-0",
+  zoom: "scale-100 opacity-100",
+  none: "opacity-100"
+};
+
+const TRANSITION_HIDDEN = {
+  fade: "opacity-0",
+  "slide-left": "-translate-x-full",
+  "slide-right": "translate-x-full",
+  zoom: "scale-90 opacity-0",
+  none: "opacity-0"
+};
+
+export function PlayerEngine({ playlist, onMediaChange, volume = 0, appearance = {} }: PlayerEngineProps) {
+  const transitionType = appearance.transition_type || "fade";
+  const transitionDuration = appearance.transition_duration || 600;
   // UI State - only used for rendering the layers
   const [layers, setLayers] = useState({
     active: "A" as "A" | "B",
