@@ -108,6 +108,7 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         scan: "scan 4s linear infinite",
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+        "pulse-success": "pulse-success 0.6s ease-out",
       },
     },
   },
