@@ -405,7 +405,7 @@ export default function PlaylistEditor() {
           .from("playlists")
           .insert({ 
             name: updatedName, 
-            tenant_id: tenantId as any, 
+            tenant_id: String(tenantId), 
             company_id: companyId || companyData.id,
             is_active: true,
             appearance_config: updatedAppearance || appearanceConfig 
