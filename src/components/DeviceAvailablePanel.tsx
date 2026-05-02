@@ -86,7 +86,7 @@ export function DeviceItem({ device, isSelected, onToggle, onClick }: DeviceItem
       className={cn(
         "group relative flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 cursor-pointer",
         isSelected 
-          ? "bg-[#085CF0]/10 border-[#085CF0]/30 shadow-[0_0_15px_rgba(8,92,240,0.1)]" 
+          ? "bg-primary/10 border-primary/30 shadow-[0_0_15px_rgba(var(--primary),0.1)]" 
           : "bg-white/5 border-white/5 hover:border-white/10 hover:bg-white/[0.07]",
         isDragging && "opacity-0"
       )}
