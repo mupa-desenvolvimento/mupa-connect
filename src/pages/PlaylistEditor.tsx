@@ -125,7 +125,7 @@ const SortableItem = ({
         isSelected 
           ? 'border-[#085CF0] ring-2 ring-[#085CF0]/20 bg-[#085CF0]/5 shadow-xl shadow-[#085CF0]/10' 
           : 'border-border/40 bg-card/40 hover:border-[#085CF0]/30'
-      } ${isCurrent ? 'ring-2 ring-yellow-500/50 bg-yellow-500/5' : ''} ${isDragging ? 'opacity-20 ring-4 ring-[#085CF0] border-[#085CF0] scale-95 transition-transform duration-200' : ''}`}
+      } ${isCurrent ? 'ring-2 ring-yellow-500/50 bg-yellow-500/5' : ''} ${isDragging ? 'opacity-20 ring-4 ring-[#085CF0] border-[#085CF0] scale-95 transition-transform duration-200' : ''} ${isLastDropped ? 'animate-[pulse-success_1s_ease-out] ring-4 ring-green-500/50' : ''}`}
       onClick={(e) => {
         e.stopPropagation();
         onSelect(item);
