@@ -485,31 +485,3 @@ function DetailRow({
   );
 }
 
-function DetailRow({
-  icon: Icon,
-  label,
-  value,
-  mono,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-  mono?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3 py-1">
-      <div className="flex items-center gap-2 text-muted-foreground text-xs">
-        <Icon className="h-3.5 w-3.5" />
-        <span>{label}</span>
-      </div>
-      <span
-        className={cn(
-          "text-sm text-right truncate max-w-[60%]",
-          mono && "font-mono text-xs"
-        )}
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
