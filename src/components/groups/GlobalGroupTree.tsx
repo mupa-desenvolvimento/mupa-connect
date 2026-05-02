@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronRight, ChevronDown, Folder, Monitor, Store as StoreIcon, MoreVertical, Plus, Edit2, Trash2, Link2 } from "lucide-react";
+import { ChevronRight, ChevronDown, Folder, Monitor, Store as StoreIcon, MoreVertical, Plus, Edit2, Trash2, Link2, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PlaylistBadge } from "./PlaylistBadge";
