@@ -568,7 +568,7 @@ export function DeviceAvailablePanel({
         </div>
       </div>
 
-      <div className="p-4 bg-black/40 border-t border-white/5 flex items-center justify-center gap-2.5 text-white/20">
+      <div className="p-4 bg-background/40 border-t border-border/40 flex items-center justify-center gap-2.5 text-white/20">
         <MousePointer2 className="w-3.5 h-3.5" />
         <span className="text-[10px] font-bold uppercase tracking-widest">
           Arraste para organizar sua estrutura
