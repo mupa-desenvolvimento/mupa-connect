@@ -87,6 +87,10 @@ export default function DeviceDetailPage() {
       console.error(error);
     } else {
       toast.success("Dispositivo atualizado com sucesso");
+      // Notificar via Firebase
+      if (device.device_code) {
+        FirebaseRealtimeService.notifyDeviceUpdate(device.device_code);
+      }
       setDevice(prev => prev ? { 
         ...prev, 
         name: deviceName,
