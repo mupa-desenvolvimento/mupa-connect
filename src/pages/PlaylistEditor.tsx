@@ -65,6 +65,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { handlePlaylistError } from "@/utils/error-handlers";
 import { PlaylistErrorBanner } from "@/components/PlaylistErrorBanner";
+import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 
 // --- Types ---
 interface EditorPlaylistItem {
