@@ -82,8 +82,8 @@ export default function PlayerPage() {
             updated_at: new Date().toISOString(),
             items: mapItems(mainPlaylist.playlist_items),
             // Support for advanced scheduling
-            schedules: deviceManifest.schedules || [], 
-            fallback_items: mapItems(deviceManifest.fallback_playlist_items)
+            schedules: (deviceManifest as any).schedules || [], 
+            fallback_items: mapItems((deviceManifest as any).fallback_playlist_items)
           };
 
           setManifest(newManifest);
