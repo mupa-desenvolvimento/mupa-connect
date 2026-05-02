@@ -560,6 +560,11 @@ export default function PlaylistEditor() {
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
     setActiveId(null);
+    setLastDroppedId(active.id);
+    
+    // Reset o flash após 1 segundo
+    setTimeout(() => setLastDroppedId(null), 1000);
+
     if (over && active.id !== over.id) {
       const oldIndex = items.findIndex((i) => i.id === active.id);
       const newIndex = items.findIndex((i) => i.id === over.id);
