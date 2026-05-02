@@ -23,6 +23,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   ChevronLeft, 
   Play, 
+  Pause,
   Save, 
   Plus, 
   Search, 
