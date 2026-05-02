@@ -496,7 +496,7 @@ export function DeviceAvailablePanel({
             </div>
             
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 p-1 bg-white/[0.02] border border-white/5 rounded-lg flex-1">
+              <div className="flex items-center gap-1.5 p-1 bg-background/[0.02] border border-border/40 rounded-lg flex-1">
                 {(["all", "linked", "unlinked"] as const).map((mode) => (
                   <button
                     key={mode}
