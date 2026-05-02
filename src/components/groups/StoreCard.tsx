@@ -96,27 +96,26 @@ export function StoreCard({ store, playlists, onRefresh }: StoreCardProps) {
   };
 
   const handleCreateSector = async () => {
-    const name = window.prompt("Nome do novo setor:");
-    if (!name) return;
+    if (!newSectorName.trim()) return;
 
     const { error } = await supabase
       .from("store_internal_groups")
       .insert({
         store_id: store.id,
-        name
+        name: newSectorName
       } as any);
 
     if (error) {
       toast.error("Erro ao criar setor");
     } else {
-      toast.success("Setor criado!");
+      toast.success("Setor criado com sucesso!");
+      setNewSectorName("");
+      setIsSectorDialogOpen(false);
       refetchSectors();
     }
   };
 
   const handleDeleteSector = async (id: string) => {
-    if (!confirm("Deseja realmente excluir este setor?")) return;
-
     const { error } = await supabase
       .from("store_internal_groups")
       .delete()
@@ -125,7 +124,8 @@ export function StoreCard({ store, playlists, onRefresh }: StoreCardProps) {
     if (error) {
       toast.error("Erro ao excluir setor");
     } else {
-      toast.success("Setor excluído");
+      toast.success("Setor removido com sucesso");
+      setDeleteSectorConfirm({ open: false, id: "", name: "" });
       refetchSectors();
     }
   };
