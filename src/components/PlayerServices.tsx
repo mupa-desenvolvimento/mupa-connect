@@ -101,23 +101,32 @@ export const ScheduleResolver = {
     
     const now = new Date();
     const currentTime = now.getHours() * 100 + now.getMinutes(); // HHMM format
-    const currentDay = now.getDay(); // 0-6
+    const currentDay = now.getDay(); // 0-6 (Sunday is 0)
 
     // If manifest has schedules, find the matching one
-    if (manifest.schedules && manifest.schedules.length > 0) {
+    if (manifest.schedules && Array.isArray(manifest.schedules)) {
       const matchingSchedule = manifest.schedules.find((s: any) => {
-        const inTime = (!s.start_time || currentTime >= s.start_time) && 
-                       (!s.end_time || currentTime <= s.end_time);
-        const inDay = !s.days || s.days.includes(currentDay);
-        return inTime && inDay;
+        // Validate day of week
+        const days = Array.isArray(s.days) ? s.days : [];
+        const dayMatch = days.length === 0 || days.includes(currentDay);
+        
+        // Validate time range
+        const start = s.start_time || 0;
+        const end = s.end_time || 2359;
+        const timeMatch = currentTime >= start && currentTime <= end;
+
+        return dayMatch && timeMatch;
       });
 
-      if (matchingSchedule && matchingSchedule.items) {
+      if (matchingSchedule && Array.isArray(matchingSchedule.items) && matchingSchedule.items.length > 0) {
         return matchingSchedule.items;
       }
     }
 
-    // Default to main playlist or fallback
-    return manifest.items || manifest.fallback_items || [];
+    // Default to main playlist or fallback_items if primary is empty
+    const primaryItems = Array.isArray(manifest.items) ? manifest.items : [];
+    if (primaryItems.length > 0) return primaryItems;
+
+    return Array.isArray(manifest.fallback_items) ? manifest.fallback_items : [];
   }
 };
