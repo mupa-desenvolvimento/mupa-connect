@@ -157,7 +157,6 @@ export default function PlayerPage() {
     const interval = setInterval(backgroundSync, 60000);
     
     return () => {
-      clearTimeout(initialTimer);
       clearInterval(interval);
     };
   }, [deviceCode]);
