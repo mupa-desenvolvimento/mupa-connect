@@ -373,7 +373,7 @@ export default function GroupsPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex flex-col gap-4 overflow-hidden">
+    <div className="h-[calc(100vh-180px)] flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar">
       <div className="flex justify-between items-center pr-2">
         <PageHeader
           title="Gestão de Grupos"
