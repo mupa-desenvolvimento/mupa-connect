@@ -283,11 +283,11 @@ export default function PlaylistEditor() {
     console.log("ITEMS STATE UPDATED. Count:", items.length, items);
   }, [items]);
 
-  // DND Sensors
+  // DND Sensors - Otimizado para Timeline
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 4, // Snap mais reativo ao começar a arrastar
       },
     }),
     useSensor(KeyboardSensor, {
