@@ -51,7 +51,9 @@ interface StoreCardProps {
 export function StoreCard({ store, playlists, onRefresh }: StoreCardProps) {
   const { data: sectors, refetch: refetchSectors } = useStoreInternalGroups(store.id);
   const { data: allDevices, refetch: refetchDevices } = useDevices(null);
-  
+  const [isSectorDialogOpen, setIsSectorDialogOpen] = useState(false);
+  const [newSectorName, setNewSectorName] = useState("");
+  const [deleteSectorConfirm, setDeleteSectorConfirm] = useState<{ open: boolean, id: string, name: string }>({ open: false, id: "", name: "" });
   const normalize = (val: string | null | undefined) => {
     if (!val) return "";
     let normalized = val.replace(/FIL-/gi, "");
