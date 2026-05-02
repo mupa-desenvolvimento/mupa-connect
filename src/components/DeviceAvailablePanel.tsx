@@ -235,24 +235,6 @@ export function DeviceAvailablePanel({
       const storeMap = new Map(stores?.map(s => [s.code?.toString().trim(), s.name]) || []);
       const storeIdByCode = new Map(stores?.map(s => [s.code?.toString().trim(), s.id]) || []);
 
-      if (devicesError) throw devicesError;
-
-      // Fetch all groups to get names for context
-      const { data: groups } = await supabase
-        .from("groups")
-        .select("id, name")
-        .eq("tenant_id", tenantId);
-      
-      const groupMap = new Map(groups?.map(g => [g.id, g.name]) || []);
-
-      // Fetch all stores to get names for context
-      const { data: stores } = await supabase
-        .from("stores")
-        .select("id, name, code")
-        .eq("tenant_id", tenantId);
-      
-      const storeMap = new Map(stores?.map(s => [s.code?.toString().trim(), s.name]) || []);
-      const storeIdByCode = new Map(stores?.map(s => [s.code?.toString().trim(), s.id]) || []);
 
       // Fetch explicit group_devices links (New hierarchy system)
       const { data: groupLinks } = await supabase
