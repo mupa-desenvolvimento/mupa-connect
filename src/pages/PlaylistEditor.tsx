@@ -482,22 +482,27 @@ export default function PlaylistEditor() {
       if (safeItems.length > 0) {
         const itemsToInsert = safeItems.map((it, idx) => {
           // Double-check de segurança (Requisito 5)
-          if (!isUuid(it.mediaId)) {
-            throw new Error(`ID de mídia inválido (não é UUID): ${it.mediaId}`);
+          const mediaId = String(it.mediaId);
+          
+          if (!isUuid(mediaId)) {
+            console.error("FALHA DE VALIDAÇÃO: mediaId não é UUID válido:", mediaId);
+            throw new Error(`O item na posição ${idx + 1} possui um ID de mídia inválido ("${mediaId}"). Remova-o e adicione novamente.`);
           }
+
           if (!isUuid(currentPlaylistId)) {
-            throw new Error(`ID da playlist inválido (não é UUID): ${currentPlaylistId}`);
+            console.error("FALHA DE VALIDAÇÃO: playlistId não é UUID válido:", currentPlaylistId);
+            throw new Error(`O identificador da playlist ("${currentPlaylistId}") é inválido.`);
           }
           
           return {
-            playlist_id: currentPlaylistId,
-            media_id: it.mediaId,
+            playlist_id: currentPlaylistId, // UUID
+            media_id: mediaId, // UUID
             duracao: Number(it.duration),
             prioridade: Number(it.priority || 1),
             tipo: it.type,
-            ordem: idx + 1, // Ordem numérica correta
-            position: idx + 1, // Posição numérica correta
-            conteudo_id: String(it.mediaId), // Mantendo como string para o campo conteudo_id
+            ordem: idx + 1, // Inteiro
+            position: idx + 1, // Inteiro
+            conteudo_id: mediaId, // Mantendo o UUID como string
             ativo: true
           };
         });
