@@ -530,12 +530,12 @@ export default function GroupsPage() {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="groups" className="flex-1 mt-4 border-t border-border/40 pt-4 overflow-hidden flex flex-col">
-                <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+              <TabsContent value="groups" className="flex-1 min-h-0 mt-0 border-t border-border/40 data-[state=active]:flex data-[state=active]:flex-col overflow-hidden">
+                <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-2 pt-4">
                 {loadingGroups ? (
                   <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
                 ) : groups && groups.length > 0 ? (
-                  <div className="space-y-1 pb-20">
+                  <div className="space-y-1 pb-2">
                   {filteredGroups.map(group => (
                     <GroupTreeNode 
                       key={group.id} 
