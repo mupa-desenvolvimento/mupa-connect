@@ -605,12 +605,20 @@ export default function PlaylistEditor() {
     }
     const newItem: EditorPlaylistItem = {
       id: `temp-${Date.now()}-${Math.random()}`,
-      mediaId: media.id,
-      duration: media.duration || 10,
+      mediaId: media.id, // O media.id vindo de useMedias DEVE ser um UUID
+      duration: Number(media.duration || 10),
       priority: 1,
       type: media.type === 'video' ? 'video' : 'image',
       media: media
     };
+    
+    // Verificação extra antes de adicionar ao estado (Requisito 5)
+    if (typeof media.id === 'string' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(media.id)) {
+      console.error("ERRO: Tentando adicionar mídia com ID não-UUID:", media.id);
+      toast.error("Erro interno: A mídia selecionada possui um identificador inválido.");
+      return;
+    }
+
     const newItems = [...items, newItem];
     console.log("New items state will be:", newItems);
     setItems(newItems);
