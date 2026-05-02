@@ -23,6 +23,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   ChevronLeft, 
   Play, 
+  Pause,
   Save, 
   Plus, 
   Search, 
@@ -84,12 +85,16 @@ const SortableItem = ({
   item, 
   index, 
   isSelected, 
-  onSelect 
+  onSelect,
+  width,
+  isCurrent
 }: { 
   item: EditorPlaylistItem, 
   index: number, 
   isSelected: boolean,
-  onSelect: (item: EditorPlaylistItem) => void
+  onSelect: (item: EditorPlaylistItem) => void,
+  width: string,
+  isCurrent: boolean
 }) => {
   const {
     attributes,
@@ -105,20 +110,24 @@ const SortableItem = ({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    zIndex: isDragging ? 10 : 1,
+    zIndex: isDragging ? 50 : 1,
     opacity: isDragging ? 0.5 : 1,
+    width: width,
   };
 
   return (
     <div 
       ref={setNodeRef} 
       style={style}
-      onClick={() => onSelect(item)}
-      className={`relative shrink-0 w-48 h-32 rounded-xl border transition-all cursor-pointer group overflow-hidden ${
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect(item);
+      }}
+      className={`relative shrink-0 h-32 rounded-xl border transition-all cursor-pointer group overflow-hidden ${
         isSelected 
           ? 'border-[#085CF0] ring-2 ring-[#085CF0]/20 bg-[#085CF0]/5 shadow-xl shadow-[#085CF0]/10' 
           : 'border-border/40 bg-card/40 hover:border-[#085CF0]/30'
-      } ${isDragging ? 'shadow-2xl' : ''}`}
+      } ${isCurrent ? 'ring-2 ring-yellow-500/50 bg-yellow-500/5' : ''} ${isDragging ? 'shadow-2xl' : ''}`}
     >
       <div className="absolute inset-0">
         <img 
@@ -189,6 +198,85 @@ export default function PlaylistEditor() {
   const [showDebug, setShowDebug] = useState(false);
   const [mediaSearch, setMediaSearch] = useState("");
   const [appearanceConfig, setAppearanceConfig] = useState<any>({});
+
+  // Timeline Engine State
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const playheadRef = React.useRef<HTMLDivElement>(null);
+  const timelineRef = React.useRef<HTMLDivElement>(null);
+  const scrollAreaRef = React.useRef<HTMLDivElement>(null);
+  const requestRef = React.useRef<number>();
+  const lastTimeRef = React.useRef<number>();
+
+  const totalDuration = items.reduce((acc, curr) => acc + (curr.duration || 0), 0);
+
+  // Playback Logic
+  const animate = useCallback((time: number) => {
+    if (lastTimeRef.current !== undefined) {
+      const deltaTime = (time - lastTimeRef.current) / 1000;
+      setCurrentTime(prevTime => {
+        const newTime = prevTime + deltaTime;
+        if (newTime >= totalDuration) {
+          return 0; // Loop
+        }
+        return newTime;
+      });
+    }
+    lastTimeRef.current = time;
+    requestRef.current = requestAnimationFrame(animate);
+  }, [totalDuration]);
+
+  useEffect(() => {
+    if (isPlaying) {
+      lastTimeRef.current = performance.now();
+      requestRef.current = requestAnimationFrame(animate);
+    } else {
+      if (requestRef.current) cancelAnimationFrame(requestRef.current);
+    }
+    return () => {
+      if (requestRef.current) cancelAnimationFrame(requestRef.current);
+    };
+  }, [isPlaying, animate]);
+
+  // Update currentIndex based on currentTime
+  useEffect(() => {
+    let accumulatedTime = 0;
+    const index = items.findIndex(item => {
+      accumulatedTime += item.duration;
+      return currentTime < accumulatedTime;
+    });
+    
+    if (index !== -1 && index !== currentIndex) {
+      setCurrentIndex(index);
+      if (items[index]) {
+        setSelectedItem(items[index]);
+      }
+    }
+  }, [currentTime, items, currentIndex]);
+
+  // Direct DOM update for playhead performance
+  useEffect(() => {
+    if (playheadRef.current && totalDuration > 0) {
+      const progress = (currentTime / totalDuration) * 100;
+      playheadRef.current.style.left = `${progress}%`;
+      
+      // Auto-scroll logic
+      if (timelineRef.current && isPlaying) {
+        const container = timelineRef.current.parentElement;
+        if (container) {
+          const scrollPos = (progress / 100) * timelineRef.current.offsetWidth - (container.offsetWidth / 2);
+          container.scrollTo({ left: scrollPos, behavior: 'auto' });
+        }
+      }
+    }
+  }, [currentTime, totalDuration, isPlaying]);
+
+  const togglePlayback = () => setIsPlaying(!isPlaying);
+
+  const seekTo = (percent: number) => {
+    setCurrentTime(percent * totalDuration);
+  };
 
   // Monitorar mudanças no estado de itens
   useEffect(() => {
@@ -495,8 +583,6 @@ export default function PlaylistEditor() {
     triggerAutoSave(newItems, playlistName);
   };
 
-  const totalDuration = items.reduce((acc, curr) => acc + curr.duration, 0);
-
   if (isLoadingPlaylist && id !== "new") {
     return (
       <div className="h-screen flex items-center justify-center bg-[#09090b]">
@@ -505,8 +591,10 @@ export default function PlaylistEditor() {
     );
   }
 
+  const pxPerSecond = 20; // Scale: 20px per second
+
   return (
-    <div className="flex flex-col h-screen bg-[#09090b] text-white">
+    <div className="flex flex-col h-screen bg-[#09090b] text-white overflow-hidden">
       <PlaylistErrorBanner error={playlistData === null && id !== 'new' ? "Playlist não encontrada ou sem permissão de acesso." : null} className="m-4" />
       
       {/* Header */}
@@ -700,15 +788,29 @@ export default function PlaylistEditor() {
                 )}
                 
                 {/* Overlay Controls */}
-                <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-all">
+                <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-all z-10">
                    <div className="flex items-center gap-4">
-                      <Button size="icon" className="h-10 w-10 rounded-full bg-white text-black hover:bg-white/90">
-                         <Play className="h-5 w-5 fill-current" />
+                      <Button 
+                        size="icon" 
+                        className="h-10 w-10 rounded-full bg-white text-black hover:bg-white/90"
+                        onClick={(e) => { e.stopPropagation(); togglePlayback(); }}
+                      >
+                         {isPlaying ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 fill-current" />}
                       </Button>
-                      <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
-                         <div className="h-full bg-[#085CF0] w-1/3" />
+                      <div 
+                        className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden cursor-pointer group/progress" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          seekTo((e.clientX - rect.left) / rect.width);
+                        }}
+                      >
+                         <div 
+                           className="h-full bg-[#085CF0] transition-all duration-100 ease-linear" 
+                           style={{ width: `${totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0}%` }} 
+                         />
                       </div>
-                      <span className="text-xs font-mono font-bold">03:20 / {totalDuration}S</span>
+                      <span className="text-xs font-mono font-bold">{Math.floor(currentTime)}s / {totalDuration}s</span>
                       <Button size="icon" variant="ghost" className="text-white hover:bg-white/10">
                          <Maximize2 className="h-5 w-5" />
                       </Button>
@@ -718,8 +820,8 @@ export default function PlaylistEditor() {
           </div>
 
           {/* Horizontal Timeline Container */}
-          <div className="h-64 border-t border-white/5 bg-[#0c0c0e]/80 backdrop-blur-md flex flex-col">
-             <div className="px-6 py-3 flex items-center justify-between border-b border-white/5 bg-black/20">
+          <div className="h-64 border-t border-white/5 bg-[#0c0c0e]/80 backdrop-blur-md flex flex-col overflow-hidden">
+             <div className="px-6 py-3 flex items-center justify-between border-b border-white/5 bg-black/20 shrink-0">
                 <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
                   Timeline de Exibição <Badge variant="outline" className="text-[9px] border-white/10">{items.length} Itens</Badge>
                 </h3>
@@ -739,8 +841,23 @@ export default function PlaylistEditor() {
                 </div>
              </div>
 
-             <ScrollArea className="flex-1 w-full">
-                <div className="p-6 flex gap-4 min-w-full">
+             <ScrollArea className="flex-1 w-full" ref={scrollAreaRef}>
+                <div 
+                  ref={timelineRef}
+                  className="p-6 relative flex gap-0 min-w-full h-[180px] cursor-crosshair bg-[#0c0c0e]/40"
+                  style={{ width: `${Math.max(totalDuration * pxPerSecond, 800)}px` }}
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    seekTo((e.clientX - rect.left) / rect.width);
+                  }}
+                >
+                  {/* Playhead */}
+                  <div 
+                    ref={playheadRef}
+                    className="absolute top-0 bottom-0 w-1 bg-yellow-500 z-50 pointer-events-none shadow-[0_0_15px_rgba(234,179,8,0.8)] before:content-[''] before:absolute before:top-0 before:left-1/2 before:-translate-x-1/2 before:w-3 before:h-3 before:bg-yellow-500 before:rounded-full"
+                    style={{ left: `${totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0}%`, transform: 'translateX(-50%)' }}
+                  />
+
                   <DndContext 
                     sensors={sensors}
                     collisionDetection={closestCenter}
@@ -760,6 +877,8 @@ export default function PlaylistEditor() {
                             index={index}
                             isSelected={selectedItem?.id === item.id}
                             onSelect={setSelectedItem}
+                            width={totalDuration > 0 ? `${(item.duration / totalDuration) * 100}%` : '200px'}
+                            isCurrent={index === currentIndex && isPlaying}
                           />
                         ))}
                       </AnimatePresence>
@@ -779,7 +898,7 @@ export default function PlaylistEditor() {
                   {/* Quick Add Button at the end of timeline */}
                   <Button 
                     variant="outline" 
-                    className="shrink-0 w-48 h-32 rounded-xl border-2 border-dashed border-white/5 bg-white/5 hover:bg-white/10 hover:border-[#085CF0]/30 transition-all flex flex-col items-center justify-center gap-2"
+                    className="shrink-0 w-48 h-32 ml-4 rounded-xl border-2 border-dashed border-white/5 bg-white/5 hover:bg-white/10 hover:border-[#085CF0]/30 transition-all flex flex-col items-center justify-center gap-2"
                   >
                     <Plus className="h-6 w-6 text-white/20" />
                     <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">Adicionar</span>
