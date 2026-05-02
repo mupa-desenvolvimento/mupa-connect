@@ -28,11 +28,12 @@ export default function PlayerPage() {
       if (cachedManifest) {
         console.log("[Player] Resuming from offline manifest");
         setManifest(cachedManifest);
+        // We set isLoading to false only if we have content to play
         setIsLoading(false);
       }
 
       try {
-        // Step B: Resolve Device Identify
+        // Step B: Resolve Device Identity (Background)
         const { data: device, error } = await supabase
           .from("dispositivos")
           .select("*")
@@ -46,19 +47,26 @@ export default function PlayerPage() {
 
         setDeviceUuid(device.id.toString());
         setDeviceInfo(device);
-
-        // Step C: Manifest is now handled by BackgroundSync and Realtime updates
-        // We rely on the local cache for immediate playback to ensure zero-flicker startups
-        setIsLoading(false);
+        
+        // Initial fetch if we have no manifest yet
+        if (!cachedManifest) {
+          console.log("[Player] No cache found, fetching manifest...");
+          const newManifest = await ManifestService.fetchManifest(deviceCode);
+          setManifest(newManifest);
+          setIsLoading(false);
+        }
       } catch (err) {
-        console.error("[Player] Sync error:", err);
+        console.error("[Player] Initial resolve error:", err);
       } finally {
-        setIsLoading(false);
+        // Always stop loading spinner if we have manifest, even on error
+        if (ManifestManager.getManifest(deviceCode)) {
+          setIsLoading(false);
+        }
       }
     }
 
     initializePlayer();
-  }, [deviceCode, reloadKey]);
+  }, [deviceCode]);
 
   // 1.5 Realtime Updates via Firebase
   useEffect(() => {
