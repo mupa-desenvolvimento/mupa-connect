@@ -278,7 +278,6 @@ export default function GroupsPage() {
 
   const handleSaveStoreLinks = async () => {
     const groupId = linkStoresModal.group.id;
-    if (!confirm(`Deseja salvar as alterações de vínculo das lojas para o grupo "${linkStoresModal.group.name}"?`)) return;
     try {
       // Simplistic sync: delete then insert
       await supabase.from("group_stores").delete().eq("group_id", groupId);
