@@ -239,7 +239,15 @@ export default function GroupsPage() {
       });
       setGroupModal({ open: true, mode: 'edit', group });
     } else if (type === 'delete') {
-      handleDeleteGroup(group.id, group.name);
+      const children = groups?.filter(g => g.parent_id === group.id) || [];
+      const storesLinked = group.linked_store_ids?.length > 0;
+      setDeleteConfirm({
+        open: true,
+        groupId: group.id,
+        groupName: group.name,
+        hasChildren: children.length > 0,
+        hasStores: storesLinked
+      });
     } else if (type === 'stores') {
       // Fetch currently linked stores
       const { data } = await supabase.from("group_stores").select("store_id").eq("group_id", group.id);
