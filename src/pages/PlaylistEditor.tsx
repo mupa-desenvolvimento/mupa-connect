@@ -877,6 +877,17 @@ export default function PlaylistEditor() {
                     seekTo((e.clientX - rect.left) / rect.width);
                   }}
                 >
+                  {/* Grid Lines para Snap Visual */}
+                  <div className="absolute inset-0 pointer-events-none opacity-20 flex">
+                    {Array.from({ length: Math.ceil(totalDuration) }).map((_, i) => (
+                      <div 
+                        key={i} 
+                        className="h-full border-l border-white/10" 
+                        style={{ width: `${pxPerSecond}px` }} 
+                      />
+                    ))}
+                  </div>
+
                   {/* Playhead */}
                   <div 
                     ref={playheadRef}
