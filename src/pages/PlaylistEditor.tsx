@@ -8,8 +8,7 @@ import {
   useSensor,
   useSensors,
   DragOverlay,
-  defaultDropAnimationSideEffects,
-  SnapCenterModifier
+  defaultDropAnimationSideEffects
 } from "@dnd-kit/core";
 import {
   arrayMove,
