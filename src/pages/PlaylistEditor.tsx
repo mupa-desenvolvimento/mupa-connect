@@ -343,8 +343,8 @@ export default function PlaylistEditor() {
       if (deleteError) throw deleteError;
 
       // 2. Inserir novos itens se existirem
-      if (updatedItems.length > 0) {
-        const itemsToInsert = updatedItems.map((it, idx) => ({
+      if (safeItems.length > 0) {
+        const itemsToInsert = safeItems.map((it, idx) => ({
           playlist_id: currentPlaylistId,
           media_id: it.mediaId,
           duracao: it.duration,
