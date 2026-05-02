@@ -177,8 +177,9 @@ export function GroupTreeNode({ node, allGroups, allStores, allDevices, level = 
                   <span className="text-sm font-medium truncate">{store.name} <span className="text-xs text-muted-foreground font-normal">({store.code})</span></span>
                   <div className="flex items-center gap-2">
                     <PlaylistBadge 
-                      playlistName={store.playlist_name || 'Playlist Padrão'}
+                      playlistName={store.playlist_name || node.playlist_name || inherited.name || 'Playlist Padrão'}
                       isInherited={!store.playlist_id}
+                      inheritedFromName={!store.playlist_id ? (store.playlist_name ? "Própria" : (node.playlist_id ? node.name : inherited.from)) : null}
                     />
                     <div className="flex items-center gap-1 text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">
                       <Monitor className="w-3 h-3" /> {storeDevices.length}
