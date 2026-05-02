@@ -533,8 +533,17 @@ export default function PlaylistEditor() {
               Alterações pendentes
             </span>
           )}
+          
+          <PlaylistAppearanceDrawer 
+            config={appearanceConfig} 
+            onChange={(newConfig) => {
+              setAppearanceConfig(newConfig);
+              setHasUnsavedChanges(true);
+            }}
+          />
+
           <Button 
-            onClick={() => savePlaylist(items, playlistName)}
+            onClick={() => savePlaylist(items, playlistName, appearanceConfig)}
             disabled={isSaving}
             className={cn(
               "h-9 px-4 gap-2 font-bold text-xs transition-all",
@@ -554,7 +563,13 @@ export default function PlaylistEditor() {
           <Button variant="outline" className="border-white/10 hover:bg-white/5 gap-2 h-9 px-4 text-white">
             <Play className="h-4 w-4 fill-current" /> Preview
           </Button>
-          <Button className="bg-[#085CF0] hover:bg-[#0750d4] text-white h-9 px-4 gap-2">
+          <Button 
+            className="bg-[#085CF0] hover:bg-[#0750d4] text-white h-9 px-4 gap-2"
+            onClick={async () => {
+              await savePlaylist(items, playlistName, appearanceConfig);
+              toast.success("Comando de atualização enviado para as telas");
+            }}
+          >
             <RefreshCw className="h-4 w-4" /> Atualizar Telas
           </Button>
         </div>
