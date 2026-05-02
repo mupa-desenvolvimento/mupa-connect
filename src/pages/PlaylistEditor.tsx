@@ -586,12 +586,14 @@ export default function PlaylistEditor() {
   };
 
   const updateItemDuration = (id: string, newDuration: number) => {
+    // Implementar snap para múltiplos de 0.5s para precisão (Requisito)
+    const snappedDuration = Math.round(newDuration * 2) / 2;
     const newItems = items.map(item => 
-      item.id === id ? { ...item, duration: newDuration } : item
+      item.id === id ? { ...item, duration: snappedDuration } : item
     );
     setItems(newItems);
     if (selectedItem?.id === id) {
-      setSelectedItem({ ...selectedItem, duration: newDuration });
+      setSelectedItem({ ...selectedItem, duration: snappedDuration });
     }
     triggerAutoSave(newItems, playlistName);
   };
@@ -875,6 +877,17 @@ export default function PlaylistEditor() {
                     seekTo((e.clientX - rect.left) / rect.width);
                   }}
                 >
+                  {/* Grid Lines para Snap Visual */}
+                  <div className="absolute inset-0 pointer-events-none opacity-20 flex">
+                    {Array.from({ length: Math.ceil(totalDuration) }).map((_, i) => (
+                      <div 
+                        key={i} 
+                        className="h-full border-l border-white/10" 
+                        style={{ width: `${pxPerSecond}px` }} 
+                      />
+                    ))}
+                  </div>
+
                   {/* Playhead */}
                   <div 
                     ref={playheadRef}
@@ -993,7 +1006,7 @@ export default function PlaylistEditor() {
                               value={[selectedItem.duration]} 
                               min={1} 
                               max={60} 
-                              step={1}
+                              step={0.5}
                               onValueChange={(val) => updateItemDuration(selectedItem.id, val[0])}
                               className="py-4"
                             />
