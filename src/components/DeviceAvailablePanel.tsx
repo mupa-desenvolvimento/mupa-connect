@@ -136,7 +136,7 @@ export function DeviceItem({ device, isSelected, onToggle, onClick }: DeviceItem
           <div className="flex flex-wrap gap-1.5 mt-2">
             {device.status_label === "Vinculado" ? (
               <div className="flex items-center gap-1.5">
-                <Badge variant="secondary" className="bg-[#085CF0]/10 text-[#085CF0] border-[#085CF0]/20 text-[9px] h-4 uppercase tracking-tighter">
+                <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-[9px] h-4 uppercase tracking-tighter">
                   {device.group_name || "Vinculado"}
                 </Badge>
                 <TooltipProvider>
