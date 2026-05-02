@@ -374,9 +374,8 @@ export default function GroupsPage() {
   };
 
   return (
-    <ScrollArea className="h-[calc(100vh-180px)]">
-      <div className="flex flex-col gap-4 pr-4">
-      <div className="flex justify-between items-center pr-2">
+    <div className="h-[calc(100vh-64px)] flex flex-col gap-4 overflow-hidden p-4">
+      <div className="flex justify-between items-center pr-2 shrink-0">
         <PageHeader
           title="Gestão de Grupos"
           description="Administre a hierarquia global de lojas, setores e playlists de forma intuitiva."
