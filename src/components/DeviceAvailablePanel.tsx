@@ -201,7 +201,7 @@ export function DeviceAvailablePanel({
     queryKey: ["all-devices-panel", tenantId],
     queryFn: async () => {
       // 1. Base query for devices
-      let query = supabase
+      const { data: devicesData, error: devicesError } = await supabase
         .from("dispositivos")
         .select(`
           id, 
@@ -212,27 +212,10 @@ export function DeviceAvailablePanel({
           num_filial, 
           store_id,
           grupo_dispositivos,
-          company_id
-        `);
-      
-      // 2. Apply context filter
-      if (companyId) {
-        query = query.eq("company_id", companyId);
-      } else if (tenantId) {
-        const { data: companies } = await supabase
-          .from("companies")
-          .select("id")
-          .eq("tenant_id", tenantId);
-        
-        const cIds = companies?.map(c => c.id) || [];
-        if (cIds.length > 0) {
-          query = query.in("company_id", cIds);
-        } else {
-          return [];
-        }
-      }
+          tenant_id
+        `)
+        .eq("tenant_id", tenantId);
 
-      const { data: devicesData, error: devicesError } = await query;
       if (devicesError) throw devicesError;
 
       // Fetch all groups to get names for context
@@ -251,6 +234,7 @@ export function DeviceAvailablePanel({
       
       const storeMap = new Map(stores?.map(s => [s.code?.toString().trim(), s.name]) || []);
       const storeIdByCode = new Map(stores?.map(s => [s.code?.toString().trim(), s.id]) || []);
+
 
       // Fetch explicit group_devices links (New hierarchy system)
       const { data: groupLinks } = await supabase
@@ -339,7 +323,8 @@ export function DeviceAvailablePanel({
       // 3. Get device counts per store code
       const { data: deviceCounts } = await supabase
         .from("dispositivos")
-        .select("num_filial");
+        .select("num_filial")
+        .eq("tenant_id", tenantId);
       
       const countMap = new Map<string, number>();
       deviceCounts?.forEach(d => {
