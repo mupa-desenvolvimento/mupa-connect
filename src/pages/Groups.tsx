@@ -204,11 +204,10 @@ export default function GroupsPage() {
   }, [tenantId, refetchGroups, refetchDevices, refetchStores]);
 
   const enrichedGroups = useMemo(() => {
-    if (!groups) return [];
-    const safeDevices = devices || [];
-    const safeStores = stores || [];
+    if (!groups || !devices) return [];
     
     // Memoize descendant data for efficiency
+    // Use string IDs for the sets as expected by Group interface
     const memo = new Map<string, { storeIds: Set<string>, directDeviceIds: Set<string> }>();
 
     const getGroupDataRecursive = (groupId: string): { storeIds: Set<string>, directDeviceIds: Set<string> } => {
@@ -220,7 +219,6 @@ export default function GroupsPage() {
       const storeIds = new Set(group.linked_store_ids || []);
       const directDeviceIds = new Set(group.direct_device_ids || []);
 
-      // Get children
       const children = groups.filter(g => g.parent_id === groupId);
       children.forEach(child => {
         const childData = getGroupDataRecursive(child.id);
@@ -233,24 +231,21 @@ export default function GroupsPage() {
       return result;
     };
 
-    const result = groups.map(group => {
+    return groups.map(group => {
       const { storeIds, directDeviceIds } = getGroupDataRecursive(group.id);
 
-      // Recursive devices for total count
-      const allGroupDevices = (devices || []).filter(d => {
-        const isDirect = directDeviceIds.has(d.device_uuid);
-        const isFromStoreId = !!(d.store_id && storeIds.has(d.store_id));
-        
-        return isDirect || isFromStoreId;
-      });
+      // Recursive total devices impacted
+      const impactedDevices = devices.filter(d => 
+        directDeviceIds.has(d.device_uuid) || (d.store_id && storeIds.has(d.store_id))
+      );
       
-      const uniqueRecursiveCount = new Set(allGroupDevices.map(d => d.id)).size;
+      const totalImpactedCount = new Set(impactedDevices.map(d => d.id)).size;
 
       // Local devices for badges
       const localStoreIds = new Set(group.linked_store_ids || []);
       const localDirectDeviceIds = new Set(group.direct_device_ids || []);
 
-      const localDevices = (devices || []).map(d => {
+      const localDevices = devices.map(d => {
         const isDirect = localDirectDeviceIds.has(d.device_uuid);
         const isFromStoreId = !!(d.store_id && localStoreIds.has(d.store_id));
         
@@ -263,8 +258,6 @@ export default function GroupsPage() {
         return null;
       }).filter((d): d is any => d !== null);
 
-
-      // Deduplicate local devices
       const uniqueLocalDevicesMap = new Map();
       localDevices.forEach(d => {
         if (!uniqueLocalDevicesMap.has(d.id)) {
@@ -277,29 +270,14 @@ export default function GroupsPage() {
         }
       });
 
-      // Fallback: if group has NO devices and NO stores, 
-      // check if it should show "free" devices (as a fallback behavior requested)
-      let finalLocalDevices = Array.from(uniqueLocalDevicesMap.values());
-      let finalRecursiveCount = uniqueRecursiveCount;
-
-      if (finalRecursiveCount === 0 && !group.parent_id) {
-        const freeDevices = (devices || []).filter(d => !d.grupo_dispositivos && !d.store_id);
-        // Only apply fallback to groups that look like "General" or "Default" or if it's the only group
-        if (freeDevices.length > 0 && (group.name.toLowerCase().includes("padrão") || groups.length === 1)) {
-          finalLocalDevices = freeDevices.map(d => ({ ...d, origin: 'direto' }));
-          finalRecursiveCount = freeDevices.length;
-        }
-      }
-
       return {
         ...group,
-        devices: finalLocalDevices,
-        device_count: finalRecursiveCount,
-        store_count: storeIds.size
+        device_count: totalImpactedCount,
+        store_count: localStoreIds.size,
+        devices: Array.from(uniqueLocalDevicesMap.values())
       };
     });
-    return result;
-  }, [groups, devices, stores]);
+  }, [groups, devices]);
 
   const filteredGroups = useMemo(() => {
     if (!enrichedGroups) return [];
