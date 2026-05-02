@@ -4,6 +4,7 @@ import { useDeviceCommandChannel } from "@/hooks/useDeviceCommandChannel";
 import { supabase } from "@/integrations/supabase/client";
 import { PlayerEngine } from "@/components/PlayerEngine";
 import { ManifestManager, MediaCacheService, ScheduleResolver } from "@/components/PlayerServices";
+import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 
 export default function PlayerPage() {
   const { deviceCode } = useParams();
