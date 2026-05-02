@@ -43,6 +43,8 @@ interface StoreCardProps {
     code: string;
     playlist_id: string | null;
     playlist_name?: string;
+    group_id?: string | null;
+    group_name?: string | null;
   };
   playlists: any[];
   onRefresh: () => void;
