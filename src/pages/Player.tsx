@@ -268,17 +268,22 @@ export default function PlayerPage() {
 
       {/* HUD overlay - Zero flickering absolute layers */}
       {(appearance?.show_device_name !== false || appearance?.show_datetime !== false) && (
-        <div className="absolute top-0 left-0 right-0 p-6 flex items-start justify-between bg-gradient-to-b from-black/80 to-transparent z-40 pointer-events-none">
-          <div className="flex items-center gap-3">
+        <div className="absolute top-0 left-0 right-0 p-8 flex items-start justify-between bg-gradient-to-b from-black/90 via-black/40 to-transparent z-40 pointer-events-none transition-all duration-500">
+          <div className="flex items-center gap-4">
             {appearance?.show_device_name !== false && (
               <>
-                <div className="h-10 w-10 rounded-lg bg-gradient-primary grid place-items-center font-display font-bold text-primary-foreground text-xl shadow-lg">M</div>
-                <div className="leading-tight drop-shadow-md">
-                  <div className="font-display font-bold text-lg text-white">
+                <div className="h-12 w-12 rounded-xl bg-[#085CF0] grid place-items-center font-display font-black text-white text-2xl shadow-[0_0_20px_rgba(8,92,240,0.4)]">
+                  {deviceInfo?.apelido_interno?.charAt(0) || "M"}
+                </div>
+                <div className="leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                  <div className="font-display font-black text-2xl text-white tracking-tight">
                     {deviceInfo?.apelido_interno || "Player Profissional"}
                   </div>
-                  <div className="text-[11px] uppercase tracking-[0.2em] text-white/70 font-mono font-bold">
-                    {deviceInfo ? `Filial ${deviceInfo.num_filial}` : `Offline · ${deviceCode}`}
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <div className="px-2 py-0.5 rounded bg-white/10 backdrop-blur-md border border-white/10 text-[10px] uppercase font-mono font-bold text-white/90 flex items-center gap-1.5">
+                      <MapPin className="h-3 w-3 text-[#085CF0]" />
+                      Filial {deviceInfo?.num_filial || "—"}
+                    </div>
                   </div>
                 </div>
               </>
