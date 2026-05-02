@@ -234,6 +234,8 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, appearance =
             onEnded={handleVideoEnded}
             onError={() => handleError(layers.indexA)}
             playsInline
+            autoPlay
+            preload="auto"
             className="w-full h-full object-cover"
           />
         ) : (
