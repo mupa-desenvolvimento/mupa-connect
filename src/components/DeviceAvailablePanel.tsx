@@ -260,13 +260,7 @@ export function DeviceAvailablePanel({
           let groupId = linkMap.get(d.device_uuid);
           if (groupId) vinculationType = 'direct';
           
-          // Priority 2: Legacy grupo_dispositivos UUID
-          if (!groupId && d.grupo_dispositivos && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(d.grupo_dispositivos)) {
-            groupId = d.grupo_dispositivos;
-            vinculationType = 'legacy';
-          }
-
-          // Priority 3: Transitive vinculation via store
+          // Priority 2: Transitive vinculation via store
           if (!groupId && d.store_id) {
             const transitiveGroupId = storeToGroupMap.get(d.store_id);
             if (transitiveGroupId) {
@@ -274,6 +268,7 @@ export function DeviceAvailablePanel({
               vinculationType = 'transitive';
             }
           }
+
 
           if (groupId) {
             statusLabel = "Vinculado";
