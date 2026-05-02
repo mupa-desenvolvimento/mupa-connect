@@ -84,12 +84,16 @@ const SortableItem = ({
   item, 
   index, 
   isSelected, 
-  onSelect 
+  onSelect,
+  width,
+  isCurrent
 }: { 
   item: EditorPlaylistItem, 
   index: number, 
   isSelected: boolean,
-  onSelect: (item: EditorPlaylistItem) => void
+  onSelect: (item: EditorPlaylistItem) => void,
+  width: string,
+  isCurrent: boolean
 }) => {
   const {
     attributes,
@@ -105,20 +109,24 @@ const SortableItem = ({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    zIndex: isDragging ? 10 : 1,
+    zIndex: isDragging ? 50 : 1,
     opacity: isDragging ? 0.5 : 1,
+    width: width,
   };
 
   return (
     <div 
       ref={setNodeRef} 
       style={style}
-      onClick={() => onSelect(item)}
-      className={`relative shrink-0 w-48 h-32 rounded-xl border transition-all cursor-pointer group overflow-hidden ${
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect(item);
+      }}
+      className={`relative shrink-0 h-32 rounded-xl border transition-all cursor-pointer group overflow-hidden ${
         isSelected 
           ? 'border-[#085CF0] ring-2 ring-[#085CF0]/20 bg-[#085CF0]/5 shadow-xl shadow-[#085CF0]/10' 
           : 'border-border/40 bg-card/40 hover:border-[#085CF0]/30'
-      } ${isDragging ? 'shadow-2xl' : ''}`}
+      } ${isCurrent ? 'ring-2 ring-yellow-500/50 bg-yellow-500/5' : ''} ${isDragging ? 'shadow-2xl' : ''}`}
     >
       <div className="absolute inset-0">
         <img 
