@@ -237,6 +237,11 @@ export function DeviceFirebaseCommandDrawer({
       console.error(error);
     } else {
       toast.success("Dispositivo atualizado com sucesso");
+      // Notificar via Firebase
+      const code = device?.serial || device?.apelido_interno;
+      if (code) {
+        FirebaseRealtimeService.notifyDeviceUpdate(code);
+      }
     }
     setSaving(false);
   };
