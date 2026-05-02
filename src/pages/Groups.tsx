@@ -112,50 +112,43 @@ export default function GroupsPage() {
       if (!group) return { storeCodes: new Set(), storeIds: new Set(), directDeviceIds: new Set() };
 
       const storeIds = new Set(group.linked_store_ids || []);
-      const storeCodes = new Set(stores.filter(s => storeIds.has(s.id)).map(s => normalize(s.code)));
       const directDeviceIds = new Set(group.direct_device_ids || []);
 
       // Get children
       const children = groups.filter(g => g.parent_id === groupId);
       children.forEach(child => {
         const childData = getGroupDataRecursive(child.id);
-        childData.storeCodes.forEach(code => storeCodes.add(code));
         childData.storeIds.forEach(id => storeIds.add(id));
         childData.directDeviceIds.forEach(id => directDeviceIds.add(id));
       });
 
-      const result = { storeCodes, storeIds, directDeviceIds };
+      const result = { storeCodes: new Set<string>(), storeIds, directDeviceIds };
       memo.set(groupId, result);
       return result;
     };
 
     return groups.map(group => {
-      const { storeCodes, storeIds, directDeviceIds } = getGroupDataRecursive(group.id);
+      const { storeIds, directDeviceIds } = getGroupDataRecursive(group.id);
 
       // Recursive devices for total count
       const allGroupDevices = (devices || []).filter(d => {
-        const isDirect = directDeviceIds.has(d.device_uuid) || d.grupo_dispositivos === group.id;
+        const isDirect = directDeviceIds.has(d.device_uuid);
         const isFromStoreId = !!(d.store_id && storeIds.has(d.store_id));
-        const normalizedDeviceFilial = normalize(d.num_filial);
-        const isFromStoreCode = normalizedDeviceFilial !== "" && storeCodes.has(normalizedDeviceFilial);
         
-        return isDirect || isFromStoreId || isFromStoreCode;
+        return isDirect || isFromStoreId;
       });
       
       const uniqueRecursiveCount = new Set(allGroupDevices.map(d => d.id)).size;
 
       // Local devices for badges
       const localStoreIds = new Set(group.linked_store_ids || []);
-      const localStoreCodes = new Set(stores.filter(s => localStoreIds.has(s.id)).map(s => normalize(s.code)));
       const localDirectDeviceIds = new Set(group.direct_device_ids || []);
 
       const localDevices = (devices || []).map(d => {
-        const isDirect = localDirectDeviceIds.has(d.device_uuid) || d.grupo_dispositivos === group.id;
+        const isDirect = localDirectDeviceIds.has(d.device_uuid);
         const isFromStoreId = !!(d.store_id && localStoreIds.has(d.store_id));
-        const normalizedDeviceFilial = normalize(d.num_filial);
-        const isFromStoreCode = normalizedDeviceFilial !== "" && localStoreCodes.has(normalizedDeviceFilial);
         
-        if (isDirect || isFromStoreId || isFromStoreCode) {
+        if (isDirect || isFromStoreId) {
           return {
             ...d,
             origin: (isDirect ? 'direto' : 'loja') as 'direto' | 'loja'

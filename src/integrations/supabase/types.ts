@@ -2030,6 +2030,60 @@ export type Database = {
           },
         ]
       }
+      dispositivos_import_full: {
+        Row: {
+          apelido_interno: string | null
+          apps_instalados: string | null
+          atualizado: string | null
+          campanhas: string | null
+          comando: string | null
+          empresa: string | null
+          grupo_dispositivos: string | null
+          id: string | null
+          ip_dispositivo: string | null
+          num_filial: string | null
+          online: string | null
+          pin: string | null
+          serial: string | null
+          tipo_da_licenca: string | null
+          type: string | null
+        }
+        Insert: {
+          apelido_interno?: string | null
+          apps_instalados?: string | null
+          atualizado?: string | null
+          campanhas?: string | null
+          comando?: string | null
+          empresa?: string | null
+          grupo_dispositivos?: string | null
+          id?: string | null
+          ip_dispositivo?: string | null
+          num_filial?: string | null
+          online?: string | null
+          pin?: string | null
+          serial?: string | null
+          tipo_da_licenca?: string | null
+          type?: string | null
+        }
+        Update: {
+          apelido_interno?: string | null
+          apps_instalados?: string | null
+          atualizado?: string | null
+          campanhas?: string | null
+          comando?: string | null
+          empresa?: string | null
+          grupo_dispositivos?: string | null
+          id?: string | null
+          ip_dispositivo?: string | null
+          num_filial?: string | null
+          online?: string | null
+          pin?: string | null
+          serial?: string | null
+          tipo_da_licenca?: string | null
+          type?: string | null
+        }
+        Relationships: []
+      }
       distribution_channels: {
         Row: {
           created_at: string | null
@@ -6455,6 +6509,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      normalize_filial: { Args: { "": string }; Returns: string }
       register_device: {
         Args: {
           p_company_id?: string
