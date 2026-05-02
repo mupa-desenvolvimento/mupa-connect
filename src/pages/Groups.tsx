@@ -489,7 +489,7 @@ export default function GroupsPage() {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="h-[calc(100vh-2rem)] flex flex-col gap-4 overflow-hidden">
+      <div className="h-screen flex flex-col gap-4 overflow-hidden p-6">
         <div className="flex justify-between items-center pr-2 shrink-0">
           <PageHeader
             title="Gestão de Grupos"
@@ -520,7 +520,7 @@ export default function GroupsPage() {
 
         <div className="flex-1 flex gap-6 overflow-hidden">
           <div className="flex-[3] min-w-0 flex flex-col gap-4 overflow-hidden">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
               <TabsList className="bg-white/5 border border-white/10 p-1 w-fit shrink-0">
                 <TabsTrigger value="groups" className="gap-2 data-[state=active]:bg-primary">
                   <Globe className="w-4 h-4" /> Grupos Globais
@@ -530,7 +530,8 @@ export default function GroupsPage() {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="groups" className="flex-1 mt-4 border-t border-white/5 pt-4 overflow-y-auto custom-scrollbar pr-2">
+              <TabsContent value="groups" className="flex-1 mt-4 border-t border-white/5 pt-4 overflow-hidden flex flex-col">
+                <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
                 {loadingGroups ? (
                   <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
                 ) : groups && groups.length > 0 ? (
@@ -553,7 +554,8 @@ export default function GroupsPage() {
                   <p className="text-white/40">Nenhum grupo global configurado</p>
                 </div>
               )}
-            </TabsContent>
+                </div>
+              </TabsContent>
 
             <TabsContent value="stores" className="flex-1 mt-4 flex flex-col overflow-hidden">
               <div className="flex items-center justify-between mb-4 px-1">
@@ -591,7 +593,7 @@ export default function GroupsPage() {
         </div>
 
         {/* Sidebar Panel */}
-        <div className="flex-1 min-w-[320px] max-w-[400px] flex flex-col overflow-hidden h-full">
+        <div className="w-[340px] flex flex-col overflow-hidden">
           <DeviceAvailablePanel 
             selectedIds={selectedDevices}
             onToggleSelection={(ids: string[]) => {
