@@ -90,7 +90,6 @@ export default function GroupsPage() {
   });
 
   const enrichedGroups = useMemo(() => {
-    console.log("DEBUG: GroupsPage - groups:", groups?.length, "devices:", devices?.length, "stores:", stores?.length);
     if (!groups) return [];
     const safeDevices = devices || [];
     const safeStores = stores || [];
