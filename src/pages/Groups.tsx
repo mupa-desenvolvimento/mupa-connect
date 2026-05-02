@@ -712,5 +712,4 @@ export default function GroupsPage() {
       </Dialog>
     </div>
   );
-  );
 }
