@@ -142,6 +142,11 @@ export default function GroupsPage() {
       
       try {
         // Link device directly to group
+        // Note: Using 'dispositivos' table and 'id' as reference for the group_devices link if needed,
+        // but checking schema it seems we use device_uuid. 
+        // IMPORTANT: The error reported was relation "public.devices" does not exist.
+        // This implies some code is trying to hit "devices" instead of "dispositivos".
+        
         await supabase.from('group_devices').delete().eq('device_id', device.device_uuid);
         const { error } = await supabase.from('group_devices').insert({
           group_id: group.id,
