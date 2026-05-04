@@ -28,6 +28,8 @@ import UsersPage from "./pages/Users";
 import QuickAccessPage from "./pages/QuickAccess";
 import NOCDashboard from "./pages/admin/NOCDashboard";
 import MediaTrash from "./pages/MediaTrash";
+import AppsPage from "./pages/admin/Apps";
+import AppDownloadProxy from "./pages/AppDownloadProxy";
 import SharedMonitoringPage from "./pages/monitoring/SharedMonitoring";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -96,6 +98,9 @@ const App = () => {
 
               {/* Acesso Rápido - Sem login obrigatório (protegido por token) */}
               <Route path="/quick-access/:token" element={<QuickAccessPage />} />
+              
+              {/* Download direto do APK */}
+              <Route path="/download/app/:id" element={<AppDownloadProxy />} />
 
               {/* Painel Empresa - Protegido */}
               <Route element={session ? <AppLayout /> : <Login />}>
@@ -111,6 +116,12 @@ const App = () => {
                 <Route path="/admin/player-logs" element={
                   <ProtectedRoute allowedRoles={["admin_global"]}>
                     <PlayerMonitoring />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/admin/apps" element={
+                  <ProtectedRoute allowedRoles={["admin_global"]}>
+                    <AppsPage />
                   </ProtectedRoute>
                 } />
 
