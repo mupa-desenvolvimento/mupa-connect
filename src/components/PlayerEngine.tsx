@@ -199,21 +199,17 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     if (timerRef.current) clearTimeout(timerRef.current);
 
     if (currentItem?.type === "video" && currentVideo) {
-      // For videos, we rely on timeupdate or precise timeout
+      // For videos, we calculate transition point relative to the actual duration
       const duration = currentItem.duration || 10;
-      const transitionPoint = Math.max(0, (duration * 1000) - 300); // 0.3s before end
+      const transitionPoint = Math.max(0, (duration * 1000) - 300); // 300ms before end
       
-      timerRef.current = setTimeout(() => {
-        performTransition();
-      }, transitionPoint);
+      timerRef.current = setTimeout(performTransition, transitionPoint);
     } else if (currentItem) {
-      // For images, use the full duration minus crossfade
-      const duration = currentItem.duration || 10;
-      const transitionPoint = Math.max(0, (duration * 1000) - 300);
+      // For images, use the configured duration minus crossfade
+      const duration = (currentItem.duration || 10) * 1000;
+      const transitionPoint = Math.max(0, duration - 300);
       
-      timerRef.current = setTimeout(() => {
-        performTransition();
-      }, transitionPoint);
+      timerRef.current = setTimeout(performTransition, transitionPoint);
     }
   }, [activeLayer, itemA, itemB, isReady, performTransition]);
 
