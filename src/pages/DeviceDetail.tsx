@@ -72,6 +72,7 @@ export default function DeviceDetailPage() {
       setNumFilial(data.num_filial ?? "");
       setDeviceName(data.apelido_interno ?? "");
       setIsMaintenance(!!data.is_maintenance);
+      setSelectedPlaylistId(data.playlist_id);
     } else {
       setDevice(null);
     }
