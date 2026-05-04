@@ -179,8 +179,12 @@ export default function GroupsPage() {
         
         if (error) throw error;
         toast.success(`${device.apelido_interno} movido para ${store.name}`);
-        refetchDevices();
-        refetchStores();
+        
+        await Promise.all([
+          refetchDevices(),
+          refetchStores(),
+          queryClient.invalidateQueries({ queryKey: ["all-devices-panel", tenantId] })
+        ]);
       } catch (e: any) {
         toast.error("Erro ao mover dispositivo: " + e.message);
       }
