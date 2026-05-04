@@ -138,34 +138,46 @@ export function GroupTreeNode({ node, allGroups, allStores, allDevices, level = 
         </div>
       </div>
       
-      {/* Direct Devices Badges */}
-      {isOpen && node.devices && node.devices.length > 0 && (
+      {/* Direct & Inherited Devices List (Expanded) */}
+      {isOpen && (
         <div 
-          className="flex flex-wrap gap-1.5 pb-2" 
+          className="space-y-1 pb-2" 
           style={{ marginLeft: `${(level * 20) + 48}px` }}
         >
-          {node.devices.map(device => (
-            <Badge 
-              key={device.id} 
-              variant="outline" 
-              className={cn(
-                "text-[9px] py-0 h-4 border-white/5 flex items-center gap-1.5 px-2",
-                device.origin === 'direto' 
-                  ? 'bg-blue-500/10 text-blue-300 border-blue-500/20' 
-                  : device.origin === 'loja'
-                    ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
-                    : 'bg-purple-500/10 text-purple-300 border-purple-500/20'
-              )}
-            >
-              {device.origin === 'direto' ? <Monitor className="w-2 h-2" /> : device.origin === 'loja' ? <LayoutGrid className="w-2 h-2" /> : <ChevronRight className="w-2 h-2" />}
-              <div className={cn(
-                "w-1 h-1 rounded-full",
-                device.last_online && (new Date().getTime() - new Date(device.last_online).getTime() < 300000) ? "bg-green-500" : "bg-red-500"
-              )} />
-              {device.nome}
-              <span className="opacity-40 font-normal">({device.num_filial || 'Livre'})</span>
-            </Badge>
-          ))}
+          {node.devices && node.devices.length > 0 ? (
+            node.devices.map(device => (
+              <div key={device.id} className="flex items-center gap-2 p-1.5 rounded-md hover:bg-white/5 group/device transition-colors border border-transparent hover:border-white/5">
+                <Monitor className={cn(
+                  "w-3.5 h-3.5",
+                  device.origin === 'direto' ? "text-blue-400" : device.origin === 'loja' ? "text-amber-400" : "text-purple-400"
+                )} />
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium truncate text-white/80">{device.nome}</span>
+                    <Badge variant="outline" className={cn(
+                      "text-[8px] h-3.5 px-1 uppercase tracking-tighter",
+                      device.origin === 'direto' ? "bg-blue-500/5 text-blue-400 border-blue-500/10" : 
+                      device.origin === 'loja' ? "bg-amber-500/5 text-amber-400 border-amber-500/10" :
+                      "bg-purple-500/5 text-purple-400 border-purple-500/10"
+                    )}>
+                      {device.origin}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] text-white/20 font-mono">{device.device_uuid.substring(0, 8)}...</span>
+                    <div className={cn(
+                      "w-1 h-1 rounded-full",
+                      device.last_online && (new Date().getTime() - new Date(device.last_online).getTime() < 300000) ? "bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.4)]" : "bg-red-500"
+                    )} />
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : !hasChildren && (
+            <div className="py-2 px-3 border border-dashed border-white/5 rounded-lg bg-white/5">
+              <span className="text-[10px] text-white/20 uppercase font-bold tracking-widest italic">Nenhum dispositivo vinculado</span>
+            </div>
+          )}
         </div>
       )}
 
