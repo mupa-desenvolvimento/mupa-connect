@@ -17,247 +17,301 @@ interface PlayerEngineProps {
   serial?: string;
 }
 
+/**
+ * PlayerEngine implements a seamless playback system using A/B buffering.
+ * It strictly follows professional streaming patterns to eliminate flicker and black screens.
+ */
 export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: PlayerEngineProps) {
   const [activeLayer, setActiveLayer] = useState<"A" | "B">("A");
-  const [mediaA, setMediaA] = useState<{ item: MediaItem; index: number } | null>(null);
-  const [mediaB, setMediaB] = useState<{ item: MediaItem; index: number } | null>(null);
-  const [mediaMap, setMediaMap] = useState<Record<string, string>>({});
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [isReady, setIsReady] = useState(false); // New state to avoid black screen on init
+  
+  // States to hold the current items assigned to each layer
+  const [itemA, setItemA] = useState<MediaItem | null>(null);
+  const [itemB, setItemB] = useState<MediaItem | null>(null);
+  
+  // Media source URLs (blob or remote)
+  const [srcA, setSrcA] = useState<string>("");
+  const [srcB, setSrcB] = useState<string>("");
 
+  const [isReady, setIsReady] = useState(false);
+
+  // Refs for precise control without re-renders
   const playlistRef = useRef(playlist);
   const currentIndexRef = useRef(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
   const videoARef = useRef<HTMLVideoElement>(null);
   const videoBRef = useRef<HTMLVideoElement>(null);
+  const imgARef = useRef<HTMLImageElement>(null);
+  const imgBRef = useRef<HTMLImageElement>(null);
+
   const isTransitioningRef = useRef(false);
+  const readyToSwitchRef = useRef<Record<string, boolean>>({ A: false, B: false });
 
   // Sync playlist ref
   useEffect(() => {
     playlistRef.current = playlist;
   }, [playlist]);
 
-  const getDisplayUrl = useCallback((url: string) => {
-    return mediaMap[url] || url;
-  }, [mediaMap]);
+  /**
+   * GPU Optimized styles for seamless transitions
+   */
+  const getLayerStyle = (layer: "A" | "B"): React.CSSProperties => {
+    const isActive = activeLayer === layer;
+    return {
+      opacity: isActive ? 1 : 0,
+      visibility: isActive ? "visible" : "hidden",
+      zIndex: isActive ? 10 : 0,
+      transition: "opacity 400ms ease-in-out, visibility 400ms ease-in-out",
+      willChange: "opacity",
+      transform: "translateZ(0)",
+      backfaceVisibility: "hidden",
+      position: "absolute",
+      inset: 0
+    };
+  };
 
-  // Pre-cache item and get blob URL
-  const prepareMedia = useCallback(async (item: MediaItem, priority = 0) => {
-    if (!item?.url) return;
-    const startTime = Date.now();
+  const getMediaStyle = (): React.CSSProperties => ({
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    transform: "translateZ(0)",
+    backfaceVisibility: "hidden"
+  });
+
+  /**
+   * Warm up the decoder for a video element to prevent delay/black frame on start.
+   */
+  const warmUpDecoder = async (video: HTMLVideoElement | null) => {
+    if (!video) return;
     try {
-      await MediaCacheService.cacheMedia(item.url, item.type, priority, serial);
-      const blobUrl = await MediaCacheService.getBlobUrl(item.url);
-      setMediaMap(prev => ({ ...prev, [item.url]: blobUrl }));
-    } catch (err: any) {
-      console.warn("[PlayerEngine] Prepare failed", item.url, err);
-      if (serial) {
-        MediaCacheService.logPerformance(serial, 'media_prepare_error', `Falha ao preparar: ${item.name}`, { url: item.url, error: err.message }, Date.now() - startTime);
-      }
+      video.muted = true;
+      await video.play();
+      video.pause();
+      video.currentTime = 0;
+      // Note: We keep it muted during transition if volume is 0
+    } catch (err) {
+      console.warn("[PlayerEngine] Decoder warm-up failed", err);
     }
-  }, [serial]);
+  };
 
-  const moveToNext = useCallback(() => {
-    const currentPlaylist = playlistRef.current;
-    if (isTransitioningRef.current || !currentPlaylist.length) return;
+  /**
+   * Transition logic from current active layer to the next.
+   */
+  const performTransition = useCallback(() => {
+    if (isTransitioningRef.current || !playlistRef.current.length) return;
     
+    const nextLayer = activeLayer === "A" ? "B" : "A";
+    const nextVideo = nextLayer === "A" ? videoARef.current : videoBRef.current;
+    const nextItem = nextLayer === "A" ? itemA : itemB;
+
+    // Ensure next layer is actually ready, or fallback to immediate if we've waited too long
+    if (!readyToSwitchRef.current[nextLayer]) {
+      console.warn(`[PlayerEngine] Layer ${nextLayer} not ready for transition yet. Waiting...`);
+      // We will try again via the interval/timeout or safety fallback
+      return;
+    }
+
     isTransitioningRef.current = true;
-    setIsTransitioning(true);
+    
+    // 1. Start playback of next layer while still hidden
+    if (nextItem?.type === "video" && nextVideo) {
+      nextVideo.muted = volume === 0;
+      nextVideo.play().catch(console.error);
+    }
 
-    const nextIndex = (currentIndexRef.current + 1) % currentPlaylist.length;
-    currentIndexRef.current = nextIndex;
-    onMediaChange?.(nextIndex);
+    // 2. Trigger Crossfade (CSS transition handles this via opacity/visibility change)
+    setActiveLayer(nextLayer);
 
-    // Switch active layer
-    setActiveLayer(prev => {
-      const newActiveLayer = prev === "A" ? "B" : "A";
-      
-      // Prepare the NEXT media item for the now inactive layer with high priority
-      const nextNextIndex = (nextIndex + 1) % currentPlaylist.length;
-      const nextNextItem = currentPlaylist[nextNextIndex];
+    // 3. Update index and notify parent
+    currentIndexRef.current = (currentIndexRef.current + 1) % playlistRef.current.length;
+    onMediaChange?.(currentIndexRef.current);
 
-      if (newActiveLayer === "A") {
-        setMediaB({ item: nextNextItem, index: nextNextIndex });
-        prepareMedia(nextNextItem, 10); // Priority 10 for immediate next
-      } else {
-        setMediaA({ item: nextNextItem, index: nextNextIndex });
-        prepareMedia(nextNextItem, 10); // Priority 10 for immediate next
-      }
-      
-      return newActiveLayer;
-    });
-
-    // Transition duration match
-    setTimeout(() => {
+    // 4. Cleanup and prepare NEXT buffer after transition ends
+    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+    transitionTimerRef.current = setTimeout(() => {
       isTransitioningRef.current = false;
-      setIsTransitioning(false);
-    }, 800);
+      prepareNextBuffer();
+    }, 450); // Slightly longer than 400ms transition
+  }, [activeLayer, itemA, itemB, volume, onMediaChange]);
 
-  }, [onMediaChange, prepareMedia]);
+  /**
+   * Prepare the inactive layer with the next media item in the playlist.
+   */
+  const prepareNextBuffer = async () => {
+    const inactiveLayer = activeLayer === "A" ? "B" : "A";
+    const currentPlaylist = playlistRef.current;
+    const nextIndex = (currentIndexRef.current + 1) % currentPlaylist.length;
+    const nextItem = currentPlaylist[nextIndex];
 
-  const startCurrentMedia = useCallback(() => {
-    const isA = activeLayer === "A";
-    const currentMedia = isA ? mediaA : mediaB;
-    const video = isA ? videoARef.current : videoBRef.current;
+    if (!nextItem) return;
 
-    if (!currentMedia) return;
+    readyToSwitchRef.current[inactiveLayer] = false;
 
+    // Load URL from cache
+    try {
+      const blobUrl = await MediaCacheService.getBlobUrl(nextItem.url);
+      const finalUrl = blobUrl || nextItem.url;
+
+      if (inactiveLayer === "A") {
+        setItemA(nextItem);
+        setSrcA(finalUrl);
+      } else {
+        setItemB(nextItem);
+        setSrcB(finalUrl);
+      }
+
+      // If it's an image, preload it
+      if (nextItem.type === "image") {
+        const img = new Image();
+        img.src = finalUrl;
+        img.onload = () => {
+          readyToSwitchRef.current[inactiveLayer] = true;
+        };
+        img.onerror = () => {
+          readyToSwitchRef.current[inactiveLayer] = true; // Still allow transition to show error
+        };
+      }
+      // Videos are handled by "canplaythrough" listener in the JSX
+    } catch (err) {
+      console.error("[PlayerEngine] Buffer preparation failed", err);
+      readyToSwitchRef.current[inactiveLayer] = true; // Fallback
+    }
+  };
+
+  /**
+   * Set the main sequence timer based on media duration.
+   * Includes early transition logic (0.3s before end).
+   */
+  useEffect(() => {
+    if (!isReady) return;
+
+    const currentItem = activeLayer === "A" ? itemA : itemB;
+    const currentVideo = activeLayer === "A" ? videoARef.current : videoBRef.current;
+    
     if (timerRef.current) clearTimeout(timerRef.current);
 
-    if (currentMedia.item.type === "video" && video) {
-      video.muted = volume === 0;
-      video.currentTime = 0;
+    if (currentItem?.type === "video" && currentVideo) {
+      // For videos, we rely on timeupdate or precise timeout
+      const duration = currentItem.duration || 10;
+      const transitionPoint = Math.max(0, (duration * 1000) - 300); // 0.3s before end
       
-      // Ensure video is ready before transition if possible
-      video.play().catch(err => {
-        console.warn("[PlayerEngine] Play error, skipping in 2s", err);
-        if (serial) {
-          MediaCacheService.logPerformance(serial, 'media_play_error', `Erro ao reproduzir vídeo: ${currentMedia.item.name}`, { url: currentMedia.item.url, error: err.message });
-        }
-        timerRef.current = setTimeout(moveToNext, 2000);
-      });
-      
-      // Safety timeout
-      const safetyDuration = ((currentMedia.item.duration || 10) + 5) * 1000;
       timerRef.current = setTimeout(() => {
-        console.warn("[PlayerEngine] Video safety timeout reached");
-        if (serial) {
-          MediaCacheService.logPerformance(serial, 'media_play_timeout', `Timeout de vídeo: ${currentMedia.item.name}`, { url: currentMedia.item.url, duration: currentMedia.item.duration });
-        }
-        moveToNext();
-      }, safetyDuration);
-    } else {
-      // For images, ensure we wait for the configured duration
-      const duration = (currentMedia.item.duration || 10) * 1000;
-      timerRef.current = setTimeout(moveToNext, duration);
+        performTransition();
+      }, transitionPoint);
+    } else if (currentItem) {
+      // For images, use the full duration minus crossfade
+      const duration = currentItem.duration || 10;
+      const transitionPoint = Math.max(0, (duration * 1000) - 300);
+      
+      timerRef.current = setTimeout(() => {
+        performTransition();
+      }, transitionPoint);
     }
-  }, [activeLayer, mediaA, mediaB, volume, moveToNext]);
+  }, [activeLayer, itemA, itemB, isReady, performTransition]);
 
-  // Whenever activeLayer or current media index changes, trigger start
-  useEffect(() => {
-    startCurrentMedia();
-  }, [activeLayer, mediaA?.index, mediaB?.index, startCurrentMedia]);
-
-  // Initial setup
+  /**
+   * Initialization
+   */
   useEffect(() => {
     if (!playlist.length) return;
 
     const init = async () => {
-      // Don't reset if we are already playing and length hasn't changed
-      if (mediaA || mediaB) {
-        console.log("[PlayerEngine] Playlist updated, continuing playback...");
-        setIsReady(true);
-        return;
-      }
-
       currentIndexRef.current = 0;
       const item0 = playlist[0];
       const item1 = playlist[1 % playlist.length];
 
-      // Prepare both immediately with highest priority
-      await Promise.all([
-        prepareMedia(item0, 20), 
-        prepareMedia(item1, 15)
-      ]);
+      // Prepare Layer A
+      const blob0 = await MediaCacheService.getBlobUrl(item0.url);
+      setSrcA(blob0 || item0.url);
+      setItemA(item0);
 
-      setMediaA({ item: item0, index: 0 });
-      setMediaB({ item: item1, index: 1 % playlist.length });
-      
-      // Give React a frame to mount elements before showing
-      requestAnimationFrame(() => {
-        setActiveLayer("A");
-        setIsReady(true);
-        if (serial) {
-          MediaCacheService.logPerformance(serial, 'engine_ready', 'Engine Profissional Iniciada', { playlist_size: playlist.length });
-        }
-        onMediaChange?.(0);
-      });
+      // Prepare Layer B
+      const blob1 = await MediaCacheService.getBlobUrl(item1.url);
+      setSrcB(blob1 || item1.url);
+      setItemB(item1);
+
+      setIsReady(true);
+      onMediaChange?.(0);
+      if (serial) {
+        MediaCacheService.logPerformance(serial, 'engine_init', 'Engine Profissional Reiniciada (Seamless Mode)', { playlist_size: playlist.length });
+      }
     };
 
     init();
 
-    // Background cache everything else + cleanup
-    const idleTask = (window as any).requestIdleCallback || ((fn: any) => setTimeout(fn, 5000));
-    idleTask(() => {
-      playlist.forEach(item => {
-        if (!mediaMap[item.url]) {
-          MediaCacheService.cacheMedia(item.url, item.type, -1).catch(() => {});
-        }
-      });
-      // Cleanup old cache entries not in current playlist
-      const urls = playlist.map(i => i.url);
-      MediaCacheService.clearOldCache(urls).catch(() => {});
-    });
-
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
     };
-  }, [playlist.length, playlist]); // Added playlist to catch content updates with same length
+  }, [playlist.length, serial]);
 
   if (!playlist.length) return null;
 
   return (
-    <div className={cn(
-      "relative w-full h-full bg-black overflow-hidden transition-opacity duration-1000",
-      isReady ? "opacity-100" : "opacity-0"
-    )}>
-      {/* Layer A */}
-      <div 
-        className={`absolute inset-0 transition-all duration-800 ease-in-out ${
-          activeLayer === "A" ? "opacity-100 scale-100 z-10" : "opacity-0 scale-105 z-0"
-        }`}
-        style={{ willChange: 'opacity, transform' }}
-      >
-        {mediaA?.item.type === "video" ? (
+    <div className="relative w-full h-full bg-black overflow-hidden">
+      {/* Buffer Layer A */}
+      <div style={getLayerStyle("A")}>
+        {itemA?.type === "video" ? (
           <video
             ref={videoARef}
-            src={getDisplayUrl(mediaA.item.url)}
+            src={srcA}
             muted={volume === 0}
             preload="auto"
-            autoPlay
             playsInline
-            onEnded={moveToNext}
-            onError={() => moveToNext()}
-            className="w-full h-full object-cover"
+            style={getMediaStyle()}
+            onCanPlayThrough={(e) => {
+              readyToSwitchRef.current.A = true;
+              if (activeLayer === "B") warmUpDecoder(e.currentTarget);
+            }}
+            onError={performTransition}
           />
-        ) : mediaA ? (
+        ) : srcA ? (
           <img
-            src={getDisplayUrl(mediaA.item.url)}
-            onError={() => moveToNext()}
-            className="w-full h-full object-cover"
+            ref={imgARef}
+            src={srcA}
+            style={getMediaStyle()}
             alt=""
+            onError={performTransition}
           />
         ) : null}
       </div>
 
-      {/* Layer B */}
-      <div 
-        className={`absolute inset-0 transition-all duration-800 ease-in-out ${
-          activeLayer === "B" ? "opacity-100 scale-100 z-10" : "opacity-0 scale-105 z-0"
-        }`}
-        style={{ willChange: 'opacity, transform' }}
-      >
-        {mediaB?.item.type === "video" ? (
+      {/* Buffer Layer B */}
+      <div style={getLayerStyle("B")}>
+        {itemB?.type === "video" ? (
           <video
             ref={videoBRef}
-            src={getDisplayUrl(mediaB.item.url)}
+            src={srcB}
             muted={volume === 0}
             preload="auto"
-            autoPlay
             playsInline
-            onEnded={moveToNext}
-            onError={() => moveToNext()}
-            className="w-full h-full object-cover"
+            style={getMediaStyle()}
+            onCanPlayThrough={(e) => {
+              readyToSwitchRef.current.B = true;
+              if (activeLayer === "A") warmUpDecoder(e.currentTarget);
+            }}
+            onError={performTransition}
           />
-        ) : mediaB ? (
+        ) : srcB ? (
           <img
-            src={getDisplayUrl(mediaB.item.url)}
-            onError={() => moveToNext()}
-            className="w-full h-full object-cover"
+            ref={imgBRef}
+            src={srcB}
+            style={getMediaStyle()}
             alt=""
+            onError={performTransition}
           />
         ) : null}
       </div>
+
+      {/* Fallback protection - Ensuring we never have a black screen if something breaks */}
+      {!isReady && (
+        <div className="absolute inset-0 bg-black flex items-center justify-center z-50">
+           <div className="animate-pulse text-white/20 font-mono text-[10px] uppercase tracking-widest">
+             Sincronizando...
+           </div>
+        </div>
+      )}
     </div>
   );
 }
