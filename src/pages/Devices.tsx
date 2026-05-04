@@ -216,8 +216,16 @@ export default function DevicesPage() {
               <SelectItem value="offline">Offline</SelectItem>
             </SelectContent>
           </Select>
-          {(search || storeFilter !== "all" || groupFilter !== "all" || statusFilter !== "all") && (
-            <Button variant="ghost" size="sm" className="h-10 text-muted-foreground hover:text-primary" onClick={() => {setSearch(""); setStoreFilter("all"); setGroupFilter("all"); setStatusFilter("all");}}><FilterX className="h-4 w-4 mr-2" /> Limpar</Button>
+          <Select value={playlistFilter} onValueChange={setPlaylistFilter}>
+            <SelectTrigger className="w-full md:w-[150px] h-10 bg-background/50 border-border/40"><SelectValue placeholder="Playlist" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Filtro Playlist</SelectItem>
+              <SelectItem value="has">Com Playlist</SelectItem>
+              <SelectItem value="none">Sem Playlist</SelectItem>
+            </SelectContent>
+          </Select>
+          {(search || storeFilter !== "all" || groupFilter !== "all" || statusFilter !== "all" || playlistFilter !== "all") && (
+            <Button variant="ghost" size="sm" className="h-10 text-muted-foreground hover:text-primary" onClick={() => {setSearch(""); setStoreFilter("all"); setGroupFilter("all"); setStatusFilter("all"); setPlaylistFilter("all");}}><FilterX className="h-4 w-4 mr-2" /> Limpar</Button>
           )}
         </div>
       </div>
