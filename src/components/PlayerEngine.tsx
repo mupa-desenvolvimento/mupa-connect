@@ -143,8 +143,11 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
       const item0 = playlist[0];
       const item1 = playlist[1 % playlist.length];
 
-      // Prepare both immediately
-      await Promise.all([prepareMedia(item0), prepareMedia(item1)]);
+      // Prepare both immediately with highest priority
+      await Promise.all([
+        prepareMedia(item0, 20), 
+        prepareMedia(item1, 15)
+      ]);
 
       setMediaA({ item: item0, index: 0 });
       setMediaB({ item: item1, index: 1 % playlist.length });
