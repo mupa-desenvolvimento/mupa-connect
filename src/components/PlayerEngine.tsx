@@ -41,10 +41,10 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
   }, [mediaMap]);
 
   // Pre-cache item and get blob URL
-  const prepareMedia = useCallback(async (item: MediaItem) => {
+  const prepareMedia = useCallback(async (item: MediaItem, priority = 0) => {
     if (!item?.url) return;
     try {
-      await MediaCacheService.cacheMedia(item.url);
+      await MediaCacheService.cacheMedia(item.url, item.type, priority);
       const blobUrl = await MediaCacheService.getBlobUrl(item.url);
       setMediaMap(prev => ({ ...prev, [item.url]: blobUrl }));
     } catch (err) {
