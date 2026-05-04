@@ -210,6 +210,7 @@ export default function PlaylistEditor() {
     if (playlistData) {
       console.log("Loading playlist data:", playlistData);
       setPlaylistName(playlistData.name);
+      setIsDefault(playlistData.is_company_default || false);
       
       if (playlistData.playlist_items && playlistData.playlist_items.length > 0) {
         const mappedItems = playlistData.playlist_items.map((it: any) => ({
