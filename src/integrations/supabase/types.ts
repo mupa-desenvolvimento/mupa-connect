@@ -1762,6 +1762,44 @@ export type Database = {
           },
         ]
       }
+      device_quick_actions: {
+        Row: {
+          command_payload: Json
+          command_type: string
+          created_at: string
+          device_id: number
+          id: string
+          label: string
+          updated_at: string
+        }
+        Insert: {
+          command_payload?: Json
+          command_type: string
+          created_at?: string
+          device_id: number
+          id?: string
+          label: string
+          updated_at?: string
+        }
+        Update: {
+          command_payload?: Json
+          command_type?: string
+          created_at?: string
+          device_id?: number
+          id?: string
+          label?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_quick_actions_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "dispositivos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       device_status_logs: {
         Row: {
           created_at: string

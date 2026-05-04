@@ -31,6 +31,9 @@ import {
   Layers,
   Wrench,
   Save,
+  PlusCircle,
+  Play,
+  Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -155,6 +158,143 @@ export function DeviceFirebaseCommandDrawer({
   const [numFilial, setNumFilial] = useState("");
   const [isMaintenance, setIsMaintenance] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [quickActions, setQuickActions] = useState<any[]>([]);
+  const [loadingActions, setLoadingActions] = useState(false);
+  const [showAddAction, setShowAddAction] = useState(false);
+  const [newActionLabel, setNewActionLabel] = useState("");
+  const [newActionPayload, setNewActionPayload] = useState("");
+  const [editingActionId, setEditingActionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (device?.id && open) {
+      fetchQuickActions();
+    }
+  }, [device?.id, open]);
+
+  const fetchQuickActions = async () => {
+    if (!device?.id) return;
+    setLoadingActions(true);
+    const { data, error } = await supabase
+      .from("device_quick_actions")
+      .select("*")
+      .eq("device_id", Number(device.id))
+      .order("created_at", { ascending: true });
+
+    if (!error) {
+      setQuickActions(data || []);
+    }
+    setLoadingActions(false);
+  };
+
+  const saveQuickAction = async (commandType: CommandKey) => {
+    if (!device?.id || !newActionLabel) {
+      toast.error("Informe o nome do botão.");
+      return;
+    }
+
+    const config = COMMANDS.find(c => c.key === commandType);
+    let payloadValue = "";
+    
+    if (config?.field) {
+      payloadValue = (inputs[commandType] ?? "").trim();
+      if (!payloadValue) {
+        toast.error(`Informe o ${config.field} antes de salvar.`);
+        return;
+      }
+    }
+
+    const payload = { value: payloadValue };
+
+    if (editingActionId) {
+      const { error } = await supabase
+        .from("device_quick_actions")
+        .update({
+          label: newActionLabel,
+          command_payload: payload
+        })
+        .eq("id", editingActionId);
+
+      if (error) {
+        toast.error("Erro ao atualizar botão.");
+      } else {
+        toast.success("Botão atualizado!");
+        setEditingActionId(null);
+        setNewActionLabel("");
+        fetchQuickActions();
+      }
+    } else {
+      const { error } = await supabase
+        .from("device_quick_actions")
+        .insert({
+          device_id: Number(device.id),
+          label: newActionLabel,
+          command_type: commandType,
+          command_payload: payload
+        });
+
+      if (error) {
+        toast.error("Erro ao salvar botão.");
+      } else {
+        toast.success("Botão salvo com sucesso!");
+        setNewActionLabel("");
+        fetchQuickActions();
+      }
+    }
+  };
+
+  const deleteQuickAction = async (id: string) => {
+    const { error } = await supabase
+      .from("device_quick_actions")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      toast.error("Erro ao remover botão.");
+    } else {
+      toast.success("Botão removido.");
+      fetchQuickActions();
+    }
+  };
+
+  const executeQuickAction = async (action: any) => {
+    if (!device?.serial) return;
+
+    const cfg = COMMANDS.find(c => c.key === action.command_type);
+    if (!cfg) return;
+
+    const value = action.command_payload?.value || "";
+    const codbarValue = cfg.fixedCodbar ?? (cfg.field === "codbar" ? value : "");
+    
+    const payload: Record<string, string> = {
+      comando: cfg.comando,
+      id_grupo: device.grupo_dispositivos ?? "",
+      codbar: codbarValue,
+      package: cfg.field === "package" ? value : "",
+      ip: cfg.field === "ip" ? value : "",
+      time: `${Date.now()}`,
+    };
+
+    setSending(cfg.key);
+    try {
+      const res = await fetch(
+        `${FIREBASE_BASE}/${encodeURIComponent(device.serial)}.json`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      
+      toast.success(`Ação "${action.label}" executada`, {
+        description: `Comando enviado para ${device.serial}`,
+      });
+    } catch (e) {
+      toast.error("Falha ao executar ação rápida");
+    } finally {
+      setSending(null);
+    }
+  };
 
   useEffect(() => {
     if (device) {
@@ -379,6 +519,88 @@ export function DeviceFirebaseCommandDrawer({
 
             <Separator />
 
+            {/* AÇÕES RÁPIDAS */}
+            <section className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                  Ações Rápidas Salvas
+                </h3>
+              </div>
+              
+              {loadingActions ? (
+                <div className="flex justify-center p-4">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+              ) : quickActions.length > 0 ? (
+                <div className="grid grid-cols-1 gap-2">
+                  {quickActions.map((action) => {
+                    const cfg = COMMANDS.find(c => c.key === action.command_type);
+                    const Icon = cfg?.icon || Rocket;
+                    return (
+                      <div 
+                        key={action.id}
+                        className="flex items-center gap-2 p-2 rounded-lg border bg-card hover:border-primary/40 transition-colors group"
+                      >
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="flex-1 justify-start gap-2.5 h-10 px-2"
+                          onClick={() => executeQuickAction(action)}
+                          disabled={!!sending}
+                        >
+                          <div className="p-1.5 rounded bg-muted">
+                            <Icon className={cn("h-3.5 w-3.5", cfg?.accent || "text-primary")} />
+                          </div>
+                          <div className="text-left min-w-0">
+                            <p className="text-sm font-medium leading-tight truncate">
+                              {action.label}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground truncate">
+                              {cfg?.label}: {action.command_payload?.value}
+                            </p>
+                          </div>
+                          {sending === action.command_type && (
+                            <Loader2 className="h-3 w-3 animate-spin ml-auto" />
+                          )}
+                        </Button>
+                        <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-primary"
+                            onClick={() => {
+                              setEditingActionId(action.id);
+                              setNewActionLabel(action.label);
+                              // Popula o input do comando para permitir edição
+                              if (action.command_type) {
+                                setInputs(prev => ({...prev, [action.command_type]: action.command_payload?.value || ""}));
+                              }
+                            }}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() => deleteQuickAction(action.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground italic p-2 bg-muted/20 rounded border border-dashed text-center">
+                  Nenhuma ação rápida salva para este dispositivo.
+                </p>
+              )}
+            </section>
+
+            <Separator />
+
             {/* COMANDOS */}
             <section className="space-y-3">
               <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
@@ -409,15 +631,64 @@ export function DeviceFirebaseCommandDrawer({
                       </div>
 
                       {cfg.field && (
-                        <div>
+                        <div className="space-y-2">
                           <Label className="sr-only">{cfg.label}</Label>
-                          <Input
-                            placeholder={cfg.placeholder}
-                            value={value}
-                            onChange={(e) => setInput(cfg.key, e.target.value)}
-                            className="h-9 text-sm"
-                            disabled={isSending}
-                          />
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder={cfg.placeholder}
+                              value={value}
+                              onChange={(e) => setInput(cfg.key, e.target.value)}
+                              className="h-9 text-sm"
+                              disabled={isSending}
+                            />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              placeholder="Nome do botão (ex: Abrir Mupa)"
+                              value={editingActionId && COMMANDS.find(c => c.key === cfg.key) && quickActions.find(a => a.id === editingActionId)?.command_type === cfg.key ? newActionLabel : (inputs[`label_${cfg.key}`] || "")}
+                              onChange={(e) => {
+                                if (editingActionId) {
+                                  setNewActionLabel(e.target.value);
+                                } else {
+                                  setInputs(prev => ({...prev, [`label_${cfg.key}`]: e.target.value}));
+                                }
+                              }}
+                              className="h-8 text-[11px] bg-muted/30"
+                            />
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 px-2 text-[10px] shrink-0"
+                              onClick={() => {
+                                const label = inputs[`label_${cfg.key}`];
+                                if (!label && !editingActionId) {
+                                  toast.error("Informe um nome para o botão.");
+                                  return;
+                                }
+                                if (!editingActionId) {
+                                  setNewActionLabel(label);
+                                }
+                                saveQuickAction(cfg.key);
+                                if (!editingActionId) setInputs(prev => ({...prev, [`label_${cfg.key}`]: ""}));
+                              }}
+                            >
+                              <Save className="h-3 w-3 mr-1" />
+                              {editingActionId ? "Atualizar" : "Salvar Atalho"}
+                            </Button>
+                            {editingActionId && (
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                className="h-8 px-2 text-[10px]"
+                                onClick={() => {
+                                  setEditingActionId(null);
+                                  setNewActionLabel("");
+                                }}
+                              >
+                                Cancelar
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       )}
 
