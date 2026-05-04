@@ -77,7 +77,7 @@ export function GroupTreeNode({ node, allGroups, allStores, allDevices, level = 
         style={{ marginLeft: `${level * 20}px` }}
       >
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
-          {hasChildren ? (
+          {canExpand ? (
             <Button 
               variant="ghost" 
               size="icon" 
