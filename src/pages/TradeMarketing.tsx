@@ -44,6 +44,7 @@ export default function TradeMarketingDashboard() {
         .from("media_events")
         .select(`
           id, 
+          media_id,
           duration, 
           created_at,
           metadata
