@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { MediaCacheService } from "./PlayerServices";
+import { cn } from "@/lib/utils";
 
 interface MediaItem {
   id: string;
