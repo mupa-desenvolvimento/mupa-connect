@@ -2,6 +2,9 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { MediaCacheService } from "./PlayerServices";
 import { cn } from "@/lib/utils";
 
+const MIN_DURATION = 3; // Segundos mínimos para qualquer mídia
+const TRANSITION_MS = 400; // Tempo do crossfade CSS
+
 interface MediaItem {
   id: string;
   url: string;
