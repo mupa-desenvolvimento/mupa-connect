@@ -100,20 +100,23 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
    * Transition logic from current active layer to the next.
    */
   const performTransition = useCallback(() => {
-    if (isTransitioningRef.current || !playlistRef.current.length) return;
-    
     const nextLayer = activeLayer === "A" ? "B" : "A";
-    const nextVideo = nextLayer === "A" ? videoARef.current : videoBRef.current;
-    const nextItem = nextLayer === "A" ? itemA : itemB;
+    
+    if (isTransitioningRef.current || !playlistRef.current.length) return;
 
-    // Ensure next layer is actually ready, or fallback to immediate if we've waited too long
+    // Safety Fallback: If next layer is not ready, we delay the transition
+    // and try again in 100ms. This prevents black screens.
     if (!readyToSwitchRef.current[nextLayer]) {
-      console.warn(`[PlayerEngine] Layer ${nextLayer} not ready for transition yet. Waiting...`);
-      // We will try again via the interval/timeout or safety fallback
+      console.warn(`[PlayerEngine] Next layer (${nextLayer}) not ready. Retrying in 100ms...`);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(performTransition, 100);
       return;
     }
 
     isTransitioningRef.current = true;
+    
+    const nextVideo = nextLayer === "A" ? videoARef.current : videoBRef.current;
+    const nextItem = nextLayer === "A" ? itemA : itemB;
     
     // 1. Start playback of next layer while still hidden
     if (nextItem?.type === "video" && nextVideo) {
