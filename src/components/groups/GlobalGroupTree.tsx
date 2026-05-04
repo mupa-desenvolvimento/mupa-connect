@@ -175,7 +175,7 @@ export function GroupTreeNode({ node, allGroups, allStores, allDevices, level = 
                 </div>
               </div>
             ))
-          ) : !hasChildren && (
+          ) : !hasSubItems && (
             <div className="py-2 px-3 border border-dashed border-white/5 rounded-lg bg-white/5">
               <span className="text-[10px] text-white/20 uppercase font-bold tracking-widest italic">Nenhum dispositivo vinculado</span>
             </div>
