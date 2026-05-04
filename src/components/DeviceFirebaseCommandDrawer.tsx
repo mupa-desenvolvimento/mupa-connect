@@ -633,15 +633,64 @@ export function DeviceFirebaseCommandDrawer({
                       </div>
 
                       {cfg.field && (
-                        <div>
+                        <div className="space-y-2">
                           <Label className="sr-only">{cfg.label}</Label>
-                          <Input
-                            placeholder={cfg.placeholder}
-                            value={value}
-                            onChange={(e) => setInput(cfg.key, e.target.value)}
-                            className="h-9 text-sm"
-                            disabled={isSending}
-                          />
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder={cfg.placeholder}
+                              value={value}
+                              onChange={(e) => setInput(cfg.key, e.target.value)}
+                              className="h-9 text-sm"
+                              disabled={isSending}
+                            />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              placeholder="Nome do botão (ex: Abrir Mupa)"
+                              value={editingActionId && COMMANDS.find(c => c.key === cfg.key) ? newActionLabel : (inputs[`label_${cfg.key}`] || "")}
+                              onChange={(e) => {
+                                if (editingActionId) {
+                                  setNewActionLabel(e.target.value);
+                                } else {
+                                  setInputs(prev => ({...prev, [`label_${cfg.key}`]: e.target.value}));
+                                }
+                              }}
+                              className="h-8 text-[11px] bg-muted/30"
+                            />
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 px-2 text-[10px] shrink-0"
+                              onClick={() => {
+                                const label = inputs[`label_${cfg.key}`];
+                                if (!label && !editingActionId) {
+                                  toast.error("Informe um nome para o botão.");
+                                  return;
+                                }
+                                if (!editingActionId) {
+                                  setNewActionLabel(label);
+                                }
+                                saveQuickAction(cfg.key);
+                                if (!editingActionId) setInputs(prev => ({...prev, [`label_${cfg.key}`]: ""}));
+                              }}
+                            >
+                              <Save className="h-3 w-3 mr-1" />
+                              {editingActionId ? "Atualizar" : "Salvar Atalho"}
+                            </Button>
+                            {editingActionId && (
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                className="h-8 px-2 text-[10px]"
+                                onClick={() => {
+                                  setEditingActionId(null);
+                                  setNewActionLabel("");
+                                }}
+                              >
+                                Cancelar
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       )}
 
