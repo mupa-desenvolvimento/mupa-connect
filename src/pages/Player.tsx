@@ -110,21 +110,38 @@ export default function PlayerPage() {
     setCurrentIndex(idx);
     setLastIndexChange(Date.now());
     
-    // Proof of Play Log (Background, non-blocking)
-    if (activePlaylist[idx] && deviceInfo?.serial) {
+    const media = activePlaylist[idx];
+    if (media && deviceInfo?.id) {
+      // 1. Proof of Play Log (Legacy compat)
       supabase.functions.invoke('device-api/proof', {
         body: { 
           serial: deviceInfo.serial,
           playlist_id: manifest?.playlist_id,
-          media_id: activePlaylist[idx].id,
+          media_id: media.id,
           payload: {
-            media_name: activePlaylist[idx].name,
+            media_name: media.name,
             playlist_name: manifest?.name
           }
         }
       }).catch(() => {});
+
+      // 2. Trade Marketing Event (New Module)
+      supabase.from('media_events').insert({
+        device_id: deviceInfo.id,
+        media_id: media.id?.toString(),
+        playlist_id: manifest?.playlist_id,
+        event_type: 'view',
+        duration: media.duration || 10,
+        metadata: {
+          media_name: media.name,
+          media_type: media.type,
+          serial: deviceInfo.serial
+        }
+      }).then(({ error }) => {
+        if (error) console.error("[Player] Failed to log media event:", error);
+      });
     }
-  }, [activePlaylist, deviceInfo?.serial, manifest]);
+  }, [activePlaylist, deviceInfo, manifest]);
 
   // 4. Background Sync (Polling) - Silent & Efficient
   useEffect(() => {

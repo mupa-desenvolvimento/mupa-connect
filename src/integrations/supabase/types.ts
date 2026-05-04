@@ -3043,6 +3043,54 @@ export type Database = {
           },
         ]
       }
+      media_events: {
+        Row: {
+          created_at: string
+          device_id: number | null
+          duration: number | null
+          event_type: string
+          id: string
+          media_id: string | null
+          metadata: Json | null
+          playlist_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          device_id?: number | null
+          duration?: number | null
+          event_type?: string
+          id?: string
+          media_id?: string | null
+          metadata?: Json | null
+          playlist_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          device_id?: number | null
+          duration?: number | null
+          event_type?: string
+          id?: string
+          media_id?: string | null
+          metadata?: Json | null
+          playlist_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_events_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "dispositivos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_events_playlist_id_fkey"
+            columns: ["playlist_id"]
+            isOneToOne: false
+            referencedRelation: "playlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       media_items: {
         Row: {
           auto_delete: boolean | null
