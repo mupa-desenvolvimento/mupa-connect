@@ -102,6 +102,8 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
     if (currentMedia.item.type === "video" && video) {
       video.muted = volume === 0;
       video.currentTime = 0;
+      
+      // Ensure video is ready before transition if possible
       video.play().catch(err => {
         console.warn("[PlayerEngine] Play error, skipping in 2s", err);
         timerRef.current = setTimeout(moveToNext, 2000);
