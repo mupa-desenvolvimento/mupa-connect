@@ -24,6 +24,7 @@ export default function PlayerPage() {
 
     async function initializePlayer() {
       // Step A: Load Local Cache Immediately
+      MediaCacheService.logPerformance(deviceCode, 'init_start', 'Iniciando carregamento do player');
       const cachedManifest = ManifestManager.getManifest(deviceCode);
       if (cachedManifest) {
         console.log("[Player] Resuming from offline manifest");
