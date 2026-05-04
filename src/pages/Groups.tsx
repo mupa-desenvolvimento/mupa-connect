@@ -233,7 +233,8 @@ export default function GroupsPage() {
     });
 
     // Function to get ALL devices for a group including its sub-hierarchies
-    const getGroupDevicesRecursive = (groupId: string, visited = new Set<string>()): any[] => {
+    // Origin priority: direct (this group) > store (this group) > inherited (from subgroups)
+    const getGroupDevicesRecursive = (groupId: string, visited = new Set<string>(), isRecursive = false): any[] => {
       if (visited.has(groupId)) return [];
       visited.add(groupId);
 
@@ -242,11 +243,12 @@ export default function GroupsPage() {
 
       let groupDevices: any[] = [];
 
-      // 1. Direct devices
+      // 1. Direct devices (linked via group_devices)
       const directIds = new Set(group.direct_device_ids || []);
       safeDevices.forEach(d => {
         if (directIds.has(d.device_uuid)) {
-          groupDevices.push({ ...d, origin: 'direto' as const });
+          // If we found it via recursion, it's 'herdado', if at root of call it's 'direto'
+          groupDevices.push({ ...d, origin: isRecursive ? 'herdado' : 'direto' as const });
         }
       });
 
@@ -255,14 +257,15 @@ export default function GroupsPage() {
       linkedStoreIds.forEach(storeId => {
         const storeDevs = devicesByStore.get(storeId) || [];
         storeDevs.forEach(d => {
-          groupDevices.push({ ...d, origin: 'loja' as const });
+          // If we found it via recursion, it's 'herdado', if at root it's 'loja'
+          groupDevices.push({ ...d, origin: isRecursive ? 'herdado' : 'loja' as const });
         });
       });
 
       // 3. Devices from sub-groups (recursive)
       const subGroups = groups.filter(g => g.parent_id === groupId);
       subGroups.forEach(sub => {
-        groupDevices = [...groupDevices, ...getGroupDevicesRecursive(sub.id, visited)];
+        groupDevices = [...groupDevices, ...getGroupDevicesRecursive(sub.id, visited, true)];
       });
 
       return groupDevices;
@@ -271,11 +274,17 @@ export default function GroupsPage() {
     const result = groups.map(group => {
       const allHierarchyDevices = getGroupDevicesRecursive(group.id);
       
-      // Deduplicate devices (prioritize direct > store > inherited)
+      // Deduplicate devices
+      // Priority: 'direto' > 'loja' > 'herdado'
       const uniqueDevicesMap = new Map();
+      const originPriority = { 'direto': 3, 'loja': 2, 'herdado': 1 };
+
       allHierarchyDevices.forEach(d => {
         const existing = uniqueDevicesMap.get(d.id);
-        if (!existing || (d.origin === 'direto' && existing.origin !== 'direto')) {
+        const currentPriority = originPriority[d.origin as keyof typeof originPriority] || 0;
+        const existingPriority = existing ? (originPriority[existing.origin as keyof typeof originPriority] || 0) : -1;
+
+        if (!existing || currentPriority > existingPriority) {
           uniqueDevicesMap.set(d.id, d);
         }
       });

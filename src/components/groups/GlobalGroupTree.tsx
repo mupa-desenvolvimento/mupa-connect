@@ -17,7 +17,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
 
 interface EnrichedDevice extends Device {
-  origin?: 'direto' | 'loja';
+  origin?: 'direto' | 'loja' | 'herdado';
 }
 
 interface EnrichedGroup extends Group {
@@ -152,10 +152,12 @@ export function GroupTreeNode({ node, allGroups, allStores, allDevices, level = 
                 "text-[9px] py-0 h-4 border-white/5 flex items-center gap-1.5 px-2",
                 device.origin === 'direto' 
                   ? 'bg-blue-500/10 text-blue-300 border-blue-500/20' 
-                  : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                  : device.origin === 'loja'
+                    ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                    : 'bg-purple-500/10 text-purple-300 border-purple-500/20'
               )}
             >
-              {device.origin === 'direto' ? <Monitor className="w-2 h-2" /> : <LayoutGrid className="w-2 h-2" />}
+              {device.origin === 'direto' ? <Monitor className="w-2 h-2" /> : device.origin === 'loja' ? <LayoutGrid className="w-2 h-2" /> : <ChevronRight className="w-2 h-2" />}
               <div className={cn(
                 "w-1 h-1 rounded-full",
                 device.last_online && (new Date().getTime() - new Date(device.last_online).getTime() < 300000) ? "bg-green-500" : "bg-red-500"
