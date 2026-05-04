@@ -41,6 +41,8 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
   const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
   const watchdogTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastTransitionTimeRef = useRef<number>(Date.now());
+  const heartbeatRef = useRef<number>(0);
+  const lastCheckTimeRef = useRef<number>(Date.now());
   
   const videoARef = useRef<HTMLVideoElement>(null);
   const videoBRef = useRef<HTMLVideoElement>(null);
@@ -249,6 +251,65 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
   }, [activeLayer, itemA, itemB, isReady, performTransition, startWatchdog]);
 
   /**
+   * Periodic Heartbeat (RequestAnimationFrame)
+   * This mechanism does NOT rely on setTimeout/setInterval and detects logical freezes.
+   */
+  useEffect(() => {
+    if (!isReady) return;
+
+    const checkFreeze = () => {
+      const now = Date.now();
+      const currentItem = activeLayer === "A" ? itemA : itemB;
+      const currentVideo = activeLayer === "A" ? videoARef.current : videoBRef.current;
+      
+      if (currentItem && !isTransitioningRef.current) {
+        const elapsedSinceTransition = now - lastTransitionTimeRef.current;
+        const expectedDuration = (currentItem.duration || 10) * 1000;
+        
+        // Safety Threshold: 7 seconds past the expected time
+        const FREEZE_THRESHOLD = 7000;
+
+        // Condition 1: Time-based freeze (for images or general backup)
+        if (elapsedSinceTransition > expectedDuration + FREEZE_THRESHOLD) {
+          console.error(`[PlayerEngine] Heartbeat detected freeze (index: ${currentIndexRef.current}). Forcing next.`);
+          if (serial) {
+            MediaCacheService.logPerformance(serial, 'engine_freeze_recovery', 'Heartbeat forçou transição por travamento de tempo', { index: currentIndexRef.current });
+          }
+          performTransition();
+        }
+
+        // Condition 2: Video playback freeze
+        if (currentItem.type === "video" && currentVideo && !currentVideo.paused) {
+          // Check if video time is moving (only if enough time has passed since last check)
+          if (now - lastCheckTimeRef.current > 2000) {
+            const lastTime = (currentVideo as any)._lastRecordedTime || 0;
+            if (currentVideo.currentTime > 0 && Math.abs(currentVideo.currentTime - lastTime) < 0.01) {
+              console.warn("[PlayerEngine] Video appears stuck at", currentVideo.currentTime);
+              // We give it a little more grace for videos before forcing transition
+              if (elapsedSinceTransition > (currentVideo.duration * 1000) + 3000) {
+                console.error("[PlayerEngine] Video stuck for too long, forcing next.");
+                if (serial) {
+                  MediaCacheService.logPerformance(serial, 'engine_video_freeze_recovery', 'Heartbeat forçou transição por vídeo travado', { index: currentIndexRef.current, timestamp: currentVideo.currentTime });
+                }
+                performTransition();
+              }
+            }
+            (currentVideo as any)._lastRecordedTime = currentVideo.currentTime;
+            lastCheckTimeRef.current = now;
+          }
+        }
+      }
+      
+      heartbeatRef.current = requestAnimationFrame(checkFreeze);
+    };
+
+    heartbeatRef.current = requestAnimationFrame(checkFreeze);
+    return () => {
+      if (heartbeatRef.current) cancelAnimationFrame(heartbeatRef.current);
+    };
+  }, [activeLayer, itemA, itemB, isReady, performTransition]);
+
+  /**
    * Initialization
    */
   useEffect(() => {
@@ -282,6 +343,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
       if (timerRef.current) clearTimeout(timerRef.current);
       if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
       if (watchdogTimerRef.current) clearTimeout(watchdogTimerRef.current);
+      if (heartbeatRef.current) cancelAnimationFrame(heartbeatRef.current);
     };
   }, [playlist.length, serial]);
 
