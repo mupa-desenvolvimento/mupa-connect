@@ -75,6 +75,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     width: "100%",
     height: "100%",
     objectFit: "cover",
+    willChange: "opacity",
     transform: "translateZ(0)",
     backfaceVisibility: "hidden"
   });
@@ -99,25 +100,31 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
    * Transition logic from current active layer to the next.
    */
   const performTransition = useCallback(() => {
-    if (isTransitioningRef.current || !playlistRef.current.length) return;
-    
     const nextLayer = activeLayer === "A" ? "B" : "A";
-    const nextVideo = nextLayer === "A" ? videoARef.current : videoBRef.current;
-    const nextItem = nextLayer === "A" ? itemA : itemB;
+    
+    if (isTransitioningRef.current || !playlistRef.current.length) return;
 
-    // Ensure next layer is actually ready, or fallback to immediate if we've waited too long
+    // Safety Fallback: If next layer is not ready, we delay the transition
+    // and try again in 100ms. This prevents black screens.
     if (!readyToSwitchRef.current[nextLayer]) {
-      console.warn(`[PlayerEngine] Layer ${nextLayer} not ready for transition yet. Waiting...`);
-      // We will try again via the interval/timeout or safety fallback
+      console.warn(`[PlayerEngine] Next layer (${nextLayer}) not ready. Retrying in 100ms...`);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(performTransition, 100);
       return;
     }
 
     isTransitioningRef.current = true;
     
+    const nextVideo = nextLayer === "A" ? videoARef.current : videoBRef.current;
+    const nextItem = nextLayer === "A" ? itemA : itemB;
+    
     // 1. Start playback of next layer while still hidden
     if (nextItem?.type === "video" && nextVideo) {
       nextVideo.muted = volume === 0;
-      nextVideo.play().catch(console.error);
+      nextVideo.play().catch(err => {
+        console.warn("[PlayerEngine] Play failed during transition", err);
+        // If play fails, we might still transition to show the error state or frame
+      });
     }
 
     // 2. Trigger Crossfade (CSS transition handles this via opacity/visibility change)
@@ -192,21 +199,17 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     if (timerRef.current) clearTimeout(timerRef.current);
 
     if (currentItem?.type === "video" && currentVideo) {
-      // For videos, we rely on timeupdate or precise timeout
+      // For videos, we calculate transition point relative to the actual duration
       const duration = currentItem.duration || 10;
-      const transitionPoint = Math.max(0, (duration * 1000) - 300); // 0.3s before end
+      const transitionPoint = Math.max(0, (duration * 1000) - 300); // 300ms before end
       
-      timerRef.current = setTimeout(() => {
-        performTransition();
-      }, transitionPoint);
+      timerRef.current = setTimeout(performTransition, transitionPoint);
     } else if (currentItem) {
-      // For images, use the full duration minus crossfade
-      const duration = currentItem.duration || 10;
-      const transitionPoint = Math.max(0, (duration * 1000) - 300);
+      // For images, use the configured duration minus crossfade
+      const duration = (currentItem.duration || 10) * 1000;
+      const transitionPoint = Math.max(0, duration - 300);
       
-      timerRef.current = setTimeout(() => {
-        performTransition();
-      }, transitionPoint);
+      timerRef.current = setTimeout(performTransition, transitionPoint);
     }
   }, [activeLayer, itemA, itemB, isReady, performTransition]);
 
