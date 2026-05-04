@@ -144,7 +144,6 @@ export default function GroupsPage() {
       
       try {
         // Link device directly to group
-        // Use device_uuid to identify the device in group_devices table
         await supabase.from('group_devices').delete().eq('device_id', device.device_uuid);
         const { error } = await supabase.from('group_devices').insert({
           group_id: group.id,
@@ -154,8 +153,13 @@ export default function GroupsPage() {
         
         if (error) throw error;
         toast.success(`${device.apelido_interno} vinculado ao grupo ${group.name}`);
-        refetchGroups();
-        refetchDevices();
+        
+        // Comprehensive refetch to sync all views
+        await Promise.all([
+          refetchGroups(),
+          refetchDevices(),
+          queryClient.invalidateQueries({ queryKey: ["all-devices-panel", tenantId] })
+        ]);
       } catch (e: any) {
         toast.error("Erro ao vincular dispositivo: " + e.message);
       }
