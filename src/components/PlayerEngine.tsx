@@ -111,6 +111,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
       // Ensure video is ready before transition if possible
       video.play().catch(err => {
         console.warn("[PlayerEngine] Play error, skipping in 2s", err);
+        if (serial) {
+          MediaCacheService.logPerformance(serial, 'media_play_error', `Erro ao reproduzir vídeo: ${currentMedia.item.name}`, { url: currentMedia.item.url, error: err.message });
+        }
         timerRef.current = setTimeout(moveToNext, 2000);
       });
       
