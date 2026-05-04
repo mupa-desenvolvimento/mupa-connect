@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { MediaCacheService } from "./PlayerServices";
+import { cn } from "@/lib/utils";
 
 interface MediaItem {
   id: string;
@@ -21,6 +22,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
   const [mediaB, setMediaB] = useState<{ item: MediaItem; index: number } | null>(null);
   const [mediaMap, setMediaMap] = useState<Record<string, string>>({});
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isReady, setIsReady] = useState(false); // New state to avoid black screen on init
 
   const playlistRef = useRef(playlist);
   const currentIndexRef = useRef(0);
@@ -100,6 +102,8 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
     if (currentMedia.item.type === "video" && video) {
       video.muted = volume === 0;
       video.currentTime = 0;
+      
+      // Ensure video is ready before transition if possible
       video.play().catch(err => {
         console.warn("[PlayerEngine] Play error, skipping in 2s", err);
         timerRef.current = setTimeout(moveToNext, 2000);
@@ -112,6 +116,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
         moveToNext();
       }, safetyDuration);
     } else {
+      // For images, ensure we wait for the configured duration
       const duration = (currentMedia.item.duration || 10) * 1000;
       timerRef.current = setTimeout(moveToNext, duration);
     }
@@ -128,9 +133,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
 
     const init = async () => {
       // Don't reset if we are already playing and length hasn't changed
-      // This allows seamless manifest updates
       if (mediaA || mediaB) {
         console.log("[PlayerEngine] Playlist updated, continuing playback...");
+        setIsReady(true);
         return;
       }
 
@@ -143,8 +148,13 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
 
       setMediaA({ item: item0, index: 0 });
       setMediaB({ item: item1, index: 1 % playlist.length });
-      setActiveLayer("A");
-      onMediaChange?.(0);
+      
+      // Give React a frame to mount elements before showing
+      requestAnimationFrame(() => {
+        setActiveLayer("A");
+        setIsReady(true);
+        onMediaChange?.(0);
+      });
     };
 
     init();
@@ -170,7 +180,10 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
   if (!playlist.length) return null;
 
   return (
-    <div className="relative w-full h-full bg-black overflow-hidden">
+    <div className={cn(
+      "relative w-full h-full bg-black overflow-hidden transition-opacity duration-1000",
+      isReady ? "opacity-100" : "opacity-0"
+    )}>
       {/* Layer A */}
       <div 
         className={`absolute inset-0 transition-all duration-800 ease-in-out ${
