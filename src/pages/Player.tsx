@@ -28,6 +28,7 @@ export default function PlayerPage() {
       const cachedManifest = ManifestManager.getManifest(deviceCode);
       if (cachedManifest) {
         console.log("[Player] Resuming from offline manifest");
+        MediaCacheService.logPerformance(deviceCode, 'manifest_cache_hit', 'Retomando do manifesto local');
         setManifest(cachedManifest);
         // We set isLoading to false only if we have content to play
         setIsLoading(false);
