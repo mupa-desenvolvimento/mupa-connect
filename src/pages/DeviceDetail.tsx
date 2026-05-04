@@ -48,7 +48,7 @@ export default function DeviceDetailPage() {
     setLoading(true);
     const { data, error } = await supabase
       .from("dispositivos")
-      .select("id, apelido_interno, serial, online, num_filial, is_maintenance, playlist_id")
+      .select("id, apelido_interno, serial, online, num_filial, is_maintenance, playlist_id, last_heartbeat_at")
       .eq("id", Number(id))
       .maybeSingle();
 
@@ -63,7 +63,7 @@ export default function DeviceDetailPage() {
         id: String(data.id),
         name: data.apelido_interno ?? "Dispositivo",
         device_code: data.serial ?? null,
-        status: data.online ? "online" : "offline",
+        status: (data.last_heartbeat_at && (new Date().getTime() - new Date(data.last_heartbeat_at).getTime() < 300000)) ? "online" : "offline",
         resolution: null,
         num_filial: data.num_filial ?? "",
         is_maintenance: !!data.is_maintenance,
