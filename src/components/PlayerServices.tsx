@@ -5,7 +5,10 @@ import { useState, useEffect } from "react";
  * This ensures that media can be played offline and transitions are fluid.
  */
 export const MediaCacheService = {
-  CACHE_NAME: "mupa-media-cache-v2",
+  CACHE_NAME: "mupa-media-cache-v3",
+  downloadQueue: [] as { url: string; type?: 'image' | 'video'; priority?: number; resolve: (val: string) => void; reject: (err: any) => void }[],
+  activeDownloads: 0,
+  MAX_CONCURRENT: 2,
 
   async init() {
     if (!("caches" in window)) {
@@ -22,25 +25,55 @@ export const MediaCacheService = {
     return !!response;
   },
 
-  async cacheMedia(url: string): Promise<string> {
+  /**
+   * Caches media using a queue system to prevent network congestion
+   */
+  async cacheMedia(url: string, type?: 'image' | 'video', priority = 0): Promise<string> {
     if (!url) return "";
+    
+    // Check if already in cache
     const cache = await caches.open(this.CACHE_NAME);
     const cachedResponse = await cache.match(url);
-    
-    if (cachedResponse) {
-      return url; 
+    if (cachedResponse) return url;
+
+    return new Promise((resolve, reject) => {
+      // Add to queue with priority (higher number = higher priority)
+      this.downloadQueue.push({ url, type, priority, resolve, reject });
+      this.downloadQueue.sort((a, b) => (b.priority || 0) - (a.priority || 0));
+      this.processQueue();
+    });
+  },
+
+  async processQueue() {
+    if (this.activeDownloads >= this.MAX_CONCURRENT || this.downloadQueue.length === 0) {
+      return;
     }
 
+    const item = this.downloadQueue.shift();
+    if (!item) return;
+
+    this.activeDownloads++;
+    
     try {
-      console.log(`[MediaCache] Downloading: ${url}`);
-      const response = await fetch(url, { mode: 'cors' });
-      if (!response.ok) throw new Error(`Failed to fetch ${url}`);
-      await cache.put(url, response);
-      console.log(`[MediaCache] Cached: ${url}`);
-      return url;
+      console.log(`[MediaCache] Starting download: ${item.url} (Type: ${item.type || 'unknown'})`);
+      
+      const cache = await caches.open(this.CACHE_NAME);
+      const response = await fetch(item.url, { mode: 'cors' });
+      
+      if (!response.ok) throw new Error(`Failed to fetch ${item.url}`);
+      
+      // For videos, we might want to verify headers or partially cache if needed, 
+      // but standard Cache API put is usually sufficient for service workers/blob usage.
+      await cache.put(item.url, response);
+      
+      console.log(`[MediaCache] Successfully cached: ${item.url}`);
+      item.resolve(item.url);
     } catch (err) {
-      console.error(`[MediaCache] Error caching ${url}:`, err);
-      return url; 
+      console.error(`[MediaCache] Error caching ${item.url}:`, err);
+      item.reject(err);
+    } finally {
+      this.activeDownloads--;
+      this.processQueue();
     }
   },
 

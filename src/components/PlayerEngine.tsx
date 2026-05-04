@@ -41,10 +41,10 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
   }, [mediaMap]);
 
   // Pre-cache item and get blob URL
-  const prepareMedia = useCallback(async (item: MediaItem) => {
+  const prepareMedia = useCallback(async (item: MediaItem, priority = 0) => {
     if (!item?.url) return;
     try {
-      await MediaCacheService.cacheMedia(item.url);
+      await MediaCacheService.cacheMedia(item.url, item.type, priority);
       const blobUrl = await MediaCacheService.getBlobUrl(item.url);
       setMediaMap(prev => ({ ...prev, [item.url]: blobUrl }));
     } catch (err) {
@@ -67,16 +67,16 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
     setActiveLayer(prev => {
       const newActiveLayer = prev === "A" ? "B" : "A";
       
-      // Prepare the NEXT media item for the now inactive layer
+      // Prepare the NEXT media item for the now inactive layer with high priority
       const nextNextIndex = (nextIndex + 1) % currentPlaylist.length;
       const nextNextItem = currentPlaylist[nextNextIndex];
 
       if (newActiveLayer === "A") {
         setMediaB({ item: nextNextItem, index: nextNextIndex });
-        prepareMedia(nextNextItem);
+        prepareMedia(nextNextItem, 10); // Priority 10 for immediate next
       } else {
         setMediaA({ item: nextNextItem, index: nextNextIndex });
-        prepareMedia(nextNextItem);
+        prepareMedia(nextNextItem, 10); // Priority 10 for immediate next
       }
       
       return newActiveLayer;
@@ -143,8 +143,11 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
       const item0 = playlist[0];
       const item1 = playlist[1 % playlist.length];
 
-      // Prepare both immediately
-      await Promise.all([prepareMedia(item0), prepareMedia(item1)]);
+      // Prepare both immediately with highest priority
+      await Promise.all([
+        prepareMedia(item0, 20), 
+        prepareMedia(item1, 15)
+      ]);
 
       setMediaA({ item: item0, index: 0 });
       setMediaB({ item: item1, index: 1 % playlist.length });
@@ -164,7 +167,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
     idleTask(() => {
       playlist.forEach(item => {
         if (!mediaMap[item.url]) {
-          MediaCacheService.cacheMedia(item.url).catch(() => {});
+          MediaCacheService.cacheMedia(item.url, item.type, -1).catch(() => {});
         }
       });
       // Cleanup old cache entries not in current playlist
