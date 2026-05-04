@@ -186,8 +186,10 @@ export function DeviceFirebaseCommandDrawer({
     setLoadingActions(false);
   };
 
-  const saveQuickAction = async (commandType: CommandKey) => {
-    if (!device?.id || !newActionLabel) {
+  const saveQuickAction = async (commandType: CommandKey, customLabel?: string) => {
+    const labelToSave = customLabel || newActionLabel;
+    
+    if (!device?.id || !labelToSave) {
       toast.error("Informe o nome do botão.");
       return;
     }
@@ -209,7 +211,7 @@ export function DeviceFirebaseCommandDrawer({
       const { error } = await supabase
         .from("device_quick_actions")
         .update({
-          label: newActionLabel,
+          label: labelToSave,
           command_payload: payload
         })
         .eq("id", editingActionId);
@@ -227,13 +229,14 @@ export function DeviceFirebaseCommandDrawer({
         .from("device_quick_actions")
         .insert({
           device_id: Number(device.id),
-          label: newActionLabel,
+          label: labelToSave,
           command_type: commandType,
           command_payload: payload
         });
 
       if (error) {
         toast.error("Erro ao salvar botão.");
+        console.error("Error saving quick action:", error);
       } else {
         toast.success("Botão salvo com sucesso!");
         setNewActionLabel("");
