@@ -14,6 +14,7 @@ import { GroupTreeNode } from "@/components/groups/GlobalGroupTree";
 import { StoreCard } from "@/components/groups/StoreCard";
 import { Input } from "@/components/ui/input";
 import { DndContext, DragOverlay, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { useQueryClient } from "@tanstack/react-query";
 import { 
   Dialog, 
   DialogContent, 
