@@ -21,6 +21,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
   const [mediaB, setMediaB] = useState<{ item: MediaItem; index: number } | null>(null);
   const [mediaMap, setMediaMap] = useState<Record<string, string>>({});
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isReady, setIsReady] = useState(false); // New state to avoid black screen on init
 
   const playlistRef = useRef(playlist);
   const currentIndexRef = useRef(0);
