@@ -14,6 +14,7 @@ interface PlayerEngineProps {
   playlist: MediaItem[];
   onMediaChange?: (index: number) => void;
   volume?: number;
+  serial?: string;
 }
 
 export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngineProps) {
