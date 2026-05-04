@@ -17,7 +17,7 @@ interface PlayerEngineProps {
   serial?: string;
 }
 
-export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngineProps) {
+export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: PlayerEngineProps) {
   const [activeLayer, setActiveLayer] = useState<"A" | "B">("A");
   const [mediaA, setMediaA] = useState<{ item: MediaItem; index: number } | null>(null);
   const [mediaB, setMediaB] = useState<{ item: MediaItem; index: number } | null>(null);
