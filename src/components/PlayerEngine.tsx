@@ -329,6 +329,10 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     if (!playlist.length) return;
 
     const init = async () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+      if (watchdogTimerRef.current) clearTimeout(watchdogTimerRef.current);
+      
       currentIndexRef.current = 0;
       const item0 = playlist[0];
       const item1 = playlist[1 % playlist.length];
@@ -343,8 +347,10 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
       setSrcB(blob1 || item1.url);
       setItemB(item1);
 
+      lastTransitionTimeRef.current = Date.now();
       setIsReady(true);
       onMediaChange?.(0);
+      
       if (serial) {
         MediaCacheService.logPerformance(serial, 'engine_init', 'Engine Profissional Reiniciada (Seamless Mode)', { playlist_size: playlist.length });
       }
