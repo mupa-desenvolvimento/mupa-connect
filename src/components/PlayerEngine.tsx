@@ -75,6 +75,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     width: "100%",
     height: "100%",
     objectFit: "cover",
+    willChange: "opacity",
     transform: "translateZ(0)",
     backfaceVisibility: "hidden"
   });
