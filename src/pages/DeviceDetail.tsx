@@ -27,6 +27,7 @@ interface DeviceRow {
   resolution: string | null;
   num_filial: string | null;
   is_maintenance: boolean;
+  playlist_id: string | null;
 }
 
 export default function DeviceDetailPage() {
