@@ -142,6 +142,7 @@ export default function GroupsPage() {
       
       try {
         // Link device directly to group
+        // Use device_uuid to identify the device in group_devices table
         await supabase.from('group_devices').delete().eq('device_id', device.device_uuid);
         const { error } = await supabase.from('group_devices').insert({
           group_id: group.id,
