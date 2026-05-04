@@ -121,6 +121,11 @@ export default function DevicesPage() {
       const matchesGroup = groupFilter === "all" || d.grupo_dispositivos === groupFilter;
       const matchesStatus = statusFilter === "all" || status === statusFilter;
       return matchesSearch && matchesStore && matchesGroup && matchesStatus;
+    }).sort((a, b) => {
+      // Prioridade: Sem playlist no topo
+      if (!a.playlist_id && b.playlist_id) return -1;
+      if (a.playlist_id && !b.playlist_id) return 1;
+      return (a.apelido_interno || "").localeCompare(b.apelido_interno || "");
     });
   }, [devices, search, storeFilter, groupFilter, statusFilter]);
 
