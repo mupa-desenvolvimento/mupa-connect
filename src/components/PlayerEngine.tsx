@@ -39,6 +39,8 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
   const currentIndexRef = useRef(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const watchdogTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTransitionTimeRef = useRef<number>(Date.now());
   
   const videoARef = useRef<HTMLVideoElement>(null);
   const videoBRef = useRef<HTMLVideoElement>(null);
@@ -47,6 +49,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
 
   const isTransitioningRef = useRef(false);
   const readyToSwitchRef = useRef<Record<string, boolean>>({ A: false, B: false });
+  const loadingStatusRef = useRef<Record<string, boolean>>({ A: false, B: false });
 
   // Sync playlist ref
   useEffect(() => {
@@ -104,6 +107,8 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     
     if (isTransitioningRef.current || !playlistRef.current.length) return;
 
+    console.log(`[PlayerEngine] Attempting transition to ${nextLayer}. Index: ${currentIndexRef.current}`);
+
     // Safety Fallback: If next layer is not ready, we delay the transition
     // and try again in 100ms. This prevents black screens.
     if (!readyToSwitchRef.current[nextLayer]) {
@@ -114,6 +119,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     }
 
     isTransitioningRef.current = true;
+    lastTransitionTimeRef.current = Date.now();
     
     const nextVideo = nextLayer === "A" ? videoARef.current : videoBRef.current;
     const nextItem = nextLayer === "A" ? itemA : itemB;
@@ -123,11 +129,10 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
       nextVideo.muted = volume === 0;
       nextVideo.play().catch(err => {
         console.warn("[PlayerEngine] Play failed during transition", err);
-        // If play fails, we might still transition to show the error state or frame
       });
     }
 
-    // 2. Trigger Crossfade (CSS transition handles this via opacity/visibility change)
+    // 2. Trigger Crossfade
     setActiveLayer(nextLayer);
 
     // 3. Update index and notify parent
@@ -139,8 +144,26 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     transitionTimerRef.current = setTimeout(() => {
       isTransitioningRef.current = false;
       prepareNextBuffer();
-    }, 450); // Slightly longer than 400ms transition
+    }, 450);
   }, [activeLayer, itemA, itemB, volume, onMediaChange]);
+
+  /**
+   * Watchdog mechanism to prevent getting stuck
+   */
+  const startWatchdog = useCallback((durationMs: number) => {
+    if (watchdogTimerRef.current) clearTimeout(watchdogTimerRef.current);
+    
+    // Safety buffer: watchdog triggers 5 seconds after expected transition
+    const timeout = durationMs + 5000;
+    
+    watchdogTimerRef.current = setTimeout(() => {
+      console.warn("[PlayerEngine] Watchdog triggered! Forcing transition to prevent freeze.");
+      // Ensure the next layer is marked as ready if it was stuck
+      const inactiveLayer = activeLayer === "A" ? "B" : "A";
+      readyToSwitchRef.current[inactiveLayer] = true;
+      performTransition();
+    }, timeout);
+  }, [activeLayer, performTransition]);
 
   /**
    * Prepare the inactive layer with the next media item in the playlist.
@@ -154,8 +177,16 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     if (!nextItem) return;
 
     readyToSwitchRef.current[inactiveLayer] = false;
+    loadingStatusRef.current[inactiveLayer] = false;
 
-    // Load URL from cache
+    // Fallback for loading timeout
+    const loadTimeout = setTimeout(() => {
+      if (!loadingStatusRef.current[inactiveLayer]) {
+        console.warn(`[PlayerEngine] Buffer loading timed out for layer ${inactiveLayer}. Forcing ready state.`);
+        readyToSwitchRef.current[inactiveLayer] = true;
+      }
+    }, 8000); // 8 seconds load timeout
+
     try {
       const blobUrl = await MediaCacheService.getBlobUrl(nextItem.url);
       const finalUrl = blobUrl || nextItem.url;
@@ -168,28 +199,30 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
         setSrcB(finalUrl);
       }
 
-      // If it's an image, preload it
       if (nextItem.type === "image") {
         const img = new Image();
         img.src = finalUrl;
         img.onload = () => {
+          clearTimeout(loadTimeout);
+          loadingStatusRef.current[inactiveLayer] = true;
           readyToSwitchRef.current[inactiveLayer] = true;
         };
         img.onerror = () => {
-          readyToSwitchRef.current[inactiveLayer] = true; // Still allow transition to show error
+          clearTimeout(loadTimeout);
+          console.warn("[PlayerEngine] Image load failed, skipping to ready.");
+          readyToSwitchRef.current[inactiveLayer] = true;
         };
+      } else {
+        // For videos, canplaythrough will clear the timeout
+        (window as any)[`loadTimeout${inactiveLayer}`] = loadTimeout;
       }
-      // Videos are handled by "canplaythrough" listener in the JSX
     } catch (err) {
+      clearTimeout(loadTimeout);
       console.error("[PlayerEngine] Buffer preparation failed", err);
-      readyToSwitchRef.current[inactiveLayer] = true; // Fallback
+      readyToSwitchRef.current[inactiveLayer] = true;
     }
   };
 
-  /**
-   * Set the main sequence timer based on media duration.
-   * Includes early transition logic (0.3s before end).
-   */
   useEffect(() => {
     if (!isReady) return;
 
@@ -199,19 +232,21 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     if (timerRef.current) clearTimeout(timerRef.current);
 
     if (currentItem?.type === "video" && currentVideo) {
-      // For videos, we calculate transition point relative to the actual duration
-      const duration = currentItem.duration || 10;
-      const transitionPoint = Math.max(0, (duration * 1000) - 300); // 300ms before end
-      
-      timerRef.current = setTimeout(performTransition, transitionPoint);
-    } else if (currentItem) {
-      // For images, use the configured duration minus crossfade
       const duration = (currentItem.duration || 10) * 1000;
       const transitionPoint = Math.max(0, duration - 300);
       
+      console.log(`[PlayerEngine] Scheduling video transition in ${transitionPoint}ms`);
       timerRef.current = setTimeout(performTransition, transitionPoint);
+      startWatchdog(duration);
+    } else if (currentItem) {
+      const duration = (currentItem.duration || 10) * 1000;
+      const transitionPoint = Math.max(0, duration - 300);
+      
+      console.log(`[PlayerEngine] Scheduling image transition in ${transitionPoint}ms`);
+      timerRef.current = setTimeout(performTransition, transitionPoint);
+      startWatchdog(duration);
     }
-  }, [activeLayer, itemA, itemB, isReady, performTransition]);
+  }, [activeLayer, itemA, itemB, isReady, performTransition, startWatchdog]);
 
   /**
    * Initialization
@@ -246,6 +281,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
       if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+      if (watchdogTimerRef.current) clearTimeout(watchdogTimerRef.current);
     };
   }, [playlist.length, serial]);
 
@@ -264,8 +300,12 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
             playsInline
             style={getMediaStyle()}
             onCanPlayThrough={(e) => {
+              const timeout = (window as any).loadTimeoutA;
+              if (timeout) clearTimeout(timeout);
+              loadingStatusRef.current.A = true;
               readyToSwitchRef.current.A = true;
               if (activeLayer === "B") warmUpDecoder(e.currentTarget);
+              e.currentTarget.style.transform = "translateZ(0)";
             }}
             onError={performTransition}
           />
@@ -275,6 +315,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
             src={srcA}
             style={getMediaStyle()}
             alt=""
+            onLoad={(e) => {
+              (e.currentTarget as HTMLImageElement).style.transform = "translateZ(0)";
+            }}
             onError={performTransition}
           />
         ) : null}
@@ -291,8 +334,12 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
             playsInline
             style={getMediaStyle()}
             onCanPlayThrough={(e) => {
+              const timeout = (window as any).loadTimeoutB;
+              if (timeout) clearTimeout(timeout);
+              loadingStatusRef.current.B = true;
               readyToSwitchRef.current.B = true;
               if (activeLayer === "A") warmUpDecoder(e.currentTarget);
+              e.currentTarget.style.transform = "translateZ(0)";
             }}
             onError={performTransition}
           />
@@ -302,6 +349,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
             src={srcB}
             style={getMediaStyle()}
             alt=""
+            onLoad={(e) => {
+              (e.currentTarget as HTMLImageElement).style.transform = "translateZ(0)";
+            }}
             onError={performTransition}
           />
         ) : null}
