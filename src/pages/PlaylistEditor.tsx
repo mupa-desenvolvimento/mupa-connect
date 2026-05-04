@@ -301,7 +301,7 @@ export default function PlaylistEditor() {
       } else {
         const { error: updateError } = await supabase
           .from("playlists")
-          .update({ name: updatedName, updated_at: new Date().toISOString() })
+          .update({ name: updatedName, is_company_default: isDefault, updated_at: new Date().toISOString() })
           .eq("id", id as any);
         if (updateError) throw updateError;
       }
