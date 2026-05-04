@@ -158,6 +158,143 @@ export function DeviceFirebaseCommandDrawer({
   const [numFilial, setNumFilial] = useState("");
   const [isMaintenance, setIsMaintenance] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [quickActions, setQuickActions] = useState<any[]>([]);
+  const [loadingActions, setLoadingActions] = useState(false);
+  const [showAddAction, setShowAddAction] = useState(false);
+  const [newActionLabel, setNewActionLabel] = useState("");
+  const [newActionPayload, setNewActionPayload] = useState("");
+  const [editingActionId, setEditingActionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (device?.id && open) {
+      fetchQuickActions();
+    }
+  }, [device?.id, open]);
+
+  const fetchQuickActions = async () => {
+    if (!device?.id) return;
+    setLoadingActions(true);
+    const { data, error } = await supabase
+      .from("device_quick_actions")
+      .select("*")
+      .eq("device_id", Number(device.id))
+      .order("created_at", { ascending: true });
+
+    if (!error) {
+      setQuickActions(data || []);
+    }
+    setLoadingActions(false);
+  };
+
+  const saveQuickAction = async (commandType: CommandKey) => {
+    if (!device?.id || !newActionLabel) {
+      toast.error("Informe o nome do botão.");
+      return;
+    }
+
+    const config = COMMANDS.find(c => c.key === commandType);
+    let payloadValue = "";
+    
+    if (config?.field) {
+      payloadValue = (inputs[commandType] ?? "").trim();
+      if (!payloadValue) {
+        toast.error(`Informe o ${config.field} antes de salvar.`);
+        return;
+      }
+    }
+
+    const payload = { value: payloadValue };
+
+    if (editingActionId) {
+      const { error } = await supabase
+        .from("device_quick_actions")
+        .update({
+          label: newActionLabel,
+          command_payload: payload
+        })
+        .eq("id", editingActionId);
+
+      if (error) {
+        toast.error("Erro ao atualizar botão.");
+      } else {
+        toast.success("Botão atualizado!");
+        setEditingActionId(null);
+        setNewActionLabel("");
+        fetchQuickActions();
+      }
+    } else {
+      const { error } = await supabase
+        .from("device_quick_actions")
+        .insert({
+          device_id: Number(device.id),
+          label: newActionLabel,
+          command_type: commandType,
+          command_payload: payload
+        });
+
+      if (error) {
+        toast.error("Erro ao salvar botão.");
+      } else {
+        toast.success("Botão salvo com sucesso!");
+        setNewActionLabel("");
+        fetchQuickActions();
+      }
+    }
+  };
+
+  const deleteQuickAction = async (id: string) => {
+    const { error } = await supabase
+      .from("device_quick_actions")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      toast.error("Erro ao remover botão.");
+    } else {
+      toast.success("Botão removido.");
+      fetchQuickActions();
+    }
+  };
+
+  const executeQuickAction = async (action: any) => {
+    if (!device?.serial) return;
+
+    const cfg = COMMANDS.find(c => c.key === action.command_type);
+    if (!cfg) return;
+
+    const value = action.command_payload?.value || "";
+    const codbarValue = cfg.fixedCodbar ?? (cfg.field === "codbar" ? value : "");
+    
+    const payload: Record<string, string> = {
+      comando: cfg.comando,
+      id_grupo: device.grupo_dispositivos ?? "",
+      codbar: codbarValue,
+      package: cfg.field === "package" ? value : "",
+      ip: cfg.field === "ip" ? value : "",
+      time: `${Date.now()}`,
+    };
+
+    setSending(cfg.key);
+    try {
+      const res = await fetch(
+        `${FIREBASE_BASE}/${encodeURIComponent(device.serial)}.json`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      
+      toast.success(`Ação "${action.label}" executada`, {
+        description: `Comando enviado para ${device.serial}`,
+      });
+    } catch (e) {
+      toast.error("Falha ao executar ação rápida");
+    } finally {
+      setSending(null);
+    }
+  };
 
   useEffect(() => {
     if (device) {
