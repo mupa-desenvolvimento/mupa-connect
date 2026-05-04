@@ -63,6 +63,7 @@ export default function DeviceDetailPage() {
         resolution: null,
         num_filial: data.num_filial ?? "",
         is_maintenance: !!data.is_maintenance,
+        playlist_id: data.playlist_id,
       });
       setNumFilial(data.num_filial ?? "");
       setDeviceName(data.apelido_interno ?? "");
