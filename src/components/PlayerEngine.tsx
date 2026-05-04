@@ -167,7 +167,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
     idleTask(() => {
       playlist.forEach(item => {
         if (!mediaMap[item.url]) {
-          MediaCacheService.cacheMedia(item.url).catch(() => {});
+          MediaCacheService.cacheMedia(item.url, item.type, -1).catch(() => {});
         }
       });
       // Cleanup old cache entries not in current playlist
