@@ -38,6 +38,10 @@ export default function DeviceDetailPage() {
   const [numFilial, setNumFilial] = useState("");
   const [deviceName, setDeviceName] = useState("");
   const [isMaintenance, setIsMaintenance] = useState(false);
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
+
+  const { data: tenantId, isSuperAdmin } = useTenant();
+  const { data: playlists } = usePlaylists(tenantId || undefined, isSuperAdmin);
 
   const fetchDevice = async () => {
     if (!id) return;
