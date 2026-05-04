@@ -106,7 +106,8 @@ export default function DeviceDetailPage() {
         ...prev, 
         name: deviceName,
         num_filial: numFilial,
-        is_maintenance: isMaintenance
+        is_maintenance: isMaintenance,
+        playlist_id: selectedPlaylistId
       } : null);
     }
     setSaving(false);
