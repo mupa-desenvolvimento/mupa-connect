@@ -220,7 +220,8 @@ export default function DevicesPage() {
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="w-[30%]">Dispositivo</TableHead>
                   <TableHead>Serial</TableHead>
-                  <TableHead>Loja</TableHead>
+                   <TableHead>Loja</TableHead>
+                  <TableHead>Playlist</TableHead>
                   <TableHead>Última Atividade</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
