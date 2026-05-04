@@ -519,6 +519,90 @@ export function DeviceFirebaseCommandDrawer({
 
             <Separator />
 
+            <Separator />
+
+            {/* AÇÕES RÁPIDAS */}
+            <section className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                  Ações Rápidas Salvas
+                </h3>
+              </div>
+              
+              {loadingActions ? (
+                <div className="flex justify-center p-4">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+              ) : quickActions.length > 0 ? (
+                <div className="grid grid-cols-1 gap-2">
+                  {quickActions.map((action) => {
+                    const cfg = COMMANDS.find(c => c.key === action.command_type);
+                    const Icon = cfg?.icon || Rocket;
+                    return (
+                      <div 
+                        key={action.id}
+                        className="flex items-center gap-2 p-2 rounded-lg border bg-card hover:border-primary/40 transition-colors group"
+                      >
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="flex-1 justify-start gap-2.5 h-10 px-2"
+                          onClick={() => executeQuickAction(action)}
+                          disabled={!!sending}
+                        >
+                          <div className="p-1.5 rounded bg-muted">
+                            <Icon className={cn("h-3.5 w-3.5", cfg?.accent || "text-primary")} />
+                          </div>
+                          <div className="text-left min-w-0">
+                            <p className="text-sm font-medium leading-tight truncate">
+                              {action.label}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground truncate">
+                              {cfg?.label}: {action.command_payload?.value}
+                            </p>
+                          </div>
+                          {sending === action.command_type && (
+                            <Loader2 className="h-3 w-3 animate-spin ml-auto" />
+                          )}
+                        </Button>
+                        <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-primary"
+                            onClick={() => {
+                              setEditingActionId(action.id);
+                              setNewActionLabel(action.label);
+                              // Popula o input do comando para permitir edição
+                              if (action.command_type) {
+                                setInputs(prev => ({...prev, [action.command_type]: action.command_payload?.value || ""}));
+                              }
+                            }}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() => deleteQuickAction(action.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground italic p-2 bg-muted/20 rounded border border-dashed text-center">
+                  Nenhuma ação rápida salva para este dispositivo.
+                </p>
+              )}
+            </section>
+
+            <Separator />
+
             {/* COMANDOS */}
             <section className="space-y-3">
               <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
