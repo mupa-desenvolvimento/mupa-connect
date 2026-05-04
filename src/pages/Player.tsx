@@ -217,6 +217,7 @@ export default function PlayerPage() {
       <PlayerEngine 
         playlist={activePlaylist} 
         volume={volume}
+        serial={deviceInfo?.serial || deviceCode}
         onMediaChange={handleMediaChange}
       />
 
