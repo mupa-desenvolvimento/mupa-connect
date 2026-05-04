@@ -187,7 +187,13 @@ export function DeviceFirebaseCommandDrawer({
   };
 
   const saveQuickAction = async (commandType: CommandKey, customLabel?: string) => {
-    const labelToSave = customLabel || newActionLabel;
+    let labelToSave = customLabel;
+    
+    // Se estiver editando e o label customizado não foi passado (ou é o valor do input de novo comando),
+    // usa o newActionLabel que é onde o estado de edição é mantido.
+    if (editingActionId) {
+      labelToSave = newActionLabel;
+    }
     
     if (!device?.id || !labelToSave) {
       toast.error("Informe o nome do botão.");
