@@ -14,9 +14,10 @@ interface PlayerEngineProps {
   playlist: MediaItem[];
   onMediaChange?: (index: number) => void;
   volume?: number;
+  serial?: string;
 }
 
-export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngineProps) {
+export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: PlayerEngineProps) {
   const [activeLayer, setActiveLayer] = useState<"A" | "B">("A");
   const [mediaA, setMediaA] = useState<{ item: MediaItem; index: number } | null>(null);
   const [mediaB, setMediaB] = useState<{ item: MediaItem; index: number } | null>(null);
@@ -43,14 +44,18 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
   // Pre-cache item and get blob URL
   const prepareMedia = useCallback(async (item: MediaItem, priority = 0) => {
     if (!item?.url) return;
+    const startTime = Date.now();
     try {
-      await MediaCacheService.cacheMedia(item.url, item.type, priority);
+      await MediaCacheService.cacheMedia(item.url, item.type, priority, serial);
       const blobUrl = await MediaCacheService.getBlobUrl(item.url);
       setMediaMap(prev => ({ ...prev, [item.url]: blobUrl }));
-    } catch (err) {
+    } catch (err: any) {
       console.warn("[PlayerEngine] Prepare failed", item.url, err);
+      if (serial) {
+        MediaCacheService.logPerformance(serial, 'media_prepare_error', `Falha ao preparar: ${item.name}`, { url: item.url, error: err.message }, Date.now() - startTime);
+      }
     }
-  }, []);
+  }, [serial]);
 
   const moveToNext = useCallback(() => {
     const currentPlaylist = playlistRef.current;
@@ -106,6 +111,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
       // Ensure video is ready before transition if possible
       video.play().catch(err => {
         console.warn("[PlayerEngine] Play error, skipping in 2s", err);
+        if (serial) {
+          MediaCacheService.logPerformance(serial, 'media_play_error', `Erro ao reproduzir vídeo: ${currentMedia.item.name}`, { url: currentMedia.item.url, error: err.message });
+        }
         timerRef.current = setTimeout(moveToNext, 2000);
       });
       
@@ -113,6 +121,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
       const safetyDuration = ((currentMedia.item.duration || 10) + 5) * 1000;
       timerRef.current = setTimeout(() => {
         console.warn("[PlayerEngine] Video safety timeout reached");
+        if (serial) {
+          MediaCacheService.logPerformance(serial, 'media_play_timeout', `Timeout de vídeo: ${currentMedia.item.name}`, { url: currentMedia.item.url, duration: currentMedia.item.duration });
+        }
         moveToNext();
       }, safetyDuration);
     } else {
@@ -156,6 +167,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
       requestAnimationFrame(() => {
         setActiveLayer("A");
         setIsReady(true);
+        if (serial) {
+          MediaCacheService.logPerformance(serial, 'engine_ready', 'Engine Profissional Iniciada', { playlist_size: playlist.length });
+        }
         onMediaChange?.(0);
       });
     };

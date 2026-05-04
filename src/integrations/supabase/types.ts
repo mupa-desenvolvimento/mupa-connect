@@ -3741,6 +3741,36 @@ export type Database = {
           },
         ]
       }
+      player_performance_logs: {
+        Row: {
+          created_at: string
+          duration_ms: number | null
+          event_type: string
+          id: string
+          message: string | null
+          metadata: Json | null
+          serial: string
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number | null
+          event_type: string
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          serial: string
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number | null
+          event_type?: string
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          serial?: string
+        }
+        Relationships: []
+      }
       playlist_channel_items: {
         Row: {
           channel_id: string | null

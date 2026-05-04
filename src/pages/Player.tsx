@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { useDeviceCommandChannel } from "@/hooks/useDeviceCommandChannel";
 import { supabase } from "@/integrations/supabase/client";
 import { PlayerEngine } from "@/components/PlayerEngine";
-import { ManifestManager, ScheduleResolver } from "@/components/PlayerServices";
+import { ManifestManager, ScheduleResolver, MediaCacheService } from "@/components/PlayerServices";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { ManifestService } from "@/services/ManifestService";
 
@@ -24,9 +24,11 @@ export default function PlayerPage() {
 
     async function initializePlayer() {
       // Step A: Load Local Cache Immediately
+      MediaCacheService.logPerformance(deviceCode, 'init_start', 'Iniciando carregamento do player');
       const cachedManifest = ManifestManager.getManifest(deviceCode);
       if (cachedManifest) {
         console.log("[Player] Resuming from offline manifest");
+        MediaCacheService.logPerformance(deviceCode, 'manifest_cache_hit', 'Retomando do manifesto local');
         setManifest(cachedManifest);
         // We set isLoading to false only if we have content to play
         setIsLoading(false);
@@ -35,7 +37,10 @@ export default function PlayerPage() {
       try {
         if (!cachedManifest) {
           console.log("[Player] No cache found, fetching initial manifest...");
+          MediaCacheService.logPerformance(deviceCode, 'manifest_fetch_start', 'Buscando manifesto remoto (sem cache)');
+          const startTime = Date.now();
           const result = await ManifestService.fetchManifest(deviceCode);
+          MediaCacheService.logPerformance(deviceCode, 'manifest_fetch_success', 'Manifesto remoto carregado', {}, Date.now() - startTime);
           setManifest(result.manifest);
           if (result.device) {
             setDeviceUuid(result.device.id?.toString());
@@ -212,6 +217,7 @@ export default function PlayerPage() {
       <PlayerEngine 
         playlist={activePlaylist} 
         volume={volume}
+        serial={deviceInfo?.serial || deviceCode}
         onMediaChange={handleMediaChange}
       />
 
