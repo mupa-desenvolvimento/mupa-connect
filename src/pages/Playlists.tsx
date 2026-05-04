@@ -278,9 +278,16 @@ export default function PlaylistsPage() {
                         <div className="h-10 w-10 rounded-lg bg-primary/5 flex items-center justify-center flex-shrink-0 border border-primary/10">
                           <Layers className="h-5 w-5 text-primary opacity-70" />
                         </div>
-                        <Badge variant={playlist.is_active ? "default" : "secondary"} className="text-[10px]">
-                          {playlist.is_active ? 'ATIVA' : 'RASCUNHO'}
-                        </Badge>
+                        <div className="flex gap-1">
+                          {playlist.is_company_default && (
+                            <Badge className="bg-[#085CF0] text-white text-[10px] border-none">
+                              DEFAULT
+                            </Badge>
+                          )}
+                          <Badge variant={playlist.is_active ? "default" : "secondary"} className="text-[10px]">
+                            {playlist.is_active ? 'ATIVA' : 'RASCUNHO'}
+                          </Badge>
+                        </div>
                       </div>
                       
                       <div className="flex-1 min-w-0">
