@@ -633,10 +633,10 @@ export function DeviceFirebaseCommandDrawer({
                         </div>
                       </div>
 
-                      {cfg.field && (
-                        <div className="space-y-2">
-                          <Label className="sr-only">{cfg.label}</Label>
-                          <div className="flex gap-2">
+                      <div className="space-y-3 pt-1">
+                        {cfg.field && (
+                          <div className="space-y-2">
+                            <Label className="sr-only">{cfg.label}</Label>
                             <Input
                               placeholder={cfg.placeholder}
                               value={value}
@@ -645,55 +645,53 @@ export function DeviceFirebaseCommandDrawer({
                               disabled={isSending}
                             />
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Input
-                              placeholder="Nome do botão (ex: Abrir Mupa)"
-                              value={editingActionId && COMMANDS.find(c => c.key === cfg.key) && quickActions.find(a => a.id === editingActionId)?.command_type === cfg.key ? newActionLabel : (inputs[`label_${cfg.key}`] || "")}
-                              onChange={(e) => {
-                                if (editingActionId) {
-                                  setNewActionLabel(e.target.value);
-                                } else {
-                                  setInputs(prev => ({...prev, [`label_${cfg.key}`]: e.target.value}));
-                                }
-                              }}
-                              className="h-8 text-[11px] bg-muted/30"
-                            />
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-8 px-2 text-[10px] shrink-0"
+                        )}
+                        
+                        <div className="flex items-center gap-2">
+                          <Input
+                            placeholder="Nome do botão (ex: Abrir Mupa)"
+                            value={editingActionId && quickActions.find(a => a.id === editingActionId)?.command_type === cfg.key ? newActionLabel : (inputs[`label_${cfg.key}`] || "")}
+                            onChange={(e) => {
+                              if (editingActionId && quickActions.find(a => a.id === editingActionId)?.command_type === cfg.key) {
+                                setNewActionLabel(e.target.value);
+                              } else {
+                                setInputs(prev => ({...prev, [`label_${cfg.key}`]: e.target.value}));
+                              }
+                            }}
+                            className="h-8 text-[11px] bg-muted/30"
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 px-2 text-[10px] shrink-0"
+                            onClick={() => {
+                              const label = inputs[`label_${cfg.key}`];
+                              if (!label && !editingActionId) {
+                                toast.error("Informe um nome para o botão.");
+                                return;
+                              }
+                              saveQuickAction(cfg.key, label);
+                              if (!editingActionId) setInputs(prev => ({...prev, [`label_${cfg.key}`]: ""}));
+                            }}
+                          >
+                            <Save className="h-3 w-3 mr-1" />
+                            {editingActionId && quickActions.find(a => a.id === editingActionId)?.command_type === cfg.key ? "Atualizar" : "Salvar Atalho"}
+                          </Button>
+                          {editingActionId && quickActions.find(a => a.id === editingActionId)?.command_type === cfg.key && (
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="h-8 px-2 text-[10px]"
                               onClick={() => {
-                                const label = inputs[`label_${cfg.key}`];
-                                if (!label && !editingActionId) {
-                                  toast.error("Informe um nome para o botão.");
-                                  return;
-                                }
-                                if (!editingActionId) {
-                                  setNewActionLabel(label);
-                                }
-                                saveQuickAction(cfg.key);
-                                if (!editingActionId) setInputs(prev => ({...prev, [`label_${cfg.key}`]: ""}));
+                                setEditingActionId(null);
+                                setNewActionLabel("");
                               }}
                             >
-                              <Save className="h-3 w-3 mr-1" />
-                              {editingActionId ? "Atualizar" : "Salvar Atalho"}
+                              Cancelar
                             </Button>
-                            {editingActionId && (
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                className="h-8 px-2 text-[10px]"
-                                onClick={() => {
-                                  setEditingActionId(null);
-                                  setNewActionLabel("");
-                                }}
-                              >
-                                Cancelar
-                              </Button>
-                            )}
-                          </div>
+                          )}
                         </div>
-                      )}
+                      </div>
 
                       <Button
                         size="sm"
