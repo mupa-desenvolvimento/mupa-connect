@@ -61,12 +61,24 @@ interface Device {
   current_media_id: string | null;
 }
 
+interface PerformanceLog {
+  id: string;
+  serial: string;
+  event_type: string;
+  message: string;
+  metadata: any;
+  duration_ms: number | null;
+  created_at: string;
+}
+
 export default function PlayerMonitoring() {
   const [devices, setDevices] = useState<Device[]>([]);
+  const [performanceLogs, setPerformanceLogs] = useState<PerformanceLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSuperAdmin, setIsSuperAdmin] = useState<boolean | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState("devices");
   const navigate = useNavigate();
 
   useEffect(() => {
