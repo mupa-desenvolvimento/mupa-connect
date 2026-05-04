@@ -48,6 +48,7 @@ export function usePlaylists(contextId?: string, isSuperAdmin?: boolean) {
           name, 
           updated_at, 
           is_active, 
+          is_company_default,
           tenant_id,
           company_id,
           companies:companies!playlists_company_id_fkey (
