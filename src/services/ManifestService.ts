@@ -32,20 +32,35 @@ export const ManifestService = {
       .or(`apelido_interno.eq."${deviceCode}",serial.eq."${deviceCode}"`)
       .maybeSingle();
 
-    if (deviceError || !device?.playlist_id) {
+    let targetPlaylistId = device.playlist_id;
+
+    if (!targetPlaylistId) {
+      const { data: defaultPlaylist } = await supabase
+        .from("playlists")
+        .select("id")
+        .eq("company_id", device.company_id)
+        .eq("is_company_default", true)
+        .maybeSingle();
+      
+      if (defaultPlaylist) {
+        targetPlaylistId = defaultPlaylist.id;
+      }
+    }
+
+    if (!targetPlaylistId) {
       throw new Error("Device or playlist not found");
     }
 
     const { data: playlist, error: playlistError } = await supabase
       .from("playlists")
       .select("id, name, updated_at, schedule")
-      .eq("id", device.playlist_id)
+      .eq("id", targetPlaylistId)
       .maybeSingle();
 
     const { data: playlistItems, error: itemsError } = await supabase
       .from("playlist_items")
       .select("id, media_id, position, ordem, duracao, tipo, media_items(id, name, file_url, thumbnail_url, type, duration)")
-      .eq("playlist_id", device.playlist_id);
+      .eq("playlist_id", targetPlaylistId);
 
     if (playlistError || itemsError || !playlist) {
       throw new Error("Manifest data not found");

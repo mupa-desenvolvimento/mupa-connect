@@ -16,7 +16,9 @@ import {
   Play,
   FilterX,
   RotateCcw,
-  Megaphone
+  Megaphone,
+  Layers,
+  AlertTriangle
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -46,6 +48,7 @@ export default function DevicesPage() {
   const [storeFilter, setStoreFilter] = useState("all");
   const [groupFilter, setGroupFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [playlistFilter, setPlaylistFilter] = useState("all");
   const [selectedDevice, setSelectedDevice] = useState<any | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -59,7 +62,13 @@ export default function DevicesPage() {
   const { data: devices, isLoading, refetch } = useQuery({
     queryKey: ["dispositivos-full", tenantId],
     queryFn: async () => {
-      let query = supabase.from("dispositivos").select("*");
+      let query = supabase.from("dispositivos").select(`
+        *,
+        playlists:playlist_id (
+          id,
+          name
+        )
+      `);
       
       // Filtrar por tenantId se disponível
       if (tenantId) {
@@ -112,7 +121,16 @@ export default function DevicesPage() {
       const matchesStore = storeFilter === "all" || d.num_filial === storeFilter;
       const matchesGroup = groupFilter === "all" || d.grupo_dispositivos === groupFilter;
       const matchesStatus = statusFilter === "all" || status === statusFilter;
-      return matchesSearch && matchesStore && matchesGroup && matchesStatus;
+      const matchesPlaylist = 
+        playlistFilter === "all" ? true :
+        playlistFilter === "has" ? !!d.playlist_id :
+        !d.playlist_id;
+      return matchesSearch && matchesStore && matchesGroup && matchesStatus && matchesPlaylist;
+    }).sort((a, b) => {
+      // Prioridade: Sem playlist no topo
+      if (!a.playlist_id && b.playlist_id) return -1;
+      if (a.playlist_id && !b.playlist_id) return 1;
+      return (a.apelido_interno || "").localeCompare(b.apelido_interno || "");
     });
   }, [devices, search, storeFilter, groupFilter, statusFilter]);
 
@@ -198,8 +216,16 @@ export default function DevicesPage() {
               <SelectItem value="offline">Offline</SelectItem>
             </SelectContent>
           </Select>
-          {(search || storeFilter !== "all" || groupFilter !== "all" || statusFilter !== "all") && (
-            <Button variant="ghost" size="sm" className="h-10 text-muted-foreground hover:text-primary" onClick={() => {setSearch(""); setStoreFilter("all"); setGroupFilter("all"); setStatusFilter("all");}}><FilterX className="h-4 w-4 mr-2" /> Limpar</Button>
+          <Select value={playlistFilter} onValueChange={setPlaylistFilter}>
+            <SelectTrigger className="w-full md:w-[150px] h-10 bg-background/50 border-border/40"><SelectValue placeholder="Playlist" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Filtro Playlist</SelectItem>
+              <SelectItem value="has">Com Playlist</SelectItem>
+              <SelectItem value="none">Sem Playlist</SelectItem>
+            </SelectContent>
+          </Select>
+          {(search || storeFilter !== "all" || groupFilter !== "all" || statusFilter !== "all" || playlistFilter !== "all") && (
+            <Button variant="ghost" size="sm" className="h-10 text-muted-foreground hover:text-primary" onClick={() => {setSearch(""); setStoreFilter("all"); setGroupFilter("all"); setStatusFilter("all"); setPlaylistFilter("all");}}><FilterX className="h-4 w-4 mr-2" /> Limpar</Button>
           )}
         </div>
       </div>
@@ -214,7 +240,8 @@ export default function DevicesPage() {
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="w-[30%]">Dispositivo</TableHead>
                   <TableHead>Serial</TableHead>
-                  <TableHead>Loja</TableHead>
+                   <TableHead>Loja</TableHead>
+                  <TableHead>Playlist</TableHead>
                   <TableHead>Última Atividade</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -228,6 +255,19 @@ export default function DevicesPage() {
                       <TableCell><div className="flex items-center gap-3"><Monitor className="h-4 w-4 text-primary opacity-70" />{d.apelido_interno}</div></TableCell>
                       <TableCell className="font-mono text-xs text-muted-foreground">{d.serial}</TableCell>
                       <TableCell><span className="text-xs px-2 py-1 bg-muted rounded-md">Loja {d.num_filial}</span></TableCell>
+                      <TableCell>
+                        {d.playlists ? (
+                          <div className="flex items-center gap-1.5 text-xs font-medium text-foreground/80">
+                            <Layers className="h-3 w-3 text-primary" />
+                            {d.playlists.name}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 text-xs text-destructive font-bold">
+                            <AlertTriangle className="h-3 w-3" />
+                            Sem Playlist
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell className="text-muted-foreground text-xs">{formatDate(d.last_heartbeat_at)}</TableCell>
                       <TableCell><StatusBadge status={status} /></TableCell>
                       <TableCell className="text-right" onClick={e => e.stopPropagation()}>

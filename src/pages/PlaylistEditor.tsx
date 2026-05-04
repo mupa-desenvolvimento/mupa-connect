@@ -181,6 +181,7 @@ export default function PlaylistEditor() {
   const [items, setItems] = useState<EditorPlaylistItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<EditorPlaylistItem | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDefault, setIsDefault] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -209,6 +210,7 @@ export default function PlaylistEditor() {
     if (playlistData) {
       console.log("Loading playlist data:", playlistData);
       setPlaylistName(playlistData.name);
+      setIsDefault(playlistData.is_company_default || false);
       
       if (playlistData.playlist_items && playlistData.playlist_items.length > 0) {
         const mappedItems = playlistData.playlist_items.map((it: any) => ({
@@ -282,7 +284,8 @@ export default function PlaylistEditor() {
             name: updatedName, 
             tenant_id: tenantId as any, 
             company_id: companyId || companyData.id,
-            is_active: true 
+            is_active: true,
+            is_company_default: isDefault
           })
           .select().single();
           
@@ -298,7 +301,7 @@ export default function PlaylistEditor() {
       } else {
         const { error: updateError } = await supabase
           .from("playlists")
-          .update({ name: updatedName, updated_at: new Date().toISOString() })
+          .update({ name: updatedName, is_company_default: isDefault, updated_at: new Date().toISOString() })
           .eq("id", id as any);
         if (updateError) throw updateError;
       }
@@ -505,6 +508,25 @@ export default function PlaylistEditor() {
                 }}
                 className="bg-transparent border-none focus:ring-0 text-lg font-display font-semibold text-white p-0 h-7"
               />
+              <div className="flex items-center gap-2 mt-0.5">
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input 
+                    type="checkbox" 
+                    checked={isDefault}
+                    onChange={(e) => {
+                      setIsDefault(e.target.checked);
+                      setHasUnsavedChanges(true);
+                    }}
+                    className="w-3.5 h-3.5 rounded border-white/20 bg-black/40 text-[#085CF0] focus:ring-[#085CF0] focus:ring-offset-0 transition-all cursor-pointer"
+                  />
+                  <span className={cn(
+                    "text-[10px] font-bold transition-colors uppercase tracking-wider",
+                    isDefault ? "text-[#085CF0]" : "text-white/40 group-hover:text-white/60"
+                  )}>
+                    {isDefault ? "Playlist Default (Fallback)" : "Definir como Default"}
+                  </span>
+                </label>
+              </div>
             </div>
           </div>
           <div className="flex flex-col">
