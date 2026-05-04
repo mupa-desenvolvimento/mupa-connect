@@ -8,7 +8,8 @@ export interface Device {
   num_filial: string | null;
   store_id: string | null;
   grupo_dispositivos: string | null; // Legacy device group
-  last_online?: string;
+  last_heartbeat_at?: string;
+  last_proof_at?: string;
   status?: string;
   group_id?: string; // New hierarchy
   group_name?: string;
@@ -32,7 +33,8 @@ export function useDevices(tenantId: string | null) {
           store_id,
           tenant_id,
           grupo_dispositivos,
-          last_online,
+          last_heartbeat_at,
+          last_proof_at,
           group_devices (
             group_id,
             groups (name)

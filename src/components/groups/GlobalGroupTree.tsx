@@ -169,7 +169,7 @@ export function GroupTreeNode({ node, allGroups, allStores, allDevices, level = 
                     <span className="text-[9px] text-white/20 font-mono">{device.device_uuid.substring(0, 8)}...</span>
                     <div className={cn(
                       "w-1 h-1 rounded-full",
-                      device.last_online && (new Date().getTime() - new Date(device.last_online).getTime() < 300000) ? "bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.4)]" : "bg-red-500"
+                      device.last_heartbeat_at && (new Date().getTime() - new Date(device.last_heartbeat_at).getTime() < 300000) ? "bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.4)]" : "bg-red-500"
                     )} />
                   </div>
                 </div>
@@ -287,7 +287,7 @@ function StoreTreeNode({ store, node, level, inherited, storeDevices }: {
                   <Badge variant="outline" className="text-[8px] h-3.5 bg-blue-500/5 text-blue-400 border-blue-500/10">LOJA</Badge>
                   <div className={cn(
                     "w-1 h-1 rounded-full",
-                    device.last_online && (new Date().getTime() - new Date(device.last_online).getTime() < 300000) ? "bg-green-500" : "bg-red-500"
+                    device.last_heartbeat_at && (new Date().getTime() - new Date(device.last_heartbeat_at).getTime() < 300000) ? "bg-green-500" : "bg-red-500"
                   )} />
                 </div>
               </div>
