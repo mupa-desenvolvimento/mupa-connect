@@ -271,15 +271,28 @@ export default function AppsPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" asChild>
-                        <a href={app.file_url} target="_blank" rel="noopener noreferrer">
+                      <Button variant="ghost" size="icon" asChild title="Baixar APK">
+                        <a href={`${window.location.origin}/download/app/${app.id}`} target="_blank" rel="noopener noreferrer">
                           <Download className="h-4 w-4" />
                         </a>
                       </Button>
                       <Button 
                         variant="ghost" 
                         size="icon" 
+                        title="Copiar Link de Download"
+                        onClick={() => {
+                          const link = `${window.location.origin}/download/app/${app.id}`;
+                          navigator.clipboard.writeText(link);
+                          toast.success("Link de download copiado!");
+                        }}
+                      >
+                        <Globe className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
                         className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        title="Remover APK"
                         onClick={() => {
                           if (confirm("Tem certeza que deseja remover este APK?")) {
                             deleteAppMutation.mutate(app.id);
