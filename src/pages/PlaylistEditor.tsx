@@ -528,7 +528,6 @@ export default function PlaylistEditor() {
               </label>
             </div>
           </div>
-          </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-2 text-[10px] text-white/40 font-medium uppercase tracking-wider">
               <span>{items.length} ITENS</span>
