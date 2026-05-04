@@ -31,6 +31,9 @@ import {
   Layers,
   Wrench,
   Save,
+  PlusCircle,
+  Play,
+  Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
