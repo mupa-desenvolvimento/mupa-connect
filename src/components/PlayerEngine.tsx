@@ -109,47 +109,52 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
    */
   const performTransition = useCallback(() => {
     const nextLayer = activeLayer === "A" ? "B" : "A";
+    const currentItem = activeLayer === "A" ? itemA : itemB;
     
-    if (isTransitioningRef.current || !playlistRef.current.length) return;
+    if (isTransitioningRef.current || !playlistRef.current.length || !currentItem) return;
 
-    console.log(`[PlayerEngine] Attempting transition to ${nextLayer}. Index: ${currentIndexRef.current}`);
+    // BLOQUEIO DE TROCA PREMATURA
+    const now = Date.now();
+    const elapsed = now - lastTransitionTimeRef.current;
+    const configuredDuration = (currentItem.duration || 10);
+    const minRequiredMs = Math.max(configuredDuration, MIN_DURATION) * 1000;
 
-    // Safety Fallback: If next layer is not ready, we delay the transition
-    // and try again in 100ms. This prevents black screens.
+    if (elapsed < minRequiredMs - 50) { // Pequena margem para precisão
+      console.warn(`[PlayerEngine] Troca prematura detectada (${elapsed}ms < ${minRequiredMs}ms). Cancelando.`);
+      return;
+    }
+
+    console.log(`[PlayerEngine] Efetuando transição. Mídia: ${currentItem.name}, Exibida por: ${elapsed}ms`);
+
     if (!readyToSwitchRef.current[nextLayer]) {
-      console.warn(`[PlayerEngine] Next layer (${nextLayer}) not ready. Retrying in 100ms...`);
+      console.warn(`[PlayerEngine] Próxima camada (${nextLayer}) não carregada. Retrying...`);
       if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(performTransition, 100);
+      timerRef.current = setTimeout(performTransition, 200);
       return;
     }
 
     isTransitioningRef.current = true;
-    lastTransitionTimeRef.current = Date.now();
     
     const nextVideo = nextLayer === "A" ? videoARef.current : videoBRef.current;
     const nextItem = nextLayer === "A" ? itemA : itemB;
     
-    // 1. Start playback of next layer while still hidden
     if (nextItem?.type === "video" && nextVideo) {
       nextVideo.muted = volume === 0;
-      nextVideo.play().catch(err => {
-        console.warn("[PlayerEngine] Play failed during transition", err);
-      });
+      nextVideo.play().catch(() => {});
     }
 
-    // 2. Trigger Crossfade
+    // DISPARO ÚNICO
     setActiveLayer(nextLayer);
+    lastTransitionTimeRef.current = now;
 
-    // 3. Update index and notify parent
     currentIndexRef.current = (currentIndexRef.current + 1) % playlistRef.current.length;
     onMediaChange?.(currentIndexRef.current);
 
-    // 4. Cleanup and prepare NEXT buffer after transition ends
     if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
     transitionTimerRef.current = setTimeout(() => {
       isTransitioningRef.current = false;
       prepareNextBuffer();
-    }, 450);
+    }, TRANSITION_MS + 50);
   }, [activeLayer, itemA, itemB, volume, onMediaChange]);
 
   /**
