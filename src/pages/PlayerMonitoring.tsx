@@ -101,27 +101,41 @@ export default function PlayerMonitoring() {
       } else {
         setIsSuperAdmin(true);
         fetchDevices();
+        fetchPerformanceLogs();
       }
     }
 
     checkAccess();
 
-    // Inscrição Realtime para atualizações na tabela dispositivos
-    const channel = supabase
+    const devicesChannel = supabase
       .channel('dispositivos_monitoring')
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'dispositivos' },
-        () => {
-          fetchDevices();
-        }
-      )
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'dispositivos' }, () => fetchDevices())
+      .subscribe();
+
+    const logsChannel = supabase
+      .channel('player_logs_monitoring')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'player_performance_logs' }, (payload) => {
+        setPerformanceLogs(prev => [payload.new as PerformanceLog, ...prev].slice(0, 100));
+      })
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(devicesChannel);
+      supabase.removeChannel(logsChannel);
     };
   }, []);
+
+  async function fetchPerformanceLogs() {
+    const { data, error } = await supabase
+      .from("player_performance_logs")
+      .select("*")
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (!error && data) {
+      setPerformanceLogs(data);
+    }
+  }
 
   async function fetchDevices() {
     const { data, error } = await supabase
