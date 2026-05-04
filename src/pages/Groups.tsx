@@ -207,54 +207,88 @@ export default function GroupsPage() {
   const enrichedGroups = useMemo(() => {
     if (!groups) return [];
     const safeDevices = devices || [];
+    const safeStores = stores || [];
     
-    return groups.map(group => {
-      // 1. Direct devices linked to this group (via its direct_device_ids array)
-      const directDeviceIds = new Set(group.direct_device_ids || []);
-      
-      // 2. Stores linked to this group (via its linked_store_ids array)
-      const linkedStoreIds = new Set(group.linked_store_ids || []);
-      
-      // Combine all devices for this specific group
-      // - Direct devices (matched by device_uuid)
-      // - Devices belonging to linked stores (matched by store_id)
-      const groupLevelDevices = safeDevices.filter(d => 
-        directDeviceIds.has(d.device_uuid) || (d.store_id && linkedStoreIds.has(d.store_id))
-      );
+    // Create a map for quick lookup of devices per store
+    const devicesByStore = new Map<string, typeof safeDevices>();
+    safeDevices.forEach(d => {
+      if (d.store_id) {
+        if (!devicesByStore.has(d.store_id)) devicesByStore.set(d.store_id, []);
+        devicesByStore.get(d.store_id)?.push(d);
+      }
+    });
 
-      // Create enriched device objects for display with origin tracking
-      const enrichedDevices = groupLevelDevices.map(d => ({
-        ...d,
-        origin: directDeviceIds.has(d.device_uuid) ? 'direto' as const : 'loja' as const
-      }));
+    // Function to get ALL devices for a group including its sub-hierarchies
+    const getGroupDevicesRecursive = (groupId: string, visited = new Set<string>()): any[] => {
+      if (visited.has(groupId)) return [];
+      visited.add(groupId);
 
-      // Deduplicate devices (a device could be both direct and from a store)
-      // Prioritize 'direto' origin for visual feedback
+      const group = groups.find(g => g.id === groupId);
+      if (!group) return [];
+
+      let groupDevices: any[] = [];
+
+      // 1. Direct devices
+      const directIds = new Set(group.direct_device_ids || []);
+      safeDevices.forEach(d => {
+        if (directIds.has(d.device_uuid)) {
+          groupDevices.push({ ...d, origin: 'direto' as const });
+        }
+      });
+
+      // 2. Devices from linked stores
+      const linkedStoreIds = group.linked_store_ids || [];
+      linkedStoreIds.forEach(storeId => {
+        const storeDevs = devicesByStore.get(storeId) || [];
+        storeDevs.forEach(d => {
+          groupDevices.push({ ...d, origin: 'loja' as const });
+        });
+      });
+
+      // 3. Devices from sub-groups (recursive)
+      const subGroups = groups.filter(g => g.parent_id === groupId);
+      subGroups.forEach(sub => {
+        groupDevices = [...groupDevices, ...getGroupDevicesRecursive(sub.id, visited)];
+      });
+
+      return groupDevices;
+    };
+
+    const result = groups.map(group => {
+      const allHierarchyDevices = getGroupDevicesRecursive(group.id);
+      
+      // Deduplicate devices (prioritize direct > store > inherited)
       const uniqueDevicesMap = new Map();
-      enrichedDevices.forEach(d => {
+      allHierarchyDevices.forEach(d => {
         const existing = uniqueDevicesMap.get(d.id);
-        if (!existing || (d.origin === 'direto' && existing.origin === 'loja')) {
+        if (!existing || (d.origin === 'direto' && existing.origin !== 'direto')) {
           uniqueDevicesMap.set(d.id, d);
         }
       });
 
+      const finalDevices = Array.from(uniqueDevicesMap.values());
+      
+      console.log(`Devices para grupo ${group.name}:`, finalDevices.length, finalDevices);
+
       return {
         ...group,
-        device_count: uniqueDevicesMap.size,
-        store_count: linkedStoreIds.size,
-        devices: Array.from(uniqueDevicesMap.values())
+        device_count: finalDevices.length,
+        store_count: group.linked_store_ids?.length || 0,
+        devices: finalDevices
       };
     });
-  }, [groups, devices]);
+
+    return result;
+  }, [groups, devices, stores]);
 
   const filteredGroups = useMemo(() => {
     if (!enrichedGroups) return [];
     if (!searchQuery) {
-      const roots = enrichedGroups.filter(g => !g.parent_id || !enrichedGroups.some(pg => pg.id === g.parent_id));
-      return roots;
+      // Find root groups (those whose parent_id is null OR whose parent_id doesn't exist in the set)
+      const groupIds = new Set(enrichedGroups.map(g => g.id));
+      return enrichedGroups.filter(g => !g.parent_id || !groupIds.has(g.parent_id));
     }
-    const filtered = enrichedGroups.filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    return filtered;
+    return enrichedGroups.filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [enrichedGroups, searchQuery]);
 
   const [deviceSearchQuery, setDeviceSearchQuery] = useState("");
