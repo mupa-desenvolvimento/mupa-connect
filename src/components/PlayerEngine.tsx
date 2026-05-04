@@ -2,6 +2,9 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { MediaCacheService } from "./PlayerServices";
 import { cn } from "@/lib/utils";
 
+const MIN_DURATION = 3; // Segundos mínimos para qualquer mídia
+const TRANSITION_MS = 400; // Tempo do crossfade CSS
+
 interface MediaItem {
   id: string;
   url: string;
@@ -106,47 +109,52 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
    */
   const performTransition = useCallback(() => {
     const nextLayer = activeLayer === "A" ? "B" : "A";
+    const currentItem = activeLayer === "A" ? itemA : itemB;
     
-    if (isTransitioningRef.current || !playlistRef.current.length) return;
+    if (isTransitioningRef.current || !playlistRef.current.length || !currentItem) return;
 
-    console.log(`[PlayerEngine] Attempting transition to ${nextLayer}. Index: ${currentIndexRef.current}`);
+    // BLOQUEIO DE TROCA PREMATURA
+    const now = Date.now();
+    const elapsed = now - lastTransitionTimeRef.current;
+    const configuredDuration = (currentItem.duration || 10);
+    const minRequiredMs = Math.max(configuredDuration, MIN_DURATION) * 1000;
 
-    // Safety Fallback: If next layer is not ready, we delay the transition
-    // and try again in 100ms. This prevents black screens.
+    if (elapsed < minRequiredMs - 50) { // Pequena margem para precisão
+      console.warn(`[PlayerEngine] Troca prematura detectada (${elapsed}ms < ${minRequiredMs}ms). Cancelando.`);
+      return;
+    }
+
+    console.log(`[PlayerEngine] Efetuando transição. Mídia: ${currentItem.name}, Exibida por: ${elapsed}ms`);
+
     if (!readyToSwitchRef.current[nextLayer]) {
-      console.warn(`[PlayerEngine] Next layer (${nextLayer}) not ready. Retrying in 100ms...`);
+      console.warn(`[PlayerEngine] Próxima camada (${nextLayer}) não carregada. Retrying...`);
       if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(performTransition, 100);
+      timerRef.current = setTimeout(performTransition, 200);
       return;
     }
 
     isTransitioningRef.current = true;
-    lastTransitionTimeRef.current = Date.now();
     
     const nextVideo = nextLayer === "A" ? videoARef.current : videoBRef.current;
     const nextItem = nextLayer === "A" ? itemA : itemB;
     
-    // 1. Start playback of next layer while still hidden
     if (nextItem?.type === "video" && nextVideo) {
       nextVideo.muted = volume === 0;
-      nextVideo.play().catch(err => {
-        console.warn("[PlayerEngine] Play failed during transition", err);
-      });
+      nextVideo.play().catch(() => {});
     }
 
-    // 2. Trigger Crossfade
+    // DISPARO ÚNICO
     setActiveLayer(nextLayer);
+    lastTransitionTimeRef.current = now;
 
-    // 3. Update index and notify parent
     currentIndexRef.current = (currentIndexRef.current + 1) % playlistRef.current.length;
     onMediaChange?.(currentIndexRef.current);
 
-    // 4. Cleanup and prepare NEXT buffer after transition ends
     if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
     transitionTimerRef.current = setTimeout(() => {
       isTransitioningRef.current = false;
       prepareNextBuffer();
-    }, 450);
+    }, TRANSITION_MS + 50);
   }, [activeLayer, itemA, itemB, volume, onMediaChange]);
 
   /**
@@ -225,29 +233,34 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     }
   };
 
+  // CONTROLADOR ÚNICO DE TEMPO (Efeito isolado para o Timer principal)
   useEffect(() => {
     if (!isReady) return;
 
     const currentItem = activeLayer === "A" ? itemA : itemB;
-    const currentVideo = activeLayer === "A" ? videoARef.current : videoBRef.current;
+    if (!currentItem) return;
     
-    if (timerRef.current) clearTimeout(timerRef.current);
-
-    if (currentItem?.type === "video" && currentVideo) {
-      const duration = (currentItem.duration || 10) * 1000;
-      const transitionPoint = Math.max(0, duration - 300);
-      
-      console.log(`[PlayerEngine] Scheduling video transition in ${transitionPoint}ms`);
-      timerRef.current = setTimeout(performTransition, transitionPoint);
-      startWatchdog(duration);
-    } else if (currentItem) {
-      const duration = (currentItem.duration || 10) * 1000;
-      const transitionPoint = Math.max(0, duration - 300);
-      
-      console.log(`[PlayerEngine] Scheduling image transition in ${transitionPoint}ms`);
-      timerRef.current = setTimeout(performTransition, transitionPoint);
-      startWatchdog(duration);
+    // Limpar timer anterior antes de iniciar novo
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
     }
+
+    const duration = Math.max(currentItem.duration || 0, MIN_DURATION);
+    const ms = duration * 1000;
+    const transitionPoint = Math.max(0, ms - (TRANSITION_MS / 2));
+    
+    console.log(`[PlayerEngine] Mídia: ${currentItem.name} | Duração: ${duration}s | Proxima em: ${transitionPoint}ms`);
+    
+    timerRef.current = setTimeout(() => {
+      performTransition();
+    }, transitionPoint);
+
+    startWatchdog(ms);
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, [activeLayer, itemA, itemB, isReady, performTransition, startWatchdog]);
 
   /**
@@ -264,33 +277,29 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
       
       if (currentItem && !isTransitioningRef.current) {
         const elapsedSinceTransition = now - lastTransitionTimeRef.current;
-        const expectedDuration = (currentItem.duration || 10) * 1000;
+        const duration = Math.max(currentItem.duration || 0, MIN_DURATION);
+        const expectedMs = duration * 1000;
         
-        // Safety Threshold: 7 seconds past the expected time
-        const FREEZE_THRESHOLD = 7000;
+        // Safety Threshold: 10 segundos além do tempo esperado (mais conservador)
+        const FREEZE_THRESHOLD = 10000;
 
-        // Condition 1: Time-based freeze (for images or general backup)
-        if (elapsedSinceTransition > expectedDuration + FREEZE_THRESHOLD) {
-          console.error(`[PlayerEngine] Heartbeat detected freeze (index: ${currentIndexRef.current}). Forcing next.`);
-          if (serial) {
-            MediaCacheService.logPerformance(serial, 'engine_freeze_recovery', 'Heartbeat forçou transição por travamento de tempo', { index: currentIndexRef.current });
-          }
+        // Diagnóstico em tempo real (Log opcional se necessário)
+        // console.log("Time Check:", elapsedSinceTransition, "/", expectedMs);
+
+        // 1. Travamento Geral ou Imagem
+        if (elapsedSinceTransition > expectedMs + FREEZE_THRESHOLD) {
+          console.error(`[PlayerEngine] Heartbeat detectou atraso excessivo. Forçando próxima.`);
           performTransition();
         }
 
-        // Condition 2: Video playback freeze
+        // 2. Travamento de Vídeo
         if (currentItem.type === "video" && currentVideo && !currentVideo.paused) {
-          // Check if video time is moving (only if enough time has passed since last check)
-          if (now - lastCheckTimeRef.current > 2000) {
+          if (now - lastCheckTimeRef.current > 3000) {
             const lastTime = (currentVideo as any)._lastRecordedTime || 0;
             if (currentVideo.currentTime > 0 && Math.abs(currentVideo.currentTime - lastTime) < 0.01) {
-              console.warn("[PlayerEngine] Video appears stuck at", currentVideo.currentTime);
-              // We give it a little more grace for videos before forcing transition
-              if (elapsedSinceTransition > (currentVideo.duration * 1000) + 3000) {
-                console.error("[PlayerEngine] Video stuck for too long, forcing next.");
-                if (serial) {
-                  MediaCacheService.logPerformance(serial, 'engine_video_freeze_recovery', 'Heartbeat forçou transição por vídeo travado', { index: currentIndexRef.current, timestamp: currentVideo.currentTime });
-                }
+              console.warn("[PlayerEngine] Vídeo parado no frame:", currentVideo.currentTime);
+              if (elapsedSinceTransition > expectedMs + 5000) {
+                console.error("[PlayerEngine] Vídeo travado por muito tempo, pulando.");
                 performTransition();
               }
             }
@@ -316,6 +325,10 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     if (!playlist.length) return;
 
     const init = async () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+      if (watchdogTimerRef.current) clearTimeout(watchdogTimerRef.current);
+      
       currentIndexRef.current = 0;
       const item0 = playlist[0];
       const item1 = playlist[1 % playlist.length];
@@ -330,8 +343,10 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
       setSrcB(blob1 || item1.url);
       setItemB(item1);
 
+      lastTransitionTimeRef.current = Date.now();
       setIsReady(true);
       onMediaChange?.(0);
+      
       if (serial) {
         MediaCacheService.logPerformance(serial, 'engine_init', 'Engine Profissional Reiniciada (Seamless Mode)', { playlist_size: playlist.length });
       }
