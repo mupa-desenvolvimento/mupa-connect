@@ -17,7 +17,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
 
 interface EnrichedDevice extends Device {
-  origin?: 'direto' | 'loja';
+  origin?: 'direto' | 'loja' | 'herdado';
 }
 
 interface EnrichedGroup extends Group {
