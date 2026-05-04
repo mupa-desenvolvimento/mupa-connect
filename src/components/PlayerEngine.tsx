@@ -129,9 +129,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
 
     const init = async () => {
       // Don't reset if we are already playing and length hasn't changed
-      // This allows seamless manifest updates
       if (mediaA || mediaB) {
         console.log("[PlayerEngine] Playlist updated, continuing playback...");
+        setIsReady(true);
         return;
       }
 
@@ -144,8 +144,13 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
 
       setMediaA({ item: item0, index: 0 });
       setMediaB({ item: item1, index: 1 % playlist.length });
-      setActiveLayer("A");
-      onMediaChange?.(0);
+      
+      // Give React a frame to mount elements before showing
+      requestAnimationFrame(() => {
+        setActiveLayer("A");
+        setIsReady(true);
+        onMediaChange?.(0);
+      });
     };
 
     init();
