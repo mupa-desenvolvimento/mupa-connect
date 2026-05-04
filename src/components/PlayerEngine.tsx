@@ -67,16 +67,16 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
     setActiveLayer(prev => {
       const newActiveLayer = prev === "A" ? "B" : "A";
       
-      // Prepare the NEXT media item for the now inactive layer
+      // Prepare the NEXT media item for the now inactive layer with high priority
       const nextNextIndex = (nextIndex + 1) % currentPlaylist.length;
       const nextNextItem = currentPlaylist[nextNextIndex];
 
       if (newActiveLayer === "A") {
         setMediaB({ item: nextNextItem, index: nextNextIndex });
-        prepareMedia(nextNextItem);
+        prepareMedia(nextNextItem, 10); // Priority 10 for immediate next
       } else {
         setMediaA({ item: nextNextItem, index: nextNextIndex });
-        prepareMedia(nextNextItem);
+        prepareMedia(nextNextItem, 10); // Priority 10 for immediate next
       }
       
       return newActiveLayer;
