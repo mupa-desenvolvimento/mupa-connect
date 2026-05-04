@@ -206,8 +206,12 @@ export default function GroupsPage() {
         
         if (error) throw error;
         toast.success(`${store.name} vinculado ao grupo ${group.name}`);
-        refetchGroups();
-        refetchStores();
+        
+        await Promise.all([
+          refetchGroups(),
+          refetchStores(),
+          queryClient.invalidateQueries({ queryKey: ["all-devices-panel", tenantId] })
+        ]);
       } catch (e: any) {
         toast.error("Erro ao vincular loja: " + e.message);
       }
