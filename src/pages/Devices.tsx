@@ -235,6 +235,19 @@ export default function DevicesPage() {
                       <TableCell><div className="flex items-center gap-3"><Monitor className="h-4 w-4 text-primary opacity-70" />{d.apelido_interno}</div></TableCell>
                       <TableCell className="font-mono text-xs text-muted-foreground">{d.serial}</TableCell>
                       <TableCell><span className="text-xs px-2 py-1 bg-muted rounded-md">Loja {d.num_filial}</span></TableCell>
+                      <TableCell>
+                        {d.playlists ? (
+                          <div className="flex items-center gap-1.5 text-xs font-medium text-foreground/80">
+                            <Layers className="h-3 w-3 text-primary" />
+                            {d.playlists.name}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 text-xs text-destructive font-bold">
+                            <AlertTriangle className="h-3 w-3" />
+                            Sem Playlist
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell className="text-muted-foreground text-xs">{formatDate(d.last_heartbeat_at)}</TableCell>
                       <TableCell><StatusBadge status={status} /></TableCell>
                       <TableCell className="text-right" onClick={e => e.stopPropagation()}>
