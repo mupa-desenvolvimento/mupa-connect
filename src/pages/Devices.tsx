@@ -48,6 +48,7 @@ export default function DevicesPage() {
   const [storeFilter, setStoreFilter] = useState("all");
   const [groupFilter, setGroupFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [playlistFilter, setPlaylistFilter] = useState("all");
   const [selectedDevice, setSelectedDevice] = useState<any | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
