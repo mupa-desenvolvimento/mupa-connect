@@ -98,6 +98,9 @@ const App = () => {
 
               {/* Acesso Rápido - Sem login obrigatório (protegido por token) */}
               <Route path="/quick-access/:token" element={<QuickAccessPage />} />
+              
+              {/* Download direto do APK */}
+              <Route path="/download/app/:id" element={<AppDownloadProxy />} />
 
               {/* Painel Empresa - Protegido */}
               <Route element={session ? <AppLayout /> : <Login />}>
