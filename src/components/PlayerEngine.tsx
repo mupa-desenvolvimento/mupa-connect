@@ -272,6 +272,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
         // Condition 1: Time-based freeze (for images or general backup)
         if (elapsedSinceTransition > expectedDuration + FREEZE_THRESHOLD) {
           console.error(`[PlayerEngine] Heartbeat detected freeze (index: ${currentIndexRef.current}). Forcing next.`);
+          if (serial) {
+            MediaCacheService.logPerformance(serial, 'engine_freeze_recovery', 'Heartbeat forçou transição por travamento de tempo', { index: currentIndexRef.current });
+          }
           performTransition();
         }
 
@@ -285,6 +288,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
               // We give it a little more grace for videos before forcing transition
               if (elapsedSinceTransition > (currentVideo.duration * 1000) + 3000) {
                 console.error("[PlayerEngine] Video stuck for too long, forcing next.");
+                if (serial) {
+                  MediaCacheService.logPerformance(serial, 'engine_video_freeze_recovery', 'Heartbeat forçou transição por vídeo travado', { index: currentIndexRef.current, timestamp: currentVideo.currentTime });
+                }
                 performTransition();
               }
             }
