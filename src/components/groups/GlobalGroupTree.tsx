@@ -184,7 +184,7 @@ export function GroupTreeNode({ node, allGroups, allStores, allDevices, level = 
       )}
 
       {/* Children: Subgroups and Stores */}
-      {isOpen && hasChildren && (
+      {isOpen && hasSubItems && (
         <div className="space-y-1">
           {childrenGroups.map(child => (
             <GroupTreeNode 
