@@ -116,6 +116,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
         moveToNext();
       }, safetyDuration);
     } else {
+      // For images, ensure we wait for the configured duration
       const duration = (currentMedia.item.duration || 10) * 1000;
       timerRef.current = setTimeout(moveToNext, duration);
     }
