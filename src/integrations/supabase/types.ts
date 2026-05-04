@@ -184,6 +184,75 @@ export type Database = {
         }
         Relationships: []
       }
+      app_companies: {
+        Row: {
+          app_id: string
+          company_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          app_id: string
+          company_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          app_id?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_companies_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "apps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "app_companies_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apps: {
+        Row: {
+          created_at: string
+          description: string | null
+          file_size: number | null
+          file_url: string
+          id: string
+          name: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          file_size?: number | null
+          file_url: string
+          id?: string
+          name: string
+          updated_at?: string
+          version: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       audience_detections: {
         Row: {
           age: number | null
