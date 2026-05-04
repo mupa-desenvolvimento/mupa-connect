@@ -167,6 +167,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
       requestAnimationFrame(() => {
         setActiveLayer("A");
         setIsReady(true);
+        if (serial) {
+          MediaCacheService.logPerformance(serial, 'engine_ready', 'Engine Profissional Iniciada', { playlist_size: playlist.length });
+        }
         onMediaChange?.(0);
       });
     };
