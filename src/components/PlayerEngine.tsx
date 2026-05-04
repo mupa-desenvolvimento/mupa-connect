@@ -149,10 +149,23 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
 
     init();
 
+    // Background cache everything else + cleanup
+    const idleTask = (window as any).requestIdleCallback || ((fn: any) => setTimeout(fn, 5000));
+    idleTask(() => {
+      playlist.forEach(item => {
+        if (!mediaMap[item.url]) {
+          MediaCacheService.cacheMedia(item.url).catch(() => {});
+        }
+      });
+      // Cleanup old cache entries not in current playlist
+      const urls = playlist.map(i => i.url);
+      MediaCacheService.clearOldCache(urls).catch(() => {});
+    });
+
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [playlist.length]);
+  }, [playlist.length, playlist]); // Added playlist to catch content updates with same length
 
   if (!playlist.length) return null;
 
