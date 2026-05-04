@@ -233,29 +233,34 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     }
   };
 
+  // CONTROLADOR ÚNICO DE TEMPO (Efeito isolado para o Timer principal)
   useEffect(() => {
     if (!isReady) return;
 
     const currentItem = activeLayer === "A" ? itemA : itemB;
-    const currentVideo = activeLayer === "A" ? videoARef.current : videoBRef.current;
+    if (!currentItem) return;
     
-    if (timerRef.current) clearTimeout(timerRef.current);
-
-    if (currentItem?.type === "video" && currentVideo) {
-      const duration = (currentItem.duration || 10) * 1000;
-      const transitionPoint = Math.max(0, duration - 300);
-      
-      console.log(`[PlayerEngine] Scheduling video transition in ${transitionPoint}ms`);
-      timerRef.current = setTimeout(performTransition, transitionPoint);
-      startWatchdog(duration);
-    } else if (currentItem) {
-      const duration = (currentItem.duration || 10) * 1000;
-      const transitionPoint = Math.max(0, duration - 300);
-      
-      console.log(`[PlayerEngine] Scheduling image transition in ${transitionPoint}ms`);
-      timerRef.current = setTimeout(performTransition, transitionPoint);
-      startWatchdog(duration);
+    // Limpar timer anterior antes de iniciar novo
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
     }
+
+    const duration = Math.max(currentItem.duration || 0, MIN_DURATION);
+    const ms = duration * 1000;
+    const transitionPoint = Math.max(0, ms - (TRANSITION_MS / 2));
+    
+    console.log(`[PlayerEngine] Mídia: ${currentItem.name} | Duração: ${duration}s | Proxima em: ${transitionPoint}ms`);
+    
+    timerRef.current = setTimeout(() => {
+      performTransition();
+    }, transitionPoint);
+
+    startWatchdog(ms);
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, [activeLayer, itemA, itemB, isReady, performTransition, startWatchdog]);
 
   /**
