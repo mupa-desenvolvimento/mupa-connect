@@ -121,6 +121,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
       const safetyDuration = ((currentMedia.item.duration || 10) + 5) * 1000;
       timerRef.current = setTimeout(() => {
         console.warn("[PlayerEngine] Video safety timeout reached");
+        if (serial) {
+          MediaCacheService.logPerformance(serial, 'media_play_timeout', `Timeout de vídeo: ${currentMedia.item.name}`, { url: currentMedia.item.url, duration: currentMedia.item.duration });
+        }
         moveToNext();
       }, safetyDuration);
     } else {
