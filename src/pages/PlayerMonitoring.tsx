@@ -157,12 +157,14 @@ export default function PlayerMonitoring() {
     const lastHeartbeat = new Date(device.last_heartbeat_at);
     const diffSeconds = (now.getTime() - lastHeartbeat.getTime()) / 1000;
 
-    if (diffSeconds > 60) return "offline";
-
+    // Aumentado para 5 minutos (300s) para ser consistente com o resto do sistema
+    if (diffSeconds > 300) return "offline";
+    
     if (device.last_proof_at) {
       const lastProof = new Date(device.last_proof_at);
       const proofDiffSeconds = (now.getTime() - lastProof.getTime()) / 1000;
-      if (proofDiffSeconds < 30) return "ativo";
+      // Se teve prova de exibição nos últimos 5 minutos, consideramos rodando
+      if (proofDiffSeconds < 300) return "ativo";
     }
 
     return "online";
