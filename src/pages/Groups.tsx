@@ -216,7 +216,7 @@ export default function GroupsPage() {
         toast.error("Erro ao vincular loja: " + e.message);
       }
     }
-  }, [tenantId, refetchGroups, refetchDevices, refetchStores]);
+  }, [tenantId, refetchGroups, refetchDevices, refetchStores, queryClient]);
 
   const enrichedGroups = useMemo(() => {
     if (!groups) return [];
