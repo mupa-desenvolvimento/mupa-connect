@@ -32,7 +32,22 @@ export const ManifestService = {
       .or(`apelido_interno.eq."${deviceCode}",serial.eq."${deviceCode}"`)
       .maybeSingle();
 
-    if (deviceError || !device?.playlist_id) {
+    let targetPlaylistId = device.playlist_id;
+
+    if (!targetPlaylistId) {
+      const { data: defaultPlaylist } = await supabase
+        .from("playlists")
+        .select("id")
+        .eq("company_id", device.company_id)
+        .eq("is_company_default", true)
+        .maybeSingle();
+      
+      if (defaultPlaylist) {
+        targetPlaylistId = defaultPlaylist.id;
+      }
+    }
+
+    if (!targetPlaylistId) {
       throw new Error("Device or playlist not found");
     }
 
