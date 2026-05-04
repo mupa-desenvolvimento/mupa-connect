@@ -16,6 +16,7 @@ export default function PlayerPage() {
   const [reloadKey, setReloadKey] = useState<number>(0);
   const [volume, setVolume] = useState(0); // Default muted as requested
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [lastIndexChange, setLastIndexChange] = useState(Date.now());
   const [syncToast, setSyncToast] = useState<{ msg: string; ts: number } | null>(null);
 
   // 1. Core Loader: Resolve Identity & Manifest (Offline-First)
@@ -107,6 +108,7 @@ export default function PlayerPage() {
 
   const handleMediaChange = useCallback((idx: number) => {
     setCurrentIndex(idx);
+    setLastIndexChange(Date.now());
     
     // Proof of Play Log (Background, non-blocking)
     if (activePlaylist[idx] && deviceInfo?.serial) {
@@ -183,6 +185,31 @@ export default function PlayerPage() {
     const interval = setInterval(beat, 30000);
     return () => clearInterval(interval);
   }, [deviceInfo?.serial]);
+
+  // 6. Page-Level Watchdog (Anti-Stall)
+  // Uses RequestAnimationFrame to detect if the entire engine is stuck
+  useEffect(() => {
+    let rafId: number;
+    
+    const checkEngineHealth = () => {
+      const now = Date.now();
+      const timeSinceLastAdvance = now - lastIndexChange;
+      const currentMedia = activePlaylist[currentIndex];
+      
+      // Safety margin: 30s beyond media duration or 2 mins default
+      const maxWait = currentMedia ? (currentMedia.duration * 1000) + 30000 : 120000;
+      
+      if (timeSinceLastAdvance > maxWait) {
+        console.error("[Player] Page heartbeat detected engine stall. Forcing page reload.");
+        window.location.reload();
+      }
+      
+      rafId = requestAnimationFrame(checkEngineHealth);
+    };
+
+    rafId = requestAnimationFrame(checkEngineHealth);
+    return () => cancelAnimationFrame(rafId);
+  }, [lastIndexChange, currentIndex, activePlaylist]);
 
   // UI Setup
   useEffect(() => {
