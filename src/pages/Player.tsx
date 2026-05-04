@@ -37,7 +37,10 @@ export default function PlayerPage() {
       try {
         if (!cachedManifest) {
           console.log("[Player] No cache found, fetching initial manifest...");
+          MediaCacheService.logPerformance(deviceCode, 'manifest_fetch_start', 'Buscando manifesto remoto (sem cache)');
+          const startTime = Date.now();
           const result = await ManifestService.fetchManifest(deviceCode);
+          MediaCacheService.logPerformance(deviceCode, 'manifest_fetch_success', 'Manifesto remoto carregado', {}, Date.now() - startTime);
           setManifest(result.manifest);
           if (result.device) {
             setDeviceUuid(result.device.id?.toString());
