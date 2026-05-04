@@ -176,7 +176,10 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngi
   if (!playlist.length) return null;
 
   return (
-    <div className="relative w-full h-full bg-black overflow-hidden">
+    <div className={cn(
+      "relative w-full h-full bg-black overflow-hidden transition-opacity duration-1000",
+      isReady ? "opacity-100" : "opacity-0"
+    )}>
       {/* Layer A */}
       <div 
         className={`absolute inset-0 transition-all duration-800 ease-in-out ${
