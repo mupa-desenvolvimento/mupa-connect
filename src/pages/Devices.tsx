@@ -121,7 +121,11 @@ export default function DevicesPage() {
       const matchesStore = storeFilter === "all" || d.num_filial === storeFilter;
       const matchesGroup = groupFilter === "all" || d.grupo_dispositivos === groupFilter;
       const matchesStatus = statusFilter === "all" || status === statusFilter;
-      return matchesSearch && matchesStore && matchesGroup && matchesStatus;
+      const matchesPlaylist = 
+        playlistFilter === "all" ? true :
+        playlistFilter === "has" ? !!d.playlist_id :
+        !d.playlist_id;
+      return matchesSearch && matchesStore && matchesGroup && matchesStatus && matchesPlaylist;
     }).sort((a, b) => {
       // Prioridade: Sem playlist no topo
       if (!a.playlist_id && b.playlist_id) return -1;
