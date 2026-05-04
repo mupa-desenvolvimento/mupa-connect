@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { useDeviceCommandChannel } from "@/hooks/useDeviceCommandChannel";
 import { supabase } from "@/integrations/supabase/client";
 import { PlayerEngine } from "@/components/PlayerEngine";
-import { ManifestManager, ScheduleResolver } from "@/components/PlayerServices";
+import { ManifestManager, ScheduleResolver, MediaCacheService } from "@/components/PlayerServices";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { ManifestService } from "@/services/ManifestService";
 
