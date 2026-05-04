@@ -54,13 +54,13 @@ export const ManifestService = {
     const { data: playlist, error: playlistError } = await supabase
       .from("playlists")
       .select("id, name, updated_at, schedule")
-      .eq("id", device.playlist_id)
+      .eq("id", targetPlaylistId)
       .maybeSingle();
 
     const { data: playlistItems, error: itemsError } = await supabase
       .from("playlist_items")
       .select("id, media_id, position, ordem, duracao, tipo, media_items(id, name, file_url, thumbnail_url, type, duration)")
-      .eq("playlist_id", device.playlist_id);
+      .eq("playlist_id", targetPlaylistId);
 
     if (playlistError || itemsError || !playlist) {
       throw new Error("Manifest data not found");
