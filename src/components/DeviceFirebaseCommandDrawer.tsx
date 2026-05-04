@@ -645,7 +645,7 @@ export function DeviceFirebaseCommandDrawer({
                           <div className="flex items-center gap-2">
                             <Input
                               placeholder="Nome do botão (ex: Abrir Mupa)"
-                              value={editingActionId && COMMANDS.find(c => c.key === cfg.key) ? newActionLabel : (inputs[`label_${cfg.key}`] || "")}
+                              value={editingActionId && COMMANDS.find(c => c.key === cfg.key) && quickActions.find(a => a.id === editingActionId)?.command_type === cfg.key ? newActionLabel : (inputs[`label_${cfg.key}`] || "")}
                               onChange={(e) => {
                                 if (editingActionId) {
                                   setNewActionLabel(e.target.value);
