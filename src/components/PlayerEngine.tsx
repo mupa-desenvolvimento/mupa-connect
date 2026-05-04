@@ -44,14 +44,18 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
   // Pre-cache item and get blob URL
   const prepareMedia = useCallback(async (item: MediaItem, priority = 0) => {
     if (!item?.url) return;
+    const startTime = Date.now();
     try {
-      await MediaCacheService.cacheMedia(item.url, item.type, priority);
+      await MediaCacheService.cacheMedia(item.url, item.type, priority, serial);
       const blobUrl = await MediaCacheService.getBlobUrl(item.url);
       setMediaMap(prev => ({ ...prev, [item.url]: blobUrl }));
-    } catch (err) {
+    } catch (err: any) {
       console.warn("[PlayerEngine] Prepare failed", item.url, err);
+      if (serial) {
+        MediaCacheService.logPerformance(serial, 'media_prepare_error', `Falha ao preparar: ${item.name}`, { url: item.url, error: err.message }, Date.now() - startTime);
+      }
     }
-  }, []);
+  }, [serial]);
 
   const moveToNext = useCallback(() => {
     const currentPlaylist = playlistRef.current;
