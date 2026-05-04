@@ -44,7 +44,7 @@ export default function DeviceDetailPage() {
     setLoading(true);
     const { data, error } = await supabase
       .from("dispositivos")
-      .select("id, apelido_interno, serial, online, num_filial, is_maintenance")
+      .select("id, apelido_interno, serial, online, num_filial, is_maintenance, playlist_id")
       .eq("id", Number(id))
       .maybeSingle();
 
