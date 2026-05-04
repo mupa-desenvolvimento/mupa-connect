@@ -37,7 +37,9 @@ export function GroupTreeNode({ node, allGroups, allStores, allDevices, level = 
   const [isOpen, setIsOpen] = useState(level < 1); // Expand first level by default
   const childrenGroups = allGroups.filter(g => g.parent_id === node.id);
   const childrenStores = allStores.filter(s => node.linked_store_ids?.includes(s.id));
-  const hasChildren = childrenGroups.length > 0 || childrenStores.length > 0;
+  const hasSubItems = childrenGroups.length > 0 || childrenStores.length > 0;
+  const hasDevices = (node.devices && node.devices.length > 0);
+  const canExpand = hasSubItems || hasDevices;
 
   const { setNodeRef, isOver } = useDroppable({
     id: `group-${node.id}`,
