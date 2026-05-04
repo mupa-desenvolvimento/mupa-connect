@@ -115,6 +115,12 @@ const App = () => {
                   </ProtectedRoute>
                 } />
 
+                <Route path="/admin/apps" element={
+                  <ProtectedRoute allowedRoles={["admin_global"]}>
+                    <AppsPage />
+                  </ProtectedRoute>
+                } />
+
                 {/* COMPANY ADMIN ONLY */}
                 <Route path="/usuarios" element={
                   <ProtectedRoute requireAdmin>
