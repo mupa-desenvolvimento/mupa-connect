@@ -32,6 +32,7 @@ import AppsPage from "./pages/admin/Apps";
 import CompanyAppsPage from "./pages/CompanyApps";
 import AppDownloadProxy from "./pages/AppDownloadProxy";
 import SharedMonitoringPage from "./pages/monitoring/SharedMonitoring";
+import TradeMarketingDashboard from "./pages/TradeMarketing";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
@@ -190,6 +191,12 @@ const App = () => {
                 <Route path="/campanhas" element={
                   <ProtectedRoute requireMarketing>
                     <Campaigns />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/trade-marketing" element={
+                  <ProtectedRoute requireMarketing>
+                    <TradeMarketingDashboard />
                   </ProtectedRoute>
                 } />
 
