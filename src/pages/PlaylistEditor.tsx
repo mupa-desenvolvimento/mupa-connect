@@ -508,7 +508,26 @@ export default function PlaylistEditor() {
                 }}
                 className="bg-transparent border-none focus:ring-0 text-lg font-display font-semibold text-white p-0 h-7"
               />
+            <div className="flex items-center gap-2 mt-0.5">
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <input 
+                  type="checkbox" 
+                  checked={isDefault}
+                  onChange={(e) => {
+                    setIsDefault(e.target.checked);
+                    setHasUnsavedChanges(true);
+                  }}
+                  className="w-3.5 h-3.5 rounded border-white/20 bg-black/40 text-[#085CF0] focus:ring-[#085CF0] focus:ring-offset-0 transition-all cursor-pointer"
+                />
+                <span className={cn(
+                  "text-[10px] font-bold transition-colors uppercase tracking-wider",
+                  isDefault ? "text-[#085CF0]" : "text-white/40 group-hover:text-white/60"
+                )}>
+                  {isDefault ? "Playlist Default (Fallback)" : "Definir como Default"}
+                </span>
+              </label>
             </div>
+          </div>
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-2 text-[10px] text-white/40 font-medium uppercase tracking-wider">
