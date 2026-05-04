@@ -519,8 +519,6 @@ export function DeviceFirebaseCommandDrawer({
 
             <Separator />
 
-            <Separator />
-
             {/* AÇÕES RÁPIDAS */}
             <section className="space-y-3">
               <div className="flex items-center justify-between">
