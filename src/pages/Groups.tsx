@@ -402,8 +402,12 @@ export default function GroupsPage() {
       }
       toast.success("Vínculo de dispositivos atualizado!");
       setLinkDevicesModal({ ...linkDevicesModal, open: false });
-      refetchGroups();
-      refetchDevices();
+      
+      await Promise.all([
+        refetchGroups(),
+        refetchDevices(),
+        queryClient.invalidateQueries({ queryKey: ["all-devices-panel", tenantId] })
+      ]);
     } catch (e: any) {
       toast.error("Erro ao vincular dispositivos: " + e.message);
     }
