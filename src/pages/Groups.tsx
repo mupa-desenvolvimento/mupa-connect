@@ -56,6 +56,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 export default function GroupsPage() {
   const { tenantId } = useTenant();
+  const queryClient = useQueryClient();
 
   const { data: playlists } = usePlaylists(tenantId || undefined);
   const { data: groups, isLoading: loadingGroups, refetch: refetchGroups } = useGroups(tenantId);
