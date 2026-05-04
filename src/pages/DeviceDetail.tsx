@@ -218,11 +218,37 @@ export default function DeviceDetailPage() {
                 onChange={(e) => setNumFilial(e.target.value)}
               />
             </div>
+            
+            <div className="space-y-2">
+              <Label>Playlist Vinculada</Label>
+              <Select value={selectedPlaylistId || "none"} onValueChange={(val) => setSelectedPlaylistId(val === "none" ? null : val)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione uma playlist" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sem playlist (usar padrão)</SelectItem>
+                  {playlists?.map(p => (
+                    <SelectItem key={p.id} value={p.id}>
+                      <div className="flex items-center gap-2">
+                        {p.is_company_default && <Layers className="h-3 w-3 text-[#085CF0]" />}
+                        {p.name}
+                        {p.is_company_default && <span className="text-[10px] bg-[#085CF0]/10 text-[#085CF0] px-1 rounded ml-1 font-bold">DEFAULT</span>}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {!selectedPlaylistId && (
+                <p className="text-[10px] text-yellow-600 font-medium">
+                  Este dispositivo usará a playlist padrão da empresa como fallback.
+                </p>
+              )}
+            </div>
 
             <Button 
               className="w-full"
               onClick={handleUpdateDevice} 
-              disabled={saving || (deviceName === device.name && numFilial === device.num_filial)}
+              disabled={saving || (deviceName === device.name && numFilial === device.num_filial && selectedPlaylistId === device.playlist_id)}
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
               Salvar Alterações
