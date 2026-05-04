@@ -92,7 +92,8 @@ export default function DeviceDetailPage() {
       .update({ 
         apelido_interno: deviceName,
         num_filial: numFilial,
-        is_maintenance: isMaintenance
+        is_maintenance: isMaintenance,
+        playlist_id: selectedPlaylistId
       })
       .eq("id", Number(id));
 
