@@ -121,7 +121,10 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     // 1. Start playback of next layer while still hidden
     if (nextItem?.type === "video" && nextVideo) {
       nextVideo.muted = volume === 0;
-      nextVideo.play().catch(console.error);
+      nextVideo.play().catch(err => {
+        console.warn("[PlayerEngine] Play failed during transition", err);
+        // If play fails, we might still transition to show the error state or frame
+      });
     }
 
     // 2. Trigger Crossfade (CSS transition handles this via opacity/visibility change)
