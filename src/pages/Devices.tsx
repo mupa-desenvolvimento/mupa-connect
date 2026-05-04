@@ -59,7 +59,13 @@ export default function DevicesPage() {
   const { data: devices, isLoading, refetch } = useQuery({
     queryKey: ["dispositivos-full", tenantId],
     queryFn: async () => {
-      let query = supabase.from("dispositivos").select("*");
+      let query = supabase.from("dispositivos").select(`
+        *,
+        playlists:playlist_id (
+          id,
+          name
+        )
+      `);
       
       // Filtrar por tenantId se disponível
       if (tenantId) {
