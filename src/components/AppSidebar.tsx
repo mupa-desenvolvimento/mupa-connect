@@ -45,6 +45,7 @@ export function AppSidebar() {
     { title: "Mídias", url: "/midias", icon: ImageIcon, visible: isMarketing },
     { title: "Inteligência EAN", url: "/admin/analytics/consultas", icon: BarChart3, visible: true },
     { title: "Painel NOC", url: "/admin/monitoring", icon: Activity, visible: isTecnico },
+    { title: "Aplicativos", url: "/aplicativos", icon: MonitorPlay, visible: isTecnico },
   ].filter((i) => i.visible);
 
   const orgItems = [

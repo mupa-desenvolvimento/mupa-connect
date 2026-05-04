@@ -29,6 +29,7 @@ import QuickAccessPage from "./pages/QuickAccess";
 import NOCDashboard from "./pages/admin/NOCDashboard";
 import MediaTrash from "./pages/MediaTrash";
 import AppsPage from "./pages/admin/Apps";
+import CompanyAppsPage from "./pages/CompanyApps";
 import AppDownloadProxy from "./pages/AppDownloadProxy";
 import SharedMonitoringPage from "./pages/monitoring/SharedMonitoring";
 import { useEffect, useState } from "react";
@@ -156,6 +157,12 @@ const App = () => {
                 <Route path="/dispositivos/:id" element={
                   <ProtectedRoute requireTecnico>
                     <DeviceDetail />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/aplicativos" element={
+                  <ProtectedRoute requireTecnico>
+                    <CompanyAppsPage />
                   </ProtectedRoute>
                 } />
 
