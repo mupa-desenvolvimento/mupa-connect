@@ -16,7 +16,9 @@ import {
   Play,
   FilterX,
   RotateCcw,
-  Megaphone
+  Megaphone,
+  Layers,
+  AlertTriangle
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
