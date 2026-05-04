@@ -46,8 +46,24 @@ serve(async (req) => {
         })
       }
 
-      if (!device.playlist_id) {
-        return new Response(JSON.stringify({ error: 'Device has no playlist' }), {
+      let targetPlaylistId = device.playlist_id;
+
+      if (!targetPlaylistId) {
+        console.log('Device has no direct playlist, looking for default for company:', device.company_id);
+        const { data: defaultPlaylist } = await supabaseClient
+          .from('playlists')
+          .select('id')
+          .eq('company_id', device.company_id)
+          .eq('is_company_default', true)
+          .maybeSingle();
+        
+        if (defaultPlaylist) {
+          targetPlaylistId = defaultPlaylist.id;
+        }
+      }
+
+      if (!targetPlaylistId) {
+        return new Response(JSON.stringify({ error: 'Device has no playlist and no default found' }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 404,
         })
@@ -56,7 +72,7 @@ serve(async (req) => {
       const { data: playlist, error: playlistError } = await supabaseClient
         .from('playlists')
         .select('id, name, updated_at, schedule, fallback_media_id')
-        .eq('id', device.playlist_id)
+        .eq('id', targetPlaylistId)
         .maybeSingle()
 
       if (playlistError || !playlist) {
