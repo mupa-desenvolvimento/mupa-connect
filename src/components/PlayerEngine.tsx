@@ -277,33 +277,29 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
       
       if (currentItem && !isTransitioningRef.current) {
         const elapsedSinceTransition = now - lastTransitionTimeRef.current;
-        const expectedDuration = (currentItem.duration || 10) * 1000;
+        const duration = Math.max(currentItem.duration || 0, MIN_DURATION);
+        const expectedMs = duration * 1000;
         
-        // Safety Threshold: 7 seconds past the expected time
-        const FREEZE_THRESHOLD = 7000;
+        // Safety Threshold: 10 segundos além do tempo esperado (mais conservador)
+        const FREEZE_THRESHOLD = 10000;
 
-        // Condition 1: Time-based freeze (for images or general backup)
-        if (elapsedSinceTransition > expectedDuration + FREEZE_THRESHOLD) {
-          console.error(`[PlayerEngine] Heartbeat detected freeze (index: ${currentIndexRef.current}). Forcing next.`);
-          if (serial) {
-            MediaCacheService.logPerformance(serial, 'engine_freeze_recovery', 'Heartbeat forçou transição por travamento de tempo', { index: currentIndexRef.current });
-          }
+        // Diagnóstico em tempo real (Log opcional se necessário)
+        // console.log("Time Check:", elapsedSinceTransition, "/", expectedMs);
+
+        // 1. Travamento Geral ou Imagem
+        if (elapsedSinceTransition > expectedMs + FREEZE_THRESHOLD) {
+          console.error(`[PlayerEngine] Heartbeat detectou atraso excessivo. Forçando próxima.`);
           performTransition();
         }
 
-        // Condition 2: Video playback freeze
+        // 2. Travamento de Vídeo
         if (currentItem.type === "video" && currentVideo && !currentVideo.paused) {
-          // Check if video time is moving (only if enough time has passed since last check)
-          if (now - lastCheckTimeRef.current > 2000) {
+          if (now - lastCheckTimeRef.current > 3000) {
             const lastTime = (currentVideo as any)._lastRecordedTime || 0;
             if (currentVideo.currentTime > 0 && Math.abs(currentVideo.currentTime - lastTime) < 0.01) {
-              console.warn("[PlayerEngine] Video appears stuck at", currentVideo.currentTime);
-              // We give it a little more grace for videos before forcing transition
-              if (elapsedSinceTransition > (currentVideo.duration * 1000) + 3000) {
-                console.error("[PlayerEngine] Video stuck for too long, forcing next.");
-                if (serial) {
-                  MediaCacheService.logPerformance(serial, 'engine_video_freeze_recovery', 'Heartbeat forçou transição por vídeo travado', { index: currentIndexRef.current, timestamp: currentVideo.currentTime });
-                }
+              console.warn("[PlayerEngine] Vídeo parado no frame:", currentVideo.currentTime);
+              if (elapsedSinceTransition > expectedMs + 5000) {
+                console.error("[PlayerEngine] Vídeo travado por muito tempo, pulando.");
                 performTransition();
               }
             }
