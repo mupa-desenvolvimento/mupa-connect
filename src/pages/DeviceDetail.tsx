@@ -8,7 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, ExternalLink, Loader2, Save, Store, Wrench, Monitor } from "lucide-react";
+import { ArrowLeft, ExternalLink, Loader2, Save, Store, Wrench, Monitor, Layers, Check, ChevronsUpDown } from "lucide-react";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { usePlaylists, useTenant } from "@/hooks/use-playlist-data";
 import { toast } from "sonner";
 
 interface DeviceRow {
