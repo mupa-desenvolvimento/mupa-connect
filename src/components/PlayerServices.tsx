@@ -6,9 +6,25 @@ import { useState, useEffect } from "react";
  */
 export const MediaCacheService = {
   CACHE_NAME: "mupa-media-cache-v3",
-  downloadQueue: [] as { url: string; type?: 'image' | 'video'; priority?: number; resolve: (val: string) => void; reject: (err: any) => void }[],
+  downloadQueue: [] as { url: string; type?: 'image' | 'video'; priority?: number; serial?: string; resolve: (val: string) => void; reject: (err: any) => void }[],
   activeDownloads: 0,
   MAX_CONCURRENT: 2,
+
+  async logPerformance(serial: string, event: string, message: string, metadata: any = {}, duration?: number) {
+    if (!serial) return;
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      await supabase.from("player_performance_logs").insert({
+        serial,
+        event_type: event,
+        message,
+        metadata,
+        duration_ms: duration
+      });
+    } catch (e) {
+      console.warn("[MediaCache] Log failed", e);
+    }
+  },
 
   async init() {
     if (!("caches" in window)) {
@@ -28,7 +44,7 @@ export const MediaCacheService = {
   /**
    * Caches media using a queue system to prevent network congestion
    */
-  async cacheMedia(url: string, type?: 'image' | 'video', priority = 0): Promise<string> {
+  async cacheMedia(url: string, type?: 'image' | 'video', priority = 0, serial?: string): Promise<string> {
     if (!url) return "";
     
     // Check if already in cache
@@ -38,7 +54,7 @@ export const MediaCacheService = {
 
     return new Promise((resolve, reject) => {
       // Add to queue with priority (higher number = higher priority)
-      this.downloadQueue.push({ url, type, priority, resolve, reject });
+      this.downloadQueue.push({ url, type, priority, serial, resolve, reject });
       this.downloadQueue.sort((a, b) => (b.priority || 0) - (a.priority || 0));
       this.processQueue();
     });
@@ -53,6 +69,7 @@ export const MediaCacheService = {
     if (!item) return;
 
     this.activeDownloads++;
+    const startTime = Date.now();
     
     try {
       console.log(`[MediaCache] Starting download: ${item.url} (Type: ${item.type || 'unknown'})`);
@@ -60,16 +77,26 @@ export const MediaCacheService = {
       const cache = await caches.open(this.CACHE_NAME);
       const response = await fetch(item.url, { mode: 'cors' });
       
-      if (!response.ok) throw new Error(`Failed to fetch ${item.url}`);
+      if (!response.ok) throw new Error(`Failed to fetch ${item.url} - Status ${response.status}`);
       
       // For videos, we might want to verify headers or partially cache if needed, 
       // but standard Cache API put is usually sufficient for service workers/blob usage.
       await cache.put(item.url, response);
       
-      console.log(`[MediaCache] Successfully cached: ${item.url}`);
+      const duration = Date.now() - startTime;
+      console.log(`[MediaCache] Successfully cached: ${item.url} in ${duration}ms`);
+      
+      if (item.serial) {
+        this.logPerformance(item.serial, 'media_cache_success', `Cached: ${item.url.split('/').pop()}`, { url: item.url, type: item.type }, duration);
+      }
+      
       item.resolve(item.url);
-    } catch (err) {
+    } catch (err: any) {
       console.error(`[MediaCache] Error caching ${item.url}:`, err);
+      const duration = Date.now() - startTime;
+      if (item.serial) {
+        this.logPerformance(item.serial, 'media_cache_error', `Failed to cache: ${item.url.split('/').pop()}`, { url: item.url, error: err.message }, duration);
+      }
       item.reject(err);
     } finally {
       this.activeDownloads--;
