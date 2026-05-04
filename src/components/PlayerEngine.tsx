@@ -7,7 +7,6 @@ interface MediaItem {
   type: "image" | "video";
   duration: number;
   name: string;
-  blobUrl?: string;
 }
 
 interface PlayerEngineProps {
@@ -17,219 +16,188 @@ interface PlayerEngineProps {
 }
 
 export function PlayerEngine({ playlist, onMediaChange, volume = 0 }: PlayerEngineProps) {
-  // UI State - only used for rendering the layers
-  const [layers, setLayers] = useState({
-    active: "A" as "A" | "B",
-    indexA: 0,
-    indexB: 1,
-    isTransitioning: false
-  });
-  
+  const [activeLayer, setActiveLayer] = useState<"A" | "B">("A");
+  const [mediaA, setMediaA] = useState<{ item: MediaItem; index: number } | null>(null);
+  const [mediaB, setMediaB] = useState<{ item: MediaItem; index: number } | null>(null);
   const [mediaMap, setMediaMap] = useState<Record<string, string>>({});
-  
-  // Internal Control Refs (Single Source of Truth)
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
   const currentIndexRef = useRef(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const isTransitioningRef = useRef(false);
   const videoARef = useRef<HTMLVideoElement>(null);
   const videoBRef = useRef<HTMLVideoElement>(null);
-  const preloadRef = useRef<Set<string>>(new Set());
+  const isTransitioningRef = useRef(false);
 
-  // Helper to get local URL
-  const getDisplayUrl = useCallback((item: MediaItem) => {
-    if (!item) return "";
-    return mediaMap[item.url] || item.url;
+  const getDisplayUrl = useCallback((url: string) => {
+    return mediaMap[url] || url;
   }, [mediaMap]);
 
-  const startMedia = useCallback((index: number, layer: "A" | "B") => {
-    const item = playlist[index];
-    if (!item) return;
+  // Pre-cache item and get blob URL
+  const prepareMedia = useCallback(async (item: MediaItem) => {
+    if (!item?.url) return;
+    try {
+      await MediaCacheService.cacheMedia(item.url);
+      const blobUrl = await MediaCacheService.getBlobUrl(item.url);
+      setMediaMap(prev => ({ ...prev, [item.url]: blobUrl }));
+    } catch (err) {
+      console.warn("[PlayerEngine] Prepare failed", item.url, err);
+    }
+  }, []);
 
-    console.log(`[PlayerEngine] media_start: ${item.name} (index: ${index}, layer: ${layer})`);
-    
-    // Clear any existing timer
+  const startCurrentMedia = useCallback(() => {
+    const isA = activeLayer === "A";
+    const currentMedia = isA ? mediaA : mediaB;
+    const video = isA ? videoARef.current : videoBRef.current;
+
+    if (!currentMedia) return;
+
     if (timerRef.current) clearTimeout(timerRef.current);
 
-    if (item.type === "video") {
-      const video = layer === "A" ? videoARef.current : videoBRef.current;
-      if (video) {
-        video.currentTime = 0;
-        video.play()
-          .then(() => {
-            const safetyDuration = ((item.duration || 10) + 5) * 1000;
-            timerRef.current = setTimeout(() => {
-              console.warn("[PlayerEngine] Video safety timeout reached");
-              moveToNext();
-            }, safetyDuration);
-          })
-          .catch(err => {
-            console.warn("[PlayerEngine] Video play failed, skipping in 2s", err);
-            timerRef.current = setTimeout(moveToNext, 2000);
-          });
-      }
+    if (currentMedia.item.type === "video" && video) {
+      video.muted = volume === 0;
+      video.currentTime = 0;
+      video.play().catch(err => {
+        console.warn("[PlayerEngine] Play error, skipping in 2s", err);
+        timerRef.current = setTimeout(moveToNext, 2000);
+      });
+      // Safety timeout in case video ends but onEnded doesn't fire
+      const safetyDuration = ((currentMedia.item.duration || 10) + 5) * 1000;
+      timerRef.current = setTimeout(() => {
+        console.warn("[PlayerEngine] Video safety timeout reached");
+        moveToNext();
+      }, safetyDuration);
     } else {
-      // For images, use the duration
-      const duration = (item.duration || 10) * 1000;
+      const duration = (currentMedia.item.duration || 10) * 1000;
       timerRef.current = setTimeout(moveToNext, duration);
     }
-  }, [playlist]);
+  }, [activeLayer, mediaA, mediaB, volume]);
 
   const moveToNext = useCallback(() => {
     if (isTransitioningRef.current || !playlist.length) return;
     
     isTransitioningRef.current = true;
-    const prevIndex = currentIndexRef.current;
-    const nextIndex = (prevIndex + 1) % playlist.length;
+    setIsTransitioning(true);
+
+    const nextIndex = (currentIndexRef.current + 1) % playlist.length;
     currentIndexRef.current = nextIndex;
-
-    console.log(`[PlayerEngine] media_end: index ${prevIndex} -> next_index: ${nextIndex}`);
-
-    const nextLayer = layers.active === "A" ? "B" : "A";
-
-    // Update UI state for transition
-    setLayers(prev => ({
-      ...prev,
-      active: nextLayer,
-      [nextLayer === "A" ? "indexA" : "indexB"]: nextIndex,
-      isTransitioning: true
-    }));
-
-    // Start the next media immediately (it should be preloaded)
-    startMedia(nextIndex, nextLayer);
-
-    // Notify parent
     onMediaChange?.(nextIndex);
 
-    // Release transition lock after crossfade duration
+    // Switch active layer
+    const newActiveLayer = activeLayer === "A" ? "B" : "A";
+    setActiveLayer(newActiveLayer);
+
+    // The now inactive layer should prepare the NEXT media item
+    const nextNextIndex = (nextIndex + 1) % playlist.length;
+    const nextNextItem = playlist[nextNextIndex];
+
+    if (newActiveLayer === "A") {
+      // B is now inactive, set it to nextNext
+      setMediaB({ item: nextNextItem, index: nextNextIndex });
+      prepareMedia(nextNextItem);
+    } else {
+      // A is now inactive, set it to nextNext
+      setMediaA({ item: nextNextItem, index: nextNextIndex });
+      prepareMedia(nextNextItem);
+    }
+
+    // Transition duration match
     setTimeout(() => {
       isTransitioningRef.current = false;
-      setLayers(prev => ({ ...prev, isTransitioning: false }));
-    }, 600); // Match CSS transition duration
+      setIsTransitioning(false);
+    }, 800);
 
-  }, [playlist, layers.active, startMedia, onMediaChange]);
+  }, [activeLayer, playlist, onMediaChange, prepareMedia]);
 
-  // Initial load and playlist changes
+  // Whenever activeLayer changes, trigger start
+  useEffect(() => {
+    startCurrentMedia();
+  }, [activeLayer, mediaA?.index, mediaB?.index]);
+
+  // Initial setup
   useEffect(() => {
     if (!playlist.length) return;
-    
-    // Reset if playlist changes significantly (optional, but good for stability)
-    currentIndexRef.current = 0;
-    setLayers({
-      active: "A",
-      indexA: 0,
-      indexB: 1 % playlist.length,
-      isTransitioning: false
-    });
-    
-    startMedia(0, "A");
+
+    const init = async () => {
+      currentIndexRef.current = 0;
+      const item0 = playlist[0];
+      const item1 = playlist[1 % playlist.length];
+
+      // Prepare both immediately
+      await Promise.all([prepareMedia(item0), prepareMedia(item1)]);
+
+      setMediaA({ item: item0, index: 0 });
+      setMediaB({ item: item1, index: 1 % playlist.length });
+      setActiveLayer("A");
+      onMediaChange?.(0);
+    };
+
+    init();
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [playlist.length]); // Only re-run if playlist length changes or it's first mount
-
-  // Video Ended Event Handler
-  const handleVideoEnded = useCallback(() => {
-    console.log("[PlayerEngine] Video ended naturally");
-    moveToNext();
-  }, [moveToNext]);
-
-  // Preloading Logic
-  useEffect(() => {
-    if (!playlist.length) return;
-
-    const preloadNext = async () => {
-      const nextIdx = (currentIndexRef.current + 1) % playlist.length;
-      const nextItem = playlist[nextIdx];
-      
-      if (nextItem && !preloadRef.current.has(nextItem.url)) {
-        preloadRef.current.add(nextItem.url);
-        try {
-          await MediaCacheService.cacheMedia(nextItem.url);
-          const blobUrl = await MediaCacheService.getBlobUrl(nextItem.url);
-          setMediaMap(prev => ({ ...prev, [nextItem.url]: blobUrl }));
-        } catch (err) {
-          console.warn("[PlayerEngine] Preload failed", nextItem.url, err);
-        }
-      }
-    };
-
-    preloadNext();
-    
-    // Also background cache everything else
-    const idleTask = (window as any).requestIdleCallback || ((fn: any) => setTimeout(fn, 5000));
-    idleTask(() => {
-      playlist.forEach(item => {
-        if (!mediaMap[item.url]) {
-          MediaCacheService.cacheMedia(item.url).catch(() => {});
-        }
-      });
-    });
-  }, [layers.active, playlist, mediaMap]);
-
-  const handleError = useCallback((index: number) => {
-    console.error(`[PlayerEngine] Media error at index ${index}`);
-    // If current media fails, skip it
-    if (index === currentIndexRef.current) {
-      moveToNext();
-    }
-  }, [moveToNext]);
+  }, [playlist.length]);
 
   if (!playlist.length) return null;
-
-  const mediaA = playlist[layers.indexA];
-  const mediaB = playlist[layers.indexB];
 
   return (
     <div className="relative w-full h-full bg-black overflow-hidden">
       {/* Layer A */}
       <div 
-        className={`absolute inset-0 transition-opacity duration-600 ease-in-out ${layers.active === "A" ? "opacity-100 z-10" : "opacity-0 z-0"}`}
-        style={{ willChange: 'opacity' }}
+        className={`absolute inset-0 transition-all duration-800 ease-in-out ${
+          activeLayer === "A" ? "opacity-100 scale-100 z-10" : "opacity-0 scale-105 z-0"
+        }`}
+        style={{ willChange: 'opacity, transform' }}
       >
-        {mediaA?.type === "video" ? (
+        {mediaA?.item.type === "video" ? (
           <video
             ref={videoARef}
-            src={getDisplayUrl(mediaA)}
+            src={getDisplayUrl(mediaA.item.url)}
             muted={volume === 0}
-            onEnded={handleVideoEnded}
-            onError={() => handleError(layers.indexA)}
+            preload="auto"
+            autoPlay
             playsInline
+            onEnded={moveToNext}
+            onError={() => moveToNext()}
             className="w-full h-full object-cover"
           />
-        ) : (
+        ) : mediaA ? (
           <img
-            src={getDisplayUrl(mediaA)}
-            onError={() => handleError(layers.indexA)}
+            src={getDisplayUrl(mediaA.item.url)}
+            onError={() => moveToNext()}
             className="w-full h-full object-cover"
             alt=""
           />
-        )}
+        ) : null}
       </div>
 
       {/* Layer B */}
       <div 
-        className={`absolute inset-0 transition-opacity duration-600 ease-in-out ${layers.active === "B" ? "opacity-100 z-10" : "opacity-0 z-0"}`}
-        style={{ willChange: 'opacity' }}
+        className={`absolute inset-0 transition-all duration-800 ease-in-out ${
+          activeLayer === "B" ? "opacity-100 scale-100 z-10" : "opacity-0 scale-105 z-0"
+        }`}
+        style={{ willChange: 'opacity, transform' }}
       >
-        {mediaB?.type === "video" ? (
+        {mediaB?.item.type === "video" ? (
           <video
             ref={videoBRef}
-            src={getDisplayUrl(mediaB)}
+            src={getDisplayUrl(mediaB.item.url)}
             muted={volume === 0}
-            onEnded={handleVideoEnded}
-            onError={() => handleError(layers.indexB)}
+            preload="auto"
+            autoPlay
             playsInline
+            onEnded={moveToNext}
+            onError={() => moveToNext()}
             className="w-full h-full object-cover"
           />
-        ) : (
+        ) : mediaB ? (
           <img
-            src={getDisplayUrl(mediaB)}
-            onError={() => handleError(layers.indexB)}
+            src={getDisplayUrl(mediaB.item.url)}
+            onError={() => moveToNext()}
             className="w-full h-full object-cover"
             alt=""
           />
-        )}
+        ) : null}
       </div>
     </div>
   );
