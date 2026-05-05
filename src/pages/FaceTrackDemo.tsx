@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +30,7 @@ export default function FaceTrackDemoPage() {
   const [error, setError] = useState<string | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const detectionIntervalRef = useRef<number | null>(null);
   const initializedRef = useRef(false);
@@ -37,7 +38,6 @@ export default function FaceTrackDemoPage() {
   useEffect(() => {
     if (initializedRef.current) return;
     initializedRef.current = true;
-
     const loadModels = async () => {
       try {
         const MODEL_URL = '/models';
@@ -46,13 +46,14 @@ export default function FaceTrackDemoPage() {
         await Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
           faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
           faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
           faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL)
         ]);
         
         console.log("[Face Track Demo] All models loaded successfully!");
         setModelsLoaded(true);
-        await startCamera();
+        startCamera();
       } catch (error) {
         console.error("[Face Track Demo] Error loading models:", error);
         setError("Erro ao carregar modelos de detecção facial. Verifique se os arquivos estão em /models");
@@ -64,15 +65,11 @@ export default function FaceTrackDemoPage() {
       
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { 
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            facingMode: "user"
-          }
+          video: true
         });
         videoRef.current.srcObject = stream;
         videoRef.current.onloadedmetadata = () => {
-          console.log("[Face Track Demo] Camera started! Video dimensions:", videoRef.current?.videoWidth, "x", videoRef.current?.videoHeight);
+          console.log("[Face Track Demo] Camera started!");
           setFaceDetectionActive(true);
           startDetectionLoop();
         };
@@ -90,81 +87,67 @@ export default function FaceTrackDemoPage() {
       console.log("[Face Track Demo] Starting detection loop...");
       
       detectionIntervalRef.current = window.setInterval(async () => {
-        if (!videoRef.current || !overlayCanvasRef.current || !modelsLoaded) return;
+        if (!videoRef.current || !canvasRef.current || !modelsLoaded) return;
         
-        if (!videoRef.current.videoWidth || !videoRef.current.videoHeight) {
-          console.log("[Face Track Demo] Waiting for video to be ready...");
-          return;
+        const options = new faceapi.TinyFaceDetectorOptions();
+        const result = await faceapi
+          .detectAllFaces(videoRef.current, options)
+          .withFaceLandmarks()
+          .withFaceExpressions()
+          .withAgeAndGender();
+        
+        if (result.length > 0) {
+          console.log(`[Face Track Demo] Detected ${result.length} face(s)!`);
         }
         
-        try {
-          const options = new faceapi.TinyFaceDetectorOptions({
-            inputSize: 416,
-            scoreThreshold: 0.5
-          });
+        // Update detected faces state
+        const newFaces: DetectedFace[] = result.map((face, index) => {
+          const expressions = face.expressions.asSortedArray();
+          const mostProbableExpression = expressions[0];
           
-          const result = await faceapi
-            .detectAllFaces(videoRef.current, options)
-            .withFaceLandmarks()
-            .withFaceExpressions()
-            .withAgeAndGender();
+          return {
+            id: `face_${Date.now()}_${index}`,
+            age: Math.round(face.age),
+            gender: face.gender,
+            genderProbability: face.genderProbability,
+            emotion: mostProbableExpression.expression,
+            emotionProbability: mostProbableExpression.probability,
+            allEmotions: expressions.map((exp: any) => ({
+              expression: exp.expression,
+              probability: exp.probability
+            })),
+            timestamp: new Date()
+          };
+        });
+        
+        setDetectedFaces(newFaces);
+        
+        // Draw detections on overlay canvas
+        if (result.length > 0 && overlayCanvasRef.current) {
+          const displaySize = { 
+            width: videoRef.current.videoWidth, 
+            height: videoRef.current.videoHeight 
+          };
           
-          if (result.length > 0) {
-            console.log(`[Face Track Demo] Detected ${result.length} face(s)!`);
+          faceapi.matchDimensions(overlayCanvasRef.current, displaySize);
+          const resizedDetections = faceapi.resizeResults(result, displaySize);
+          
+          const ctx = overlayCanvasRef.current.getContext('2d');
+          if (ctx) {
+            ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
+            faceapi.draw.drawDetections(overlayCanvasRef.current, resizedDetections);
+            faceapi.draw.drawFaceLandmarks(overlayCanvasRef.current, resizedDetections);
           }
-          
-          // Update detected faces state
-          const newFaces: DetectedFace[] = result.map((face, index) => {
-            const expressions = face.expressions.asSortedArray();
-            const mostProbableExpression = expressions[0];
-            
-            return {
-              id: `face_${Date.now()}_${index}`,
-              age: Math.round(face.age),
-              gender: face.gender,
-              genderProbability: face.genderProbability,
-              emotion: mostProbableExpression.expression,
-              emotionProbability: mostProbableExpression.probability,
-              allEmotions: expressions.map((exp: any) => ({
-                expression: exp.expression,
-                probability: exp.probability
-              })),
-              timestamp: new Date()
-            };
-          });
-          
-          setDetectedFaces(newFaces);
-          
-          // Draw detections on overlay canvas
-          if (result.length > 0 && overlayCanvasRef.current) {
-            const displaySize = { 
-              width: videoRef.current.videoWidth, 
-              height: videoRef.current.videoHeight 
-            };
-            
-            faceapi.matchDimensions(overlayCanvasRef.current, displaySize);
-            const resizedDetections = faceapi.resizeResults(result, displaySize);
-            
-            const ctx = overlayCanvasRef.current.getContext('2d');
-            if (ctx) {
-              ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
-              faceapi.draw.drawDetections(overlayCanvasRef.current, resizedDetections);
-              faceapi.draw.drawFaceLandmarks(overlayCanvasRef.current, resizedDetections);
-            }
-          } else if (overlayCanvasRef.current) {
-            const ctx = overlayCanvasRef.current.getContext('2d');
-            if (ctx) {
-              ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
-            }
+        } else if (overlayCanvasRef.current) {
+          const ctx = overlayCanvasRef.current.getContext('2d');
+          if (ctx) {
+            ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
           }
-        } catch (err) {
-          console.error("[Face Track Demo] Detection error:", err);
         }
-      }, 200); // Detect every 200ms
+      }, 1000); // Detect every 1 second
     };
 
     const cleanup = () => {
-      console.log("[Face Track Demo] Cleaning up...");
       if (detectionIntervalRef.current) {
         clearInterval(detectionIntervalRef.current);
       }
@@ -246,6 +229,10 @@ export default function FaceTrackDemoPage() {
                 muted 
                 playsInline 
                 className="w-full h-full object-cover"
+              />
+              <canvas 
+                ref={canvasRef} 
+                className="absolute top-0 left-0 w-0 h-0"
               />
               <canvas 
                 ref={overlayCanvasRef} 
