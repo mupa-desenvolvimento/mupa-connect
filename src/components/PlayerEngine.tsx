@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { MediaCacheService } from "./PlayerServices";
+import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { cn } from "@/lib/utils";
 
 const MIN_DURATION = 3; // Segundos mínimos para qualquer mídia
@@ -108,7 +109,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
   /**
    * Transition logic from current active layer to the next.
    */
-  const performTransition = useCallback(() => {
+  const performTransition = useCallback((triggerReason: string = "timer") => {
     if (isTransitioningRef.current || !playlistRef.current.length) return;
 
     const nextLayer = activeLayer === "A" ? "B" : "A";
@@ -123,7 +124,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     const minRequiredMs = Math.max(configuredDuration, MIN_DURATION) * 1000;
 
     // Se estiver tentando trocar muito antes do tempo, bloqueia (evita disparos duplos)
-    if (elapsed < minRequiredMs - 200) {
+    if (elapsed < minRequiredMs - 200 && triggerReason !== "error") {
       console.warn(`[PlayerEngine] Troca prematura detectada (${elapsed}ms < ${minRequiredMs}ms). Cancelando.`);
       return;
     }
@@ -134,12 +135,26 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
 
     if (!readyToSwitchRef.current[nextLayer]) {
       console.warn(`[PlayerEngine] Próxima camada (${nextLayer}) não carregada. Forçando avanço para evitar travamento.`);
-      // Se não estiver pronto em 500ms, o watchdog ou o prepareNextBuffer cuidará, 
-      // mas aqui forçamos a prontidão se já passou do tempo.
       readyToSwitchRef.current[nextLayer] = true;
+      if (serial) {
+        FirebaseRealtimeService.logEvent(serial, "buffer_not_ready", {
+          layer: nextLayer,
+          trigger: triggerReason
+        });
+      }
     }
 
-    console.log(`[PlayerEngine] NEXT TRIGGER. Mídia: ${currentItem.name}, Exibida por: ${elapsed}ms`);
+    console.log(`[PlayerEngine] NEXT TRIGGER. Mídia: ${currentItem.name}, Exibida por: ${elapsed}ms | Motivo: ${triggerReason}`);
+    
+    if (serial) {
+      FirebaseRealtimeService.logEvent(serial, "media_transition", {
+        from: currentItem.name,
+        elapsed_ms: elapsed,
+        reason: triggerReason
+      });
+      // Atualizar heartbeat também
+      FirebaseRealtimeService.sendHeartbeat(serial, currentItem.id, "playing");
+    }
 
     const nextVideo = nextLayer === "A" ? videoARef.current : videoBRef.current;
     const nextItem = nextLayer === "A" ? itemA : itemB;
@@ -148,7 +163,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
       nextVideo.muted = volume === 0;
       nextVideo.play().catch(err => {
         console.error("[PlayerEngine] Falha ao dar play, pulando:", err);
-        // Se o vídeo falhar, não travar, agendar próxima
+        if (serial) FirebaseRealtimeService.logEvent(serial, "video_play_error", { media: nextItem.name, error: err.message });
       });
     }
 
@@ -164,7 +179,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
       isTransitioningRef.current = false;
       prepareNextBuffer();
     }, TRANSITION_MS + 100);
-  }, [activeLayer, itemA, itemB, volume, onMediaChange]);
+  }, [activeLayer, itemA, itemB, volume, onMediaChange, serial]);
 
   /**
    * Watchdog mechanism (ANTI-TRAVAMENTO - CRÍTICO)
@@ -185,7 +200,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
       // Watchdog (Safety Fallback): Se passou do tempo + 3s de margem, FORÇA o avanço.
       if (elapsed > expectedMs + 3000) {
         console.warn(`[PlayerEngine] !!! TRAVAMENTO DETECTADO !!! Forçando avanço via Watchdog. ELAPSED: ${elapsed}ms | EXPECTED: ${expectedMs}ms`);
-        performTransition();
+        performTransition("watchdog");
       }
     }, 2000);
 
@@ -310,7 +325,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
         // 1. Travamento Geral ou Imagem
         if (elapsedSinceTransition > expectedMs + FREEZE_THRESHOLD) {
           console.error(`[PlayerEngine] Heartbeat detectou atraso excessivo. Forçando próxima.`);
-          performTransition();
+          performTransition("heartbeat_freeze");
         }
 
         // 2. Travamento de Vídeo
@@ -321,7 +336,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
               console.warn("[PlayerEngine] Vídeo parado no frame:", currentVideo.currentTime);
               if (elapsedSinceTransition > expectedMs + 5000) {
                 console.error("[PlayerEngine] Vídeo travado por muito tempo, pulando.");
-                performTransition();
+                performTransition("video_freeze");
               }
             }
             (currentVideo as any)._lastRecordedTime = currentVideo.currentTime;
@@ -374,6 +389,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
       onMediaChange?.(0);
       
       if (serial) {
+        FirebaseRealtimeService.logEvent(serial, 'engine_init', { playlist_size: playlist.length });
         MediaCacheService.logPerformance(serial, 'engine_init', 'Engine Profissional Reiniciada (Seamless Mode)', { playlist_size: playlist.length });
       }
     };
@@ -408,8 +424,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
               readyToSwitchRef.current.A = true;
               if (activeLayer === "B") warmUpDecoder(e.currentTarget);
               e.currentTarget.style.transform = "translateZ(0)";
+              if (serial) FirebaseRealtimeService.logEvent(serial, "video_ready", { layer: "A", media: itemA?.name });
             }}
-            onError={performTransition}
+            onError={() => performTransition("error")}
           />
         ) : srcA ? (
           <img
@@ -424,8 +441,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
                 loadingStatusRef.current.A = true;
                 readyToSwitchRef.current.A = true;
               }
+              if (serial) FirebaseRealtimeService.logEvent(serial, "image_ready", { layer: "A", media: itemA?.name });
             }}
-            onError={performTransition}
+            onError={() => performTransition("error")}
           />
         ) : null}
       </div>
@@ -447,8 +465,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
               readyToSwitchRef.current.B = true;
               if (activeLayer === "A") warmUpDecoder(e.currentTarget);
               e.currentTarget.style.transform = "translateZ(0)";
+              if (serial) FirebaseRealtimeService.logEvent(serial, "video_ready", { layer: "B", media: itemB?.name });
             }}
-            onError={performTransition}
+            onError={() => performTransition("error")}
           />
         ) : srcB ? (
           <img
@@ -463,8 +482,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
                 loadingStatusRef.current.B = true;
                 readyToSwitchRef.current.B = true;
               }
+              if (serial) FirebaseRealtimeService.logEvent(serial, "image_ready", { layer: "B", media: itemB?.name });
             }}
-            onError={performTransition}
+            onError={() => performTransition("error")}
           />
         ) : null}
       </div>
