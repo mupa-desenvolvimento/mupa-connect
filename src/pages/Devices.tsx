@@ -56,7 +56,15 @@ export default function DevicesPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deviceToEdit, setDeviceToEdit] = useState<any | null>(null);
   const { tenantId, isSuperAdmin, isTecnico, isAdmin } = useUserRole();
+
+  const handleEditDevice = (e: React.MouseEvent, device: any) => {
+    e.stopPropagation();
+    setDeviceToEdit(device);
+    setEditModalOpen(true);
+  };
 
   const openDeviceDrawer = (device: any) => {
     setSelectedDevice(device);
