@@ -236,7 +236,7 @@ export default function PlaylistEditor() {
       if (playlistData.appearance_config) {
         setAppearanceConfig({
           ...appearanceConfig,
-          ...playlistData.appearance_config
+          ...(playlistData.appearance_config as any)
         });
       }
       
