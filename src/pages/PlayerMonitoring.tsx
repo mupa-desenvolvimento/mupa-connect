@@ -48,7 +48,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-type DeviceStatus = "ativo" | "online" | "offline";
+type DeviceStatus = "ativo" | "online" | "offline" | "pending";
 
 interface Device {
   id: number;
@@ -151,6 +151,7 @@ export default function PlayerMonitoring() {
   }
 
   const getStatus = (device: Device): DeviceStatus => {
+    if (!device.company_id || device.company_id === 'fd55dbdd-63da-442e-aa99-5575c0496622') return "pending";
     if (!device.last_heartbeat_at) return "offline";
     
     const now = new Date();
@@ -163,7 +164,6 @@ export default function PlayerMonitoring() {
     const offlineThreshold = 180;
 
     if (diffSeconds > offlineThreshold) return "offline";
-    if (diffSeconds > unstableThreshold) return "online"; // Consideramos online se estiver abaixo do threshold de instabilidade
     
     return "online";
   };
@@ -183,7 +183,7 @@ export default function PlayerMonitoring() {
   const stats = {
     total: devices.length,
     online: devices.filter(d => getStatus(d) === "online").length,
-    ativo: devices.filter(d => getStatus(d) === "ativo").length,
+    pending: devices.filter(d => getStatus(d) === "pending").length,
     offline: devices.filter(d => getStatus(d) === "offline").length,
   };
 
@@ -203,6 +203,12 @@ export default function PlayerMonitoring() {
               </span>
             )}
           </div>
+        );
+      case "pending":
+        return (
+          <Badge variant="outline" className="border-orange-500 text-orange-500 bg-orange-500/10 animate-pulse gap-1">
+            <AlertCircle className="h-3 w-3" /> Aguardando Cadastro
+          </Badge>
         );
       case "offline":
         return <Badge variant="destructive" className="gap-1"><WifiOff className="h-3 w-3" /> Offline</Badge>;
@@ -277,11 +283,11 @@ export default function PlayerMonitoring() {
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Ativos (Rodando)</CardTitle>
-                <Play className="h-4 w-4 text-green-500" />
+                <CardTitle className="text-sm font-medium">Aguardando Cadastro</CardTitle>
+                <AlertCircle className="h-4 w-4 text-orange-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-500">{stats.ativo}</div>
+                <div className="text-2xl font-bold text-orange-500">{stats.pending}</div>
               </CardContent>
             </Card>
             <Card>
@@ -322,7 +328,7 @@ export default function PlayerMonitoring() {
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
                 <option value="all">Todos os Status</option>
-                <option value="ativo">Rodando Mídia</option>
+                <option value="pending">Aguardando Cadastro</option>
                 <option value="online">Online</option>
                 <option value="offline">Offline</option>
               </select>
