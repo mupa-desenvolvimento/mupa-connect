@@ -99,21 +99,23 @@ export default function DeviceValidationPage() {
       return;
     }
 
-    toast.promise(
-      Promise.all(divergent.map(item => 
-        supabase.from("dispositivos")
-          .update({ 
-            tenant_id: item.expected_tenant, 
-            company_id: item.expected_company 
-          })
-          .eq("id", item.id)
-      )),
-      {
-        loading: 'Corrigindo dispositivos...',
-        success: 'Dispositivos atualizados com sucesso!',
-        error: 'Erro ao corrigir alguns dispositivos.',
-      }
-    ).then(() => refetch());
+    const fixPromise = Promise.all(divergent.map(item => 
+      supabase.from("dispositivos")
+        .update({ 
+          tenant_id: item.expected_tenant, 
+          company_id: item.expected_company 
+        })
+        .eq("id", item.id)
+    ));
+
+    toast.promise(fixPromise, {
+      loading: 'Corrigindo dispositivos...',
+      success: 'Dispositivos atualizados com sucesso!',
+      error: 'Erro ao corrigir alguns dispositivos.',
+    });
+    
+    await fixPromise;
+    refetch();
   };
 
   const exportCSV = () => {
