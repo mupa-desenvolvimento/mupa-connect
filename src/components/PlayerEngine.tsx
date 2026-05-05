@@ -423,8 +423,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
               readyToSwitchRef.current.A = true;
               if (activeLayer === "B") warmUpDecoder(e.currentTarget);
               e.currentTarget.style.transform = "translateZ(0)";
+              if (serial) FirebaseRealtimeService.logEvent(serial, "video_ready", { layer: "A", media: itemA?.name });
             }}
-            onError={performTransition}
+            onError={() => performTransition("error")}
           />
         ) : srcA ? (
           <img
@@ -439,8 +440,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
                 loadingStatusRef.current.A = true;
                 readyToSwitchRef.current.A = true;
               }
+              if (serial) FirebaseRealtimeService.logEvent(serial, "image_ready", { layer: "A", media: itemA?.name });
             }}
-            onError={performTransition}
+            onError={() => performTransition("error")}
           />
         ) : null}
       </div>
@@ -462,8 +464,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
               readyToSwitchRef.current.B = true;
               if (activeLayer === "A") warmUpDecoder(e.currentTarget);
               e.currentTarget.style.transform = "translateZ(0)";
+              if (serial) FirebaseRealtimeService.logEvent(serial, "video_ready", { layer: "B", media: itemB?.name });
             }}
-            onError={performTransition}
+            onError={() => performTransition("error")}
           />
         ) : srcB ? (
           <img
@@ -478,8 +481,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
                 loadingStatusRef.current.B = true;
                 readyToSwitchRef.current.B = true;
               }
+              if (serial) FirebaseRealtimeService.logEvent(serial, "image_ready", { layer: "B", media: itemB?.name });
             }}
-            onError={performTransition}
+            onError={() => performTransition("error")}
           />
         ) : null}
       </div>
