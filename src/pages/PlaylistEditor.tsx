@@ -227,6 +227,7 @@ export default function PlaylistEditor() {
   const [isSaving, setIsSaving] = useState(false);
   const [isDefault, setIsDefault] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [applyToAllDevices, setApplyToAllDevices] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [debugData, setDebugData] = useState<any>(null);
