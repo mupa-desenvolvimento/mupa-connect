@@ -6464,21 +6464,23 @@ export type Database = {
         Returns: Json
       }
       get_dispositivo_por_serial: {
-        Args: {
-          p_apelido_interno?: string
-          p_apps_instalados?: Json
-          p_campanhas?: Json
-          p_device_type?: string
-          p_empresa?: string
-          p_grupo_dispositivos?: string
-          p_ip_dispositivo?: string
-          p_num_filial?: string
-          p_online?: boolean
-          p_pin?: string
-          p_serial: string
-          p_tipo_da_licenca?: string
-        }
-        Returns: Json
+        Args: { p_serial: string }
+        Returns: {
+          apelido_interno: string
+          apps_instalados: string[]
+          atualizado: string
+          campanhas: string[]
+          empresa: string
+          grupo_dispositivos: string
+          id: number
+          ip_dispositivo: string
+          num_filial: string
+          online: boolean
+          pin: string
+          serial: string
+          tipo_da_licenca: string
+          type: string
+        }[]
       }
       get_dispositivos: { Args: never; Returns: Json }
       get_group_effective_playlist: {

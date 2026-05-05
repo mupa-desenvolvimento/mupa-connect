@@ -18,8 +18,7 @@ import {
   RotateCcw,
   Megaphone,
   Layers,
-  AlertTriangle,
-  Pencil
+  AlertTriangle
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -41,7 +40,6 @@ import { DeviceFirebaseCommandDrawer } from "@/components/DeviceFirebaseCommandD
 import { BulkCommandDialog } from "@/components/BulkCommandDialog";
 import { useUserRole } from "@/hooks/use-user-role";
 import { CreateDeviceModal } from "@/components/CreateDeviceModal";
-import { EditDeviceModal } from "@/components/EditDeviceModal";
 
 type DeviceStatus = "online" | "unstable" | "offline";
 
@@ -56,15 +54,7 @@ export default function DevicesPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [deviceToEdit, setDeviceToEdit] = useState<any | null>(null);
   const { tenantId, isSuperAdmin, isTecnico, isAdmin } = useUserRole();
-
-  const handleEditDevice = (e: React.MouseEvent, device: any) => {
-    e.stopPropagation();
-    setDeviceToEdit(device);
-    setEditModalOpen(true);
-  };
 
   const openDeviceDrawer = (device: any) => {
     setSelectedDevice(device);
@@ -82,8 +72,7 @@ export default function DevicesPage() {
         ),
         companies:company_id (
           id,
-          name,
-          tenant_id
+          name
         )
       `);
       
@@ -272,7 +261,7 @@ export default function DevicesPage() {
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="w-[25%]">Dispositivo</TableHead>
                   <TableHead>Serial</TableHead>
-                  {isSuperAdmin && <TableHead>Empresa / Tenant</TableHead>}
+                  {isSuperAdmin && <TableHead>Empresa</TableHead>}
                   <TableHead>Loja</TableHead>
                   <TableHead>Playlist</TableHead>
                   <TableHead>Última Atividade</TableHead>
@@ -289,23 +278,9 @@ export default function DevicesPage() {
                       <TableCell className="font-mono text-xs text-muted-foreground">{d.serial}</TableCell>
                       {isSuperAdmin && (
                         <TableCell>
-                          <div className="flex flex-col gap-1">
-                            <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded font-medium w-fit">
-                              {d.companies?.name || "Sem Empresa"}
-                            </span>
-                            {d.tenant_id && (
-                              <span className={cn(
-                                "text-[9px] text-muted-foreground font-mono truncate max-w-[80px]",
-                                // Se o dispositivo está vinculado a uma empresa mas o tenant_id é diferente do tenant da empresa
-                                d.companies && (d.companies as any).tenant_id && d.tenant_id !== (d.companies as any).tenant_id && "text-destructive font-bold"
-                              )}>
-                                {d.tenant_id.split('-')[0]}...
-                                {d.companies && (d.companies as any).tenant_id && d.tenant_id !== (d.companies as any).tenant_id && (
-                                  <AlertTriangle className="h-2 w-2 inline ml-1" />
-                                )}
-                              </span>
-                            )}
-                          </div>
+                          <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded font-medium">
+                            {d.companies?.name || "Global"}
+                          </span>
                         </TableCell>
                       )}
                       <TableCell><span className="text-xs px-2 py-1 bg-muted rounded-md">Loja {d.num_filial}</span></TableCell>
@@ -324,19 +299,14 @@ export default function DevicesPage() {
                       </TableCell>
                       <TableCell className="text-muted-foreground text-xs">{formatDate(d.last_heartbeat_at)}</TableCell>
                       <TableCell><StatusBadge status={status} /></TableCell>
-                        <TableCell className="text-right" onClick={e => e.stopPropagation()}>
-                          <div className="flex justify-end gap-1">
-                            {isSuperAdmin && (
-                              <Button size="icon" variant="ghost" className="h-8 w-8 text-primary/70 hover:text-primary hover:bg-primary/10" onClick={(e) => handleEditDevice(e, d)} title="Editar">
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {isTecnico && (
-                              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10" onClick={() => handleRebootDevice(d.id.toString(), d.apelido_interno)} title="Reiniciar"><RotateCcw className="h-4 w-4" /></Button>
-                            )}
-                            <Button asChild size="sm" variant="ghost" className="h-8 text-primary hover:bg-primary/10"><Link to={`/play/${d.serial}`} target="_blank"><Play className="h-3.5 w-3.5 mr-1" /> Player</Link></Button>
-                          </div>
-                        </TableCell>
+                      <TableCell className="text-right" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-end gap-1">
+                          {isTecnico && (
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10" onClick={() => handleRebootDevice(d.id.toString(), d.apelido_interno)} title="Reiniciar"><RotateCcw className="h-4 w-4" /></Button>
+                          )}
+                          <Button asChild size="sm" variant="ghost" className="h-8 text-primary hover:bg-primary/10"><Link to={`/play/${d.serial}`} target="_blank"><Play className="h-3.5 w-3.5 mr-1" /> Player</Link></Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -363,12 +333,6 @@ export default function DevicesPage() {
       <CreateDeviceModal 
         open={createModalOpen}
         onOpenChange={setCreateModalOpen}
-        onSuccess={() => refetch()}
-      />
-      <EditDeviceModal
-        device={deviceToEdit}
-        open={editModalOpen}
-        onOpenChange={setEditModalOpen}
         onSuccess={() => refetch()}
       />
     </div>
