@@ -330,7 +330,10 @@ export default function PlayerPage() {
       />
 
       {/* Top Overlay Layer */}
-      <div className="absolute inset-0 z-20 pointer-events-none flex flex-col justify-between p-6">
+      <div className={cn(
+        "absolute inset-0 z-20 pointer-events-none flex flex-col justify-between p-6",
+        isPreview && "rounded-3xl border-8 border-black shadow-inner"
+      )}>
         {/* Header: Device Info & Clock */}
         <div className="flex items-start justify-between w-full">
           {/* Device Info */}
