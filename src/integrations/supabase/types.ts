@@ -6703,6 +6703,7 @@ export type Database = {
         Args: { p_device_ids: string[] }
         Returns: undefined
       }
+      jsonb_to_text_array: { Args: { p_jsonb: Json }; Returns: string[] }
       list_tenant_schemas: {
         Args: never
         Returns: {
