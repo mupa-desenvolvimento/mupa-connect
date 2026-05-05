@@ -141,7 +141,7 @@ export default function PlayerMonitoring() {
   async function fetchDevices() {
     const { data, error } = await supabase
       .from("dispositivos")
-      .select("id, serial, apelido_interno, num_filial, grupo_dispositivos, last_heartbeat_at, last_proof_at, current_playlist_id, current_media_id")
+      .select("id, serial, apelido_interno, num_filial, grupo_dispositivos, last_heartbeat_at, last_proof_at, current_playlist_id, current_media_id, player_status")
       .order('last_heartbeat_at', { ascending: false });
 
     if (!error && data) {
@@ -157,16 +157,14 @@ export default function PlayerMonitoring() {
     const lastHeartbeat = new Date(device.last_heartbeat_at);
     const diffSeconds = (now.getTime() - lastHeartbeat.getTime()) / 1000;
 
-    // Aumentado para 5 minutos (300s) para ser consistente com o resto do sistema
-    if (diffSeconds > 300) return "offline";
-    
-    if (device.last_proof_at) {
-      const lastProof = new Date(device.last_proof_at);
-      const proofDiffSeconds = (now.getTime() - lastProof.getTime()) / 1000;
-      // Se teve prova de exibição nos últimos 5 minutos, consideramos rodando
-      if (proofDiffSeconds < 300) return "ativo";
-    }
+    // Regra: se está reproduzindo, não marca como instável imediatamente (até 180s)
+    const isPlaying = (device as any).player_status === "playing";
+    const unstableThreshold = isPlaying ? 180 : 90;
+    const offlineThreshold = 180;
 
+    if (diffSeconds > offlineThreshold) return "offline";
+    if (diffSeconds > unstableThreshold) return "online"; // Consideramos online se estiver abaixo do threshold de instabilidade
+    
     return "online";
   };
 
@@ -189,14 +187,27 @@ export default function PlayerMonitoring() {
     offline: devices.filter(d => getStatus(d) === "offline").length,
   };
 
-  const getStatusBadge = (status: DeviceStatus) => {
+  const getStatusBadge = (status: DeviceStatus, device?: Device) => {
+    const isPlaying = device && (device as any).player_status === "playing";
+    
     switch (status) {
-      case "ativo":
-        return <Badge className="bg-green-500 hover:bg-green-600 gap-1"><Play className="h-3 w-3 fill-current" /> Rodando Mídia</Badge>;
       case "online":
-        return <Badge className="bg-blue-500 hover:bg-blue-600 gap-1"><Activity className="h-3 w-3" /> Online</Badge>;
-      default:
+        return (
+          <div className="flex flex-col gap-1">
+            <Badge className="bg-green-500 hover:bg-green-600 gap-1">
+              <Activity className="h-3 w-3" /> Online
+            </Badge>
+            {isPlaying && (
+              <span className="text-[10px] text-green-600 font-bold flex items-center gap-1 ml-1">
+                <Play className="h-2 w-2 fill-current" /> Reproduzindo
+              </span>
+            )}
+          </div>
+        );
+      case "offline":
         return <Badge variant="destructive" className="gap-1"><WifiOff className="h-3 w-3" /> Offline</Badge>;
+      default:
+        return <Badge className="bg-yellow-500 hover:bg-yellow-600 gap-1">Instável</Badge>;
     }
   };
 
@@ -343,7 +354,7 @@ export default function PlayerMonitoring() {
                   filteredDevices.map((device) => (
                     <TableRow key={device.id}>
                       <TableCell>
-                        {getStatusBadge(getStatus(device))}
+                        {getStatusBadge(getStatus(device), device)}
                       </TableCell>
                       <TableCell>
                         <div className="font-medium">{device.apelido_interno || "Sem nome"}</div>
