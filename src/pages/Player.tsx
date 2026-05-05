@@ -334,7 +334,7 @@ export default function PlayerPage() {
         {/* Header: Device Info & Clock */}
         <div className="flex items-start justify-between w-full">
           {/* Device Info */}
-          {(appearance.show_device_name !== false) && (
+          {(appearance.show_device_name !== false && !isPreview) && (
             <div className="flex items-center gap-3 animate-fade-in bg-black/20 backdrop-blur-sm p-3 rounded-xl border border-white/5">
               <div className="h-10 w-10 rounded-lg bg-gradient-primary grid place-items-center font-display font-bold text-primary-foreground shadow-lg shadow-primary/20">M</div>
               <div className="leading-tight">
