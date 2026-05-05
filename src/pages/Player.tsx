@@ -124,7 +124,6 @@ export default function PlayerPage() {
 
         if (!deviceCode) return;
 
-        console.log("[Player] Fetching initial manifest for device:", deviceCode);
         const result = await ManifestService.fetchManifest(deviceCode);
         setManifest(result.manifest);
         if (result.device) {
