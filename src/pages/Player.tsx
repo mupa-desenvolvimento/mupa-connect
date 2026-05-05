@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useDeviceCommandChannel } from "@/hooks/useDeviceCommandChannel";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,7 @@ import { ManifestManager, ScheduleResolver, MediaCacheService } from "@/componen
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { ManifestService } from "@/services/ManifestService";
 import { cn } from "@/lib/utils";
+import * as faceapi from "face-api.js";
 
 interface AppearanceConfig {
   show_device_name?: boolean;
@@ -49,6 +50,12 @@ export default function PlayerPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [lastIndexChange, setLastIndexChange] = useState(Date.now());
   const [syncToast, setSyncToast] = useState<{ msg: string; ts: number } | null>(null);
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+  const [faceDetectionActive, setFaceDetectionActive] = useState(false);
+  
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const detectionIntervalRef = useRef<number | null>(null);
 
   const appearance = useMemo(() => (manifest?.appearance_config || {}) as AppearanceConfig, [manifest]);
 
@@ -302,6 +309,108 @@ export default function PlayerPage() {
     return () => clearInterval(t);
   }, []);
 
+  // Face Detection with Face-API
+  useEffect(() => {
+    const loadModels = async () => {
+      try {
+        const MODEL_URL = '/models';
+        console.log("[Face Detection] Loading models from:", MODEL_URL);
+        
+        await Promise.all([
+          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+          faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
+          faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL)
+        ]);
+        
+        console.log("[Face Detection] All models loaded successfully!");
+        setModelsLoaded(true);
+        startCamera();
+      } catch (error) {
+        console.error("[Face Detection] Error loading models:", error);
+      }
+    };
+
+    const startCamera = async () => {
+      if (!videoRef.current) return;
+      
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true
+        });
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          console.log("[Face Detection] Camera started!");
+          setFaceDetectionActive(true);
+          startDetectionLoop();
+        };
+      } catch (error) {
+        console.error("[Face Detection] Error accessing camera:", error);
+      }
+    };
+
+    const startDetectionLoop = () => {
+      if (detectionIntervalRef.current) {
+        clearInterval(detectionIntervalRef.current);
+      }
+      
+      detectionIntervalRef.current = window.setInterval(async () => {
+        if (!videoRef.current || !canvasRef.current || !modelsLoaded) return;
+        
+        const options = new faceapi.TinyFaceDetectorOptions();
+        const result = await faceapi
+          .detectAllFaces(videoRef.current, options)
+          .withFaceLandmarks()
+          .withFaceExpressions()
+          .withAgeAndGender();
+        
+        if (result.length > 0) {
+          result.forEach((face, index) => {
+            // Get the most probable expression
+            const expressions = face.expressions.asSortedArray();
+            const mostProbableExpression = expressions[0];
+            
+            const faceData = {
+              timestamp: new Date().toISOString(),
+              faceIndex: index,
+              age: Math.round(face.age),
+              gender: face.gender,
+              genderProbability: face.genderProbability,
+              expressions: expressions.map((exp: any) => ({
+                expression: exp.expression,
+                probability: exp.probability
+              })),
+              mostProbableExpression: {
+                expression: mostProbableExpression.expression,
+                probability: mostProbableExpression.probability
+              }
+            };
+            
+            console.log("[Face Detection] Face detected:", faceData);
+          });
+        }
+      }, 1000); // Detect every 1 second
+    };
+
+    const cleanup = () => {
+      if (detectionIntervalRef.current) {
+        clearInterval(detectionIntervalRef.current);
+      }
+      
+      if (videoRef.current?.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+
+    if (!isPreview) {
+      loadModels();
+    }
+
+    return cleanup;
+  }, [modelsLoaded, isPreview]);
+
   if (isLoading && !activePlaylist.length) {
     return <div className="fixed inset-0 bg-black flex items-center justify-center text-white/40 font-mono text-xs uppercase tracking-widest">Iniciando Engine Profissional...</div>;
   }
@@ -319,6 +428,23 @@ export default function PlayerPage() {
 
   return (
     <div className="fixed inset-0 bg-black overflow-hidden text-white select-none">
+      {/* Hidden camera and canvas for face detection */}
+      {!isPreview && (
+        <>
+          <video 
+            ref={videoRef} 
+            autoPlay 
+            muted 
+            playsInline 
+            className="fixed top-0 left-0 w-0 h-0 object-cover"
+          />
+          <canvas 
+            ref={canvasRef} 
+            className="fixed top-0 left-0 w-0 h-0"
+          />
+        </>
+      )}
+
       <PlayerEngine 
         playlist={activePlaylist} 
         volume={volume}
