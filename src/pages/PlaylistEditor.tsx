@@ -1,10 +1,84 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
-// ... keep existing code
+import { useParams, useNavigate } from "react-router-dom";
+import { 
+  DndContext, 
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragOverlay,
+  defaultDropAnimationSideEffects
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  horizontalListSortingStrategy,
+  useSortable
+} from "@dnd-kit/sortable";
+import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
+import { CSS } from "@dnd-kit/utilities";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  ChevronLeft, 
+  Play, 
+  Save, 
+  Plus, 
+  Search, 
+  Image as ImageIcon, 
+  Video, 
+  Clock, 
+  GripVertical, 
+  Trash2,
+  Settings2,
+  Monitor,
+  Calendar,
+  Layers,
+  CheckCircle2,
+  RefreshCw,
+  Loader2,
+  Type,
+  Maximize2,
+  Bug,
+  ChevronDown,
+  ChevronUp,
+  X,
+  Pause
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
+import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { usePlaylist, useMedias, useTenant } from "@/hooks/use-playlist-data";
+import { supabase } from "@/integrations/supabase/client";
+import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
+import { useQueryClient } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
+import { handlePlaylistError } from "@/utils/error-handlers";
 import { PlaylistErrorBanner } from "@/components/PlaylistErrorBanner";
 
 // --- Constants ---
-const TIMELINE_MIN_WIDTH = 1200; // Minimum width in pixels for the timeline
-const PIXELS_PER_SECOND = 20; // Base zoom level
+const PIXELS_PER_SECOND = 15; // Zoom level
 
 // --- Utils ---
 const formatTime = (seconds: number) => {
