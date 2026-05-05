@@ -126,7 +126,10 @@ export default function DevicesPage() {
     if (!devices) return [];
     return devices.filter(d => {
       const status = getStatus(d.last_heartbeat_at, d.last_proof_at);
-      const matchesSearch = d.apelido_interno?.toLowerCase().includes(search.toLowerCase()) || d.serial?.toLowerCase().includes(search.toLowerCase());
+      const matchesSearch = 
+        (d.apelido_interno?.toLowerCase().includes(search.toLowerCase()) || 
+         d.serial?.toLowerCase().includes(search.toLowerCase()) ||
+         d.companies?.name?.toLowerCase().includes(search.toLowerCase()));
       const matchesStore = storeFilter === "all" || d.num_filial === storeFilter;
       const matchesGroup = groupFilter === "all" || d.grupo_dispositivos === groupFilter;
       const matchesStatus = statusFilter === "all" || status === statusFilter;
@@ -141,7 +144,7 @@ export default function DevicesPage() {
       if (a.playlist_id && !b.playlist_id) return 1;
       return (a.apelido_interno || "").localeCompare(b.apelido_interno || "");
     });
-  }, [devices, search, storeFilter, groupFilter, statusFilter]);
+  }, [devices, search, storeFilter, groupFilter, statusFilter, playlistFilter]);
 
   const groups = useMemo(() => {
     if (!devices) return [];
