@@ -59,6 +59,15 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { usePlaylist, useMedias, useTenant } from "@/hooks/use-playlist-data";
 import { supabase } from "@/integrations/supabase/client";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
