@@ -165,7 +165,6 @@ export function EditDeviceModal({ open, onOpenChange, device, onSuccess }: EditD
         .from("dispositivos")
         .update(updateData)
         .eq("id", device.id);
-        .eq("id", device.id);
 
       if (updateError) throw updateError;
 
