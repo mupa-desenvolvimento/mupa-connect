@@ -87,6 +87,41 @@ interface EditorPlaylistItem {
   media?: any;
 }
 
+const DEFAULT_APPEARANCE_CONFIG = {
+  show_device_name: true,
+  show_datetime: true,
+  show_serial: false,
+  transition_type: "fade",
+  transition_duration: 500,
+  footer: {
+    enabled: false,
+    text: "Consulte o preço aqui",
+    background_color: "#000000AA",
+    text_color: "#FFFFFF",
+    height: 60
+  },
+  logo: {
+    enabled: false,
+    url: "",
+    position: "top-left",
+    size: 80,
+    opacity: 1
+  }
+};
+
+const normalizeAppearanceConfig = (config?: any) => ({
+  ...DEFAULT_APPEARANCE_CONFIG,
+  ...(config && typeof config === "object" ? config : {}),
+  footer: {
+    ...DEFAULT_APPEARANCE_CONFIG.footer,
+    ...(config?.footer && typeof config.footer === "object" ? config.footer : {})
+  },
+  logo: {
+    ...DEFAULT_APPEARANCE_CONFIG.logo,
+    ...(config?.logo && typeof config.logo === "object" ? config.logo : {})
+  }
+});
+
 // --- Horizontal Sortable Item Component ---
 const SortableItem = ({ 
   item, 
