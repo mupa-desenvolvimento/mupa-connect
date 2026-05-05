@@ -82,7 +82,8 @@ export default function DevicesPage() {
         ),
         companies:company_id (
           id,
-          name
+          name,
+          tenant_id
         )
       `);
       
