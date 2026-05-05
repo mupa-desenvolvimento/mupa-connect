@@ -143,7 +143,7 @@ export default function PlayerMonitoring() {
   async function fetchDevices() {
     const { data, error } = await supabase
       .from("dispositivos")
-      .select("id, serial, apelido_interno, num_filial, grupo_dispositivos, last_heartbeat_at, last_proof_at, current_playlist_id, current_media_id, player_status")
+      .select("id, serial, apelido_interno, num_filial, grupo_dispositivos, last_heartbeat_at, last_proof_at, current_playlist_id, current_media_id, player_status, company_id")
       .order('last_heartbeat_at', { ascending: false });
 
     if (!error && data) {
