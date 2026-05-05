@@ -44,6 +44,15 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     
     isSwitchingRef.current = true;
     console.log(`[PlayerEngine] Next media trigger. Motivo: ${reason}`);
+    
+    // Log detalhado de carregamento e transição
+    if (serial) {
+      FirebaseRealtimeService.logEvent(serial, "transition_start", {
+        reason,
+        current_index: currentIndexRef.current,
+        timestamp: new Date().toISOString()
+      });
+    }
 
     const nextIdx = (currentIndexRef.current + 1) % playlistRef.current.length;
     currentIndexRef.current = nextIdx;
