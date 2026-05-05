@@ -242,14 +242,14 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     }
   };
 
-  // CONTROLADOR ÚNICO DE TEMPO (Efeito isolado para o Timer principal)
+  // CONTROLADOR ÚNICO DE TEMPO (START MEDIA LOGIC)
   useEffect(() => {
     if (!isReady) return;
 
     const currentItem = activeLayer === "A" ? itemA : itemB;
     if (!currentItem) return;
     
-    // CONTROLE ÚNICO DE TEMPO
+    // Limpar timer anterior
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
@@ -258,15 +258,13 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     const duration = Math.max(currentItem.duration || 0, MIN_DURATION);
     const ms = duration * 1000;
     
-    // O timer deve disparar exatamente no tempo da mídia
-    // A transição visual (fade) ocorre via CSS ao mudar o activeLayer em performTransition
-    console.log(`[PlayerEngine] Mídia: ${currentItem.name} | Duração: ${duration}s | Troca em: ${ms}ms`);
+    console.log(`[PlayerEngine] START Mídia: ${currentItem.name} | DURATION: ${duration}s`);
     
+    // Agendar próxima mídia
     timerRef.current = setTimeout(() => {
+      console.log(`[PlayerEngine] TIMER TRIGGERED for ${currentItem.name}`);
       performTransition();
     }, ms);
-
-    startWatchdog(ms);
 
     return () => {
       if (timerRef.current) {
@@ -274,7 +272,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
         timerRef.current = null;
       }
     };
-  }, [activeLayer, itemA, itemB, isReady, performTransition, startWatchdog]);
+  }, [activeLayer, itemA, itemB, isReady, performTransition]);
 
   /**
    * Periodic Heartbeat (RequestAnimationFrame)
