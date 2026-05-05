@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { MediaCacheService } from "./PlayerServices";
+import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { cn } from "@/lib/utils";
 
 const MIN_DURATION = 3; // Segundos mínimos para qualquer mídia
