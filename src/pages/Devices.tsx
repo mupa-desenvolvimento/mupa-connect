@@ -271,7 +271,7 @@ export default function DevicesPage() {
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="w-[25%]">Dispositivo</TableHead>
                   <TableHead>Serial</TableHead>
-                  {isSuperAdmin && <TableHead>Empresa</TableHead>}
+                  {isSuperAdmin && <TableHead>Empresa / Tenant</TableHead>}
                   <TableHead>Loja</TableHead>
                   <TableHead>Playlist</TableHead>
                   <TableHead>Última Atividade</TableHead>
