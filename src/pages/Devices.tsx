@@ -330,6 +330,11 @@ export default function DevicesPage() {
         stores={stores || []}
         groups={groups}
       />
+      <CreateDeviceModal 
+        open={createModalOpen}
+        onOpenChange={setCreateModalOpen}
+        onSuccess={() => refetch()}
+      />
     </div>
   );
 }
