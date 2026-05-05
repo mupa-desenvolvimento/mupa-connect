@@ -154,9 +154,9 @@ export function EditDeviceModal({ open, onOpenChange, device, onSuccess }: EditD
           apelido_interno: values.apelido_interno,
           num_filial: values.num_filial,
           tenant_id: values.tenant_id,
-          company_id: values.company_id,
-          store_id: values.store_id,
-          playlist_id: values.playlist_id,
+          company_id: values.company_id === "none" ? null : values.company_id,
+          store_id: values.store_id === "none" ? null : values.store_id,
+          playlist_id: values.playlist_id === "none" ? null : values.playlist_id,
           tipo_da_licenca: values.tipo_da_licenca,
           device_type: values.device_type,
           pin: values.pin,
@@ -166,21 +166,16 @@ export function EditDeviceModal({ open, onOpenChange, device, onSuccess }: EditD
 
       if (updateError) throw updateError;
 
-      // 2. Handle group linkage (using group_devices junction table if needed)
-      // Note: In this schema group_id might be a legacy field or need proper junction update
-      // Let's check if group_id column exists on dispositivos or we need junction
-      const { data: columns } = await supabase.rpc('get_column_names', { table_name: 'dispositivos' });
-      const hasGroupIdCol = Array.isArray(columns) && columns.includes('group_id');
-      
-      if (values.group_id) {
-        // If not a direct column, update group_devices
-        // (Assuming junction table update for now as it's cleaner multi-tenant practice)
+      // 2. Handle group linkage (using group_devices junction table)
+      if (values.group_id && values.group_id !== "none") {
         await supabase.from("group_devices").delete().eq("device_id", device.id);
         await supabase.from("group_devices").insert({
           device_id: device.id,
           group_id: values.group_id,
           tenant_id: values.tenant_id
         });
+      } else {
+        await supabase.from("group_devices").delete().eq("device_id", device.id);
       }
 
       // 3. Log the change
