@@ -39,7 +39,7 @@ export default function PlayerPage() {
   const { deviceCode } = useParams();
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get("preview") === "true";
-  const playlistId = searchParams.get("id");
+  const previewPlaylistId = searchParams.get("id");
   const [deviceUuid, setDeviceUuid] = useState<string | undefined>();
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
   const [manifest, setManifest] = useState<any>(null);
