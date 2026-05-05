@@ -170,9 +170,16 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
       <div 
         key={`layer-${activeLayer}-${currentIndex}`}
         className={cn(
-          "absolute inset-0 transition-opacity duration-500 ease-in-out animate-fade-in",
-          "opacity-100 z-10"
+          "absolute inset-0 z-10",
+          (!appearance?.transition_type || appearance.transition_type === "fade") && "animate-fade-in",
+          appearance?.transition_type === "slide-left" && "animate-slide-left",
+          appearance?.transition_type === "slide-right" && "animate-slide-right",
+          appearance?.transition_type === "zoom" && "animate-zoom-in",
+          appearance?.transition_type === "none" && "opacity-100"
         )}
+        style={{
+          animationDuration: `${appearance?.transition_duration || 500}ms`
+        }}
       >
         {!currentMedia?.url ? (
           <div className="w-full h-full bg-black flex items-center justify-center text-white/20 font-mono text-xs">
