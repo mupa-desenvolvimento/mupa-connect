@@ -160,22 +160,29 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
   }, [activeLayer, itemA, itemB, volume, onMediaChange]);
 
   /**
-   * Watchdog mechanism to prevent getting stuck
+   * Watchdog mechanism (ESSENCIAL para WebView)
    */
-  const startWatchdog = useCallback((durationMs: number) => {
-    if (watchdogTimerRef.current) clearTimeout(watchdogTimerRef.current);
-    
-    // Safety buffer: watchdog triggers 5 seconds after expected transition
-    const timeout = durationMs + 5000;
-    
-    watchdogTimerRef.current = setTimeout(() => {
-      console.warn("[PlayerEngine] Watchdog triggered! Forcing transition to prevent freeze.");
-      // Ensure the next layer is marked as ready if it was stuck
-      const inactiveLayer = activeLayer === "A" ? "B" : "A";
-      readyToSwitchRef.current[inactiveLayer] = true;
-      performTransition();
-    }, timeout);
-  }, [activeLayer, performTransition]);
+  useEffect(() => {
+    const watchdog = setInterval(() => {
+      if (!isReady || isTransitioningRef.current) return;
+
+      const currentItem = activeLayer === "A" ? itemA : itemB;
+      if (!currentItem) return;
+
+      const now = Date.now();
+      const elapsed = now - lastTransitionTimeRef.current;
+      const duration = Math.max(currentItem.duration || 0, MIN_DURATION);
+      const expectedMs = duration * 1000;
+
+      // Watchdog força o avanço se o tempo decorrido exceder a duração + margem de 2s
+      if (elapsed > expectedMs + 2000) {
+        console.warn(`[PlayerEngine] FORÇANDO AVANÇO (WATCHDOG). ELAPSED: ${elapsed}ms | DURATION: ${expectedMs}ms`);
+        performTransition();
+      }
+    }, 2000);
+
+    return () => clearInterval(watchdog);
+  }, [isReady, activeLayer, itemA, itemB, performTransition]);
 
   /**
    * Prepare the inactive layer with the next media item in the playlist.
