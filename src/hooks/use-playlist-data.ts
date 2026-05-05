@@ -14,9 +14,9 @@ export function useTenant() {
   };
 }
 
-export function useMedias(contextId?: string) {
+export function useMedias(contextId?: string, isSuperAdmin?: boolean) {
   return useQuery({
-    queryKey: ["medias", contextId],
+    queryKey: ["medias", contextId, isSuperAdmin],
     queryFn: async () => {
       let query = supabase
         .from("media_items")
@@ -24,9 +24,12 @@ export function useMedias(contextId?: string) {
         .in("status", ["ready", "active"])
         .order("created_at", { ascending: false });
 
-      if (contextId) {
-        // Try to filter by company or tenant
-        query = query.or(`company_id.eq.${contextId},tenant_id.eq.${contextId}`);
+      if (!isSuperAdmin) {
+        if (contextId) {
+          query = query.or(`company_id.eq.${contextId},tenant_id.eq.${contextId}`);
+        } else {
+          return [];
+        }
       }
 
       const { data, error } = await query;

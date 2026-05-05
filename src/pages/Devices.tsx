@@ -126,7 +126,10 @@ export default function DevicesPage() {
     if (!devices) return [];
     return devices.filter(d => {
       const status = getStatus(d.last_heartbeat_at, d.last_proof_at);
-      const matchesSearch = d.apelido_interno?.toLowerCase().includes(search.toLowerCase()) || d.serial?.toLowerCase().includes(search.toLowerCase());
+      const matchesSearch = 
+        (d.apelido_interno?.toLowerCase().includes(search.toLowerCase()) || 
+         d.serial?.toLowerCase().includes(search.toLowerCase()) ||
+         d.companies?.name?.toLowerCase().includes(search.toLowerCase()));
       const matchesStore = storeFilter === "all" || d.num_filial === storeFilter;
       const matchesGroup = groupFilter === "all" || d.grupo_dispositivos === groupFilter;
       const matchesStatus = statusFilter === "all" || status === statusFilter;
@@ -141,7 +144,7 @@ export default function DevicesPage() {
       if (a.playlist_id && !b.playlist_id) return 1;
       return (a.apelido_interno || "").localeCompare(b.apelido_interno || "");
     });
-  }, [devices, search, storeFilter, groupFilter, statusFilter]);
+  }, [devices, search, storeFilter, groupFilter, statusFilter, playlistFilter]);
 
   const groups = useMemo(() => {
     if (!devices) return [];
@@ -206,7 +209,7 @@ export default function DevicesPage() {
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-card p-4 rounded-xl border border-border/60 shadow-sm sticky top-0 z-10">
         <div className="relative flex-1 w-full md:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar dispositivo ou serial..." className="pl-10 h-10 bg-background/50 border-border/40 focus:bg-background" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input placeholder={isSuperAdmin ? "Buscar por nome, serial ou empresa..." : "Buscar dispositivo ou serial..."} className="pl-10 h-10 bg-background/50 border-border/40 focus:bg-background" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <div className="flex flex-wrap gap-2 w-full md:w-auto">
           <Select value={storeFilter} onValueChange={setStoreFilter}>

@@ -17,13 +17,11 @@ export interface Device {
   internal_group_name?: string;
 }
 
-export function useDevices(tenantId: string | null) {
+export function useDevices(tenantId: string | null, isSuperAdmin?: boolean) {
   return useQuery({
-    queryKey: ["devices", tenantId],
+    queryKey: ["devices", tenantId, isSuperAdmin],
     queryFn: async () => {
-      if (!tenantId) return [];
-
-      const { data: devices, error } = await supabase
+      let query = supabase
         .from("dispositivos")
         .select(`
           id,
@@ -43,8 +41,14 @@ export function useDevices(tenantId: string | null) {
             internal_group_id,
             store_internal_groups (name)
           )
-        `)
-        .eq('tenant_id', tenantId);
+        `);
+
+      if (!isSuperAdmin) {
+        if (!tenantId) return [];
+        query = query.eq('tenant_id', tenantId);
+      }
+
+      const { data: devices, error } = await query;
 
       if (error) throw error;
 
@@ -56,6 +60,6 @@ export function useDevices(tenantId: string | null) {
         internal_group_name: d.store_internal_group_devices?.[0]?.store_internal_groups?.name
       })) as Device[];
     },
-    enabled: !!tenantId,
+    enabled: !!tenantId || !!isSuperAdmin,
   });
 }
