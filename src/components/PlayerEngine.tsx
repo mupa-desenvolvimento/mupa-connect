@@ -198,6 +198,8 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
   const prepareNextBuffer = async () => {
     const inactiveLayer = activeLayer === "A" ? "B" : "A";
     const currentPlaylist = playlistRef.current;
+    if (!currentPlaylist.length) return;
+
     const nextIndex = (currentIndexRef.current + 1) % currentPlaylist.length;
     const nextItem = currentPlaylist[nextIndex];
 
@@ -206,13 +208,13 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     readyToSwitchRef.current[inactiveLayer] = false;
     loadingStatusRef.current[inactiveLayer] = false;
 
-    // Fallback for loading timeout
+    // Fallback for loading timeout: Se não carregar em 8s, marca como pronto para não travar o loop
     const loadTimeout = setTimeout(() => {
       if (!loadingStatusRef.current[inactiveLayer]) {
-        console.warn(`[PlayerEngine] Buffer loading timed out for layer ${inactiveLayer}. Forcing ready state.`);
+        console.warn(`[PlayerEngine] Buffer loading timed out for layer ${inactiveLayer}. Forcing ready state to avoid lock.`);
         readyToSwitchRef.current[inactiveLayer] = true;
       }
-    }, 8000); // 8 seconds load timeout
+    }, 8000);
 
     try {
       const blobUrl = await MediaCacheService.getBlobUrl(nextItem.url);
@@ -236,16 +238,16 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
         };
         img.onerror = () => {
           clearTimeout(loadTimeout);
-          console.warn("[PlayerEngine] Image load failed, skipping to ready.");
+          console.warn("[PlayerEngine] Image load failed, allowing transition to handle error.");
           readyToSwitchRef.current[inactiveLayer] = true;
         };
       } else {
-        // For videos, canplaythrough will clear the timeout
+        // Para vídeos, o evento canplaythrough limpará o timeout
         (window as any)[`loadTimeout${inactiveLayer}`] = loadTimeout;
       }
     } catch (err) {
       clearTimeout(loadTimeout);
-      console.error("[PlayerEngine] Buffer preparation failed", err);
+      console.error("[PlayerEngine] Buffer preparation failed, forcing ready:", err);
       readyToSwitchRef.current[inactiveLayer] = true;
     }
   };
