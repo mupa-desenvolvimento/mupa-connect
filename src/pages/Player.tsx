@@ -400,10 +400,10 @@ export default function PlayerPage() {
           {/* Configurable Footer - Refined & Elegant */}
           {appearance.footer?.enabled && (
             <div 
-              className="absolute bottom-6 right-6 z-40 flex items-center justify-center gap-2 px-6 py-3 rounded-2xl backdrop-blur-md shadow-2xl border border-white/5 animate-fade-in max-w-[85%] pointer-events-none"
+              className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center justify-center px-8 py-3 rounded-2xl backdrop-blur-md shadow-2xl border border-white/5 animate-fade-in max-w-[90%] pointer-events-none"
               style={{ 
                 backgroundColor: appearance.footer.background_color || "rgba(0, 0, 0, 0.6)",
-                color: appearance.footer.text_color || "#FFFFFF",
+                color: appearance.footer.text_color || "hsl(var(--foreground))",
               }}
             >
               <div className="flex flex-col items-center justify-center text-center leading-tight">
@@ -411,19 +411,12 @@ export default function PlayerPage() {
                   className="font-display tracking-wide"
                   style={{ 
                     fontFamily: "'Bebas Neue', sans-serif",
-                    fontSize: "1.6rem",
+                    fontSize: "1.8rem",
                     letterSpacing: "0.05em"
                   }}
                 >
                   <span className="opacity-95 block line-clamp-2">{appearance.footer.text}</span>
                 </div>
-                {deviceInfo && (
-                  <div className="flex items-center gap-1.5 mt-1 opacity-50 font-mono text-[9px] uppercase tracking-widest">
-                    <span>Filial {deviceInfo.num_filial}</span>
-                    <span>•</span>
-                    <span>ID: {deviceCode}</span>
-                  </div>
-                )}
               </div>
             </div>
           )}
