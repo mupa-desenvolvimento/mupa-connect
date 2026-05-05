@@ -138,12 +138,14 @@ const SortableItem = ({
   item, 
   index, 
   isSelected, 
-  onSelect 
+  onSelect,
+  timelineMode = false
 }: { 
   item: EditorPlaylistItem, 
   index: number, 
   isSelected: boolean,
-  onSelect: (item: EditorPlaylistItem) => void
+  onSelect: (item: EditorPlaylistItem) => void,
+  timelineMode?: boolean
 }) => {
   const {
     attributes,
