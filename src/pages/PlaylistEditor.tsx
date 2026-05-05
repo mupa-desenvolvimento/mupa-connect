@@ -818,7 +818,7 @@ export default function PlaylistEditor() {
                             <div className="flex gap-2">
                               <Input 
                                 type="color"
-                                value={appearanceConfig.footer.background_color.substring(0, 7)} 
+                                value={(appearanceConfig.footer?.background_color || "#000000AA").substring(0, 7)} 
                                 onChange={(e) => {
                                   setAppearanceConfig({
                                     ...appearanceConfig,
