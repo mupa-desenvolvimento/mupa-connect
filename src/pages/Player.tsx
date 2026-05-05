@@ -112,20 +112,19 @@ export default function PlayerPage() {
     
     const media = activePlaylist[idx];
     if (media && deviceInfo?.id) {
-      // 1. Proof of Play Log (Legacy compat)
-      supabase.functions.invoke('device-api/proof', {
+      // 1. Firebase Realtime Heartbeat (New)
+      FirebaseRealtimeService.sendHeartbeat(deviceCode!, media.id?.toString());
+
+      // 2. Proof of Play Log (Legacy compat)
+      supabase.functions.invoke('device-api/heartbeat', { 
         body: { 
           serial: deviceInfo.serial,
-          playlist_id: manifest?.playlist_id,
           media_id: media.id,
-          payload: {
-            media_name: media.name,
-            playlist_name: manifest?.name
-          }
-        }
+          playlist_id: manifest?.playlist_id
+        } 
       }).catch(() => {});
 
-      // 2. Trade Marketing Event (New Module)
+      // 3. Trade Marketing Event (New Module)
       supabase.from('media_events').insert({
         device_id: deviceInfo.id,
         media_id: media.id?.toString(),
@@ -141,7 +140,7 @@ export default function PlayerPage() {
         if (error) console.error("[Player] Failed to log media event:", error);
       });
     }
-  }, [activePlaylist, deviceInfo, manifest]);
+  }, [activePlaylist, deviceInfo, manifest, deviceCode]);
 
   // 4. Background Sync (Polling) - Silent & Efficient
   useEffect(() => {
