@@ -44,6 +44,15 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     
     isSwitchingRef.current = true;
     console.log(`[PlayerEngine] Next media trigger. Motivo: ${reason}`);
+    
+    // Log detalhado de carregamento e transição
+    if (serial) {
+      FirebaseRealtimeService.logEvent(serial, "transition_start", {
+        reason,
+        current_index: currentIndexRef.current,
+        timestamp: new Date().toISOString()
+      });
+    }
 
     const nextIdx = (currentIndexRef.current + 1) % playlistRef.current.length;
     currentIndexRef.current = nextIdx;
@@ -106,24 +115,50 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     };
   }, [currentIndex, playlist, nextMedia, serial]);
 
-  // Watchdog de segurança (opcional mas recomendado para WebView)
+  // Watchdog de segurança (CRÍTICO para WebView)
+  // Verifica se o tempo real decorrido excedeu a duração da mídia + margem de erro
   useEffect(() => {
+    const lastTransitionRef = { time: Date.now() };
+    
     const watchdog = setInterval(() => {
       if (isSwitchingRef.current) return;
       
       const media = playlistRef.current[currentIndexRef.current];
       if (!media) return;
 
-      // Se for vídeo e estiver pausado ou travado (e não for erro), tenta recuperar
+      const now = Date.now();
+      const elapsed = now - lastTransitionRef.time;
+      const duration = Math.max(media.duration || 5, 3);
+      const threshold = (duration * 1000) + 5000; // Duração + 5 segundos de folga
+
+      // 1. Recuperação de Vídeo Travado
       if (media.type === "video" && videoRef.current) {
         if (videoRef.current.paused && !videoRef.current.ended) {
-           videoRef.current.play().catch(() => nextMedia("watchdog_video_fail"));
+          console.warn("[PlayerEngine] Vídeo pausado inesperadamente, tentando play...");
+          videoRef.current.play().catch(() => nextMedia("watchdog_video_fail"));
         }
       }
-    }, 5000);
+
+      // 2. Recuperação de Travamento Lógico (Time-based)
+      if (elapsed > threshold) {
+        console.error(`[PlayerEngine] !!! TRAVAMENTO DETECTADO !!! Forçando avanço. Elapsed: ${elapsed}ms | Threshold: ${threshold}ms`);
+        if (serial) {
+          FirebaseRealtimeService.logEvent(serial, "watchdog_force_next", {
+            media: media.name,
+            elapsed,
+            threshold
+          });
+        }
+        nextMedia("watchdog_timeout");
+        lastTransitionRef.time = Date.now(); // Reset do tempo para o próximo ciclo
+      }
+    }, 2000); // Checagem frequente (a cada 2s)
+
+    // Atualiza o timestamp de referência sempre que a mídia muda
+    lastTransitionRef.time = Date.now();
 
     return () => clearInterval(watchdog);
-  }, [nextMedia]);
+  }, [currentIndex, nextMedia, serial]);
 
   if (!playlist.length) return null;
 
@@ -147,8 +182,14 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
             muted={volume === 0}
             playsInline
             className="w-full h-full object-cover"
+            onLoadStart={() => serial && FirebaseRealtimeService.logEvent(serial, "video_load_start", { media: currentMedia.name })}
+            onCanPlay={() => serial && FirebaseRealtimeService.logEvent(serial, "video_can_play", { media: currentMedia.name })}
             onEnded={() => nextMedia("video_ended")}
-            onError={() => nextMedia("video_error")}
+            onError={(e) => {
+              console.error("[PlayerEngine] Video error:", e);
+              if (serial) FirebaseRealtimeService.logEvent(serial, "video_error", { media: currentMedia.name, error: "Playback failed" });
+              nextMedia("video_error");
+            }}
           />
         ) : (
           <img
@@ -156,7 +197,12 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
             src={currentMedia.url}
             className="w-full h-full object-cover"
             alt=""
-            onError={() => nextMedia("image_error")}
+            onLoad={() => serial && FirebaseRealtimeService.logEvent(serial, "image_load_success", { media: currentMedia.name })}
+            onError={() => {
+              console.error("[PlayerEngine] Image error");
+              if (serial) FirebaseRealtimeService.logEvent(serial, "image_error", { media: currentMedia.name });
+              nextMedia("image_error");
+            }}
           />
         )}
       </div>
