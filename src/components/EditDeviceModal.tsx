@@ -148,20 +148,23 @@ export function EditDeviceModal({ open, onOpenChange, device, onSuccess }: EditD
     setIsSubmitting(true);
     try {
       // 1. Update basic device info
+      const updateData: any = {
+        apelido_interno: values.apelido_interno,
+        num_filial: values.num_filial,
+        tenant_id: values.tenant_id,
+        company_id: values.company_id === "none" ? null : values.company_id,
+        store_id: values.store_id === "none" ? null : values.store_id,
+        playlist_id: values.playlist_id === "none" ? null : values.playlist_id,
+        tipo_da_licenca: values.tipo_da_licenca,
+        device_type: values.device_type,
+        pin: values.pin,
+        atualizado: new Date().toISOString(),
+      };
+
       const { error: updateError } = await supabase
         .from("dispositivos")
-        .update({
-          apelido_interno: values.apelido_interno,
-          num_filial: values.num_filial,
-          tenant_id: values.tenant_id,
-          company_id: values.company_id === "none" ? null : values.company_id,
-          store_id: values.store_id === "none" ? null : values.store_id,
-          playlist_id: values.playlist_id === "none" ? null : values.playlist_id,
-          tipo_da_licenca: values.tipo_da_licenca,
-          device_type: values.device_type,
-          pin: values.pin,
-          atualizado: new Date().toISOString(),
-        })
+        .update(updateData)
+        .eq("id", device.id);
         .eq("id", device.id);
 
       if (updateError) throw updateError;
