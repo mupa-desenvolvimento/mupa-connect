@@ -105,7 +105,7 @@ export default function DevicesPage() {
       
       const { data, error } = await query;
       if (error) return [];
-      const uniqueFiliais = Array.from(new Set(data.map(d => d.num_filial))).sort();
+      const uniqueFiliais = Array.from(new Set(data.map(d => d.num_filial).filter(f => f && String(f).trim() !== ""))).sort();
       return uniqueFiliais.map(f => ({ id: f, name: `Loja ${f}`, code: f }));
     }
   });
