@@ -95,7 +95,7 @@ export default function MediaPage() {
 
   useEffect(() => {
     const initPage = async () => {
-      if (tenantId) {
+      if (tenantId || isSuperAdmin) {
         await Promise.all([fetchMedia(), fetchFolders()]);
         
         if (currentFolder) {
@@ -103,13 +103,14 @@ export default function MediaPage() {
         } else {
           setFolderPath([]);
         }
+        setIsLoading(false);
       } else if (!isTenantLoading) {
         setIsLoading(false);
       }
     };
 
     initPage();
-  }, [currentFolder, tenantId, isTenantLoading]);
+  }, [currentFolder, tenantId, isTenantLoading, isSuperAdmin]);
 
   const updateFolderPath = async (folderId: string) => {
     const path: FolderItem[] = [];
@@ -133,7 +134,7 @@ export default function MediaPage() {
   };
 
   const fetchMedia = async () => {
-    if (!tenantId) {
+    if (!tenantId && !isSuperAdmin) {
       setIsLoading(false);
       return;
     }
@@ -145,7 +146,7 @@ export default function MediaPage() {
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
-    if (tenantId) {
+    if (!isSuperAdmin) {
       query = query.eq("tenant_id", tenantId);
     }
 
