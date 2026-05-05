@@ -1236,7 +1236,7 @@ export default function PlaylistEditor() {
                       className="absolute top-0 bottom-0 w-[2px] bg-[#085CF0] z-30 shadow-[0_0_10px_rgba(8,92,240,0.5)] pointer-events-none transition-none"
                       style={{ left: `${(currentTime * PIXELS_PER_SECOND) + 24}px` }}
                     >
-                      <div className="absolute -top-1 -left-1.5 w-4 h-4 rounded-full bg-[#085CF0] border-2 border-white/20 shadow-lg" />
+                      <div className="absolute top-0 -left-1.5 w-4 h-4 rounded-full bg-[#085CF0] border-2 border-white/20 shadow-lg" />
                     </div>
 
                     <DndContext 
