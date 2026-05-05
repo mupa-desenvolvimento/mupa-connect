@@ -18,7 +18,8 @@ import {
   RotateCcw,
   Megaphone,
   Layers,
-  AlertTriangle
+  AlertTriangle,
+  Edit2
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -40,6 +41,7 @@ import { DeviceFirebaseCommandDrawer } from "@/components/DeviceFirebaseCommandD
 import { BulkCommandDialog } from "@/components/BulkCommandDialog";
 import { useUserRole } from "@/hooks/use-user-role";
 import { CreateDeviceModal } from "@/components/CreateDeviceModal";
+import { EditDeviceModal } from "@/components/EditDeviceModal";
 
 type DeviceStatus = "online" | "unstable" | "offline";
 
@@ -54,6 +56,7 @@ export default function DevicesPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const { tenantId, isSuperAdmin, isTecnico, isAdmin } = useUserRole();
 
   const openDeviceDrawer = (device: any) => {
