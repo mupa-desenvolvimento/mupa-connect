@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   DndContext, 
@@ -43,7 +43,8 @@ import {
   Bug,
   ChevronDown,
   ChevronUp,
-  X
+  X,
+  Pause
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,6 +76,16 @@ import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { handlePlaylistError } from "@/utils/error-handlers";
 import { PlaylistErrorBanner } from "@/components/PlaylistErrorBanner";
+
+// --- Constants ---
+const PIXELS_PER_SECOND = 15; // Zoom level
+
+// --- Utils ---
+const formatTime = (seconds: number) => {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+};
 
 // --- Types ---
 interface EditorPlaylistItem {
@@ -127,12 +138,14 @@ const SortableItem = ({
   item, 
   index, 
   isSelected, 
-  onSelect 
+  onSelect,
+  timelineMode = false
 }: { 
   item: EditorPlaylistItem, 
   index: number, 
   isSelected: boolean,
-  onSelect: (item: EditorPlaylistItem) => void
+  onSelect: (item: EditorPlaylistItem) => void,
+  timelineMode?: boolean
 }) => {
   const {
     attributes,
@@ -157,7 +170,7 @@ const SortableItem = ({
       ref={setNodeRef} 
       style={style}
       onClick={() => onSelect(item)}
-      className={`relative shrink-0 w-48 h-32 rounded-xl border transition-all cursor-pointer group overflow-hidden ${
+      className={`relative shrink-0 ${timelineMode ? 'w-full h-24' : 'w-48 h-32'} rounded-xl border transition-all cursor-pointer group overflow-hidden ${
         isSelected 
           ? 'border-[#085CF0] ring-2 ring-[#085CF0]/20 bg-[#085CF0]/5 shadow-xl shadow-[#085CF0]/10' 
           : 'border-border/40 bg-card/40 hover:border-[#085CF0]/30'
@@ -234,6 +247,56 @@ export default function PlaylistEditor() {
   const [showDebug, setShowDebug] = useState(false);
   const [mediaSearch, setMediaSearch] = useState("");
   const [appearanceConfig, setAppearanceConfig] = useState<any>(DEFAULT_APPEARANCE_CONFIG);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const timelineScrollRef = useRef<HTMLDivElement>(null);
+  const playheadIntervalRef = useRef<number | null>(null);
+
+  const totalDuration = useMemo(() => items.reduce((acc, it) => acc + it.duration, 0), [items]);
+
+  // Sincronização do preview baseada no tempo da timeline
+  useEffect(() => {
+    if (!isPlaying) return;
+
+    let startTime = Date.now() - (currentTime * 1000);
+
+    const updatePlayhead = () => {
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000;
+      
+      if (elapsed >= totalDuration) {
+        setCurrentTime(0);
+        startTime = Date.now();
+      } else {
+        setCurrentTime(elapsed);
+      }
+      playheadIntervalRef.current = requestAnimationFrame(updatePlayhead);
+    };
+
+    playheadIntervalRef.current = requestAnimationFrame(updatePlayhead);
+    return () => {
+      if (playheadIntervalRef.current) cancelAnimationFrame(playheadIntervalRef.current);
+    };
+  }, [isPlaying, totalDuration]);
+
+  // Selecionar mídia baseada no tempo atual
+  useEffect(() => {
+    let accumulatedTime = 0;
+    for (const item of items) {
+      accumulatedTime += item.duration;
+      if (currentTime <= accumulatedTime) {
+        setSelectedItem(item);
+        break;
+      }
+    }
+  }, [currentTime, items]);
+
+  const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left + (timelineScrollRef.current?.scrollLeft || 0);
+    const time = x / PIXELS_PER_SECOND;
+    setCurrentTime(Math.min(Math.max(0, time), totalDuration));
+  };
 
   // Monitorar mudanças no estado de itens
   useEffect(() => {
@@ -560,7 +623,7 @@ export default function PlaylistEditor() {
     triggerAutoSave(newItems, playlistName);
   };
 
-  const totalDuration = items.reduce((acc, curr) => acc + curr.duration, 0);
+  // totalDuration already defined as useMemo at the top
 
   if (isLoadingPlaylist && id !== "new") {
     return (
@@ -1082,30 +1145,55 @@ export default function PlaylistEditor() {
                 {/* Overlay Controls */}
                 <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-all">
                    <div className="flex items-center gap-4">
-                      <Button size="icon" className="h-10 w-10 rounded-full bg-white text-black hover:bg-white/90">
-                         <Play className="h-5 w-5 fill-current" />
+                      <Button 
+                        size="icon" 
+                        className="h-10 w-10 rounded-full bg-white text-black hover:bg-white/90"
+                        onClick={() => setIsPlaying(!isPlaying)}
+                      >
+                         {isPlaying ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 fill-current" />}
                       </Button>
                       <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
-                         <div className="h-full bg-[#085CF0] w-1/3" />
+                         <div 
+                           className="h-full bg-[#085CF0] transition-none" 
+                           style={{ width: `${(currentTime / totalDuration) * 100}%` }}
+                         />
                       </div>
-                      <span className="text-xs font-mono font-bold">03:20 / {totalDuration}S</span>
-                      <Button size="icon" variant="ghost" className="text-white hover:bg-white/10">
-                         <Maximize2 className="h-5 w-5" />
-                      </Button>
+                      <span className="text-xs font-mono font-bold">
+                        {formatTime(currentTime)} / {formatTime(totalDuration)}
+                      </span>
                    </div>
                 </div>
              </div>
           </div>
 
-          {/* Horizontal Timeline Container */}
-          <div className="h-64 border-t border-white/5 bg-[#0c0c0e]/80 backdrop-blur-md flex flex-col">
-             <div className="px-6 py-3 flex items-center justify-between border-b border-white/5 bg-black/20">
-                <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
-                  Timeline de Exibição <Badge variant="outline" className="text-[9px] border-white/10">{items.length} Itens</Badge>
-                </h3>
+          {/* Timeline Profissional - Estilo Canva/Editor de Vídeo */}
+          <div className="h-72 border-t border-white/5 bg-[#0c0c0e]/80 backdrop-blur-md flex flex-col overflow-hidden">
+             {/* Timeline Header - Controls */}
+             <div className="px-6 py-2 flex items-center justify-between border-b border-white/5 bg-black/40 h-12">
+                <div className="flex items-center gap-6">
+                  <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
+                    Timeline <Badge variant="outline" className="text-[9px] border-white/10">{items.length}</Badge>
+                  </h3>
+                  
+                  <div className="flex items-center gap-2 bg-white/5 px-2 py-1 rounded-lg border border-white/5">
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      className="h-7 w-7 text-white hover:text-[#085CF0]"
+                      onClick={() => setIsPlaying(!isPlaying)}
+                    >
+                      {isPlaying ? <Pause className="h-3.5 w-3.5 fill-current" /> : <Play className="h-3.5 w-3.5 fill-current" />}
+                    </Button>
+                    <Separator orientation="vertical" className="h-4 bg-white/10" />
+                    <span className="text-[10px] font-mono font-bold text-white/60 w-24 text-center">
+                      {formatTime(currentTime)} / {formatTime(totalDuration)}
+                    </span>
+                  </div>
+                </div>
+
                 <div className="flex items-center gap-4">
                    <div className="flex items-center gap-2 text-[10px] font-medium text-white/60 bg-black/40 px-3 py-1.5 rounded-full border border-white/5">
-                      <Clock className="h-3 w-3 text-[#3b82f6]" /> Tempo Total: {totalDuration}s
+                      <Clock className="h-3 w-3 text-[#3b82f6]" /> Total: {totalDuration}s
                    </div>
                    <Separator orientation="vertical" className="h-4 bg-white/10" />
                    <Button 
@@ -1114,59 +1202,79 @@ export default function PlaylistEditor() {
                      className="h-7 text-[10px] uppercase font-bold text-white/40 hover:text-red-400"
                      onClick={() => { setItems([]); triggerAutoSave([], playlistName); }}
                    >
-                     <Trash2 className="h-3.5 w-3.5 mr-1" /> Limpar Timeline
+                     <Trash2 className="h-3.5 w-3.5 mr-1" /> Limpar
                    </Button>
                 </div>
              </div>
 
-             <ScrollArea className="flex-1 w-full">
-                <div className="p-6 flex gap-4 min-w-full">
-                  <DndContext 
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
-                    modifiers={[restrictToHorizontalAxis]}
-                  >
-                    <SortableContext 
-                      items={items.map(i => i.id)}
-                      strategy={horizontalListSortingStrategy}
-                    >
-                      <AnimatePresence>
-                        {items.map((item, index) => (
-                          <SortableItem 
-                            key={item.id} 
-                            item={item} 
-                            index={index}
-                            isSelected={selectedItem?.id === item.id}
-                            onSelect={setSelectedItem}
-                          />
-                        ))}
-                      </AnimatePresence>
-                    </SortableContext>
-
-                    <DragOverlay dropAnimation={{
-                      sideEffects: defaultDropAnimationSideEffects({
-                        styles: { active: { opacity: '0.5' } }
-                      })
-                    }}>
-                      {activeId ? (
-                        <div className="w-48 h-32 rounded-xl border border-[#085CF0] bg-[#085CF0]/20 backdrop-blur-xl shadow-2xl scale-105" />
-                      ) : null}
-                    </DragOverlay>
-                  </DndContext>
-                  
-                  {/* Quick Add Button at the end of timeline */}
-                  <Button 
-                    variant="outline" 
-                    className="shrink-0 w-48 h-32 rounded-xl border-2 border-dashed border-white/5 bg-white/5 hover:bg-white/10 hover:border-[#085CF0]/30 transition-all flex flex-col items-center justify-center gap-2"
-                  >
-                    <Plus className="h-6 w-6 text-white/20" />
-                    <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">Adicionar</span>
-                  </Button>
+             {/* Ruler & Timeline Area */}
+             <div className="flex-1 w-full overflow-hidden relative group">
+                {/* Timeline Ruler */}
+                <div className="absolute top-0 left-0 right-0 h-6 bg-black/60 border-b border-white/5 z-20 flex select-none pointer-events-none">
+                  <div className="relative min-w-full h-full" style={{ width: `${totalDuration * PIXELS_PER_SECOND}px` }}>
+                    {Array.from({ length: Math.ceil(totalDuration / 5) + 1 }).map((_, i) => (
+                      <div 
+                        key={i} 
+                        className="absolute top-0 border-l border-white/10 h-full flex items-center pl-1"
+                        style={{ left: `${i * 5 * PIXELS_PER_SECOND}px` }}
+                      >
+                        <span className="text-[8px] text-white/30 font-mono">{formatTime(i * 5)}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <ScrollBar orientation="horizontal" />
-             </ScrollArea>
+
+                {/* Track Area */}
+                <ScrollArea ref={timelineScrollRef} className="w-full h-full pt-6">
+                  <div 
+                    className="relative p-6 py-8 cursor-crosshair min-h-full" 
+                    style={{ width: `${Math.max(window.innerWidth - 320, totalDuration * PIXELS_PER_SECOND + 100)}px` }}
+                    onClick={handleTimelineClick}
+                  >
+                    {/* Playhead (Line) */}
+                    <div 
+                      className="absolute top-0 bottom-0 w-[2px] bg-[#085CF0] z-30 shadow-[0_0_10px_rgba(8,92,240,0.5)] pointer-events-none transition-none"
+                      style={{ left: `${(currentTime * PIXELS_PER_SECOND) + 24}px` }}
+                    >
+                      <div className="absolute top-0 -left-1.5 w-4 h-4 rounded-full bg-[#085CF0] border-2 border-white/20 shadow-lg" />
+                    </div>
+
+                    <DndContext 
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragStart={handleDragStart}
+                      onDragEnd={handleDragEnd}
+                      modifiers={[restrictToHorizontalAxis]}
+                    >
+                      <SortableContext 
+                        items={items.map(i => i.id)}
+                        strategy={horizontalListSortingStrategy}
+                      >
+                        <div className="flex relative z-10">
+                          <AnimatePresence>
+                            {items.map((item, index) => (
+                              <div 
+                                key={item.id} 
+                                style={{ width: `${item.duration * PIXELS_PER_SECOND}px` }}
+                                className="shrink-0"
+                              >
+                                <SortableItem 
+                                  item={item} 
+                                  index={index}
+                                  isSelected={selectedItem?.id === item.id}
+                                  onSelect={setSelectedItem}
+                                  timelineMode={true}
+                                />
+                              </div>
+                            ))}
+                          </AnimatePresence>
+                        </div>
+                      </SortableContext>
+                    </DndContext>
+                  </div>
+                  <ScrollBar orientation="horizontal" className="z-40" />
+                </ScrollArea>
+             </div>
           </div>
         </main>
 
