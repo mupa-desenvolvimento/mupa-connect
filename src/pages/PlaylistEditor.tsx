@@ -1270,7 +1270,6 @@ export default function PlaylistEditor() {
                 </ScrollArea>
              </div>
           </div>
-          </div>
         </main>
 
         {/* Right Sidebar - Properties Panel */}
