@@ -233,6 +233,13 @@ export default function PlaylistEditor() {
       setPlaylistName(playlistData.name);
       setIsDefault(playlistData.is_company_default || false);
       
+      if (playlistData.appearance_config) {
+        setAppearanceConfig({
+          ...appearanceConfig,
+          ...playlistData.appearance_config
+        });
+      }
+      
       if (playlistData.playlist_items && playlistData.playlist_items.length > 0) {
         const mappedItems = playlistData.playlist_items.map((it: any) => ({
           id: it.id,
