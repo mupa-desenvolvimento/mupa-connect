@@ -167,7 +167,7 @@ export default function PlayerPage() {
     setLastIndexChange(Date.now());
     
     const media = activePlaylist[idx];
-    if (media && deviceInfo?.id) {
+    if (media && deviceInfo?.id && !isPreview) {
       // 1. Firebase Realtime Heartbeat (New)
       FirebaseRealtimeService.sendHeartbeat(deviceCode!, media.id?.toString());
 
