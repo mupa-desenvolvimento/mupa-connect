@@ -8,7 +8,7 @@ import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { ManifestService } from "@/services/ManifestService";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Monitor } from "lucide-react";
+import { AlertCircle, Monitor, Wrench } from "lucide-react";
 import * as faceapi from "face-api.js";
 
 interface AppearanceConfig {
@@ -124,7 +124,6 @@ export default function PlayerPage() {
 
         if (!deviceCode) return;
 
-        console.log("[Player] Fetching initial manifest for device:", deviceCode);
         const result = await ManifestService.fetchManifest(deviceCode);
         setManifest(result.manifest);
         if (result.device) {
@@ -592,8 +591,42 @@ export default function PlayerPage() {
         </div>
       </div>
 
+      {/* Maintenance Info (Bottom Right) */}
+      {deviceInfo?.is_maintenance && (
+        <div className="absolute bottom-4 right-4 z-[100] p-4 rounded-xl bg-black/80 backdrop-blur-xl border border-yellow-500/50 shadow-2xl animate-in fade-in zoom-in duration-500 max-w-[300px] pointer-events-none">
+          <div className="flex items-center gap-3 mb-3 text-yellow-500">
+            <div className="h-8 w-8 rounded-lg bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20">
+              <Wrench className="h-4 w-4" />
+            </div>
+            <div className="font-display font-bold text-sm uppercase tracking-wider">Modo Manutenção</div>
+          </div>
+          <div className="space-y-2 font-mono text-[10px] uppercase tracking-wider">
+            <div className="flex justify-between gap-4">
+              <span className="text-white/40">Serial:</span>
+              <span className="text-white/90 font-bold">{deviceInfo.serial}</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-white/40">Filial:</span>
+              <span className="text-white/90 font-bold">{deviceInfo.num_filial || "—"}</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-white/40">Nome:</span>
+              <span className="text-white/90 font-bold text-right">{deviceInfo.apelido_interno || "—"}</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-white/40">Status:</span>
+              <span className="text-yellow-500 font-bold">EM MANUTENÇÃO</span>
+            </div>
+            <div className="mt-2 pt-2 border-t border-white/5 flex justify-between gap-4">
+              <span className="text-white/40">IP Local:</span>
+              <span className="text-white/60 font-bold">Detectando...</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Serial Info (Discreet) */}
-      {(appearance.show_serial !== false && !isPreview) && (
+      {(appearance.show_serial !== false && !isPreview && !deviceInfo?.is_maintenance) && (
         <div className="absolute bottom-4 right-4 z-40 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 font-mono text-[10px] text-white/40 tracking-[0.2em] select-none pointer-events-none uppercase">
           Device ID: {deviceInfo?.serial || deviceCode}
         </div>
