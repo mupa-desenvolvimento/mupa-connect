@@ -114,12 +114,20 @@ export default function DevicesPage() {
     }
   });
 
+  const parseTs = (ts: string | null): number => {
+    if (!ts) return 0;
+    // Normaliza formato Postgres ("2026-05-05 08:33:49.776+00") para ISO
+    const iso = ts.includes("T") ? ts : ts.replace(" ", "T").replace(/([+-]\d{2})$/, "$1:00");
+    const t = new Date(iso).getTime();
+    return Number.isNaN(t) ? 0 : t;
+  };
+
   const getStatus = (lastHeartbeat: string | null, lastProof: string | null): DeviceStatus => {
-    if (!lastHeartbeat) return "offline";
-    const now = new Date().getTime();
-    const heartbeatTime = new Date(lastHeartbeat).getTime();
-    const proofTime = lastProof ? new Date(lastProof).getTime() : 0;
-    // Aumentado para 5 minutos (300000ms) para ser mais tolerante a variações de conexão
+    const heartbeatTime = parseTs(lastHeartbeat);
+    if (!heartbeatTime) return "offline";
+    const now = Date.now();
+    const proofTime = parseTs(lastProof);
+    // 5 minutos de tolerância
     const isHeartbeatRecent = (now - heartbeatTime) < 300000;
     const isProofRecent = (now - proofTime) < 300000;
     if (isHeartbeatRecent) return isProofRecent ? "online" : "unstable";

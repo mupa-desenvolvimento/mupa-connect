@@ -61,5 +61,8 @@ export function useDevices(tenantId: string | null, isSuperAdmin?: boolean) {
       })) as Device[];
     },
     enabled: !!tenantId || !!isSuperAdmin,
+    refetchInterval: 30000,
+    refetchIntervalInBackground: true,
+    staleTime: 15000,
   });
 }
