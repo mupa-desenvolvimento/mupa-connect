@@ -15,9 +15,13 @@ interface PlayerEngineProps {
   onMediaChange?: (index: number) => void;
   volume?: number;
   serial?: string;
+  appearance?: {
+    transition_type?: "fade" | "slide-left" | "slide-right" | "zoom" | "none";
+    transition_duration?: number;
+  };
 }
 
-export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: PlayerEngineProps) {
+export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appearance }: PlayerEngineProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [activeLayer, setActiveLayer] = useState<"A" | "B">("A");
   
