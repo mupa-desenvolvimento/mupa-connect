@@ -906,7 +906,7 @@ export default function PlaylistEditor() {
                         <div className="space-y-2">
                           <Label className="text-xs text-white/60">URL do Logo</Label>
                           <Input 
-                            value={appearanceConfig.logo.url} 
+                            value={appearanceConfig.logo?.url || ""} 
                             onChange={(e) => {
                               setAppearanceConfig({
                                 ...appearanceConfig,
@@ -921,7 +921,7 @@ export default function PlaylistEditor() {
                         <div className="space-y-2">
                           <Label className="text-xs text-white/60">Posição</Label>
                           <Select 
-                            value={appearanceConfig.logo.position} 
+                            value={appearanceConfig.logo?.position || DEFAULT_APPEARANCE_CONFIG.logo.position} 
                             onValueChange={(val) => {
                               setAppearanceConfig({
                                 ...appearanceConfig,
@@ -946,7 +946,7 @@ export default function PlaylistEditor() {
                             <Label className="text-xs text-white/60">Tamanho (px)</Label>
                             <Input 
                               type="number"
-                              value={appearanceConfig.logo.size} 
+                              value={appearanceConfig.logo?.size || DEFAULT_APPEARANCE_CONFIG.logo.size} 
                               onChange={(e) => {
                                 setAppearanceConfig({
                                   ...appearanceConfig,
@@ -960,7 +960,7 @@ export default function PlaylistEditor() {
                           <div className="space-y-2">
                             <Label className="text-xs text-white/60">Opacidade (%)</Label>
                             <Slider 
-                              value={[(appearanceConfig.logo.opacity || 1) * 100]} 
+                              value={[(appearanceConfig.logo?.opacity ?? DEFAULT_APPEARANCE_CONFIG.logo.opacity) * 100]} 
                               min={0} 
                               max={100} 
                               step={10}
