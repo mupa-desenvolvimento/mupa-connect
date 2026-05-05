@@ -1160,15 +1160,34 @@ export default function PlaylistEditor() {
              </div>
           </div>
 
-          {/* Horizontal Timeline Container */}
-          <div className="h-64 border-t border-white/5 bg-[#0c0c0e]/80 backdrop-blur-md flex flex-col">
-             <div className="px-6 py-3 flex items-center justify-between border-b border-white/5 bg-black/20">
-                <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
-                  Timeline de Exibição <Badge variant="outline" className="text-[9px] border-white/10">{items.length} Itens</Badge>
-                </h3>
+          {/* Timeline Profissional - Estilo Canva/Editor de Vídeo */}
+          <div className="h-72 border-t border-white/5 bg-[#0c0c0e]/80 backdrop-blur-md flex flex-col overflow-hidden">
+             {/* Timeline Header - Controls */}
+             <div className="px-6 py-2 flex items-center justify-between border-b border-white/5 bg-black/40 h-12">
+                <div className="flex items-center gap-6">
+                  <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
+                    Timeline <Badge variant="outline" className="text-[9px] border-white/10">{items.length}</Badge>
+                  </h3>
+                  
+                  <div className="flex items-center gap-2 bg-white/5 px-2 py-1 rounded-lg border border-white/5">
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      className="h-7 w-7 text-white hover:text-[#085CF0]"
+                      onClick={() => setIsPlaying(!isPlaying)}
+                    >
+                      {isPlaying ? <Pause className="h-3.5 w-3.5 fill-current" /> : <Play className="h-3.5 w-3.5 fill-current" />}
+                    </Button>
+                    <Separator orientation="vertical" className="h-4 bg-white/10" />
+                    <span className="text-[10px] font-mono font-bold text-white/60 w-24 text-center">
+                      {formatTime(currentTime)} / {formatTime(totalDuration)}
+                    </span>
+                  </div>
+                </div>
+
                 <div className="flex items-center gap-4">
                    <div className="flex items-center gap-2 text-[10px] font-medium text-white/60 bg-black/40 px-3 py-1.5 rounded-full border border-white/5">
-                      <Clock className="h-3 w-3 text-[#3b82f6]" /> Tempo Total: {totalDuration}s
+                      <Clock className="h-3 w-3 text-[#3b82f6]" /> Total: {totalDuration}s
                    </div>
                    <Separator orientation="vertical" className="h-4 bg-white/10" />
                    <Button 
@@ -1177,59 +1196,80 @@ export default function PlaylistEditor() {
                      className="h-7 text-[10px] uppercase font-bold text-white/40 hover:text-red-400"
                      onClick={() => { setItems([]); triggerAutoSave([], playlistName); }}
                    >
-                     <Trash2 className="h-3.5 w-3.5 mr-1" /> Limpar Timeline
+                     <Trash2 className="h-3.5 w-3.5 mr-1" /> Limpar
                    </Button>
                 </div>
              </div>
 
-             <ScrollArea className="flex-1 w-full">
-                <div className="p-6 flex gap-4 min-w-full">
-                  <DndContext 
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
-                    modifiers={[restrictToHorizontalAxis]}
-                  >
-                    <SortableContext 
-                      items={items.map(i => i.id)}
-                      strategy={horizontalListSortingStrategy}
-                    >
-                      <AnimatePresence>
-                        {items.map((item, index) => (
-                          <SortableItem 
-                            key={item.id} 
-                            item={item} 
-                            index={index}
-                            isSelected={selectedItem?.id === item.id}
-                            onSelect={setSelectedItem}
-                          />
-                        ))}
-                      </AnimatePresence>
-                    </SortableContext>
-
-                    <DragOverlay dropAnimation={{
-                      sideEffects: defaultDropAnimationSideEffects({
-                        styles: { active: { opacity: '0.5' } }
-                      })
-                    }}>
-                      {activeId ? (
-                        <div className="w-48 h-32 rounded-xl border border-[#085CF0] bg-[#085CF0]/20 backdrop-blur-xl shadow-2xl scale-105" />
-                      ) : null}
-                    </DragOverlay>
-                  </DndContext>
-                  
-                  {/* Quick Add Button at the end of timeline */}
-                  <Button 
-                    variant="outline" 
-                    className="shrink-0 w-48 h-32 rounded-xl border-2 border-dashed border-white/5 bg-white/5 hover:bg-white/10 hover:border-[#085CF0]/30 transition-all flex flex-col items-center justify-center gap-2"
-                  >
-                    <Plus className="h-6 w-6 text-white/20" />
-                    <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">Adicionar</span>
-                  </Button>
+             {/* Ruler & Timeline Area */}
+             <div className="flex-1 w-full overflow-hidden relative group">
+                {/* Timeline Ruler */}
+                <div className="absolute top-0 left-0 right-0 h-6 bg-black/60 border-b border-white/5 z-20 flex select-none pointer-events-none">
+                  <div className="relative min-w-full h-full" style={{ width: `${totalDuration * PIXELS_PER_SECOND}px` }}>
+                    {Array.from({ length: Math.ceil(totalDuration / 5) + 1 }).map((_, i) => (
+                      <div 
+                        key={i} 
+                        className="absolute top-0 border-l border-white/10 h-full flex items-center pl-1"
+                        style={{ left: `${i * 5 * PIXELS_PER_SECOND}px` }}
+                      >
+                        <span className="text-[8px] text-white/30 font-mono">{formatTime(i * 5)}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <ScrollBar orientation="horizontal" />
-             </ScrollArea>
+
+                {/* Track Area */}
+                <ScrollArea ref={timelineScrollRef} className="w-full h-full pt-6">
+                  <div 
+                    className="relative p-6 py-8 cursor-crosshair min-h-full" 
+                    style={{ width: `${Math.max(window.innerWidth - 320, totalDuration * PIXELS_PER_SECOND + 100)}px` }}
+                    onClick={handleTimelineClick}
+                  >
+                    {/* Playhead (Line) */}
+                    <div 
+                      className="absolute top-0 bottom-0 w-[2px] bg-[#085CF0] z-30 shadow-[0_0_10px_rgba(8,92,240,0.5)] pointer-events-none transition-none"
+                      style={{ left: `${(currentTime * PIXELS_PER_SECOND) + 24}px` }}
+                    >
+                      <div className="absolute -top-1 -left-1.5 w-4 h-4 rounded-full bg-[#085CF0] border-2 border-white/20 shadow-lg" />
+                    </div>
+
+                    <DndContext 
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragStart={handleDragStart}
+                      onDragEnd={handleDragEnd}
+                      modifiers={[restrictToHorizontalAxis]}
+                    >
+                      <SortableContext 
+                        items={items.map(i => i.id)}
+                        strategy={horizontalListSortingStrategy}
+                      >
+                        <div className="flex relative z-10">
+                          <AnimatePresence>
+                            {items.map((item, index) => (
+                              <div 
+                                key={item.id} 
+                                style={{ width: `${item.duration * PIXELS_PER_SECOND}px` }}
+                                className="shrink-0"
+                              >
+                                <SortableItem 
+                                  item={item} 
+                                  index={index}
+                                  isSelected={selectedItem?.id === item.id}
+                                  onSelect={setSelectedItem}
+                                  timelineMode={true}
+                                />
+                              </div>
+                            ))}
+                          </AnimatePresence>
+                        </div>
+                      </SortableContext>
+                    </DndContext>
+                  </div>
+                  <ScrollBar orientation="horizontal" className="z-40" />
+                </ScrollArea>
+             </div>
+          </div>
           </div>
         </main>
 
