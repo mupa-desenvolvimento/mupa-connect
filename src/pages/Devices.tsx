@@ -41,6 +41,7 @@ import { DeviceFirebaseCommandDrawer } from "@/components/DeviceFirebaseCommandD
 import { BulkCommandDialog } from "@/components/BulkCommandDialog";
 import { useUserRole } from "@/hooks/use-user-role";
 import { CreateDeviceModal } from "@/components/CreateDeviceModal";
+import { EditDeviceModal } from "@/components/EditDeviceModal";
 
 type DeviceStatus = "online" | "unstable" | "offline";
 
