@@ -615,12 +615,15 @@ export default function PlaylistEditor() {
         <aside className="w-80 border-r border-white/5 bg-[#0c0c0e] flex flex-col z-40 h-full overflow-hidden">
           <Tabs defaultValue="media" className="flex-1 flex flex-col h-full overflow-hidden">
             <div className="p-4 border-b border-white/5 shrink-0">
-              <TabsList className="grid w-full grid-cols-2 bg-black/40 p-1 border border-white/5 h-10">
-                <TabsTrigger value="media" className="data-[state=active]:bg-[#085CF0] text-xs gap-2">
+              <TabsList className="grid w-full grid-cols-3 bg-black/40 p-1 border border-white/5 h-10">
+                <TabsTrigger value="media" className="data-[state=active]:bg-[#085CF0] text-[10px] gap-2 px-1">
                   <ImageIcon className="h-3.5 w-3.5" /> Mídias
                 </TabsTrigger>
-                <TabsTrigger value="campaigns" className="data-[state=active]:bg-[#085CF0] text-xs gap-2">
+                <TabsTrigger value="campaigns" className="data-[state=active]:bg-[#085CF0] text-[10px] gap-2 px-1">
                   <Layers className="h-3.5 w-3.5" /> Campanhas
+                </TabsTrigger>
+                <TabsTrigger value="appearance" className="data-[state=active]:bg-[#085CF0] text-[10px] gap-2 px-1">
+                  <Monitor className="h-3.5 w-3.5" /> Aparência
                 </TabsTrigger>
               </TabsList>
               <div className="relative mt-4">
