@@ -70,12 +70,12 @@ export default function PlayerPage() {
       }
 
       try {
-        if (isPreview && playlistId) {
-          console.log("[Player] Loading preview for playlist:", playlistId);
+        if (isPreview && previewPlaylistId) {
+          console.log("[Player] Loading preview for playlist:", previewPlaylistId);
           const { data: playlist, error } = await supabase
             .from("playlists")
             .select("id, name, updated_at, schedule, appearance_config")
-            .eq("id", playlistId)
+            .eq("id", previewPlaylistId)
             .single();
 
           if (error) throw error;
@@ -83,7 +83,7 @@ export default function PlayerPage() {
           const { data: items, error: itemsError } = await supabase
             .from("playlist_items")
             .select("id, media_id, position, ordem, duracao, tipo, media_items(id, name, file_url, thumbnail_url, type, duration)")
-            .eq("playlist_id", playlistId);
+            .eq("playlist_id", previewPlaylistId);
 
           if (itemsError) throw itemsError;
 
