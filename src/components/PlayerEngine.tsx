@@ -121,8 +121,6 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
   // Watchdog de segurança (CRÍTICO para WebView)
   // Verifica se o tempo real decorrido excedeu a duração da mídia + margem de erro
   useEffect(() => {
-    const lastTransitionRef = { time: Date.now() };
-    
     const watchdog = setInterval(() => {
       if (isSwitchingRef.current) return;
       
@@ -130,13 +128,13 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
       if (!media) return;
 
       const now = Date.now();
-      const elapsed = now - lastTransitionRef.time;
+      const elapsed = now - startTimeRef.current;
       const duration = Math.max(media.duration || 5, 3);
-      const threshold = (duration * 1000) + 5000; // Duração + 5 segundos de folga
+      const threshold = (duration * 1000) + 15000; // Duração + 15 segundos de folga para watchdog pesado
 
       // 1. Recuperação de Vídeo Travado
       if (media.type === "video" && videoRef.current) {
-        if (videoRef.current.paused && !videoRef.current.ended) {
+        if (videoRef.current.paused && !videoRef.current.ended && videoRef.current.readyState > 2) {
           console.warn("[PlayerEngine] Vídeo pausado inesperadamente, tentando play...");
           videoRef.current.play().catch(() => nextMedia("watchdog_video_fail"));
         }
@@ -144,7 +142,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
 
       // 2. Recuperação de Travamento Lógico (Time-based)
       if (elapsed > threshold) {
-        console.error(`[PlayerEngine] !!! TRAVAMENTO DETECTADO !!! Forçando avanço. Elapsed: ${elapsed}ms | Threshold: ${threshold}ms`);
+        console.error(`[PlayerEngine] !!! WATCHDOG TRIGGER !!! Forçando avanço. Motivo: ${media.name} travado.`);
         if (serial) {
           FirebaseRealtimeService.logEvent(serial, "watchdog_force_next", {
             media: media.name,
@@ -153,15 +151,11 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
           });
         }
         nextMedia("watchdog_timeout");
-        lastTransitionRef.time = Date.now(); // Reset do tempo para o próximo ciclo
       }
-    }, 2000); // Checagem frequente (a cada 2s)
-
-    // Atualiza o timestamp de referência sempre que a mídia muda
-    lastTransitionRef.time = Date.now();
+    }, 3000);
 
     return () => clearInterval(watchdog);
-  }, [currentIndex, nextMedia, serial]);
+  }, [nextMedia, serial]);
 
   if (!playlist.length) return null;
 
