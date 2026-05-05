@@ -49,6 +49,7 @@ interface DeviceLike {
   last_proof_at?: string | null;
   is_maintenance?: boolean;
   autostart?: boolean;
+  persistence?: boolean;
 }
 
 interface Props {
@@ -159,6 +160,7 @@ export function DeviceFirebaseCommandDrawer({
   const [numFilial, setNumFilial] = useState("");
   const [isMaintenance, setIsMaintenance] = useState(false);
   const [autostart, setAutostart] = useState(true);
+  const [persistence, setPersistence] = useState(false);
   const [saving, setSaving] = useState(false);
   const [quickActions, setQuickActions] = useState<any[]>([]);
   const [loadingActions, setLoadingActions] = useState(false);
@@ -313,6 +315,7 @@ export function DeviceFirebaseCommandDrawer({
       setNumFilial(device.num_filial || "");
       setIsMaintenance(!!device.is_maintenance);
       setAutostart(device.autostart !== false); // Default true
+      setPersistence(!!device.persistence);
     }
   }, [device]);
 
@@ -380,7 +383,8 @@ export function DeviceFirebaseCommandDrawer({
         apelido_interno: deviceName,
         num_filial: numFilial,
         is_maintenance: isMaintenance,
-        autostart: autostart
+        autostart: autostart,
+        persistence: persistence
       })
       .eq("id", Number(device.id));
 
@@ -450,6 +454,24 @@ export function DeviceFirebaseCommandDrawer({
     } catch (e) {
       toast.error("Falha ao enviar comando de autostart");
       console.error(e);
+    }
+  };
+
+  const togglePersistence = async (checked: boolean) => {
+    if (!device?.id) return;
+    
+    setPersistence(checked);
+    const { error } = await supabase
+      .from("dispositivos")
+      .update({ persistence: checked })
+      .eq("id", Number(device.id));
+
+    if (error) {
+      toast.error("Erro ao atualizar persistência");
+      setPersistence(!checked);
+      console.error(error);
+    } else {
+      toast.success(checked ? "Persistência ativada" : "Persistência desativada");
     }
   };
 
