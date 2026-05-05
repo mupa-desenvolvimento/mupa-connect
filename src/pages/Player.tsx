@@ -354,7 +354,7 @@ export default function PlayerPage() {
                 opacity: appearance.logo.opacity ?? 1,
                 // Handle dynamic footer offset
                 ...(appearance.logo.position.startsWith('bottom') && appearance.footer?.enabled ? {
-                  bottom: `${(appearance.footer.height || 60) + 24}px`
+                  bottom: `80px`
                 } : {})
               }}
             >
