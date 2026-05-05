@@ -401,6 +401,11 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
             alt=""
             onLoad={(e) => {
               (e.currentTarget as HTMLImageElement).style.transform = "translateZ(0)";
+              // Marcar como pronto imediatamente no carregamento da imagem ativa
+              if (activeLayer === "A") {
+                loadingStatusRef.current.A = true;
+                readyToSwitchRef.current.A = true;
+              }
             }}
             onError={performTransition}
           />
