@@ -293,12 +293,7 @@ export default function PlayerPage() {
     return () => cancelAnimationFrame(rafId);
   }, [lastIndexChange, currentIndex, activePlaylist]);
 
-  // UI Setup
-  useEffect(() => {
-    document.documentElement.classList.add("dark");
-    document.body.style.background = "#000";
-    return () => { document.body.style.background = ""; };
-  }, []);
+  // UI Setup - Already handled in top-level useEffect
 
   const [now, setNow] = useState(new Date());
   useEffect(() => {
