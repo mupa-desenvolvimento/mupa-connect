@@ -204,7 +204,12 @@ export default function DevicesPage() {
             )}
             <Button variant="outline" size="sm" onClick={() => refetch()} className="h-9"><RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} /> Atualizar</Button>
             {isAdmin && (
-              <Button className="bg-gradient-primary text-primary-foreground shadow-glow h-9"><Plus className="h-4 w-4 mr-2" /> Novo</Button>
+              <Button 
+                className="bg-gradient-primary text-primary-foreground shadow-glow h-9"
+                onClick={() => setCreateModalOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" /> Novo
+              </Button>
             )}
           </div>
         }
