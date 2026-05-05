@@ -55,13 +55,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 
 export default function GroupsPage() {
-  const { tenantId } = useTenant();
+  const { tenantId, isSuperAdmin } = useTenant();
   const queryClient = useQueryClient();
 
-  const { data: playlists } = usePlaylists(tenantId || undefined);
-  const { data: groups, isLoading: loadingGroups, refetch: refetchGroups } = useGroups(tenantId);
+  const { data: playlists } = usePlaylists(tenantId || undefined, isSuperAdmin);
+  const { data: groups, isLoading: loadingGroups, refetch: refetchGroups } = useGroups(tenantId, isSuperAdmin);
   const { data: stores, isLoading: loadingStores, refetch: refetchStores } = useStores(tenantId);
-  const { data: devices, refetch: refetchDevices } = useDevices(tenantId);
+  const { data: devices, refetch: refetchDevices } = useDevices(tenantId, isSuperAdmin);
   
   const [activeTab, setActiveTab] = useState("groups");
   const [searchQuery, setSearchQuery] = useState("");
