@@ -434,7 +434,7 @@ export default function PlayerPage() {
       )}
 
       {/* Discreet sync notification */}
-      {syncToast && (
+      {syncToast && !isPreview && (
         <div className="absolute bottom-20 left-6 z-40 flex items-center gap-3 px-4 py-2 rounded-xl bg-primary/20 backdrop-blur-xl border border-primary/20 font-mono text-xs text-primary-foreground tracking-wider select-none pointer-events-none animate-fade-in">
           <span className="h-2 w-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(var(--primary),0.5)]" />
           {syncToast.msg}
