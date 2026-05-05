@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useDeviceCommandChannel } from "@/hooks/useDeviceCommandChannel";
 import { supabase } from "@/integrations/supabase/client";
 import { PlayerEngine } from "@/components/PlayerEngine";
