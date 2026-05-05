@@ -31,6 +31,11 @@ interface AppearanceConfig {
 }
 
 export default function PlayerPage() {
+  useEffect(() => {
+    // Force black background for all players
+    document.body.style.backgroundColor = "black";
+    return () => { document.body.style.backgroundColor = ""; };
+  }, []);
   const { deviceCode } = useParams();
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get("preview") === "true";
