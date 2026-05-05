@@ -14,39 +14,42 @@ export interface Group {
   direct_device_ids?: string[];
 }
 
-export function useGroups(tenantId: string | null) {
+export function useGroups(tenantId: string | null, isSuperAdmin?: boolean) {
   return useQuery({
-    queryKey: ["groups", tenantId],
+    queryKey: ["groups", tenantId, isSuperAdmin],
     queryFn: async () => {
-      if (!tenantId) return [];
-
-      // Fetch groups
-      const { data: groups, error: groupsError } = await supabase
+      let groupsQuery = supabase
         .from("groups")
         .select(`
           *,
           playlists (name)
-        `)
-        .eq("tenant_id", tenantId);
+        `);
       
-      if (groupsError) {
-        throw groupsError;
+      let deviceLinksQuery = supabase
+        .from("group_devices")
+        .select("group_id, device_id");
+
+      let storeLinksQuery = supabase
+        .from("group_stores")
+        .select("group_id, store_id");
+
+      if (!isSuperAdmin) {
+        if (!tenantId) return [];
+        groupsQuery = groupsQuery.eq("tenant_id", tenantId);
+        deviceLinksQuery = deviceLinksQuery.eq("tenant_id", tenantId);
+        storeLinksQuery = storeLinksQuery.eq("tenant_id", tenantId);
       }
 
-      // Fetch device links per group
-      const { data: deviceLinks, error: devicesError } = await supabase
-        .from("group_devices")
-        .select("group_id, device_id")
-        .eq("tenant_id", tenantId);
+      // Fetch groups
+      const { data: groups, error: groupsError } = await groupsQuery;
+      if (groupsError) throw groupsError;
 
+      // Fetch device links per group
+      const { data: deviceLinks, error: devicesError } = await deviceLinksQuery;
       if (devicesError) throw devicesError;
 
       // Fetch store links per group
-      const { data: storeLinks, error: storesError } = await supabase
-        .from("group_stores")
-        .select("group_id, store_id")
-        .eq("tenant_id", tenantId);
-
+      const { data: storeLinks, error: storesError } = await storeLinksQuery;
       if (storesError) throw storesError;
 
       const deviceMap = deviceLinks.reduce((acc: any, curr: any) => {
@@ -64,12 +67,12 @@ export function useGroups(tenantId: string | null) {
       return groups.map((g: any) => ({
         ...g,
         playlist_name: g.playlists?.name,
-        device_count: (deviceMap[g.id]?.length || 0), // This is just direct devices for now, will be updated in UI
+        device_count: (deviceMap[g.id]?.length || 0),
         store_count: storeMap[g.id]?.length || 0,
         linked_store_ids: storeMap[g.id] || [],
         direct_device_ids: deviceMap[g.id] || []
       })) as Group[];
     },
-    enabled: !!tenantId,
+    enabled: !!tenantId || !!isSuperAdmin,
   });
 }
