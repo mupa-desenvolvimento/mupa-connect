@@ -94,6 +94,7 @@ const App = () => {
               <Route path="/redefinir-senha" element={<ResetPassword />} />
               
               {/* Player rota fullscreen, sem layout e sem auth obrigatória (usa deviceCode) */}
+              <Route path="/play" element={<Player />} />
               <Route path="/play/:deviceCode" element={<Player />} />
 
               {/* Monitoramento Compartilhado - Sem login obrigatório (protegido por token) */}
