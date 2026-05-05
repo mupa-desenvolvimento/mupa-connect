@@ -170,7 +170,7 @@ const SortableItem = ({
       ref={setNodeRef} 
       style={style}
       onClick={() => onSelect(item)}
-      className={`relative shrink-0 w-48 h-32 rounded-xl border transition-all cursor-pointer group overflow-hidden ${
+      className={`relative shrink-0 ${timelineMode ? 'w-full h-24' : 'w-48 h-32'} rounded-xl border transition-all cursor-pointer group overflow-hidden ${
         isSelected 
           ? 'border-[#085CF0] ring-2 ring-[#085CF0]/20 bg-[#085CF0]/5 shadow-xl shadow-[#085CF0]/10' 
           : 'border-border/40 bg-card/40 hover:border-[#085CF0]/30'
