@@ -297,10 +297,10 @@ export default function DevicesPage() {
                               <span className={cn(
                                 "text-[9px] text-muted-foreground font-mono truncate max-w-[80px]",
                                 // Se o dispositivo está vinculado a uma empresa mas o tenant_id é diferente do tenant da empresa
-                                d.companies && d.companies.tenant_id && d.tenant_id !== d.companies.tenant_id && "text-destructive font-bold"
+                                d.companies && (d.companies as any).tenant_id && d.tenant_id !== (d.companies as any).tenant_id && "text-destructive font-bold"
                               )}>
                                 {d.tenant_id.split('-')[0]}...
-                                {d.companies && d.companies.tenant_id && d.tenant_id !== d.companies.tenant_id && (
+                                {d.companies && (d.companies as any).tenant_id && d.tenant_id !== (d.companies as any).tenant_id && (
                                   <AlertTriangle className="h-2 w-2 inline ml-1" />
                                 )}
                               </span>
