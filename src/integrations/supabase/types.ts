@@ -2109,6 +2109,7 @@ export type Database = {
           last_proof_at: string | null
           num_filial: string | null
           online: boolean | null
+          persistence: boolean | null
           pin: string | null
           playlist_id: string | null
           serial: string | null
@@ -2140,6 +2141,7 @@ export type Database = {
           last_proof_at?: string | null
           num_filial?: string | null
           online?: boolean | null
+          persistence?: boolean | null
           pin?: string | null
           playlist_id?: string | null
           serial?: string | null
@@ -2171,6 +2173,7 @@ export type Database = {
           last_proof_at?: string | null
           num_filial?: string | null
           online?: boolean | null
+          persistence?: boolean | null
           pin?: string | null
           playlist_id?: string | null
           serial?: string | null
@@ -6752,6 +6755,7 @@ export type Database = {
           last_proof_at: string | null
           num_filial: string | null
           online: boolean | null
+          persistence: boolean | null
           pin: string | null
           playlist_id: string | null
           serial: string | null

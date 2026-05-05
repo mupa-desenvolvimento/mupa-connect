@@ -39,6 +39,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { Loader2 } from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { DevicePersistenceMonitor } from "@/components/DevicePersistenceMonitor";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -84,6 +85,7 @@ const App = () => {
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <DevicePersistenceMonitor />
           <BrowserRouter>
             <Routes>
               {/* Rotas Públicas */}
