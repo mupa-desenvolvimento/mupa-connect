@@ -14,6 +14,7 @@ import {
   Monitor, 
   Settings, 
   Play,
+  Activity,
   FilterX,
   RotateCcw,
   Megaphone,
@@ -291,17 +292,25 @@ export default function DevicesPage() {
                           <div className="flex flex-col">
                             <span>{d.apelido_interno}</span>
                             <span className="flex items-center gap-1 mt-0.5">
-                              {d.autostart !== false ? (
-                                <span className="flex items-center gap-1 text-[9px] text-green-600 font-medium">
-                                  <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-                                  Autostart Ativo
-                                </span>
-                              ) : (
-                                <span className="flex items-center gap-1 text-[9px] text-red-600 font-medium">
-                                  <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
-                                  Autostart Inativo
-                                </span>
-                              )}
+                              <div className="flex flex-col gap-0.5">
+                                {d.autostart !== false ? (
+                                  <span className="flex items-center gap-1 text-[9px] text-green-600 font-medium">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+                                    Autostart Ativo
+                                  </span>
+                                ) : (
+                                  <span className="flex items-center gap-1 text-[9px] text-red-600 font-medium">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                                    Autostart Inativo
+                                  </span>
+                                )}
+                                {d.persistence && (
+                                  <span className="flex items-center gap-1 text-[9px] text-blue-600 font-medium">
+                                    <Activity className="h-2 w-2" />
+                                    Monitorado
+                                  </span>
+                                )}
+                              </div>
                             </span>
                           </div>
                         </div>
