@@ -167,7 +167,6 @@ export function EditDeviceModal({ device, open, onOpenChange, onSuccess }: EditD
           tenant_id: values.tenant_id,
           company_id: values.company_id,
           store_id: values.store_id,
-          group_id: values.group_id,
           playlist_id: values.playlist_id,
           tipo_da_licenca: values.tipo_da_licenca,
           type: values.type,
@@ -175,7 +174,7 @@ export function EditDeviceModal({ device, open, onOpenChange, onSuccess }: EditD
           num_filial: values.num_filial,
           pin: values.pin,
           atualizado: new Date().toISOString(),
-        })
+        } as any)
         .eq("id", device.id);
 
       if (error) throw error;
