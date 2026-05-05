@@ -167,14 +167,14 @@ export default function MediaPage() {
   };
 
   const fetchFolders = async () => {
-    if (!tenantId) return;
+    if (!tenantId && !isSuperAdmin) return;
     
     let query = supabase
       .from("folders")
       .select("*")
       .order("name");
 
-    if (tenantId) {
+    if (!isSuperAdmin) {
       query = query.eq("tenant_id", tenantId);
     }
 
