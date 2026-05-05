@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, ExternalLink, Loader2, Save, Store, Wrench, Monitor, Layers, Check, ChevronsUpDown } from "lucide-react";
+import { ArrowLeft, ExternalLink, Loader2, Save, Store, Wrench, Monitor, Layers, Check, ChevronsUpDown, Play } from "lucide-react";
 import { 
   Select, 
   SelectContent, 
