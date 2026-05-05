@@ -53,50 +53,73 @@ export default function PlayerPage() {
 
     async function initializePlayer() {
       // Step A: Load Local Cache Immediately
-      MediaCacheService.logPerformance(deviceCode, 'init_start', 'Iniciando carregamento do player');
-      const cachedManifest = ManifestManager.getManifest(deviceCode);
-      if (cachedManifest) {
-        console.log("[Player] Resuming from offline manifest");
-        MediaCacheService.logPerformance(deviceCode, 'manifest_cache_hit', 'Retomando do manifesto local');
-        setManifest(cachedManifest);
-        // We set isLoading to false only if we have content to play
-        setIsLoading(false);
+      if (deviceCode) {
+        MediaCacheService.logPerformance(deviceCode, 'init_start', 'Iniciando carregamento do player');
+        const cachedManifest = ManifestManager.getManifest(deviceCode);
+        if (cachedManifest && !isPreview) {
+          console.log("[Player] Resuming from offline manifest");
+          MediaCacheService.logPerformance(deviceCode, 'manifest_cache_hit', 'Retomando do manifesto local');
+          setManifest(cachedManifest);
+          setIsLoading(false);
+        }
       }
 
       try {
-        if (!cachedManifest) {
-          console.log("[Player] No cache found, fetching initial manifest...");
-          MediaCacheService.logPerformance(deviceCode, 'manifest_fetch_start', 'Buscando manifesto remoto (sem cache)');
-          const startTime = Date.now();
-          const result = await ManifestService.fetchManifest(deviceCode);
-          MediaCacheService.logPerformance(deviceCode, 'manifest_fetch_success', 'Manifesto remoto carregado', {}, Date.now() - startTime);
-          setManifest(result.manifest);
-          if (result.device) {
-            setDeviceUuid(result.device.id?.toString());
-            setDeviceInfo(result.device);
-          }
+        if (isPreview && playlistId) {
+          console.log("[Player] Loading preview for playlist:", playlistId);
+          const { data: playlist, error } = await supabase
+            .from("playlists")
+            .select("id, name, updated_at, schedule, appearance_config")
+            .eq("id", playlistId)
+            .single();
+
+          if (error) throw error;
+
+          const { data: items, error: itemsError } = await supabase
+            .from("playlist_items")
+            .select("id, media_id, position, ordem, duracao, tipo, media_items(id, name, file_url, thumbnail_url, type, duration)")
+            .eq("playlist_id", playlistId);
+
+          if (itemsError) throw itemsError;
+
+          const mapItems = (items: any[]) => (items || [])
+            .sort((a, b) => (a.position ?? a.ordem ?? 0) - (b.position ?? b.ordem ?? 0))
+            .map((item) => {
+              const media = Array.isArray(item.media_items) ? item.media_items[0] : item.media_items;
+              return {
+                id: item.media_id || item.id,
+                type: item.tipo || media?.type || "image",
+                url: media?.file_url,
+                duration: item.duracao || media?.duration || 10,
+                name: media?.name || "Sem nome"
+              };
+            })
+            .filter((item) => item.url);
+
+          setManifest({
+            playlist_id: playlist.id,
+            name: playlist.name,
+            updated_at: playlist.updated_at || new Date().toISOString(),
+            items: mapItems(items || []),
+            appearance_config: playlist.appearance_config || {}
+          });
           setIsLoading(false);
           return;
         }
 
-        // Step B: Resolve Device Identity in background without blocking playback
-        const { data: device, error } = await supabase
-          .from("dispositivos")
-          .select("*")
-          .or(`apelido_interno.eq."${deviceCode}",serial.eq."${deviceCode}"`)
-          .maybeSingle();
+        if (!deviceCode) return;
 
-        if (!error && device) {
-          setDeviceUuid(device.id.toString());
-          setDeviceInfo(device);
+        console.log("[Player] Fetching initial manifest for device:", deviceCode);
+        const result = await ManifestService.fetchManifest(deviceCode);
+        setManifest(result.manifest);
+        if (result.device) {
+          setDeviceUuid(result.device.id?.toString());
+          setDeviceInfo(result.device);
         }
+        setIsLoading(false);
       } catch (err) {
         console.error("[Player] Initial resolve error:", err);
-      } finally {
-        // Always stop loading spinner if we have manifest, even on error
-        if (ManifestManager.getManifest(deviceCode)) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     }
 
