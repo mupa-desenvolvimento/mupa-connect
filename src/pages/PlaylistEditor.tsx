@@ -87,6 +87,41 @@ interface EditorPlaylistItem {
   media?: any;
 }
 
+const DEFAULT_APPEARANCE_CONFIG = {
+  show_device_name: true,
+  show_datetime: true,
+  show_serial: false,
+  transition_type: "fade",
+  transition_duration: 500,
+  footer: {
+    enabled: false,
+    text: "Consulte o preço aqui",
+    background_color: "#000000AA",
+    text_color: "#FFFFFF",
+    height: 60
+  },
+  logo: {
+    enabled: false,
+    url: "",
+    position: "top-left",
+    size: 80,
+    opacity: 1
+  }
+};
+
+const normalizeAppearanceConfig = (config?: any) => ({
+  ...DEFAULT_APPEARANCE_CONFIG,
+  ...(config && typeof config === "object" ? config : {}),
+  footer: {
+    ...DEFAULT_APPEARANCE_CONFIG.footer,
+    ...(config?.footer && typeof config.footer === "object" ? config.footer : {})
+  },
+  logo: {
+    ...DEFAULT_APPEARANCE_CONFIG.logo,
+    ...(config?.logo && typeof config.logo === "object" ? config.logo : {})
+  }
+});
+
 // --- Horizontal Sortable Item Component ---
 const SortableItem = ({ 
   item, 
@@ -197,27 +232,7 @@ export default function PlaylistEditor() {
   const [debugData, setDebugData] = useState<any>(null);
   const [showDebug, setShowDebug] = useState(false);
   const [mediaSearch, setMediaSearch] = useState("");
-  const [appearanceConfig, setAppearanceConfig] = useState<any>({
-    show_device_name: true,
-    show_datetime: true,
-    show_serial: false,
-    transition_type: "fade",
-    transition_duration: 500,
-    footer: {
-      enabled: false,
-      text: "Consulte o preço aqui",
-      background_color: "#000000AA",
-      text_color: "#FFFFFF",
-      height: 60
-    },
-    logo: {
-      enabled: false,
-      url: "",
-      position: "top-left",
-      size: 80,
-      opacity: 1
-    }
-  });
+  const [appearanceConfig, setAppearanceConfig] = useState<any>(DEFAULT_APPEARANCE_CONFIG);
 
   // Monitorar mudanças no estado de itens
   useEffect(() => {
@@ -242,12 +257,7 @@ export default function PlaylistEditor() {
       setPlaylistName(playlistData.name);
       setIsDefault(playlistData.is_company_default || false);
       
-      if (playlistData.appearance_config) {
-        setAppearanceConfig({
-          ...appearanceConfig,
-          ...(playlistData.appearance_config as any)
-        });
-      }
+      setAppearanceConfig(normalizeAppearanceConfig(playlistData.appearance_config));
       
       if (playlistData.playlist_items && playlistData.playlist_items.length > 0) {
         const mappedItems = playlistData.playlist_items.map((it: any) => ({
@@ -801,7 +811,7 @@ export default function PlaylistEditor() {
                         <div className="space-y-2">
                           <Label className="text-xs text-white/60">Texto do Rodapé</Label>
                           <Input 
-                            value={appearanceConfig.footer.text} 
+                            value={appearanceConfig.footer?.text || DEFAULT_APPEARANCE_CONFIG.footer.text} 
                             onChange={(e) => {
                               setAppearanceConfig({
                                 ...appearanceConfig,
@@ -818,7 +828,7 @@ export default function PlaylistEditor() {
                             <div className="flex gap-2">
                               <Input 
                                 type="color"
-                                value={(appearanceConfig.footer?.background_color || "#000000AA").substring(0, 7)} 
+                                value={(appearanceConfig.footer?.background_color || DEFAULT_APPEARANCE_CONFIG.footer.background_color).substring(0, 7)} 
                                 onChange={(e) => {
                                   setAppearanceConfig({
                                     ...appearanceConfig,
@@ -829,7 +839,7 @@ export default function PlaylistEditor() {
                                 className="w-8 h-8 p-0 border-none bg-transparent cursor-pointer"
                               />
                               <Input 
-                                value={appearanceConfig.footer.background_color} 
+                                value={appearanceConfig.footer?.background_color || DEFAULT_APPEARANCE_CONFIG.footer.background_color} 
                                 onChange={(e) => {
                                   setAppearanceConfig({
                                     ...appearanceConfig,
@@ -846,7 +856,7 @@ export default function PlaylistEditor() {
                             <div className="flex gap-2">
                               <Input 
                                 type="color"
-                                value={appearanceConfig.footer.text_color} 
+                                value={appearanceConfig.footer?.text_color || DEFAULT_APPEARANCE_CONFIG.footer.text_color} 
                                 onChange={(e) => {
                                   setAppearanceConfig({
                                     ...appearanceConfig,
@@ -857,7 +867,7 @@ export default function PlaylistEditor() {
                                 className="w-8 h-8 p-0 border-none bg-transparent cursor-pointer"
                               />
                               <Input 
-                                value={appearanceConfig.footer.text_color} 
+                                value={appearanceConfig.footer?.text_color || DEFAULT_APPEARANCE_CONFIG.footer.text_color} 
                                 onChange={(e) => {
                                   setAppearanceConfig({
                                     ...appearanceConfig,
@@ -896,7 +906,7 @@ export default function PlaylistEditor() {
                         <div className="space-y-2">
                           <Label className="text-xs text-white/60">URL do Logo</Label>
                           <Input 
-                            value={appearanceConfig.logo.url} 
+                            value={appearanceConfig.logo?.url || ""} 
                             onChange={(e) => {
                               setAppearanceConfig({
                                 ...appearanceConfig,
@@ -911,7 +921,7 @@ export default function PlaylistEditor() {
                         <div className="space-y-2">
                           <Label className="text-xs text-white/60">Posição</Label>
                           <Select 
-                            value={appearanceConfig.logo.position} 
+                            value={appearanceConfig.logo?.position || DEFAULT_APPEARANCE_CONFIG.logo.position} 
                             onValueChange={(val) => {
                               setAppearanceConfig({
                                 ...appearanceConfig,
@@ -936,7 +946,7 @@ export default function PlaylistEditor() {
                             <Label className="text-xs text-white/60">Tamanho (px)</Label>
                             <Input 
                               type="number"
-                              value={appearanceConfig.logo.size} 
+                              value={appearanceConfig.logo?.size || DEFAULT_APPEARANCE_CONFIG.logo.size} 
                               onChange={(e) => {
                                 setAppearanceConfig({
                                   ...appearanceConfig,
@@ -950,7 +960,7 @@ export default function PlaylistEditor() {
                           <div className="space-y-2">
                             <Label className="text-xs text-white/60">Opacidade (%)</Label>
                             <Slider 
-                              value={[(appearanceConfig.logo.opacity || 1) * 100]} 
+                              value={[(appearanceConfig.logo?.opacity ?? DEFAULT_APPEARANCE_CONFIG.logo.opacity) * 100]} 
                               min={0} 
                               max={100} 
                               step={10}
