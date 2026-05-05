@@ -39,6 +39,7 @@ import { toast } from "sonner";
 import { DeviceFirebaseCommandDrawer } from "@/components/DeviceFirebaseCommandDrawer";
 import { BulkCommandDialog } from "@/components/BulkCommandDialog";
 import { useUserRole } from "@/hooks/use-user-role";
+import { CreateDeviceModal } from "@/components/CreateDeviceModal";
 
 type DeviceStatus = "online" | "unstable" | "offline";
 
@@ -52,6 +53,7 @@ export default function DevicesPage() {
   const [selectedDevice, setSelectedDevice] = useState<any | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
   const { tenantId, isSuperAdmin, isTecnico, isAdmin } = useUserRole();
 
   const openDeviceDrawer = (device: any) => {
@@ -202,7 +204,12 @@ export default function DevicesPage() {
             )}
             <Button variant="outline" size="sm" onClick={() => refetch()} className="h-9"><RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} /> Atualizar</Button>
             {isAdmin && (
-              <Button className="bg-gradient-primary text-primary-foreground shadow-glow h-9"><Plus className="h-4 w-4 mr-2" /> Novo</Button>
+              <Button 
+                className="bg-gradient-primary text-primary-foreground shadow-glow h-9"
+                onClick={() => setCreateModalOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" /> Novo
+              </Button>
             )}
           </div>
         }
@@ -322,6 +329,11 @@ export default function DevicesPage() {
         devices={filteredDevices} 
         stores={stores || []}
         groups={groups}
+      />
+      <CreateDeviceModal 
+        open={createModalOpen}
+        onOpenChange={setCreateModalOpen}
+        onSuccess={() => refetch()}
       />
     </div>
   );
