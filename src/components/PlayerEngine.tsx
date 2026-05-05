@@ -182,8 +182,14 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
             muted={volume === 0}
             playsInline
             className="w-full h-full object-cover"
+            onLoadStart={() => serial && FirebaseRealtimeService.logEvent(serial, "video_load_start", { media: currentMedia.name })}
+            onCanPlay={() => serial && FirebaseRealtimeService.logEvent(serial, "video_can_play", { media: currentMedia.name })}
             onEnded={() => nextMedia("video_ended")}
-            onError={() => nextMedia("video_error")}
+            onError={(e) => {
+              console.error("[PlayerEngine] Video error:", e);
+              if (serial) FirebaseRealtimeService.logEvent(serial, "video_error", { media: currentMedia.name, error: "Playback failed" });
+              nextMedia("video_error");
+            }}
           />
         ) : (
           <img
@@ -191,7 +197,12 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
             src={currentMedia.url}
             className="w-full h-full object-cover"
             alt=""
-            onError={() => nextMedia("image_error")}
+            onLoad={() => serial && FirebaseRealtimeService.logEvent(serial, "image_load_success", { media: currentMedia.name })}
+            onError={() => {
+              console.error("[PlayerEngine] Image error");
+              if (serial) FirebaseRealtimeService.logEvent(serial, "image_error", { media: currentMedia.name });
+              nextMedia("image_error");
+            }}
           />
         )}
       </div>
