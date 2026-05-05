@@ -109,7 +109,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
   /**
    * Transition logic from current active layer to the next.
    */
-  const performTransition = useCallback(() => {
+  const performTransition = useCallback((triggerReason: string = "timer") => {
     if (isTransitioningRef.current || !playlistRef.current.length) return;
 
     const nextLayer = activeLayer === "A" ? "B" : "A";
@@ -124,7 +124,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     const minRequiredMs = Math.max(configuredDuration, MIN_DURATION) * 1000;
 
     // Se estiver tentando trocar muito antes do tempo, bloqueia (evita disparos duplos)
-    if (elapsed < minRequiredMs - 200) {
+    if (elapsed < minRequiredMs - 200 && triggerReason !== "error") {
       console.warn(`[PlayerEngine] Troca prematura detectada (${elapsed}ms < ${minRequiredMs}ms). Cancelando.`);
       return;
     }
@@ -135,12 +135,26 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
 
     if (!readyToSwitchRef.current[nextLayer]) {
       console.warn(`[PlayerEngine] Próxima camada (${nextLayer}) não carregada. Forçando avanço para evitar travamento.`);
-      // Se não estiver pronto em 500ms, o watchdog ou o prepareNextBuffer cuidará, 
-      // mas aqui forçamos a prontidão se já passou do tempo.
       readyToSwitchRef.current[nextLayer] = true;
+      if (serial) {
+        FirebaseRealtimeService.logEvent(serial, "buffer_not_ready", {
+          layer: nextLayer,
+          trigger: triggerReason
+        });
+      }
     }
 
-    console.log(`[PlayerEngine] NEXT TRIGGER. Mídia: ${currentItem.name}, Exibida por: ${elapsed}ms`);
+    console.log(`[PlayerEngine] NEXT TRIGGER. Mídia: ${currentItem.name}, Exibida por: ${elapsed}ms | Motivo: ${triggerReason}`);
+    
+    if (serial) {
+      FirebaseRealtimeService.logEvent(serial, "media_transition", {
+        from: currentItem.name,
+        elapsed_ms: elapsed,
+        reason: triggerReason
+      });
+      // Atualizar heartbeat também
+      FirebaseRealtimeService.sendHeartbeat(serial, currentItem.id, "playing");
+    }
 
     const nextVideo = nextLayer === "A" ? videoARef.current : videoBRef.current;
     const nextItem = nextLayer === "A" ? itemA : itemB;
@@ -149,7 +163,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
       nextVideo.muted = volume === 0;
       nextVideo.play().catch(err => {
         console.error("[PlayerEngine] Falha ao dar play, pulando:", err);
-        // Se o vídeo falhar, não travar, agendar próxima
+        if (serial) FirebaseRealtimeService.logEvent(serial, "video_play_error", { media: nextItem.name, error: err.message });
       });
     }
 
@@ -165,7 +179,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
       isTransitioningRef.current = false;
       prepareNextBuffer();
     }, TRANSITION_MS + 100);
-  }, [activeLayer, itemA, itemB, volume, onMediaChange]);
+  }, [activeLayer, itemA, itemB, volume, onMediaChange, serial]);
 
   /**
    * Watchdog mechanism (ANTI-TRAVAMENTO - CRÍTICO)
