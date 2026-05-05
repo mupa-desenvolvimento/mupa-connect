@@ -119,31 +119,32 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     const configuredDuration = (currentItem.duration || 10);
     const minRequiredMs = Math.max(configuredDuration, MIN_DURATION) * 1000;
 
-    if (elapsed < minRequiredMs - 50) { // Pequena margem para precisão
+    if (elapsed < minRequiredMs - 100) { // Margem de 100ms para evitar pulos prematuros por jitter de timer
       console.warn(`[PlayerEngine] Troca prematura detectada (${elapsed}ms < ${minRequiredMs}ms). Cancelando.`);
       return;
     }
 
-    console.log(`[PlayerEngine] Efetuando transição. Mídia: ${currentItem.name}, Exibida por: ${elapsed}ms`);
-
     if (!readyToSwitchRef.current[nextLayer]) {
-      console.warn(`[PlayerEngine] Próxima camada (${nextLayer}) não carregada. Retrying...`);
+      console.warn(`[PlayerEngine] Próxima camada (${nextLayer}) não carregada. Aguardando...`);
       if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(performTransition, 200);
+      timerRef.current = setTimeout(performTransition, 500); // Retry em 500ms
       return;
     }
+
+    console.log(`[PlayerEngine] Efetuando transição. Mídia: ${currentItem.name}, Exibida por: ${elapsed}ms`);
 
     isTransitioningRef.current = true;
     
     const nextVideo = nextLayer === "A" ? videoARef.current : videoBRef.current;
     const nextItem = nextLayer === "A" ? itemA : itemB;
     
+    // Iniciar vídeo da próxima camada ANTES de trocar a opacidade
     if (nextItem?.type === "video" && nextVideo) {
       nextVideo.muted = volume === 0;
-      nextVideo.play().catch(() => {});
+      nextVideo.play().catch(err => console.error("[PlayerEngine] Falha ao dar play no vídeo:", err));
     }
 
-    // DISPARO ÚNICO
+    // DISPARO ÚNICO DE TROCA DE CAMADA
     setActiveLayer(nextLayer);
     lastTransitionTimeRef.current = now;
 
@@ -154,7 +155,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     transitionTimerRef.current = setTimeout(() => {
       isTransitioningRef.current = false;
       prepareNextBuffer();
-    }, TRANSITION_MS + 50);
+    }, TRANSITION_MS + 100);
   }, [activeLayer, itemA, itemB, volume, onMediaChange]);
 
   /**
