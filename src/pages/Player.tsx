@@ -370,20 +370,30 @@ export default function PlayerPage() {
           {/* Configurable Footer - Refined & Elegant */}
           {appearance.footer?.enabled && (
             <div 
-              className="absolute bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-2 rounded-2xl backdrop-blur-md shadow-2xl border border-white/5 animate-fade-in max-w-[80%] pointer-events-none"
+              className="absolute bottom-6 right-6 z-40 flex items-center justify-center gap-2 px-6 py-3 rounded-2xl backdrop-blur-md shadow-2xl border border-white/5 animate-fade-in max-w-[85%] pointer-events-none"
               style={{ 
                 backgroundColor: appearance.footer.background_color || "rgba(0, 0, 0, 0.6)",
                 color: appearance.footer.text_color || "#FFFFFF",
               }}
             >
-              <div className="flex items-center gap-2 text-[11px] font-medium tracking-wide">
+              <div className="flex flex-col items-center justify-center text-center leading-tight">
+                <div 
+                  className="font-display tracking-wide"
+                  style={{ 
+                    fontFamily: "'Bebas Neue', sans-serif",
+                    fontSize: "1.6rem",
+                    letterSpacing: "0.05em"
+                  }}
+                >
+                  <span className="opacity-95 block line-clamp-2">{appearance.footer.text}</span>
+                </div>
                 {deviceInfo && (
-                  <>
-                    <span className="opacity-70 whitespace-nowrap">Filial {deviceInfo.num_filial}</span>
-                    <span className="opacity-40">•</span>
-                  </>
+                  <div className="flex items-center gap-1.5 mt-1 opacity-50 font-mono text-[9px] uppercase tracking-widest">
+                    <span>Filial {deviceInfo.num_filial}</span>
+                    <span>•</span>
+                    <span>ID: {deviceCode}</span>
+                  </div>
                 )}
-                <span className="opacity-90">{appearance.footer.text}</span>
               </div>
             </div>
           )}
