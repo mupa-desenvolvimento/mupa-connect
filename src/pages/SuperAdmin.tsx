@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ export default function SuperAdminDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchStats() {
@@ -56,8 +58,13 @@ export default function SuperAdminDashboard() {
           users: userCount || 0,
           devices: deviceCount || 0
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching superadmin stats:", error);
+        if (error?.message?.includes("Refresh Token") || error?.status === 400 || error?.status === 401) {
+          toast.error("Sessão expirada. Redirecionando...");
+          await supabase.auth.signOut();
+          navigate("/auth");
+        }
       } finally {
         setLoading(false);
       }
