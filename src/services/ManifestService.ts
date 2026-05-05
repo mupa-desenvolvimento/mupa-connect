@@ -28,7 +28,7 @@ export const ManifestService = {
   async fetchManifestFallback(deviceCode: string) {
     const { data: device, error: deviceError } = await supabase
       .from("dispositivos")
-      .select("*")
+      .select("*, appearance_config")
       .or(`apelido_interno.eq."${deviceCode}",serial.eq."${deviceCode}"`)
       .maybeSingle();
 
@@ -53,7 +53,7 @@ export const ManifestService = {
 
     const { data: playlist, error: playlistError } = await supabase
       .from("playlists")
-      .select("id, name, updated_at, schedule")
+      .select("id, name, updated_at, schedule, appearance_config")
       .eq("id", targetPlaylistId)
       .maybeSingle();
 
@@ -90,7 +90,9 @@ export const ManifestService = {
         schedules: Array.isArray(playlist.schedule) ? playlist.schedule : [],
         fallback_playlist: [],
         fallback_items: [],
-        items: mapItems(playlistItems || [])
+        items: mapItems(playlistItems || []),
+        appearance_config: device.appearance_config || playlist.appearance_config || {}
+      }
       }
     };
   }
