@@ -188,6 +188,27 @@ export default function PlaylistEditor() {
   const [debugData, setDebugData] = useState<any>(null);
   const [showDebug, setShowDebug] = useState(false);
   const [mediaSearch, setMediaSearch] = useState("");
+  const [appearanceConfig, setAppearanceConfig] = useState<any>({
+    show_device_name: true,
+    show_datetime: true,
+    show_serial: false,
+    transition_type: "fade",
+    transition_duration: 500,
+    footer: {
+      enabled: false,
+      text: "Consulte o preço aqui",
+      background_color: "#000000AA",
+      text_color: "#FFFFFF",
+      height: 60
+    },
+    logo: {
+      enabled: false,
+      url: "",
+      position: "top-left",
+      size: 80,
+      opacity: 1
+    }
+  });
 
   // Monitorar mudanças no estado de itens
   useEffect(() => {
