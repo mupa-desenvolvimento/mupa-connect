@@ -34,7 +34,7 @@ export default function PlayerPage() {
   useEffect(() => {
     // Force black background for all players
     document.body.style.backgroundColor = "black";
-    return () => { document.body.style.backgroundColor = ""; };
+    document.documentElement.classList.add("dark");
   }, []);
   const { deviceCode } = useParams();
   const [searchParams] = useSearchParams();
