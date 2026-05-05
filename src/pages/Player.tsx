@@ -54,6 +54,7 @@ export default function PlayerPage() {
   const [syncToast, setSyncToast] = useState<{ msg: string; ts: number } | null>(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [faceDetectionActive, setFaceDetectionActive] = useState(false);
+  const [errorInfo, setErrorInfo] = useState<{ message: string; code?: string } | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
