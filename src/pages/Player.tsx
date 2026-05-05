@@ -200,7 +200,7 @@ export default function PlayerPage() {
 
   // 4. Background Sync (Polling) - Silent & Efficient
   useEffect(() => {
-    if (!deviceCode) return;
+    if (!deviceCode || isPreview) return;
     
     const backgroundSync = async () => {
       console.log("[Player] Background sync checking for updates...");
