@@ -623,7 +623,7 @@ export default function PlaylistEditor() {
     triggerAutoSave(newItems, playlistName);
   };
 
-  const totalDuration = items.reduce((acc, curr) => acc + curr.duration, 0);
+  // totalDuration already defined as useMemo at the top
 
   if (isLoadingPlaylist && id !== "new") {
     return (
