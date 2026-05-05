@@ -312,6 +312,20 @@ export default function DevicesPage() {
                       <TableCell><StatusBadge status={status} /></TableCell>
                       <TableCell className="text-right" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-end gap-1">
+                          {isSuperAdmin && (
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              className="h-8 w-8 text-primary hover:bg-primary/10" 
+                              onClick={() => {
+                                setSelectedDevice(d);
+                                setEditModalOpen(true);
+                              }}
+                              title="Editar Avançado"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                          )}
                           {isTecnico && (
                             <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10" onClick={() => handleRebootDevice(d.id.toString(), d.apelido_interno)} title="Reiniciar"><RotateCcw className="h-4 w-4" /></Button>
                           )}
@@ -344,6 +358,12 @@ export default function DevicesPage() {
       <CreateDeviceModal 
         open={createModalOpen}
         onOpenChange={setCreateModalOpen}
+        onSuccess={() => refetch()}
+      />
+      <EditDeviceModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        device={selectedDevice}
         onSuccess={() => refetch()}
       />
     </div>
