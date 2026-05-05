@@ -1,0 +1,1 @@
+ALTER TABLE public.dispositivos ADD CONSTRAINT dispositivos_serial_key UNIQUE (serial);

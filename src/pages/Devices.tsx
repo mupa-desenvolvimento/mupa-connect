@@ -44,7 +44,8 @@ import { useUserRole } from "@/hooks/use-user-role";
 import { CreateDeviceModal } from "@/components/CreateDeviceModal";
 import { EditDeviceModal } from "@/components/EditDeviceModal";
 
-type DeviceStatus = "online" | "unstable" | "offline";
+type ConnectionStatus = "online" | "unstable" | "offline";
+type PlayerStatus = "reproduzindo" | "parado" | "erro";
 
 export default function DevicesPage() {
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
@@ -126,29 +127,34 @@ export default function DevicesPage() {
     return Number.isNaN(t) ? 0 : t;
   };
 
-  const getStatus = (lastHeartbeat: string | null, lastProof: string | null): DeviceStatus => {
+  const getConnectionStatus = (lastHeartbeat: string | null): ConnectionStatus => {
     const heartbeatTime = parseTs(lastHeartbeat);
     if (!heartbeatTime) return "offline";
     const now = Date.now();
-    const proofTime = parseTs(lastProof);
-    // 5 minutos de tolerância
-    const isHeartbeatRecent = (now - heartbeatTime) < 300000;
-    const isProofRecent = (now - proofTime) < 300000;
-    if (isHeartbeatRecent) return isProofRecent ? "online" : "unstable";
+    const diff = (now - heartbeatTime) / 1000;
+    
+    if (diff < 90) return "online";
+    if (diff < 180) return "unstable";
     return "offline";
+  };
+
+  const getPlayerStatus = (playerStatus: string | null): PlayerStatus => {
+    if (playerStatus === "playing") return "reproduzindo";
+    if (playerStatus === "error") return "erro";
+    return "parado";
   };
 
   const filteredDevices = useMemo(() => {
     if (!devices) return [];
     return devices.filter(d => {
-      const status = getStatus(d.last_heartbeat_at, d.last_proof_at);
+      const connStatus = getConnectionStatus(d.last_heartbeat_at);
       const matchesSearch = 
         (d.apelido_interno?.toLowerCase().includes(search.toLowerCase()) || 
          d.serial?.toLowerCase().includes(search.toLowerCase()) ||
          d.companies?.name?.toLowerCase().includes(search.toLowerCase()));
       const matchesStore = storeFilter === "all" || d.num_filial === storeFilter;
       const matchesGroup = groupFilter === "all" || d.grupo_dispositivos === groupFilter;
-      const matchesStatus = statusFilter === "all" || status === statusFilter;
+      const matchesStatus = statusFilter === "all" || connStatus === statusFilter;
       const matchesPlaylist = 
         playlistFilter === "all" ? true :
         playlistFilter === "has" ? !!d.playlist_id :
@@ -283,9 +289,10 @@ export default function DevicesPage() {
               </TableHeader>
               <TableBody>
                 {filteredDevices.map((d) => {
-                  const status = getStatus(d.last_heartbeat_at, d.last_proof_at);
+                  const connStatus = getConnectionStatus(d.last_heartbeat_at);
+                  const playStatus = getPlayerStatus(d.player_status);
                   return (
-                    <TableRow key={d.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => openDeviceDrawer({ ...d, status })}>
+                    <TableRow key={d.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => openDeviceDrawer({ ...d, status: connStatus })}>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Monitor className="h-4 w-4 text-primary opacity-70" />
@@ -338,7 +345,16 @@ export default function DevicesPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-muted-foreground text-xs">{formatDate(d.last_heartbeat_at)}</TableCell>
-                      <TableCell><StatusBadge status={status} /></TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          <StatusBadge status={connStatus} />
+                          {playStatus === "reproduzindo" && (
+                            <span className="text-[10px] text-green-600 font-bold flex items-center gap-1 ml-1">
+                              <Play className="h-2 w-2 fill-current" /> Reproduzindo
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-right" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-end gap-1">
                           {isSuperAdmin && (

@@ -8,7 +8,7 @@ import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { ManifestService } from "@/services/ManifestService";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Monitor, Wrench } from "lucide-react";
 import * as faceapi from "face-api.js";
 
 interface AppearanceConfig {
@@ -125,7 +125,6 @@ export default function PlayerPage() {
 
         if (!deviceCode) return;
 
-        console.log("[Player] Fetching initial manifest for device:", deviceCode);
         const result = await ManifestService.fetchManifest(deviceCode);
         setManifest(result.manifest);
         if (result.device) {
@@ -185,19 +184,23 @@ export default function PlayerPage() {
     
     const media = activePlaylist[idx];
     if (media && deviceInfo?.id && !isPreview) {
-      // 1. Firebase Realtime Heartbeat (New)
-      FirebaseRealtimeService.sendHeartbeat(deviceCode!, media.id?.toString());
+      // 1. Firebase Realtime Heartbeat
+      FirebaseRealtimeService.sendHeartbeat(deviceCode!, media.id?.toString(), "playing");
 
-      // 2. Proof of Play Log (Legacy compat)
-      supabase.functions.invoke('device-api/heartbeat', { 
-        body: { 
-          serial: deviceInfo.serial,
-          media_id: media.id,
-          playlist_id: manifest?.playlist_id
-        } 
-      }).catch(() => {});
+      // 2. Supabase Player Status Update
+      supabase
+        .from('dispositivos')
+        .update({ 
+          player_status: 'playing',
+          last_player_activity_at: new Date().toISOString(),
+          current_media_id: media.id
+        })
+        .eq('id', deviceInfo.id)
+        .then(({ error }) => {
+          if (error) console.warn("[Player] Failed to update player status:", error);
+        });
 
-      // 3. Trade Marketing Event (New Module)
+      // 3. Trade Marketing Event
       supabase.from('media_events').insert({
         device_id: deviceInfo.id,
         media_id: media.id?.toString(),
@@ -474,10 +477,26 @@ export default function PlayerPage() {
 
   if (!activePlaylist.length) {
     return (
-      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-4 text-white/40 font-mono text-xs uppercase tracking-widest">
-        <div>Manifesto Vazio</div>
-        <div className="px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-white/70 tracking-wider">
-          ID: {deviceCode}
+      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-6 text-white select-none">
+        <div className="flex flex-col items-center gap-2 animate-in fade-in zoom-in duration-700">
+          <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-2">
+            <Monitor className="w-8 h-8 text-white/20" />
+          </div>
+          <h2 className="text-xl font-light tracking-[0.2em] uppercase text-white/60">Aguardando Ativação</h2>
+          <p className="text-white/30 font-mono text-xs uppercase tracking-widest">Nenhuma playlist vinculada</p>
+        </div>
+        
+        <div className="flex flex-col items-center gap-3 mt-4">
+          <div className="text-[10px] text-white/20 uppercase tracking-[0.3em] font-bold">Número de Série</div>
+          <div className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 shadow-2xl backdrop-blur-sm group hover:border-white/20 transition-all duration-300">
+            <code className="text-3xl md:text-5xl font-mono font-bold tracking-[0.15em] text-white/90 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+              {deviceCode}
+            </code>
+          </div>
+        </div>
+
+        <div className="absolute bottom-12 text-[10px] text-white/10 uppercase tracking-[0.4em] font-medium animate-pulse">
+          Sincronizando com Servidor Cloud
         </div>
       </div>
     );
@@ -606,8 +625,42 @@ export default function PlayerPage() {
         </div>
       </div>
 
+      {/* Maintenance Info (Bottom Right) */}
+      {deviceInfo?.is_maintenance && (
+        <div className="absolute bottom-4 right-4 z-[100] p-4 rounded-xl bg-black/80 backdrop-blur-xl border border-yellow-500/50 shadow-2xl animate-in fade-in zoom-in duration-500 max-w-[300px] pointer-events-none">
+          <div className="flex items-center gap-3 mb-3 text-yellow-500">
+            <div className="h-8 w-8 rounded-lg bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20">
+              <Wrench className="h-4 w-4" />
+            </div>
+            <div className="font-display font-bold text-sm uppercase tracking-wider">Modo Manutenção</div>
+          </div>
+          <div className="space-y-2 font-mono text-[10px] uppercase tracking-wider">
+            <div className="flex justify-between gap-4">
+              <span className="text-white/40">Serial:</span>
+              <span className="text-white/90 font-bold">{deviceInfo.serial}</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-white/40">Filial:</span>
+              <span className="text-white/90 font-bold">{deviceInfo.num_filial || "—"}</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-white/40">Nome:</span>
+              <span className="text-white/90 font-bold text-right">{deviceInfo.apelido_interno || "—"}</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-white/40">Status:</span>
+              <span className="text-yellow-500 font-bold">EM MANUTENÇÃO</span>
+            </div>
+            <div className="mt-2 pt-2 border-t border-white/5 flex justify-between gap-4">
+              <span className="text-white/40">IP Local:</span>
+              <span className="text-white/60 font-bold">Detectando...</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Serial Info (Discreet) */}
-      {(appearance.show_serial !== false && !isPreview) && (
+      {(appearance.show_serial !== false && !isPreview && !deviceInfo?.is_maintenance) && (
         <div className="absolute bottom-4 right-4 z-40 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 font-mono text-[10px] text-white/40 tracking-[0.2em] select-none pointer-events-none uppercase">
           Device ID: {deviceInfo?.serial || deviceCode}
         </div>

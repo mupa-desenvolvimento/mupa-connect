@@ -2106,11 +2106,13 @@ export type Database = {
           ip_dispositivo: string | null
           is_maintenance: boolean | null
           last_heartbeat_at: string | null
+          last_player_activity_at: string | null
           last_proof_at: string | null
           num_filial: string | null
           online: boolean | null
           persistence: boolean | null
           pin: string | null
+          player_status: string | null
           playlist_id: string | null
           serial: string | null
           store_id: string | null
@@ -2138,11 +2140,13 @@ export type Database = {
           ip_dispositivo?: string | null
           is_maintenance?: boolean | null
           last_heartbeat_at?: string | null
+          last_player_activity_at?: string | null
           last_proof_at?: string | null
           num_filial?: string | null
           online?: boolean | null
           persistence?: boolean | null
           pin?: string | null
+          player_status?: string | null
           playlist_id?: string | null
           serial?: string | null
           store_id?: string | null
@@ -2170,11 +2174,13 @@ export type Database = {
           ip_dispositivo?: string | null
           is_maintenance?: boolean | null
           last_heartbeat_at?: string | null
+          last_player_activity_at?: string | null
           last_proof_at?: string | null
           num_filial?: string | null
           online?: boolean | null
           persistence?: boolean | null
           pin?: string | null
+          player_status?: string | null
           playlist_id?: string | null
           serial?: string | null
           store_id?: string | null
@@ -6752,11 +6758,13 @@ export type Database = {
           ip_dispositivo: string | null
           is_maintenance: boolean | null
           last_heartbeat_at: string | null
+          last_player_activity_at: string | null
           last_proof_at: string | null
           num_filial: string | null
           online: boolean | null
           persistence: boolean | null
           pin: string | null
+          player_status: string | null
           playlist_id: string | null
           serial: string | null
           store_id: string | null
