@@ -2096,6 +2096,7 @@ export type Database = {
           company_id: string | null
           current_media_id: string | null
           current_playlist_id: string | null
+          device_type: string | null
           device_uuid: string | null
           empresa: string | null
           external_id: number | null
@@ -2125,6 +2126,7 @@ export type Database = {
           company_id?: string | null
           current_media_id?: string | null
           current_playlist_id?: string | null
+          device_type?: string | null
           device_uuid?: string | null
           empresa?: string | null
           external_id?: number | null
@@ -2154,6 +2156,7 @@ export type Database = {
           company_id?: string | null
           current_media_id?: string | null
           current_playlist_id?: string | null
+          device_type?: string | null
           device_uuid?: string | null
           empresa?: string | null
           external_id?: number | null
@@ -6733,6 +6736,7 @@ export type Database = {
           company_id: string | null
           current_media_id: string | null
           current_playlist_id: string | null
+          device_type: string | null
           device_uuid: string | null
           empresa: string | null
           external_id: number | null
