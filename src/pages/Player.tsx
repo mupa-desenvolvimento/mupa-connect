@@ -367,17 +367,24 @@ export default function PlayerPage() {
             </div>
           )}
 
-          {/* Configurable Footer */}
+          {/* Configurable Footer - Refined & Elegant */}
           {appearance.footer?.enabled && (
             <div 
-              className="w-[calc(100%+3rem)] -mx-6 mb-[-1.5rem] flex items-center justify-center font-display font-bold uppercase tracking-[0.3em] shadow-2xl overflow-hidden"
+              className="absolute bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-2 rounded-2xl backdrop-blur-md shadow-2xl border border-white/5 animate-fade-in max-w-[80%] pointer-events-none"
               style={{ 
-                height: `${appearance.footer?.height || 60}px`,
-                backgroundColor: appearance.footer?.background_color || "#000000AA",
-                color: appearance.footer?.text_color || "#FFFFFF"
+                backgroundColor: appearance.footer.background_color || "rgba(0, 0, 0, 0.6)",
+                color: appearance.footer.text_color || "#FFFFFF",
               }}
             >
-              <div className="animate-pulse">{appearance.footer.text}</div>
+              <div className="flex items-center gap-2 text-[11px] font-medium tracking-wide">
+                {deviceInfo && (
+                  <>
+                    <span className="opacity-70 whitespace-nowrap">Filial {deviceInfo.num_filial}</span>
+                    <span className="opacity-40">•</span>
+                  </>
+                )}
+                <span className="opacity-90">{appearance.footer.text}</span>
+              </div>
             </div>
           )}
         </div>
