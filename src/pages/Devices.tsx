@@ -39,6 +39,7 @@ import { toast } from "sonner";
 import { DeviceFirebaseCommandDrawer } from "@/components/DeviceFirebaseCommandDrawer";
 import { BulkCommandDialog } from "@/components/BulkCommandDialog";
 import { useUserRole } from "@/hooks/use-user-role";
+import { CreateDeviceModal } from "@/components/CreateDeviceModal";
 
 type DeviceStatus = "online" | "unstable" | "offline";
 
