@@ -165,12 +165,17 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     <div className="relative w-full h-full bg-black overflow-hidden">
       {/* Camada Unificada de Exibição */}
       <div 
+        key={`layer-${activeLayer}-${currentIndex}`}
         className={cn(
-          "absolute inset-0 transition-opacity duration-500 ease-in-out",
-          activeLayer === "A" ? "opacity-100 z-10" : "opacity-0 z-0"
+          "absolute inset-0 transition-opacity duration-500 ease-in-out animate-fade-in",
+          "opacity-100 z-10"
         )}
       >
-        {currentMedia.type === "video" ? (
+        {!currentMedia?.url ? (
+          <div className="w-full h-full bg-black flex items-center justify-center text-white/20 font-mono text-xs">
+            URL INVALIDA
+          </div>
+        ) : currentMedia.type === "video" ? (
           <video
             key={`video-${currentIndex}`}
             ref={videoRef}
