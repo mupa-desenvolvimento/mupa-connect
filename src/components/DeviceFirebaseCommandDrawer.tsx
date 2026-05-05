@@ -48,6 +48,7 @@ interface DeviceLike {
   last_heartbeat_at?: string | null;
   last_proof_at?: string | null;
   is_maintenance?: boolean;
+  autostart?: boolean;
 }
 
 interface Props {
@@ -157,6 +158,7 @@ export function DeviceFirebaseCommandDrawer({
   const [deviceName, setDeviceName] = useState("");
   const [numFilial, setNumFilial] = useState("");
   const [isMaintenance, setIsMaintenance] = useState(false);
+  const [autostart, setAutostart] = useState(true);
   const [saving, setSaving] = useState(false);
   const [quickActions, setQuickActions] = useState<any[]>([]);
   const [loadingActions, setLoadingActions] = useState(false);
@@ -310,6 +312,7 @@ export function DeviceFirebaseCommandDrawer({
       setDeviceName(device.apelido_interno || "");
       setNumFilial(device.num_filial || "");
       setIsMaintenance(!!device.is_maintenance);
+      setAutostart(device.autostart !== false); // Default true
     }
   }, [device]);
 
@@ -376,7 +379,8 @@ export function DeviceFirebaseCommandDrawer({
       .update({ 
         apelido_interno: deviceName,
         num_filial: numFilial,
-        is_maintenance: isMaintenance
+        is_maintenance: isMaintenance,
+        autostart: autostart
       })
       .eq("id", Number(device.id));
 
@@ -404,6 +408,48 @@ export function DeviceFirebaseCommandDrawer({
       console.error(error);
     } else {
       toast.success(checked ? "Modo manutenção ativado" : "Modo manutenção desativado");
+    }
+  };
+
+  const toggleAutostart = async (checked: boolean) => {
+    if (!device?.id || !device?.serial) return;
+    
+    setAutostart(checked);
+    const { error } = await supabase
+      .from("dispositivos")
+      .update({ autostart: checked })
+      .eq("id", Number(device.id));
+
+    if (error) {
+      toast.error("Erro ao atualizar autostart");
+      setAutostart(!checked);
+      console.error(error);
+      return;
+    }
+
+    // Enviar comando para o dispositivo via Firebase
+    const payload: Record<string, string> = {
+      comando: `autostart:${checked}`,
+      time: `${Date.now()}`,
+    };
+
+    try {
+      const res = await fetch(
+        `${FIREBASE_BASE}/${encodeURIComponent(device.serial)}.json`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      
+      toast.success(checked ? "Autostart ativado" : "Autostart desativado", {
+        description: `Comando autostart:${checked} enviado para ${device.serial}`,
+      });
+    } catch (e) {
+      toast.error("Falha ao enviar comando de autostart");
+      console.error(e);
     }
   };
 
@@ -488,10 +534,28 @@ export function DeviceFirebaseCommandDrawer({
                   />
                 </div>
 
+                <div className="flex items-center justify-between py-2 border-t mt-2">
+                  <div className="space-y-0.5">
+                    <Label className="text-xs font-medium flex items-center gap-2">
+                      <Play className="h-3 w-3" /> Autostart
+                    </Label>
+                    <p className="text-[10px] text-muted-foreground">Inicialização automática</p>
+                  </div>
+                  <Switch 
+                    checked={autostart}
+                    onCheckedChange={toggleAutostart}
+                  />
+                </div>
+
                 <Button 
                   className="w-full h-9 text-xs"
                   onClick={handleUpdateDevice} 
-                  disabled={saving || (deviceName === device?.apelido_interno && numFilial === device?.num_filial && isMaintenance === !!device?.is_maintenance)}
+                  disabled={saving || (
+                    deviceName === device?.apelido_interno && 
+                    numFilial === device?.num_filial && 
+                    isMaintenance === !!device?.is_maintenance &&
+                    autostart === (device?.autostart !== false)
+                  )}
                 >
                   {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                   Salvar Alterações

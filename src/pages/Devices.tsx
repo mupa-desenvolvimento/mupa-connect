@@ -285,7 +285,27 @@ export default function DevicesPage() {
                   const status = getStatus(d.last_heartbeat_at, d.last_proof_at);
                   return (
                     <TableRow key={d.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => openDeviceDrawer({ ...d, status })}>
-                      <TableCell><div className="flex items-center gap-3"><Monitor className="h-4 w-4 text-primary opacity-70" />{d.apelido_interno}</div></TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Monitor className="h-4 w-4 text-primary opacity-70" />
+                          <div className="flex flex-col">
+                            <span>{d.apelido_interno}</span>
+                            <span className="flex items-center gap-1 mt-0.5">
+                              {d.autostart !== false ? (
+                                <span className="flex items-center gap-1 text-[9px] text-green-600 font-medium">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+                                  Autostart Ativo
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-1 text-[9px] text-red-600 font-medium">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                                  Autostart Inativo
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      </TableCell>
                       <TableCell className="font-mono text-xs text-muted-foreground">{d.serial}</TableCell>
                       {isSuperAdmin && (
                         <TableCell>
