@@ -688,6 +688,11 @@ export default function PlaylistEditor() {
             >
               <ScrollArea className="flex-1 w-full h-full">
                 <div className="p-4 space-y-6">
+                  {/* Informativo */}
+                  <div className="p-3 rounded-lg bg-[#085CF0]/10 border border-[#085CF0]/20 text-[10px] text-[#085CF0] font-bold uppercase tracking-wider leading-relaxed">
+                    Estas configurações serão aplicadas a todos os dispositivos que utilizam esta playlist.
+                  </div>
+
                   {/* Identificação */}
                   <div className="space-y-4">
                     <h4 className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Identificação</h4>
