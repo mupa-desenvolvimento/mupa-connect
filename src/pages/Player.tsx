@@ -251,7 +251,7 @@ export default function PlayerPage() {
 
   // 5. Heartbeat (Supabase + Firebase)
   useEffect(() => {
-    if (!deviceInfo?.serial || !deviceCode) return;
+    if (!deviceInfo?.serial || !deviceCode || isPreview) return;
     
     const currentMedia = activePlaylist[currentIndex];
     
