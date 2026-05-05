@@ -324,14 +324,19 @@ export default function DevicesPage() {
                       </TableCell>
                       <TableCell className="text-muted-foreground text-xs">{formatDate(d.last_heartbeat_at)}</TableCell>
                       <TableCell><StatusBadge status={status} /></TableCell>
-                      <TableCell className="text-right" onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-end gap-1">
-                          {isTecnico && (
-                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10" onClick={() => handleRebootDevice(d.id.toString(), d.apelido_interno)} title="Reiniciar"><RotateCcw className="h-4 w-4" /></Button>
-                          )}
-                          <Button asChild size="sm" variant="ghost" className="h-8 text-primary hover:bg-primary/10"><Link to={`/play/${d.serial}`} target="_blank"><Play className="h-3.5 w-3.5 mr-1" /> Player</Link></Button>
-                        </div>
-                      </TableCell>
+                        <TableCell className="text-right" onClick={e => e.stopPropagation()}>
+                          <div className="flex justify-end gap-1">
+                            {isSuperAdmin && (
+                              <Button size="icon" variant="ghost" className="h-8 w-8 text-primary/70 hover:text-primary hover:bg-primary/10" onClick={(e) => handleEditDevice(e, d)} title="Editar">
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {isTecnico && (
+                              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10" onClick={() => handleRebootDevice(d.id.toString(), d.apelido_interno)} title="Reiniciar"><RotateCcw className="h-4 w-4" /></Button>
+                            )}
+                            <Button asChild size="sm" variant="ghost" className="h-8 text-primary hover:bg-primary/10"><Link to={`/play/${d.serial}`} target="_blank"><Play className="h-3.5 w-3.5 mr-1" /> Player</Link></Button>
+                          </div>
+                        </TableCell>
                     </TableRow>
                   );
                 })}
