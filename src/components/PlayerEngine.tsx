@@ -24,12 +24,13 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
   // Refs para controle de estado sem disparar renders desnecessários
   const isSwitchingRef = useRef(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const loadTimerRef = useRef<NodeJS.Timeout | null>(null);
   const playlistRef = useRef(playlist);
   const currentIndexRef = useRef(0);
+  const startTimeRef = useRef(Date.now());
   
   // Elementos de mídia
   const videoRef = useRef<HTMLVideoElement>(null);
-  const nextLayerRef = useRef<"A" | "B">("B");
 
   // Sincronizar playlist
   useEffect(() => {
@@ -43,24 +44,25 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     if (isSwitchingRef.current || !playlistRef.current.length) return;
     
     isSwitchingRef.current = true;
-    console.log(`[PlayerEngine] Next media trigger. Motivo: ${reason}`);
+    const now = Date.now();
+    const elapsed = now - startTimeRef.current;
+    console.log(`[PlayerEngine] NEXT TRIGGER. Reason: ${reason} | Elapsed: ${elapsed}ms`);
     
-    // Log detalhado de carregamento e transição
     if (serial) {
       FirebaseRealtimeService.logEvent(serial, "transition_start", {
         reason,
         current_index: currentIndexRef.current,
+        elapsed,
         timestamp: new Date().toISOString()
       });
     }
 
     const nextIdx = (currentIndexRef.current + 1) % playlistRef.current.length;
     currentIndexRef.current = nextIdx;
+    startTimeRef.current = Date.now();
     
-    // Troca de camada para transição suave
     const nextLayer = activeLayer === "A" ? "B" : "A";
     
-    // Log para monitoramento
     if (serial) {
       FirebaseRealtimeService.logEvent(serial, "media_transition", {
         from: playlistRef.current[currentIndex]?.name,
@@ -69,57 +71,55 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
       });
     }
 
-    // Atualiza estado do React
     setCurrentIndex(nextIdx);
     setActiveLayer(nextLayer);
     onMediaChange?.(nextIdx);
 
-    // Reset da trava de segurança após um pequeno delay (tempo da transição CSS)
     setTimeout(() => {
       isSwitchingRef.current = false;
     }, 500);
   }, [activeLayer, currentIndex, onMediaChange, serial]);
 
-  /**
-   * Inicia a execução da mídia atual
-   */
+  const startDisplayTimer = useCallback((duration: number) => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    const finalDuration = Math.max(duration || 5, 3);
+    console.log(`[PlayerEngine] DURATION: ${finalDuration}s`);
+    
+    timerRef.current = setTimeout(() => {
+      nextMedia("display_timer");
+    }, finalDuration * 1000);
+  }, [nextMedia]);
+
   useEffect(() => {
     if (!playlist.length) return;
-
     const media = playlist[currentIndex];
-    if (!media) return;
-
-    // Limpa qualquer timer anterior (GARANTIA DE TIMER ÚNICO)
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
+    if (!media || !media.url) {
+      console.warn("[PlayerEngine] Midia invalida ou sem URL, pulando...");
+      nextMedia("invalid_url");
+      return;
     }
 
-    console.log(`[PlayerEngine] Start media: [${currentIndex}] ${media.name} (${media.type})`);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (loadTimerRef.current) clearTimeout(loadTimerRef.current);
 
-    // Se for imagem, define timer de saída
-    if (media.type === "image") {
-      const duration = Math.max(media.duration || 5, 3);
-      timerRef.current = setTimeout(() => {
-        nextMedia("image_timer");
-      }, duration * 1000);
-    }
-
-    // Heartbeat para o painel
-    if (serial) {
-      FirebaseRealtimeService.sendHeartbeat(serial, media.id, "playing");
-    }
+    console.log(`[PlayerEngine] START: ${currentIndex} | ${media.name}`);
+    
+    const LOAD_TIMEOUT = 10000; // 10 segundos para carregar
+    loadTimerRef.current = setTimeout(() => {
+      console.warn(`[PlayerEngine] LOAD TIMEOUT: ${media.name}`);
+      if (serial) FirebaseRealtimeService.logEvent(serial, "load_timeout", { media: media.name });
+      nextMedia("load_timeout");
+    }, LOAD_TIMEOUT);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      if (loadTimerRef.current) clearTimeout(loadTimerRef.current);
     };
   }, [currentIndex, playlist, nextMedia, serial]);
 
   // Watchdog de segurança (CRÍTICO para WebView)
   // Verifica se o tempo real decorrido excedeu a duração da mídia + margem de erro
   useEffect(() => {
-    const lastTransitionRef = { time: Date.now() };
-    
     const watchdog = setInterval(() => {
       if (isSwitchingRef.current) return;
       
@@ -127,13 +127,13 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
       if (!media) return;
 
       const now = Date.now();
-      const elapsed = now - lastTransitionRef.time;
+      const elapsed = now - startTimeRef.current;
       const duration = Math.max(media.duration || 5, 3);
-      const threshold = (duration * 1000) + 5000; // Duração + 5 segundos de folga
+      const threshold = (duration * 1000) + 15000; // Duração + 15 segundos de folga para watchdog pesado
 
       // 1. Recuperação de Vídeo Travado
       if (media.type === "video" && videoRef.current) {
-        if (videoRef.current.paused && !videoRef.current.ended) {
+        if (videoRef.current.paused && !videoRef.current.ended && videoRef.current.readyState > 2) {
           console.warn("[PlayerEngine] Vídeo pausado inesperadamente, tentando play...");
           videoRef.current.play().catch(() => nextMedia("watchdog_video_fail"));
         }
@@ -141,7 +141,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
 
       // 2. Recuperação de Travamento Lógico (Time-based)
       if (elapsed > threshold) {
-        console.error(`[PlayerEngine] !!! TRAVAMENTO DETECTADO !!! Forçando avanço. Elapsed: ${elapsed}ms | Threshold: ${threshold}ms`);
+        console.error(`[PlayerEngine] !!! WATCHDOG TRIGGER !!! Forçando avanço. Motivo: ${media.name} travado.`);
         if (serial) {
           FirebaseRealtimeService.logEvent(serial, "watchdog_force_next", {
             media: media.name,
@@ -150,15 +150,11 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
           });
         }
         nextMedia("watchdog_timeout");
-        lastTransitionRef.time = Date.now(); // Reset do tempo para o próximo ciclo
       }
-    }, 2000); // Checagem frequente (a cada 2s)
-
-    // Atualiza o timestamp de referência sempre que a mídia muda
-    lastTransitionRef.time = Date.now();
+    }, 3000);
 
     return () => clearInterval(watchdog);
-  }, [currentIndex, nextMedia, serial]);
+  }, [nextMedia, serial]);
 
   if (!playlist.length) return null;
 
@@ -168,12 +164,17 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     <div className="relative w-full h-full bg-black overflow-hidden">
       {/* Camada Unificada de Exibição */}
       <div 
+        key={`layer-${activeLayer}-${currentIndex}`}
         className={cn(
-          "absolute inset-0 transition-opacity duration-500 ease-in-out",
-          activeLayer === "A" ? "opacity-100 z-10" : "opacity-0 z-0"
+          "absolute inset-0 transition-opacity duration-500 ease-in-out animate-fade-in",
+          "opacity-100 z-10"
         )}
       >
-        {currentMedia.type === "video" ? (
+        {!currentMedia?.url ? (
+          <div className="w-full h-full bg-black flex items-center justify-center text-white/20 font-mono text-xs">
+            URL INVALIDA
+          </div>
+        ) : currentMedia.type === "video" ? (
           <video
             key={`video-${currentIndex}`}
             ref={videoRef}
@@ -182,12 +183,20 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
             muted={volume === 0}
             playsInline
             className="w-full h-full object-cover"
-            onLoadStart={() => serial && FirebaseRealtimeService.logEvent(serial, "video_load_start", { media: currentMedia.name })}
-            onCanPlay={() => serial && FirebaseRealtimeService.logEvent(serial, "video_can_play", { media: currentMedia.name })}
+            onLoadStart={() => {
+              if (serial) FirebaseRealtimeService.logEvent(serial, "video_load_start", { media: currentMedia.name });
+            }}
+            onCanPlay={() => {
+              if (loadTimerRef.current) {
+                clearTimeout(loadTimerRef.current);
+                loadTimerRef.current = null;
+              }
+              if (serial) FirebaseRealtimeService.logEvent(serial, "video_can_play", { media: currentMedia.name });
+            }}
             onEnded={() => nextMedia("video_ended")}
             onError={(e) => {
-              console.error("[PlayerEngine] Video error:", e);
-              if (serial) FirebaseRealtimeService.logEvent(serial, "video_error", { media: currentMedia.name, error: "Playback failed" });
+              console.error("[PlayerEngine] Video error:", currentMedia.url);
+              if (serial) FirebaseRealtimeService.logEvent(serial, "video_error", { media: currentMedia.name, url: currentMedia.url });
               nextMedia("video_error");
             }}
           />
@@ -197,10 +206,17 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
             src={currentMedia.url}
             className="w-full h-full object-cover"
             alt=""
-            onLoad={() => serial && FirebaseRealtimeService.logEvent(serial, "image_load_success", { media: currentMedia.name })}
+            onLoad={() => {
+              if (loadTimerRef.current) {
+                clearTimeout(loadTimerRef.current);
+                loadTimerRef.current = null;
+              }
+              if (serial) FirebaseRealtimeService.logEvent(serial, "image_load_success", { media: currentMedia.name });
+              startDisplayTimer(currentMedia.duration);
+            }}
             onError={() => {
-              console.error("[PlayerEngine] Image error");
-              if (serial) FirebaseRealtimeService.logEvent(serial, "image_error", { media: currentMedia.name });
+              console.error("[PlayerEngine] Erro ao carregar mídia:", currentMedia.url);
+              if (serial) FirebaseRealtimeService.logEvent(serial, "image_error", { media: currentMedia.name, url: currentMedia.url });
               nextMedia("image_error");
             }}
           />
