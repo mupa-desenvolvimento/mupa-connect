@@ -60,6 +60,8 @@ interface Device {
   last_proof_at: string | null;
   current_playlist_id: string | null;
   current_media_id: string | null;
+  company_id: string | null;
+  player_status?: string | null;
 }
 
 interface PerformanceLog {
