@@ -413,7 +413,21 @@ export default function PlaylistEditor() {
         console.warn("Silent failure updating dispositivos:", e);
       }
 
-      // 5. Notificar dispositivos vinculados via Firebase Realtime (instantâneo)
+      // 5. Aplicar para todos os dispositivos se solicitado
+      if (applyToAllDevices && (companyId || (id === "new" ? true : false))) {
+        const targetCompanyId = companyId || (playlistData?.company_id);
+        if (targetCompanyId) {
+          console.log("Applying appearance to all devices for company:", targetCompanyId);
+          await supabase
+            .from("dispositivos")
+            .update({ appearance_config: appearanceConfig })
+            .eq("company_id", targetCompanyId);
+          
+          toast.success("Configurações aplicadas a todos os dispositivos da empresa!");
+        }
+      }
+
+      // 6. Notificar dispositivos vinculados via Firebase Realtime (instantâneo)
       if (currentPlaylistId) {
         FirebaseRealtimeService.notifyPlaylistDevices(currentPlaylistId).catch(() => {});
       }
