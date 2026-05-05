@@ -51,6 +51,7 @@ const formSchema = z.object({
   tipo_da_licenca: z.string().nullable().optional(),
   device_type: z.string().nullable().optional(),
   pin: z.string().nullable().optional(),
+  autostart: z.boolean().default(true),
 });
 
 interface EditDeviceModalProps {
@@ -78,6 +79,7 @@ export function EditDeviceModal({ open, onOpenChange, device, onSuccess }: EditD
       tipo_da_licenca: "",
       device_type: "",
       pin: "",
+      autostart: true,
     },
   });
 
@@ -99,6 +101,7 @@ export function EditDeviceModal({ open, onOpenChange, device, onSuccess }: EditD
         tipo_da_licenca: device.tipo_da_licenca || "",
         device_type: device.device_type || "",
         pin: device.pin || "",
+        autostart: device.autostart !== false,
       });
     }
   }, [device, open, form]);
@@ -158,6 +161,7 @@ export function EditDeviceModal({ open, onOpenChange, device, onSuccess }: EditD
         tipo_da_licenca: values.tipo_da_licenca,
         device_type: values.device_type,
         pin: values.pin,
+        autostart: values.autostart,
         atualizado: new Date().toISOString(),
       };
 
