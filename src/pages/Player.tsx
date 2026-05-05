@@ -420,6 +420,20 @@ export default function PlayerPage() {
     return cleanup;
   }, [modelsLoaded, isPreview]);
 
+  if (errorInfo) {
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center p-6 z-[100]">
+        <Alert variant="destructive" className="max-w-md bg-zinc-900 border-destructive/50">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Erro de Configuração {errorInfo.code && `(${errorInfo.code})`}</AlertTitle>
+          <AlertDescription>
+            {errorInfo.message}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   if (isLoading && !activePlaylist.length) {
     return <div className="fixed inset-0 bg-black flex items-center justify-center text-white/40 font-mono text-xs uppercase tracking-widest">Iniciando Engine Profissional...</div>;
   }
