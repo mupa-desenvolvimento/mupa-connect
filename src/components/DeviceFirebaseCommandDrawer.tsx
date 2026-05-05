@@ -569,6 +569,19 @@ export function DeviceFirebaseCommandDrawer({
                   />
                 </div>
 
+                <div className="flex items-center justify-between py-2 border-t mt-2">
+                  <div className="space-y-0.5">
+                    <Label className="text-xs font-medium flex items-center gap-2">
+                      <Activity className="h-3 w-3" /> Persistência
+                    </Label>
+                    <p className="text-[10px] text-muted-foreground">Reabrir app se ficar offline</p>
+                  </div>
+                  <Switch 
+                    checked={persistence}
+                    onCheckedChange={togglePersistence}
+                  />
+                </div>
+
                 <Button 
                   className="w-full h-9 text-xs"
                   onClick={handleUpdateDevice} 
@@ -576,7 +589,8 @@ export function DeviceFirebaseCommandDrawer({
                     deviceName === device?.apelido_interno && 
                     numFilial === device?.num_filial && 
                     isMaintenance === !!device?.is_maintenance &&
-                    autostart === (device?.autostart !== false)
+                    autostart === (device?.autostart !== false) &&
+                    persistence === !!device?.persistence
                   )}
                 >
                   {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
