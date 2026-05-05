@@ -7,6 +7,8 @@ import { ManifestManager, ScheduleResolver, MediaCacheService } from "@/componen
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { ManifestService } from "@/services/ManifestService";
 import { cn } from "@/lib/utils";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 import * as faceapi from "face-api.js";
 
 interface AppearanceConfig {
