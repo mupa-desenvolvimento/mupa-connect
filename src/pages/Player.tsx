@@ -33,6 +33,12 @@ interface AppearanceConfig {
   };
 }
 
+const isValidUUID = (value: any): boolean => {
+  if (typeof value !== 'string') return false;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(value);
+};
+
 export default function PlayerPage() {
   useEffect(() => {
     // Force black background for all players
@@ -56,6 +62,7 @@ export default function PlayerPage() {
   const [faceDetectionActive, setFaceDetectionActive] = useState(false);
   const [errorInfo, setErrorInfo] = useState<{ message: string; code?: string } | null>(null);
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+  const lastDetectionsRef = useRef<{ [key: number]: number }>({}); // Track last detection time per face index
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -402,37 +409,51 @@ export default function PlayerPage() {
             
             console.log("[Face Detection] Face detected:", faceData);
             
-            // Send data to audience_detections table
-            try {
-              const detectionData = {
-                detected_at: new Date().toISOString(),
-                age: Math.round(face.age),
-                gender: face.gender,
-                emotion: mostProbableExpression.expression,
-                emotion_confidence: null,
-                gender_probability: null,
-                device_id: deviceInfo?.id || null,
-                tenant_id: deviceInfo?.tenant_id || manifest?.tenant_id || null,
-                session_id: `${sessionId}_person_${index}`,
-                metadata: {
-                  is_looking: true,
-                  duration_ms: 0,
-                  long_session: false,
-                  face_index: index
-                }
-              };
-              
-              const { error } = await supabase
-                .from("audience_detections")
-                .insert(detectionData);
+            // Only send detection to database every 5 seconds per face to avoid duplicates
+            const now = Date.now();
+            const lastSent = lastDetectionsRef.current[index] || 0;
+            const timeSinceLastSent = now - lastSent;
+            
+            if (timeSinceLastSent >= 5000) { // 5 seconds cooldown
+              // Send data to audience_detections table
+              try {
+                const validDeviceId = isValidUUID(deviceInfo?.id) ? deviceInfo.id : null;
+                const validTenantId = isValidUUID(deviceInfo?.tenant_id) ? deviceInfo.tenant_id : 
+                                      isValidUUID(manifest?.tenant_id) ? manifest.tenant_id : null;
                 
-              if (error) {
-                console.error("[Face Detection] Error sending detection to database:", error);
-              } else {
-                console.log("[Face Detection] Detection sent to database successfully");
+                const detectionData = {
+                  detected_at: new Date().toISOString(),
+                  age: Math.round(face.age),
+                  gender: face.gender,
+                  emotion: mostProbableExpression.expression,
+                  emotion_confidence: null,
+                  gender_probability: null,
+                  device_id: validDeviceId,
+                  tenant_id: validTenantId,
+                  session_id: `${sessionId}_person_${index}`,
+                  metadata: {
+                    is_looking: true,
+                    duration_ms: 0,
+                    long_session: false,
+                    face_index: index
+                  }
+                };
+                
+                const { error } = await supabase
+                  .from("audience_detections")
+                  .insert(detectionData);
+                
+                if (error) {
+                  console.error("[Face Detection] Error sending detection to database:", error);
+                } else {
+                  console.log("[Face Detection] Detection sent to database successfully");
+                  lastDetectionsRef.current[index] = now; // Update last sent time
+                }
+              } catch (dbError) {
+                console.error("[Face Detection] Error sending to database:", dbError);
               }
-            } catch (dbError) {
-              console.error("[Face Detection] Error sending to database:", dbError);
+            } else {
+              console.log(`[Face Detection] Skipping duplicate detection for face ${index} (last sent ${timeSinceLastSent}ms ago)`);
             }
           });
         }
