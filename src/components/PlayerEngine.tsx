@@ -257,7 +257,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     const currentItem = activeLayer === "A" ? itemA : itemB;
     if (!currentItem) return;
     
-    // Limpar timer anterior
+    // Limpar timer anterior para evitar múltiplos timers concorrentes
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
@@ -268,7 +268,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     
     console.log(`[PlayerEngine] START Mídia: ${currentItem.name} | DURATION: ${duration}s`);
     
-    // Agendar próxima mídia
+    // Agendar próxima mídia usando timer principal
     timerRef.current = setTimeout(() => {
       console.log(`[PlayerEngine] TIMER TRIGGERED for ${currentItem.name}`);
       performTransition();
