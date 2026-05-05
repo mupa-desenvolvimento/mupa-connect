@@ -122,4 +122,25 @@ export const FirebaseRealtimeService = {
       console.warn("[Firebase] notifyPlaylistDevices failed", err);
     }
   },
+
+  /**
+   * Log player events to Firebase for real-time monitoring.
+   */
+  logEvent: async (deviceCode: string, event: string, details: any = {}) => {
+    if (!deviceCode) return;
+    try {
+      const logRef = ref(database, `devices/${deviceCode}/logs/${Date.now()}`);
+      await set(logRef, {
+        event,
+        ...details,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Manter apenas os últimos 50 logs para evitar sobrecarga no banco
+      // (Isso é um "set" em um path fixo baseado em tempo, o Firebase não remove automático, 
+      // mas podemos implementar uma limpeza periódica se necessário. Por ora apenas registramos).
+    } catch (err) {
+      console.warn("[Firebase] Log event failed", err);
+    }
+  },
 };
