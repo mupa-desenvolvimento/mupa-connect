@@ -13,6 +13,11 @@ export const ManifestService = {
       data = endpointData;
     } else {
       console.warn("[ManifestService] Endpoint unavailable, using direct fallback", error || endpointData?.error);
+      if (endpointData?.error?.includes("empresa (company_id) é obrigatório")) {
+        const err: any = new Error(endpointData.error);
+        err.code = "P0001";
+        throw err;
+      }
       data = await this.fetchManifestFallback(deviceCode);
     }
 
