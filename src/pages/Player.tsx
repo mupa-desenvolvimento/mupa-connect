@@ -346,14 +346,16 @@ export default function PlayerPage() {
                 appearance.logo.position === "top-right" && "top-6 right-6",
                 appearance.logo.position === "bottom-left" && "bottom-6 left-6",
                 appearance.logo.position === "bottom-right" && "bottom-6 right-6",
-                // Adjust position if header/footer is enabled
+                // Adjust position if header is enabled
                 appearance.logo.position === "top-left" && (appearance.show_device_name !== false) && "top-24",
-                appearance.logo.position === "top-right" && (appearance.show_datetime !== false) && "top-24",
-                appearance.logo.position === "bottom-left" && appearance.footer?.enabled && `bottom-[${(appearance.footer.height || 60) + 24}px]`,
-                appearance.logo.position === "bottom-right" && appearance.footer?.enabled && `bottom-[${(appearance.footer.height || 60) + 24}px]`
+                appearance.logo.position === "top-right" && (appearance.show_datetime !== false) && "top-24"
               )}
               style={{ 
                 opacity: appearance.logo.opacity ?? 1,
+                // Handle dynamic footer offset
+                ...(appearance.logo.position.startsWith('bottom') && appearance.footer?.enabled ? {
+                  bottom: `${(appearance.footer.height || 60) + 24}px`
+                } : {})
               }}
             >
               <img 
