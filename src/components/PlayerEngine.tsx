@@ -68,14 +68,16 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     const isActive = activeLayer === layer;
     return {
       opacity: isActive ? 1 : 0,
-      visibility: isActive ? "visible" : "hidden",
-      zIndex: isActive ? 10 : 0,
-      transition: "opacity 400ms ease-in-out, visibility 400ms ease-in-out",
+      // Removido visibility: hidden para garantir que o crossfade ocorra suavemente
+      // e o elemento não suma instantaneamente durante a transição
+      zIndex: isActive ? 10 : 5,
+      transition: "opacity 400ms ease-in-out",
       willChange: "opacity",
       transform: "translateZ(0)",
       backfaceVisibility: "hidden",
       position: "absolute",
-      inset: 0
+      inset: 0,
+      backgroundColor: "black" // Garante fundo preto se a mídia falhar
     };
   };
 
