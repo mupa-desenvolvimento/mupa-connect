@@ -423,6 +423,7 @@ export default function PlaylistEditor() {
             .update({ appearance_config: appearanceConfig })
             .eq("company_id", targetCompanyId);
           
+          FirebaseRealtimeService.notifyCompanyDevices(targetCompanyId).catch(() => {});
           toast.success("Configurações aplicadas a todos os dispositivos da empresa!");
         }
       }
