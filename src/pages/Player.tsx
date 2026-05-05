@@ -6,8 +6,29 @@ import { PlayerEngine } from "@/components/PlayerEngine";
 import { ManifestManager, ScheduleResolver, MediaCacheService } from "@/components/PlayerServices";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { ManifestService } from "@/services/ManifestService";
+import { cn } from "@/lib/utils";
 
-export default function PlayerPage() {
+interface AppearanceConfig {
+  show_device_name?: boolean;
+  show_datetime?: boolean;
+  show_serial?: boolean;
+  transition_type?: "fade" | "slide-left" | "slide-right" | "zoom" | "none";
+  transition_duration?: number;
+  footer?: {
+    enabled: boolean;
+    text: string;
+    background_color: string;
+    text_color: string;
+    height: number;
+  };
+  logo?: {
+    enabled: boolean;
+    url: string;
+    position: "top-left" | "top-right" | "bottom-left" | "bottom-right";
+    size: number;
+    opacity?: number;
+  };
+}
   const { deviceCode } = useParams();
   const [deviceUuid, setDeviceUuid] = useState<string | undefined>();
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
