@@ -31,7 +31,6 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
   
   // Elementos de mídia
   const videoRef = useRef<HTMLVideoElement>(null);
-  const nextLayerRef = useRef<"A" | "B">("B");
 
   // Sincronizar playlist
   useEffect(() => {
