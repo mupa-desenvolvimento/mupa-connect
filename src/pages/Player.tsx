@@ -7,6 +7,8 @@ import { ManifestManager, ScheduleResolver, MediaCacheService } from "@/componen
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { ManifestService } from "@/services/ManifestService";
 import { cn } from "@/lib/utils";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 import * as faceapi from "face-api.js";
 
 interface AppearanceConfig {
@@ -52,6 +54,7 @@ export default function PlayerPage() {
   const [syncToast, setSyncToast] = useState<{ msg: string; ts: number } | null>(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [faceDetectionActive, setFaceDetectionActive] = useState(false);
+  const [errorInfo, setErrorInfo] = useState<{ message: string; code?: string } | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -129,8 +132,14 @@ export default function PlayerPage() {
           setDeviceInfo(result.device);
         }
         setIsLoading(false);
-      } catch (err) {
+      } catch (err: any) {
         console.error("[Player] Initial resolve error:", err);
+        if (err.message?.includes("empresa (company_id) é obrigatório") || err.code === "P0001") {
+          setErrorInfo({ 
+            message: "O parâmetro empresa (company_id) é obrigatório para novos dispositivos.", 
+            code: "P0001" 
+          });
+        }
         setIsLoading(false);
       }
     }
@@ -410,6 +419,20 @@ export default function PlayerPage() {
 
     return cleanup;
   }, [modelsLoaded, isPreview]);
+
+  if (errorInfo) {
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center p-6 z-[100]">
+        <Alert variant="destructive" className="max-w-md bg-zinc-900 border-destructive/50">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Erro de Configuração {errorInfo.code && `(${errorInfo.code})`}</AlertTitle>
+          <AlertDescription>
+            {errorInfo.message}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   if (isLoading && !activePlaylist.length) {
     return <div className="fixed inset-0 bg-black flex items-center justify-center text-white/40 font-mono text-xs uppercase tracking-widest">Iniciando Engine Profissional...</div>;
