@@ -373,7 +373,6 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
       if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
-      if (watchdogTimerRef.current) clearTimeout(watchdogTimerRef.current);
       if (heartbeatRef.current) cancelAnimationFrame(heartbeatRef.current);
     };
   }, [playlist.length, serial]);
