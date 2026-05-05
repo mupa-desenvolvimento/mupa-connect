@@ -365,6 +365,12 @@ export default function DevicesPage() {
         onOpenChange={setCreateModalOpen}
         onSuccess={() => refetch()}
       />
+      <EditDeviceModal
+        device={deviceToEdit}
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        onSuccess={() => refetch()}
+      />
     </div>
   );
 }
