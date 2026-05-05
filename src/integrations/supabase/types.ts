@@ -306,6 +306,47 @@ export type Database = {
           },
         ]
       }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          device_id: number | null
+          id: string
+          metadata: Json | null
+          new_value: Json | null
+          old_value: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          device_id?: number | null
+          id?: string
+          metadata?: Json | null
+          new_value?: Json | null
+          old_value?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          device_id?: number | null
+          id?: string
+          metadata?: Json | null
+          new_value?: Json | null
+          old_value?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vw_user_creation_status"
+            referencedColumns: ["auth_user_id"]
+          },
+        ]
+      }
       auditoria_correcoes_log: {
         Row: {
           detalhes: string | null
@@ -6687,6 +6728,16 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      log_audit_action: {
+        Args: {
+          p_action: string
+          p_device_id: number
+          p_metadata?: Json
+          p_new_value: Json
+          p_old_value: Json
+        }
+        Returns: string
       }
       log_media_trash_action: {
         Args: { p_action: string; p_media_id: string }

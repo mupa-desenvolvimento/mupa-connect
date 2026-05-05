@@ -37,8 +37,11 @@ export default function DeviceDetailPage() {
   const [saving, setSaving] = useState(false);
   const [numFilial, setNumFilial] = useState("");
   const [deviceName, setDeviceName] = useState("");
+  const [deviceSerial, setDeviceSerial] = useState("");
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
   const [isMaintenance, setIsMaintenance] = useState(false);
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
+  const [companies, setCompanies] = useState<any[]>([]);
 
   const { data: tenantId, isSuperAdmin } = useTenant();
   const { data: playlists } = usePlaylists(tenantId || undefined, isSuperAdmin);
@@ -46,9 +49,16 @@ export default function DeviceDetailPage() {
   const fetchDevice = async () => {
     if (!id) return;
     setLoading(true);
+    
+    // Se for SuperAdmin, carregar lista de empresas para permitir troca
+    if (isSuperAdmin) {
+      const { data: cos } = await supabase.from("companies").select("id, name").order("name");
+      if (cos) setCompanies(cos);
+    }
+
     const { data, error } = await supabase
       .from("dispositivos")
-      .select("id, apelido_interno, serial, online, num_filial, is_maintenance, playlist_id, last_heartbeat_at")
+      .select("id, apelido_interno, serial, online, num_filial, is_maintenance, playlist_id, last_heartbeat_at, company_id")
       .eq("id", Number(id))
       .maybeSingle();
 
@@ -71,6 +81,8 @@ export default function DeviceDetailPage() {
       });
       setNumFilial(data.num_filial ?? "");
       setDeviceName(data.apelido_interno ?? "");
+      setDeviceSerial(data.serial ?? "");
+      setSelectedCompanyId(data.company_id);
       setIsMaintenance(!!data.is_maintenance);
       setSelectedPlaylistId(data.playlist_id);
     } else {
@@ -81,30 +93,60 @@ export default function DeviceDetailPage() {
 
   useEffect(() => {
     fetchDevice();
-  }, [id]);
+  }, [id, isSuperAdmin]);
 
   const handleUpdateDevice = async () => {
     if (!id || !device) return;
     
     setSaving(true);
+    
+    // Preparar dados para auditoria
+    const oldData = {
+      apelido_interno: device.name,
+      num_filial: device.num_filial,
+      serial: device.device_code,
+      company_id: device.playlist_id, // Usando campos disponíveis no state device para o mock
+      playlist_id: device.playlist_id
+    };
+
+    const updateData: any = { 
+      apelido_interno: deviceName,
+      num_filial: numFilial,
+      is_maintenance: isMaintenance,
+      playlist_id: selectedPlaylistId
+    };
+
+    // SuperAdmin pode alterar serial e empresa
+    if (isSuperAdmin) {
+      updateData.serial = deviceSerial;
+      updateData.company_id = selectedCompanyId;
+    }
+
     const { error } = await supabase
       .from("dispositivos")
-      .update({ 
-        apelido_interno: deviceName,
-        num_filial: numFilial,
-        is_maintenance: isMaintenance,
-        playlist_id: selectedPlaylistId
-      })
+      .update(updateData)
       .eq("id", Number(id));
 
     if (error) {
       toast.error("Erro ao atualizar o dispositivo");
       console.error(error);
     } else {
+      // Registrar auditoria se for SuperAdmin
+      if (isSuperAdmin) {
+        await supabase.rpc('log_audit_action', {
+          p_action: 'update_device_properties',
+          p_device_id: Number(id),
+          p_old_value: oldData,
+          p_new_value: updateData,
+          p_metadata: { source: 'DeviceDetail', user_role: 'admin_global' }
+        });
+      }
+
       toast.success("Dispositivo atualizado com sucesso");
       setDevice(prev => prev ? { 
         ...prev, 
         name: deviceName,
+        device_code: deviceSerial,
         num_filial: numFilial,
         is_maintenance: isMaintenance,
         playlist_id: selectedPlaylistId
@@ -159,7 +201,12 @@ export default function DeviceDetailPage() {
         title={device.name}
         description={`${device.device_code ?? "—"} · ${device.status}`}
         actions={
-          <>
+          <div className="flex items-center gap-2">
+            {isSuperAdmin && (
+              <span className="text-[10px] px-2 py-1 bg-primary/10 text-primary border border-primary/20 rounded-full font-bold animate-pulse">
+                MODO SUPERADMIN
+              </span>
+            )}
             <Button asChild variant="outline">
               <Link to="/dispositivos"><ArrowLeft className="h-4 w-4 mr-1" /> Voltar</Link>
             </Button>
@@ -170,7 +217,7 @@ export default function DeviceDetailPage() {
                 </Link>
               </Button>
             )}
-          </>
+          </div>
         }
       />
 
@@ -208,6 +255,35 @@ export default function DeviceDetailPage() {
                 onChange={(e) => setDeviceName(e.target.value)}
               />
             </div>
+
+            {isSuperAdmin && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="device_serial">Serial / Identificador Único</Label>
+                  <Input
+                    id="device_serial"
+                    placeholder="Ex: ABC-123-XYZ"
+                    value={deviceSerial}
+                    onChange={(e) => setDeviceSerial(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Empresa Vinculada</Label>
+                  <Select value={selectedCompanyId || "none"} onValueChange={(val) => setSelectedCompanyId(val === "none" ? null : val)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecione a empresa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sem empresa (Global)</SelectItem>
+                      {companies.map(c => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="num_filial">Número da Filial / Loja</Label>
@@ -248,7 +324,12 @@ export default function DeviceDetailPage() {
             <Button 
               className="w-full"
               onClick={handleUpdateDevice} 
-              disabled={saving || (deviceName === device.name && numFilial === device.num_filial && selectedPlaylistId === device.playlist_id)}
+              disabled={saving || (
+                deviceName === device.name && 
+                numFilial === device.num_filial && 
+                selectedPlaylistId === device.playlist_id &&
+                (!isSuperAdmin || (deviceSerial === device.device_code && selectedCompanyId === (device as any).company_id))
+              )}
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
               Salvar Alterações
