@@ -30,7 +30,6 @@ interface AppearanceConfig {
 }
 
 export default function PlayerPage() {
-}
   const { deviceCode } = useParams();
   const [deviceUuid, setDeviceUuid] = useState<string | undefined>();
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
@@ -41,6 +40,8 @@ export default function PlayerPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [lastIndexChange, setLastIndexChange] = useState(Date.now());
   const [syncToast, setSyncToast] = useState<{ msg: string; ts: number } | null>(null);
+
+  const appearance = useMemo(() => (manifest?.appearance_config || {}) as AppearanceConfig, [manifest]);
 
   // 1. Core Loader: Resolve Identity & Manifest (Offline-First)
   useEffect(() => {
