@@ -189,7 +189,7 @@ export function EditDeviceModal({ device, open, onOpenChange, onSuccess }: EditD
           previous_tenant_id: device.tenant_id,
           new_tenant_id: values.tenant_id,
           updated_fields: values,
-        },
+        } as any,
       });
 
       toast.success("Dispositivo atualizado com sucesso!");
