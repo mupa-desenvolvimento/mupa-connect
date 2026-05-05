@@ -229,10 +229,8 @@ export default function DeviceDetailPage() {
               <Link to="/dispositivos"><ArrowLeft className="h-4 w-4 mr-1" /> Voltar</Link>
             </Button>
             {device.device_code && (
-              <Button asChild className="bg-gradient-primary text-primary-foreground shadow-glow">
-                <Link to={`/play/${device.device_code}`} target="_blank">
-                  Abrir player <ExternalLink className="h-4 w-4 ml-1" />
-                </Link>
+              <Button onClick={handlePreview} className="bg-gradient-primary text-primary-foreground shadow-glow">
+                Preview Real <Play className="h-4 w-4 ml-1 fill-current" />
               </Button>
             )}
           </div>
