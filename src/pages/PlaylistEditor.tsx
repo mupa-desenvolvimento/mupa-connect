@@ -1145,16 +1145,22 @@ export default function PlaylistEditor() {
                 {/* Overlay Controls */}
                 <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-all">
                    <div className="flex items-center gap-4">
-                      <Button size="icon" className="h-10 w-10 rounded-full bg-white text-black hover:bg-white/90">
-                         <Play className="h-5 w-5 fill-current" />
+                      <Button 
+                        size="icon" 
+                        className="h-10 w-10 rounded-full bg-white text-black hover:bg-white/90"
+                        onClick={() => setIsPlaying(!isPlaying)}
+                      >
+                         {isPlaying ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 fill-current" />}
                       </Button>
                       <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
-                         <div className="h-full bg-[#085CF0] w-1/3" />
+                         <div 
+                           className="h-full bg-[#085CF0] transition-none" 
+                           style={{ width: `${(currentTime / totalDuration) * 100}%` }}
+                         />
                       </div>
-                      <span className="text-xs font-mono font-bold">03:20 / {totalDuration}S</span>
-                      <Button size="icon" variant="ghost" className="text-white hover:bg-white/10">
-                         <Maximize2 className="h-5 w-5" />
-                      </Button>
+                      <span className="text-xs font-mono font-bold">
+                        {formatTime(currentTime)} / {formatTime(totalDuration)}
+                      </span>
                    </div>
                 </div>
              </div>
