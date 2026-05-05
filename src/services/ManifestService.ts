@@ -91,7 +91,9 @@ export const ManifestService = {
         fallback_playlist: [],
         fallback_items: [],
         items: mapItems(playlistItems || []),
-        appearance_config: device.appearance_config || playlist.appearance_config || {}
+        appearance_config: (device.appearance_config && Object.keys(device.appearance_config).length > 0) 
+          ? device.appearance_config 
+          : (playlist.appearance_config || {})
       }
     };
   }
