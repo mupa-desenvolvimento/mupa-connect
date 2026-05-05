@@ -444,10 +444,26 @@ export default function PlayerPage() {
 
   if (!activePlaylist.length) {
     return (
-      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-4 text-white/40 font-mono text-xs uppercase tracking-widest">
-        <div>Manifesto Vazio</div>
-        <div className="px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-white/70 tracking-wider">
-          ID: {deviceCode}
+      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-6 text-white select-none">
+        <div className="flex flex-col items-center gap-2 animate-in fade-in zoom-in duration-700">
+          <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-2">
+            <Monitor className="w-8 h-8 text-white/20" />
+          </div>
+          <h2 className="text-xl font-light tracking-[0.2em] uppercase text-white/60">Aguardando Ativação</h2>
+          <p className="text-white/30 font-mono text-xs uppercase tracking-widest">Nenhuma playlist vinculada</p>
+        </div>
+        
+        <div className="flex flex-col items-center gap-3 mt-4">
+          <div className="text-[10px] text-white/20 uppercase tracking-[0.3em] font-bold">Número de Série</div>
+          <div className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 shadow-2xl backdrop-blur-sm group hover:border-white/20 transition-all duration-300">
+            <code className="text-3xl md:text-5xl font-mono font-bold tracking-[0.15em] text-white/90 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+              {deviceCode}
+            </code>
+          </div>
+        </div>
+
+        <div className="absolute bottom-12 text-[10px] text-white/10 uppercase tracking-[0.4em] font-medium animate-pulse">
+          Sincronizando com Servidor Cloud
         </div>
       </div>
     );
