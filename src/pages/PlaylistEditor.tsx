@@ -247,6 +247,56 @@ export default function PlaylistEditor() {
   const [showDebug, setShowDebug] = useState(false);
   const [mediaSearch, setMediaSearch] = useState("");
   const [appearanceConfig, setAppearanceConfig] = useState<any>(DEFAULT_APPEARANCE_CONFIG);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const timelineScrollRef = useRef<HTMLDivElement>(null);
+  const playheadIntervalRef = useRef<number | null>(null);
+
+  const totalDuration = useMemo(() => items.reduce((acc, it) => acc + it.duration, 0), [items]);
+
+  // Sincronização do preview baseada no tempo da timeline
+  useEffect(() => {
+    if (!isPlaying) return;
+
+    let startTime = Date.now() - (currentTime * 1000);
+
+    const updatePlayhead = () => {
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000;
+      
+      if (elapsed >= totalDuration) {
+        setCurrentTime(0);
+        startTime = Date.now();
+      } else {
+        setCurrentTime(elapsed);
+      }
+      playheadIntervalRef.current = requestAnimationFrame(updatePlayhead);
+    };
+
+    playheadIntervalRef.current = requestAnimationFrame(updatePlayhead);
+    return () => {
+      if (playheadIntervalRef.current) cancelAnimationFrame(playheadIntervalRef.current);
+    };
+  }, [isPlaying, totalDuration]);
+
+  // Selecionar mídia baseada no tempo atual
+  useEffect(() => {
+    let accumulatedTime = 0;
+    for (const item of items) {
+      accumulatedTime += item.duration;
+      if (currentTime <= accumulatedTime) {
+        setSelectedItem(item);
+        break;
+      }
+    }
+  }, [currentTime, items]);
+
+  const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left + (timelineScrollRef.current?.scrollLeft || 0);
+    const time = x / PIXELS_PER_SECOND;
+    setCurrentTime(Math.min(Math.max(0, time), totalDuration));
+  };
 
   // Monitorar mudanças no estado de itens
   useEffect(() => {
