@@ -330,6 +330,15 @@ export default function PlaylistsPage() {
                         <Button 
                           variant="ghost" 
                           size="icon" 
+                          className="h-8 w-8 text-[#085CF0] hover:bg-[#085CF0]/10"
+                          onClick={() => handlePreview(playlist.id)}
+                          title="Preview"
+                        >
+                          <Play className="h-4 w-4 fill-current" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
                           className="h-8 w-8 text-primary hover:bg-primary/10"
                           onClick={() => handleDuplicate(playlist)}
                           title="Duplicar"
