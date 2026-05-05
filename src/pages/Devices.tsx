@@ -100,6 +100,7 @@ export default function DevicesPage() {
         if (tenantId) {
           query = query.eq("tenant_id", tenantId);
         } else {
+          console.log("No tenantId found for non-superadmin in stores list");
           return [];
         }
       }
