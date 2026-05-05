@@ -193,14 +193,24 @@ export default function PlayerPage() {
     };
   }, [deviceCode, reloadKey]);
 
-  // 5. Heartbeat
+  // 5. Heartbeat (Supabase + Firebase)
   useEffect(() => {
-    if (!deviceInfo?.serial) return;
-    const beat = () => supabase.functions.invoke('device-api/heartbeat', { body: { serial: deviceInfo.serial } }).catch(() => {});
+    if (!deviceInfo?.serial || !deviceCode) return;
+    
+    const currentMedia = activePlaylist[currentIndex];
+    
+    const beat = () => {
+      // Supabase heartbeat
+      supabase.functions.invoke('device-api/heartbeat', { body: { serial: deviceInfo.serial } }).catch(() => {});
+      
+      // Firebase heartbeat (every 30s)
+      FirebaseRealtimeService.sendHeartbeat(deviceCode, currentMedia?.id?.toString());
+    };
+
     beat();
     const interval = setInterval(beat, 30000);
     return () => clearInterval(interval);
-  }, [deviceInfo?.serial]);
+  }, [deviceInfo?.serial, deviceCode, activePlaylist, currentIndex]);
 
   // 6. Page-Level Watchdog (Anti-Stall)
   // Uses RequestAnimationFrame to detect if the entire engine is stuck
