@@ -389,6 +389,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
       onMediaChange?.(0);
       
       if (serial) {
+        FirebaseRealtimeService.logEvent(serial, 'engine_init', { playlist_size: playlist.length });
         MediaCacheService.logPerformance(serial, 'engine_init', 'Engine Profissional Reiniciada (Seamless Mode)', { playlist_size: playlist.length });
       }
     };
