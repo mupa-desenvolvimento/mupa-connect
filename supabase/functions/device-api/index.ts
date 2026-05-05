@@ -121,7 +121,6 @@ serve(async (req) => {
         items: mapItems(playlistItems || []),
         appearance_config: device.appearance_config || playlist.appearance_config || {}
       }
-      }
 
       return new Response(JSON.stringify({ success: true, device, manifest }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
