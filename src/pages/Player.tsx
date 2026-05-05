@@ -271,6 +271,7 @@ export default function PlayerPage() {
   // 6. Page-Level Watchdog (Anti-Stall)
   // Uses RequestAnimationFrame to detect if the entire engine is stuck
   useEffect(() => {
+    if (isPreview) return;
     let rafId: number;
     
     const checkEngineHealth = () => {
