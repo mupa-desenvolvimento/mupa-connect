@@ -115,13 +115,13 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     
     if (isTransitioningRef.current || !playlistRef.current.length || !currentItem) return;
 
-    // BLOQUEIO DE TROCA PREMATURA
+    // BLOQUEIO DE TROCA PREMATURA (TIMESTAMP)
     const now = Date.now();
     const elapsed = now - lastTransitionTimeRef.current;
     const configuredDuration = (currentItem.duration || 10);
     const minRequiredMs = Math.max(configuredDuration, MIN_DURATION) * 1000;
 
-    if (elapsed < minRequiredMs - 100) { // Margem de 100ms para evitar pulos prematuros por jitter de timer
+    if (elapsed < minRequiredMs - 100) {
       console.warn(`[PlayerEngine] Troca prematura detectada (${elapsed}ms < ${minRequiredMs}ms). Cancelando.`);
       return;
     }
@@ -129,24 +129,23 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     if (!readyToSwitchRef.current[nextLayer]) {
       console.warn(`[PlayerEngine] Próxima camada (${nextLayer}) não carregada. Aguardando...`);
       if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(performTransition, 500); // Retry em 500ms
+      timerRef.current = setTimeout(performTransition, 500);
       return;
     }
 
-    console.log(`[PlayerEngine] Efetuando transição. Mídia: ${currentItem.name}, Exibida por: ${elapsed}ms`);
+    console.log(`[PlayerEngine] NEXT TRIGGER. Mídia: ${currentItem.name}, Exibida por: ${elapsed}ms`);
 
     isTransitioningRef.current = true;
     
     const nextVideo = nextLayer === "A" ? videoARef.current : videoBRef.current;
     const nextItem = nextLayer === "A" ? itemA : itemB;
     
-    // Iniciar vídeo da próxima camada ANTES de trocar a opacidade
     if (nextItem?.type === "video" && nextVideo) {
       nextVideo.muted = volume === 0;
-      nextVideo.play().catch(err => console.error("[PlayerEngine] Falha ao dar play no vídeo:", err));
+      nextVideo.play().catch(err => console.error("[PlayerEngine] Falha ao dar play:", err));
     }
 
-    // DISPARO ÚNICO DE TROCA DE CAMADA
+    // DISPARO ÚNICO DE TROCA
     setActiveLayer(nextLayer);
     lastTransitionTimeRef.current = now;
 
