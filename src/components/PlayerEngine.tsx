@@ -185,12 +185,20 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
             muted={volume === 0}
             playsInline
             className="w-full h-full object-cover"
-            onLoadStart={() => serial && FirebaseRealtimeService.logEvent(serial, "video_load_start", { media: currentMedia.name })}
-            onCanPlay={() => serial && FirebaseRealtimeService.logEvent(serial, "video_can_play", { media: currentMedia.name })}
+            onLoadStart={() => {
+              if (serial) FirebaseRealtimeService.logEvent(serial, "video_load_start", { media: currentMedia.name });
+            }}
+            onCanPlay={() => {
+              if (loadTimerRef.current) {
+                clearTimeout(loadTimerRef.current);
+                loadTimerRef.current = null;
+              }
+              if (serial) FirebaseRealtimeService.logEvent(serial, "video_can_play", { media: currentMedia.name });
+            }}
             onEnded={() => nextMedia("video_ended")}
             onError={(e) => {
-              console.error("[PlayerEngine] Video error:", e);
-              if (serial) FirebaseRealtimeService.logEvent(serial, "video_error", { media: currentMedia.name, error: "Playback failed" });
+              console.error("[PlayerEngine] Video error:", currentMedia.url);
+              if (serial) FirebaseRealtimeService.logEvent(serial, "video_error", { media: currentMedia.name, url: currentMedia.url });
               nextMedia("video_error");
             }}
           />
@@ -200,10 +208,17 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
             src={currentMedia.url}
             className="w-full h-full object-cover"
             alt=""
-            onLoad={() => serial && FirebaseRealtimeService.logEvent(serial, "image_load_success", { media: currentMedia.name })}
+            onLoad={() => {
+              if (loadTimerRef.current) {
+                clearTimeout(loadTimerRef.current);
+                loadTimerRef.current = null;
+              }
+              if (serial) FirebaseRealtimeService.logEvent(serial, "image_load_success", { media: currentMedia.name });
+              startDisplayTimer(currentMedia.duration);
+            }}
             onError={() => {
-              console.error("[PlayerEngine] Image error");
-              if (serial) FirebaseRealtimeService.logEvent(serial, "image_error", { media: currentMedia.name });
+              console.error("[PlayerEngine] Erro ao carregar mídia:", currentMedia.url);
+              if (serial) FirebaseRealtimeService.logEvent(serial, "image_error", { media: currentMedia.name, url: currentMedia.url });
               nextMedia("image_error");
             }}
           />
