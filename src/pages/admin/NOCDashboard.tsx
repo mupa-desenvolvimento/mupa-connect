@@ -150,6 +150,8 @@ export default function NOCDashboard() {
     // Se não for super admin, filtrar pela empresa
     if (!isSuperAdmin && companyId) {
       query = query.eq("company_id", companyId);
+    } else {
+      console.log("NOC: Loading all devices for SuperAdmin");
     }
 
     const { data } = await query.order('last_heartbeat_at', { ascending: false });
@@ -166,6 +168,8 @@ export default function NOCDashboard() {
     
     if (!isSuperAdmin && tenantId) {
       query = query.eq("tenant_id", tenantId);
+    } else {
+      console.log("NOC: Loading all stores for SuperAdmin");
     }
     
     const { data } = await query;

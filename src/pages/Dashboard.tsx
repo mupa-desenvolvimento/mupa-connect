@@ -26,10 +26,9 @@ export default function DashboardPage() {
       let mediaQuery = supabase.from("media_items").select("*", { count: 'exact', head: true });
       let playlistQuery = supabase.from("playlists").select("*", { count: 'exact', head: true });
 
-      if (tenantId && !isSuperAdmin) {
+      if (!isSuperAdmin && tenantId) {
         devicesQuery = devicesQuery.eq("tenant_id", tenantId);
         storesQuery = storesQuery.eq("tenant_id", tenantId);
-        // Assuming media and playlists also have tenant_id
         mediaQuery = mediaQuery.eq("tenant_id", tenantId);
         playlistQuery = playlistQuery.eq("tenant_id", tenantId);
       }
@@ -59,7 +58,7 @@ export default function DashboardPage() {
     queryFn: async () => {
       let query = supabase.from("dispositivos").select("*").limit(10);
       
-      if (tenantId && !isSuperAdmin) {
+      if (!isSuperAdmin && tenantId) {
         query = query.eq("tenant_id", tenantId);
       }
 
