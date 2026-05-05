@@ -63,8 +63,24 @@ export const FirebaseRealtimeService = {
         ts: Date.now(),
       });
       console.log(`[Firebase] Notified device ${deviceCode}`);
+  },
+
+  /**
+   * Send heartbeat and status update to Firebase Realtime Database.
+   * Based on execution of player (/play).
+   */
+  sendHeartbeat: async (deviceCode: string, mediaId?: string | null, status: string = "playing") => {
+    if (!deviceCode) return;
+    try {
+      const deviceRef = ref(database, `devices/${deviceCode}/status`);
+      await set(deviceRef, {
+        last_update: Date.now(),
+        media_id: mediaId || null,
+        status: status
+      });
     } catch (err) {
-      console.warn(`[Firebase] Failed to notify ${deviceCode}`, err);
+      // Silently fail to avoid crashing the player on connection issues
+      console.warn("[Firebase] Heartbeat failed", err);
     }
   },
 
