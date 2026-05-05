@@ -346,12 +346,18 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
 
       // Prepare Layer A
       const blob0 = await MediaCacheService.getBlobUrl(item0.url);
-      setSrcA(blob0 || item0.url);
+      const finalUrl0 = blob0 || item0.url;
+      setSrcA(finalUrl0);
       setItemA(item0);
+      // Garantir que a primeira mídia seja marcada como pronta se for imagem
+      if (item0.type === "image") {
+        readyToSwitchRef.current.A = true;
+      }
 
       // Prepare Layer B
       const blob1 = await MediaCacheService.getBlobUrl(item1.url);
-      setSrcB(blob1 || item1.url);
+      const finalUrl1 = blob1 || item1.url;
+      setSrcB(finalUrl1 || item1.url);
       setItemB(item1);
 
       lastTransitionTimeRef.current = Date.now();
