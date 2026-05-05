@@ -90,6 +90,7 @@ export const ManifestService = {
       manifest: {
         playlist_id: playlist.id,
         name: playlist.name,
+        tenant_id: device.tenant_id,
         updated_at: playlist.updated_at || device.atualizado || new Date().toISOString(),
         schedule: playlist.schedule || null,
         schedules: Array.isArray(playlist.schedule) ? playlist.schedule : [],

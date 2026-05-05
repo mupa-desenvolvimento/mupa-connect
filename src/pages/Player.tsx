@@ -55,6 +55,7 @@ export default function PlayerPage() {
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [faceDetectionActive, setFaceDetectionActive] = useState(false);
   const [errorInfo, setErrorInfo] = useState<{ message: string; code?: string } | null>(null);
+  const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -375,7 +376,7 @@ export default function PlayerPage() {
           .withAgeAndGender();
         
         if (result.length > 0) {
-          result.forEach((face, index) => {
+          result.forEach(async (face, index) => {
             // Get the most probable expression
             const expressions = face.expressions.asSortedArray();
             const mostProbableExpression = expressions[0];
@@ -397,6 +398,39 @@ export default function PlayerPage() {
             };
             
             console.log("[Face Detection] Face detected:", faceData);
+            
+            // Send data to audience_detections table
+            try {
+              const detectionData = {
+                detected_at: new Date().toISOString(),
+                age: Math.round(face.age),
+                gender: face.gender,
+                emotion: mostProbableExpression.expression,
+                emotion_confidence: null,
+                gender_probability: null,
+                device_id: deviceInfo?.id || null,
+                tenant_id: deviceInfo?.tenant_id || manifest?.tenant_id || null,
+                session_id: `${sessionId}_person_${index}`,
+                metadata: {
+                  is_looking: true,
+                  duration_ms: 0,
+                  long_session: false,
+                  face_index: index
+                }
+              };
+              
+              const { error } = await supabase
+                .from("audience_detections")
+                .insert(detectionData);
+                
+              if (error) {
+                console.error("[Face Detection] Error sending detection to database:", error);
+              } else {
+                console.log("[Face Detection] Detection sent to database successfully");
+              }
+            } catch (dbError) {
+              console.error("[Face Detection] Error sending to database:", dbError);
+            }
           });
         }
       }, 1000); // Detect every 1 second
