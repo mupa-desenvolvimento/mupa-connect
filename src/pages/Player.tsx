@@ -349,7 +349,7 @@ export default function PlayerPage() {
           )}
 
           {/* Date/Time */}
-          {(appearance.show_datetime !== false) && (
+          {(appearance.show_datetime !== false && !isPreview) && (
             <div className="text-right animate-fade-in bg-black/20 backdrop-blur-sm p-3 rounded-xl border border-white/5">
               <div className="font-display text-3xl font-bold tabular-nums tracking-tighter">
                 {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
