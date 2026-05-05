@@ -24,8 +24,10 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
   // Refs para controle de estado sem disparar renders desnecessários
   const isSwitchingRef = useRef(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const loadTimerRef = useRef<NodeJS.Timeout | null>(null);
   const playlistRef = useRef(playlist);
   const currentIndexRef = useRef(0);
+  const startTimeRef = useRef(Date.now());
   
   // Elementos de mídia
   const videoRef = useRef<HTMLVideoElement>(null);
