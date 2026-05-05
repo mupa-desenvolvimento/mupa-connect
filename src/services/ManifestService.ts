@@ -93,7 +93,6 @@ export const ManifestService = {
         items: mapItems(playlistItems || []),
         appearance_config: device.appearance_config || playlist.appearance_config || {}
       }
-      }
     };
   }
 };
