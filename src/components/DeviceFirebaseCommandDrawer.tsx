@@ -166,19 +166,19 @@ export function DeviceFirebaseCommandDrawer({
   const [editingActionId, setEditingActionId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (device?.id && open) {
+    if (open) {
       fetchQuickActions();
     }
-  }, [device?.id, open]);
+  }, [open]);
 
   const fetchQuickActions = async () => {
-    if (!device?.id) return;
     setLoadingActions(true);
+    // Filtrar por tenant (o RLS cuidará do isolamento)
+    // Buscamos todas as ações rápidas do tenant (globais ou específicas)
     const { data, error } = await supabase
       .from("device_quick_actions")
       .select("*")
-      .eq("device_id", Number(device.id))
-      .order("created_at", { ascending: true });
+      .order("label", { ascending: true });
 
     if (!error) {
       setQuickActions(data || []);
@@ -195,7 +195,7 @@ export function DeviceFirebaseCommandDrawer({
       labelToSave = newActionLabel;
     }
     
-    if (!device?.id || !labelToSave) {
+    if (!labelToSave) {
       toast.error("Informe o nome do botão.");
       return;
     }
@@ -234,7 +234,7 @@ export function DeviceFirebaseCommandDrawer({
       const { error } = await supabase
         .from("device_quick_actions")
         .insert({
-          device_id: Number(device.id),
+          // Removido device_id para tornar o botão global no tenant
           label: labelToSave,
           command_type: commandType,
           command_payload: payload
@@ -244,7 +244,7 @@ export function DeviceFirebaseCommandDrawer({
         toast.error("Erro ao salvar botão.");
         console.error("Error saving quick action:", error);
       } else {
-        toast.success("Botão salvo com sucesso!");
+        toast.success("Botão salvo para todo o tenant!");
         setNewActionLabel("");
         fetchQuickActions();
       }
@@ -532,7 +532,7 @@ export function DeviceFirebaseCommandDrawer({
             <section className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                  Ações Rápidas Salvas
+                  Ações Rápidas (Tenant)
                 </h3>
               </div>
               

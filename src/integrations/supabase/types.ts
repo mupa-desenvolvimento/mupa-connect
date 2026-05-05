@@ -1877,35 +1877,55 @@ export type Database = {
           command_payload: Json
           command_type: string
           created_at: string
-          device_id: number
+          created_by: string | null
+          device_id: number | null
           id: string
           label: string
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
           command_payload?: Json
           command_type: string
           created_at?: string
-          device_id: number
+          created_by?: string | null
+          device_id?: number | null
           id?: string
           label: string
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
           command_payload?: Json
           command_type?: string
           created_at?: string
-          device_id?: number
+          created_by?: string | null
+          device_id?: number | null
           id?: string
           label?: string
+          tenant_id?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "device_quick_actions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "vw_user_creation_status"
+            referencedColumns: ["auth_user_id"]
+          },
           {
             foreignKeyName: "device_quick_actions_device_id_fkey"
             columns: ["device_id"]
             isOneToOne: false
             referencedRelation: "dispositivos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_quick_actions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
