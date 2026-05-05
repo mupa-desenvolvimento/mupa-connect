@@ -109,10 +109,12 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
    * Transition logic from current active layer to the next.
    */
   const performTransition = useCallback(() => {
+    if (isTransitioningRef.current || !playlistRef.current.length) return;
+
     const nextLayer = activeLayer === "A" ? "B" : "A";
     const currentItem = activeLayer === "A" ? itemA : itemB;
     
-    if (isTransitioningRef.current || !playlistRef.current.length || !currentItem) return;
+    if (!currentItem) return;
 
     // BLOQUEIO DE TROCA PREMATURA (TIMESTAMP)
     const now = Date.now();
@@ -120,28 +122,34 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     const configuredDuration = (currentItem.duration || 10);
     const minRequiredMs = Math.max(configuredDuration, MIN_DURATION) * 1000;
 
-    if (elapsed < minRequiredMs - 100) {
+    // Se estiver tentando trocar muito antes do tempo, bloqueia (evita disparos duplos)
+    if (elapsed < minRequiredMs - 200) {
       console.warn(`[PlayerEngine] Troca prematura detectada (${elapsed}ms < ${minRequiredMs}ms). Cancelando.`);
       return;
     }
 
+    // BLOQUEAR DUPLO AVANÇO (CONTROLLER STATE)
+    if (isTransitioningRef.current) return;
+    isTransitioningRef.current = true;
+
     if (!readyToSwitchRef.current[nextLayer]) {
-      console.warn(`[PlayerEngine] Próxima camada (${nextLayer}) não carregada. Aguardando...`);
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(performTransition, 500);
-      return;
+      console.warn(`[PlayerEngine] Próxima camada (${nextLayer}) não carregada. Forçando avanço para evitar travamento.`);
+      // Se não estiver pronto em 500ms, o watchdog ou o prepareNextBuffer cuidará, 
+      // mas aqui forçamos a prontidão se já passou do tempo.
+      readyToSwitchRef.current[nextLayer] = true;
     }
 
     console.log(`[PlayerEngine] NEXT TRIGGER. Mídia: ${currentItem.name}, Exibida por: ${elapsed}ms`);
 
-    isTransitioningRef.current = true;
-    
     const nextVideo = nextLayer === "A" ? videoARef.current : videoBRef.current;
     const nextItem = nextLayer === "A" ? itemA : itemB;
     
     if (nextItem?.type === "video" && nextVideo) {
       nextVideo.muted = volume === 0;
-      nextVideo.play().catch(err => console.error("[PlayerEngine] Falha ao dar play:", err));
+      nextVideo.play().catch(err => {
+        console.error("[PlayerEngine] Falha ao dar play, pulando:", err);
+        // Se o vídeo falhar, não travar, agendar próxima
+      });
     }
 
     // DISPARO ÚNICO DE TROCA
@@ -159,7 +167,8 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
   }, [activeLayer, itemA, itemB, volume, onMediaChange]);
 
   /**
-   * Watchdog mechanism (ESSENCIAL para WebView)
+   * Watchdog mechanism (ANTI-TRAVAMENTO - CRÍTICO)
+   * Garante que o player sempre avance, mesmo que timers de mídia ou eventos de vídeo falhem.
    */
   useEffect(() => {
     const watchdog = setInterval(() => {
@@ -173,9 +182,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
       const duration = Math.max(currentItem.duration || 0, MIN_DURATION);
       const expectedMs = duration * 1000;
 
-      // Watchdog força o avanço se o tempo decorrido exceder a duração + margem de 2s
-      if (elapsed > expectedMs + 2000) {
-        console.warn(`[PlayerEngine] FORÇANDO AVANÇO (WATCHDOG). ELAPSED: ${elapsed}ms | DURATION: ${expectedMs}ms`);
+      // Watchdog (Safety Fallback): Se passou do tempo + 3s de margem, FORÇA o avanço.
+      if (elapsed > expectedMs + 3000) {
+        console.warn(`[PlayerEngine] !!! TRAVAMENTO DETECTADO !!! Forçando avanço via Watchdog. ELAPSED: ${elapsed}ms | EXPECTED: ${expectedMs}ms`);
         performTransition();
       }
     }, 2000);
@@ -189,6 +198,8 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
   const prepareNextBuffer = async () => {
     const inactiveLayer = activeLayer === "A" ? "B" : "A";
     const currentPlaylist = playlistRef.current;
+    if (!currentPlaylist.length) return;
+
     const nextIndex = (currentIndexRef.current + 1) % currentPlaylist.length;
     const nextItem = currentPlaylist[nextIndex];
 
@@ -197,13 +208,13 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     readyToSwitchRef.current[inactiveLayer] = false;
     loadingStatusRef.current[inactiveLayer] = false;
 
-    // Fallback for loading timeout
+    // Fallback for loading timeout: Se não carregar em 8s, marca como pronto para não travar o loop
     const loadTimeout = setTimeout(() => {
       if (!loadingStatusRef.current[inactiveLayer]) {
-        console.warn(`[PlayerEngine] Buffer loading timed out for layer ${inactiveLayer}. Forcing ready state.`);
+        console.warn(`[PlayerEngine] Buffer loading timed out for layer ${inactiveLayer}. Forcing ready state to avoid lock.`);
         readyToSwitchRef.current[inactiveLayer] = true;
       }
-    }, 8000); // 8 seconds load timeout
+    }, 8000);
 
     try {
       const blobUrl = await MediaCacheService.getBlobUrl(nextItem.url);
@@ -227,16 +238,16 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
         };
         img.onerror = () => {
           clearTimeout(loadTimeout);
-          console.warn("[PlayerEngine] Image load failed, skipping to ready.");
+          console.warn("[PlayerEngine] Image load failed, allowing transition to handle error.");
           readyToSwitchRef.current[inactiveLayer] = true;
         };
       } else {
-        // For videos, canplaythrough will clear the timeout
+        // Para vídeos, o evento canplaythrough limpará o timeout
         (window as any)[`loadTimeout${inactiveLayer}`] = loadTimeout;
       }
     } catch (err) {
       clearTimeout(loadTimeout);
-      console.error("[PlayerEngine] Buffer preparation failed", err);
+      console.error("[PlayerEngine] Buffer preparation failed, forcing ready:", err);
       readyToSwitchRef.current[inactiveLayer] = true;
     }
   };
@@ -248,7 +259,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     const currentItem = activeLayer === "A" ? itemA : itemB;
     if (!currentItem) return;
     
-    // Limpar timer anterior
+    // Limpar timer anterior para evitar múltiplos timers concorrentes
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
@@ -259,7 +270,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     
     console.log(`[PlayerEngine] START Mídia: ${currentItem.name} | DURATION: ${duration}s`);
     
-    // Agendar próxima mídia
+    // Agendar próxima mídia usando timer principal
     timerRef.current = setTimeout(() => {
       console.log(`[PlayerEngine] TIMER TRIGGERED for ${currentItem.name}`);
       performTransition();
