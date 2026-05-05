@@ -27,7 +27,7 @@ interface AppearanceConfig {
     position: "top-left" | "top-right" | "bottom-left" | "bottom-right";
     size: number;
     opacity?: number;
-}
+};
 
 export default function PlayerPage() {
   const { deviceCode } = useParams();
