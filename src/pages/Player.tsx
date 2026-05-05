@@ -427,7 +427,7 @@ export default function PlayerPage() {
       </div>
 
       {/* Serial Info (Discreet) */}
-      {(appearance.show_serial !== false) && (
+      {(appearance.show_serial !== false && !isPreview) && (
         <div className="absolute bottom-4 right-4 z-40 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 font-mono text-[10px] text-white/40 tracking-[0.2em] select-none pointer-events-none uppercase">
           Device ID: {deviceInfo?.serial || deviceCode}
         </div>
