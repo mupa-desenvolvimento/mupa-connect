@@ -462,6 +462,28 @@ export default function PlaylistEditor() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
+  const handlePreview = () => {
+    if (id === "new") {
+      toast.error("Salve a playlist antes de visualizar o preview.");
+      return;
+    }
+
+    const width = window.innerWidth * 0.7; // Aumentado para 70% para melhor visibilidade
+    const height = window.innerHeight * 0.7;
+    const left = (window.innerWidth - width) / 2;
+    const top = (window.innerHeight - height) / 2;
+
+    const popup = window.open(
+      `/play?preview=true&id=${id}`,
+      "preview_player",
+      `width=${width},height=${height},top=${top},left=${left},toolbar=no,menubar=no,location=no,status=no,resizable=yes,scrollbars=no`
+    );
+
+    if (!popup || popup.closed || typeof popup.closed === "undefined") {
+      toast.error("Seu navegador bloqueou o preview. Permita popups para visualizar.");
+    }
+  };
+
   // Wrapper para auto-marcar mudanças
   const triggerAutoSave = useCallback((updatedItems: EditorPlaylistItem[], updatedName: string) => {
     setHasUnsavedChanges(true);
@@ -636,7 +658,11 @@ export default function PlaylistEditor() {
             {isSaving ? "SALVANDO..." : "SALVAR AGORA"}
           </Button>
           <Separator orientation="vertical" className="h-6 bg-white/10 mx-1" />
-          <Button variant="outline" className="border-white/10 hover:bg-white/5 gap-2 h-9 px-4 text-white">
+          <Button 
+            variant="outline" 
+            className="border-white/10 hover:bg-white/5 gap-2 h-9 px-4 text-white"
+            onClick={handlePreview}
+          >
             <Play className="h-4 w-4 fill-current" /> Preview
           </Button>
           <Button className="bg-[#085CF0] hover:bg-[#0750d4] text-white h-9 px-4 gap-2">

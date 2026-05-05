@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useDeviceCommandChannel } from "@/hooks/useDeviceCommandChannel";
 import { supabase } from "@/integrations/supabase/client";
 import { PlayerEngine } from "@/components/PlayerEngine";
@@ -31,7 +31,15 @@ interface AppearanceConfig {
 }
 
 export default function PlayerPage() {
+  useEffect(() => {
+    // Force black background for all players
+    document.body.style.backgroundColor = "black";
+    document.documentElement.classList.add("dark");
+  }, []);
   const { deviceCode } = useParams();
+  const [searchParams] = useSearchParams();
+  const isPreview = searchParams.get("preview") === "true";
+  const previewPlaylistId = searchParams.get("id");
   const [deviceUuid, setDeviceUuid] = useState<string | undefined>();
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
   const [manifest, setManifest] = useState<any>(null);
@@ -50,50 +58,73 @@ export default function PlayerPage() {
 
     async function initializePlayer() {
       // Step A: Load Local Cache Immediately
-      MediaCacheService.logPerformance(deviceCode, 'init_start', 'Iniciando carregamento do player');
-      const cachedManifest = ManifestManager.getManifest(deviceCode);
-      if (cachedManifest) {
-        console.log("[Player] Resuming from offline manifest");
-        MediaCacheService.logPerformance(deviceCode, 'manifest_cache_hit', 'Retomando do manifesto local');
-        setManifest(cachedManifest);
-        // We set isLoading to false only if we have content to play
-        setIsLoading(false);
+      if (deviceCode) {
+        MediaCacheService.logPerformance(deviceCode, 'init_start', 'Iniciando carregamento do player');
+        const cachedManifest = ManifestManager.getManifest(deviceCode);
+        if (cachedManifest && !isPreview) {
+          console.log("[Player] Resuming from offline manifest");
+          MediaCacheService.logPerformance(deviceCode, 'manifest_cache_hit', 'Retomando do manifesto local');
+          setManifest(cachedManifest);
+          setIsLoading(false);
+        }
       }
 
       try {
-        if (!cachedManifest) {
-          console.log("[Player] No cache found, fetching initial manifest...");
-          MediaCacheService.logPerformance(deviceCode, 'manifest_fetch_start', 'Buscando manifesto remoto (sem cache)');
-          const startTime = Date.now();
-          const result = await ManifestService.fetchManifest(deviceCode);
-          MediaCacheService.logPerformance(deviceCode, 'manifest_fetch_success', 'Manifesto remoto carregado', {}, Date.now() - startTime);
-          setManifest(result.manifest);
-          if (result.device) {
-            setDeviceUuid(result.device.id?.toString());
-            setDeviceInfo(result.device);
-          }
+        if (isPreview && previewPlaylistId) {
+          console.log("[Player] Loading preview for playlist:", previewPlaylistId);
+          const { data: playlist, error } = await supabase
+            .from("playlists")
+            .select("id, name, updated_at, schedule, appearance_config")
+            .eq("id", previewPlaylistId)
+            .single();
+
+          if (error) throw error;
+
+          const { data: items, error: itemsError } = await supabase
+            .from("playlist_items")
+            .select("id, media_id, position, ordem, duracao, tipo, media_items(id, name, file_url, thumbnail_url, type, duration)")
+            .eq("playlist_id", previewPlaylistId);
+
+          if (itemsError) throw itemsError;
+
+          const mapItems = (items: any[]) => (items || [])
+            .sort((a, b) => (a.position ?? a.ordem ?? 0) - (b.position ?? b.ordem ?? 0))
+            .map((item) => {
+              const media = Array.isArray(item.media_items) ? item.media_items[0] : item.media_items;
+              return {
+                id: item.media_id || item.id,
+                type: item.tipo || media?.type || "image",
+                url: media?.file_url,
+                duration: item.duracao || media?.duration || 10,
+                name: media?.name || "Sem nome"
+              };
+            })
+            .filter((item) => item.url);
+
+          setManifest({
+            playlist_id: playlist.id,
+            name: playlist.name,
+            updated_at: playlist.updated_at || new Date().toISOString(),
+            items: mapItems(items || []),
+            appearance_config: playlist.appearance_config || {}
+          });
           setIsLoading(false);
           return;
         }
 
-        // Step B: Resolve Device Identity in background without blocking playback
-        const { data: device, error } = await supabase
-          .from("dispositivos")
-          .select("*")
-          .or(`apelido_interno.eq."${deviceCode}",serial.eq."${deviceCode}"`)
-          .maybeSingle();
+        if (!deviceCode) return;
 
-        if (!error && device) {
-          setDeviceUuid(device.id.toString());
-          setDeviceInfo(device);
+        console.log("[Player] Fetching initial manifest for device:", deviceCode);
+        const result = await ManifestService.fetchManifest(deviceCode);
+        setManifest(result.manifest);
+        if (result.device) {
+          setDeviceUuid(result.device.id?.toString());
+          setDeviceInfo(result.device);
         }
+        setIsLoading(false);
       } catch (err) {
         console.error("[Player] Initial resolve error:", err);
-      } finally {
-        // Always stop loading spinner if we have manifest, even on error
-        if (ManifestManager.getManifest(deviceCode)) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     }
 
@@ -102,7 +133,7 @@ export default function PlayerPage() {
 
   // 1.5 Realtime Updates via Firebase
   useEffect(() => {
-    if (!deviceCode) return;
+    if (!deviceCode || isPreview) return;
     
     const unsubscribe = FirebaseRealtimeService.subscribeToDeviceUpdates(deviceCode, (payload) => {
       setSyncToast({ msg: "Sincronizando conteúdo...", ts: Date.now() });
@@ -122,7 +153,7 @@ export default function PlayerPage() {
   }, [manifest]);
 
   // 3. System Commands (Control Plane)
-  useDeviceCommandChannel(deviceUuid, {
+  useDeviceCommandChannel(isPreview ? undefined : deviceUuid, {
     reloadPlaylist: () => setReloadKey(k => k + 1),
     setVolume: (v) => setVolume(v),
     clearCache: () => { caches.keys().then(ks => ks.map(k => caches.delete(k))); },
@@ -136,7 +167,7 @@ export default function PlayerPage() {
     setLastIndexChange(Date.now());
     
     const media = activePlaylist[idx];
-    if (media && deviceInfo?.id) {
+    if (media && deviceInfo?.id && !isPreview) {
       // 1. Firebase Realtime Heartbeat (New)
       FirebaseRealtimeService.sendHeartbeat(deviceCode!, media.id?.toString());
 
@@ -169,7 +200,7 @@ export default function PlayerPage() {
 
   // 4. Background Sync (Polling) - Silent & Efficient
   useEffect(() => {
-    if (!deviceCode) return;
+    if (!deviceCode || isPreview) return;
     
     const backgroundSync = async () => {
       console.log("[Player] Background sync checking for updates...");
@@ -220,7 +251,7 @@ export default function PlayerPage() {
 
   // 5. Heartbeat (Supabase + Firebase)
   useEffect(() => {
-    if (!deviceInfo?.serial || !deviceCode) return;
+    if (!deviceInfo?.serial || !deviceCode || isPreview) return;
     
     const currentMedia = activePlaylist[currentIndex];
     
@@ -240,6 +271,7 @@ export default function PlayerPage() {
   // 6. Page-Level Watchdog (Anti-Stall)
   // Uses RequestAnimationFrame to detect if the entire engine is stuck
   useEffect(() => {
+    if (isPreview) return;
     let rafId: number;
     
     const checkEngineHealth = () => {
@@ -262,12 +294,7 @@ export default function PlayerPage() {
     return () => cancelAnimationFrame(rafId);
   }, [lastIndexChange, currentIndex, activePlaylist]);
 
-  // UI Setup
-  useEffect(() => {
-    document.documentElement.classList.add("dark");
-    document.body.style.background = "#000";
-    return () => { document.body.style.background = ""; };
-  }, []);
+  // UI Setup - Already handled in top-level useEffect
 
   const [now, setNow] = useState(new Date());
   useEffect(() => {
@@ -304,11 +331,14 @@ export default function PlayerPage() {
       />
 
       {/* Top Overlay Layer */}
-      <div className="absolute inset-0 z-20 pointer-events-none flex flex-col justify-between p-6">
+      <div className={cn(
+        "absolute inset-0 z-20 pointer-events-none flex flex-col justify-between p-6",
+        isPreview && "rounded-3xl border-8 border-black shadow-inner"
+      )}>
         {/* Header: Device Info & Clock */}
         <div className="flex items-start justify-between w-full">
           {/* Device Info */}
-          {(appearance.show_device_name !== false) && (
+          {(appearance.show_device_name !== false && !isPreview) && (
             <div className="flex items-center gap-3 animate-fade-in bg-black/20 backdrop-blur-sm p-3 rounded-xl border border-white/5">
               <div className="h-10 w-10 rounded-lg bg-gradient-primary grid place-items-center font-display font-bold text-primary-foreground shadow-lg shadow-primary/20">M</div>
               <div className="leading-tight">
@@ -323,7 +353,7 @@ export default function PlayerPage() {
           )}
 
           {/* Date/Time */}
-          {(appearance.show_datetime !== false) && (
+          {(appearance.show_datetime !== false && !isPreview) && (
             <div className="text-right animate-fade-in bg-black/20 backdrop-blur-sm p-3 rounded-xl border border-white/5">
               <div className="font-display text-3xl font-bold tabular-nums tracking-tighter">
                 {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
@@ -401,14 +431,14 @@ export default function PlayerPage() {
       </div>
 
       {/* Serial Info (Discreet) */}
-      {(appearance.show_serial !== false) && (
+      {(appearance.show_serial !== false && !isPreview) && (
         <div className="absolute bottom-4 right-4 z-40 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 font-mono text-[10px] text-white/40 tracking-[0.2em] select-none pointer-events-none uppercase">
           Device ID: {deviceInfo?.serial || deviceCode}
         </div>
       )}
 
       {/* Discreet sync notification */}
-      {syncToast && (
+      {syncToast && !isPreview && (
         <div className="absolute bottom-20 left-6 z-40 flex items-center gap-3 px-4 py-2 rounded-xl bg-primary/20 backdrop-blur-xl border border-primary/20 font-mono text-xs text-primary-foreground tracking-wider select-none pointer-events-none animate-fade-in">
           <span className="h-2 w-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(var(--primary),0.5)]" />
           {syncToast.msg}

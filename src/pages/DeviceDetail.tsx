@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, ExternalLink, Loader2, Save, Store, Wrench, Monitor, Layers, Check, ChevronsUpDown } from "lucide-react";
+import { ArrowLeft, ExternalLink, Loader2, Save, Store, Wrench, Monitor, Layers, Check, ChevronsUpDown, Play } from "lucide-react";
 import { 
   Select, 
   SelectContent, 
@@ -94,6 +94,24 @@ export default function DeviceDetailPage() {
   useEffect(() => {
     fetchDevice();
   }, [id, isSuperAdmin]);
+
+  const handlePreview = () => {
+    if (!device?.device_code) return;
+    const width = window.innerWidth * 0.7;
+    const height = window.innerHeight * 0.7;
+    const left = (window.innerWidth - width) / 2;
+    const top = (window.innerHeight - height) / 2;
+
+    const popup = window.open(
+      `/play/${device.device_code}?preview=true`,
+      "preview_player",
+      `width=${width},height=${height},top=${top},left=${left},toolbar=no,menubar=no,location=no,status=no,resizable=yes,scrollbars=no`
+    );
+
+    if (!popup || popup.closed || typeof popup.closed === "undefined") {
+      toast.error("Seu navegador bloqueou o preview. Permita popups para visualizar.");
+    }
+  };
 
   const handleUpdateDevice = async () => {
     if (!id || !device) return;
@@ -211,10 +229,8 @@ export default function DeviceDetailPage() {
               <Link to="/dispositivos"><ArrowLeft className="h-4 w-4 mr-1" /> Voltar</Link>
             </Button>
             {device.device_code && (
-              <Button asChild className="bg-gradient-primary text-primary-foreground shadow-glow">
-                <Link to={`/play/${device.device_code}`} target="_blank">
-                  Abrir player <ExternalLink className="h-4 w-4 ml-1" />
-                </Link>
+              <Button onClick={handlePreview} className="bg-gradient-primary text-primary-foreground shadow-glow">
+                Preview Real <Play className="h-4 w-4 ml-1 fill-current" />
               </Button>
             )}
           </div>
