@@ -232,27 +232,7 @@ export default function PlaylistEditor() {
   const [debugData, setDebugData] = useState<any>(null);
   const [showDebug, setShowDebug] = useState(false);
   const [mediaSearch, setMediaSearch] = useState("");
-  const [appearanceConfig, setAppearanceConfig] = useState<any>({
-    show_device_name: true,
-    show_datetime: true,
-    show_serial: false,
-    transition_type: "fade",
-    transition_duration: 500,
-    footer: {
-      enabled: false,
-      text: "Consulte o preço aqui",
-      background_color: "#000000AA",
-      text_color: "#FFFFFF",
-      height: 60
-    },
-    logo: {
-      enabled: false,
-      url: "",
-      position: "top-left",
-      size: 80,
-      opacity: 1
-    }
-  });
+  const [appearanceConfig, setAppearanceConfig] = useState<any>(DEFAULT_APPEARANCE_CONFIG);
 
   // Monitorar mudanças no estado de itens
   useEffect(() => {
@@ -277,12 +257,7 @@ export default function PlaylistEditor() {
       setPlaylistName(playlistData.name);
       setIsDefault(playlistData.is_company_default || false);
       
-      if (playlistData.appearance_config) {
-        setAppearanceConfig({
-          ...appearanceConfig,
-          ...(playlistData.appearance_config as any)
-        });
-      }
+      setAppearanceConfig(normalizeAppearanceConfig(playlistData.appearance_config));
       
       if (playlistData.playlist_items && playlistData.playlist_items.length > 0) {
         const mappedItems = playlistData.playlist_items.map((it: any) => ({
