@@ -288,9 +288,23 @@ export default function DevicesPage() {
                       <TableCell className="font-mono text-xs text-muted-foreground">{d.serial}</TableCell>
                       {isSuperAdmin && (
                         <TableCell>
-                          <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded font-medium">
-                            {d.companies?.name || "Global"}
-                          </span>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded font-medium w-fit">
+                              {d.companies?.name || "Sem Empresa"}
+                            </span>
+                            {d.tenant_id && (
+                              <span className={cn(
+                                "text-[9px] text-muted-foreground font-mono truncate max-w-[80px]",
+                                // Se o dispositivo está vinculado a uma empresa mas o tenant_id é diferente do tenant da empresa
+                                d.companies && d.companies.tenant_id && d.tenant_id !== d.companies.tenant_id && "text-destructive font-bold"
+                              )}>
+                                {d.tenant_id.split('-')[0]}...
+                                {d.companies && d.companies.tenant_id && d.tenant_id !== d.companies.tenant_id && (
+                                  <AlertTriangle className="h-2 w-2 inline ml-1" />
+                                )}
+                              </span>
+                            )}
+                          </div>
                         </TableCell>
                       )}
                       <TableCell><span className="text-xs px-2 py-1 bg-muted rounded-md">Loja {d.num_filial}</span></TableCell>
