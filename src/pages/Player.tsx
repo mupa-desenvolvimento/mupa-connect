@@ -132,8 +132,14 @@ export default function PlayerPage() {
           setDeviceInfo(result.device);
         }
         setIsLoading(false);
-      } catch (err) {
+      } catch (err: any) {
         console.error("[Player] Initial resolve error:", err);
+        if (err.message?.includes("empresa (company_id) é obrigatório") || err.code === "P0001") {
+          setErrorInfo({ 
+            message: "O parâmetro empresa (company_id) é obrigatório para novos dispositivos.", 
+            code: "P0001" 
+          });
+        }
         setIsLoading(false);
       }
     }
