@@ -811,7 +811,7 @@ export default function PlaylistEditor() {
                         <div className="space-y-2">
                           <Label className="text-xs text-white/60">Texto do Rodapé</Label>
                           <Input 
-                            value={appearanceConfig.footer.text} 
+                            value={appearanceConfig.footer?.text || DEFAULT_APPEARANCE_CONFIG.footer.text} 
                             onChange={(e) => {
                               setAppearanceConfig({
                                 ...appearanceConfig,
@@ -828,7 +828,7 @@ export default function PlaylistEditor() {
                             <div className="flex gap-2">
                               <Input 
                                 type="color"
-                                value={(appearanceConfig.footer?.background_color || "#000000AA").substring(0, 7)} 
+                                value={(appearanceConfig.footer?.background_color || DEFAULT_APPEARANCE_CONFIG.footer.background_color).substring(0, 7)} 
                                 onChange={(e) => {
                                   setAppearanceConfig({
                                     ...appearanceConfig,
@@ -839,7 +839,7 @@ export default function PlaylistEditor() {
                                 className="w-8 h-8 p-0 border-none bg-transparent cursor-pointer"
                               />
                               <Input 
-                                value={appearanceConfig.footer.background_color} 
+                                value={appearanceConfig.footer?.background_color || DEFAULT_APPEARANCE_CONFIG.footer.background_color} 
                                 onChange={(e) => {
                                   setAppearanceConfig({
                                     ...appearanceConfig,
@@ -856,7 +856,7 @@ export default function PlaylistEditor() {
                             <div className="flex gap-2">
                               <Input 
                                 type="color"
-                                value={appearanceConfig.footer.text_color} 
+                                value={appearanceConfig.footer?.text_color || DEFAULT_APPEARANCE_CONFIG.footer.text_color} 
                                 onChange={(e) => {
                                   setAppearanceConfig({
                                     ...appearanceConfig,
@@ -867,7 +867,7 @@ export default function PlaylistEditor() {
                                 className="w-8 h-8 p-0 border-none bg-transparent cursor-pointer"
                               />
                               <Input 
-                                value={appearanceConfig.footer.text_color} 
+                                value={appearanceConfig.footer?.text_color || DEFAULT_APPEARANCE_CONFIG.footer.text_color} 
                                 onChange={(e) => {
                                   setAppearanceConfig({
                                     ...appearanceConfig,
