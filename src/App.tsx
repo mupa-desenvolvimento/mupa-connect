@@ -29,6 +29,7 @@ import QuickAccessPage from "./pages/QuickAccess";
 import NOCDashboard from "./pages/admin/NOCDashboard";
 import MediaTrash from "./pages/MediaTrash";
 import AppsPage from "./pages/admin/Apps";
+import DeviceValidation from "./pages/admin/DeviceValidation";
 import CompanyAppsPage from "./pages/CompanyApps";
 import AppDownloadProxy from "./pages/AppDownloadProxy";
 import SharedMonitoringPage from "./pages/monitoring/SharedMonitoring";
@@ -124,6 +125,12 @@ const App = () => {
                 <Route path="/admin/apps" element={
                   <ProtectedRoute allowedRoles={["admin_global"]}>
                     <AppsPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/admin/device-validation" element={
+                  <ProtectedRoute allowedRoles={["admin_global"]}>
+                    <DeviceValidation />
                   </ProtectedRoute>
                 } />
 

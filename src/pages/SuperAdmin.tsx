@@ -115,10 +115,10 @@ export default function SuperAdminDashboard() {
             <Button 
               variant="outline" 
               className="h-24 flex flex-col gap-2 border-dashed"
-              onClick={() => setIsUserModalOpen(true)}
+              onClick={() => window.location.href = "/admin/device-validation"}
             >
-              <UserPlus className="h-6 w-6" />
-              <span>Cadastrar Usuário</span>
+              <ShieldCheck className="h-6 w-6 text-orange-500" />
+              <span>Validação de Dispositivos</span>
             </Button>
             <Button variant="outline" className="h-24 flex flex-col gap-2 border-dashed" onClick={() => setIsUserModalOpen(true)}>
               <Building2 className="h-6 w-6" />
