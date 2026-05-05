@@ -68,14 +68,16 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     const isActive = activeLayer === layer;
     return {
       opacity: isActive ? 1 : 0,
-      visibility: isActive ? "visible" : "hidden",
-      zIndex: isActive ? 10 : 0,
-      transition: "opacity 400ms ease-in-out, visibility 400ms ease-in-out",
+      // Removido visibility: hidden para garantir que o crossfade ocorra suavemente
+      // e o elemento não suma instantaneamente durante a transição
+      zIndex: isActive ? 10 : 5,
+      transition: "opacity 400ms ease-in-out",
       willChange: "opacity",
       transform: "translateZ(0)",
       backfaceVisibility: "hidden",
       position: "absolute",
-      inset: 0
+      inset: 0,
+      backgroundColor: "black" // Garante fundo preto se a mídia falhar
     };
   };
 
@@ -119,31 +121,32 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     const configuredDuration = (currentItem.duration || 10);
     const minRequiredMs = Math.max(configuredDuration, MIN_DURATION) * 1000;
 
-    if (elapsed < minRequiredMs - 50) { // Pequena margem para precisão
+    if (elapsed < minRequiredMs - 100) { // Margem de 100ms para evitar pulos prematuros por jitter de timer
       console.warn(`[PlayerEngine] Troca prematura detectada (${elapsed}ms < ${minRequiredMs}ms). Cancelando.`);
       return;
     }
 
-    console.log(`[PlayerEngine] Efetuando transição. Mídia: ${currentItem.name}, Exibida por: ${elapsed}ms`);
-
     if (!readyToSwitchRef.current[nextLayer]) {
-      console.warn(`[PlayerEngine] Próxima camada (${nextLayer}) não carregada. Retrying...`);
+      console.warn(`[PlayerEngine] Próxima camada (${nextLayer}) não carregada. Aguardando...`);
       if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(performTransition, 200);
+      timerRef.current = setTimeout(performTransition, 500); // Retry em 500ms
       return;
     }
+
+    console.log(`[PlayerEngine] Efetuando transição. Mídia: ${currentItem.name}, Exibida por: ${elapsed}ms`);
 
     isTransitioningRef.current = true;
     
     const nextVideo = nextLayer === "A" ? videoARef.current : videoBRef.current;
     const nextItem = nextLayer === "A" ? itemA : itemB;
     
+    // Iniciar vídeo da próxima camada ANTES de trocar a opacidade
     if (nextItem?.type === "video" && nextVideo) {
       nextVideo.muted = volume === 0;
-      nextVideo.play().catch(() => {});
+      nextVideo.play().catch(err => console.error("[PlayerEngine] Falha ao dar play no vídeo:", err));
     }
 
-    // DISPARO ÚNICO
+    // DISPARO ÚNICO DE TROCA DE CAMADA
     setActiveLayer(nextLayer);
     lastTransitionTimeRef.current = now;
 
@@ -154,7 +157,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     transitionTimerRef.current = setTimeout(() => {
       isTransitioningRef.current = false;
       prepareNextBuffer();
-    }, TRANSITION_MS + 50);
+    }, TRANSITION_MS + 100);
   }, [activeLayer, itemA, itemB, volume, onMediaChange]);
 
   /**
@@ -240,7 +243,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     const currentItem = activeLayer === "A" ? itemA : itemB;
     if (!currentItem) return;
     
-    // Limpar timer anterior antes de iniciar novo
+    // CONTROLE ÚNICO DE TEMPO
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
@@ -248,18 +251,22 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
 
     const duration = Math.max(currentItem.duration || 0, MIN_DURATION);
     const ms = duration * 1000;
-    const transitionPoint = Math.max(0, ms - (TRANSITION_MS / 2));
     
-    console.log(`[PlayerEngine] Mídia: ${currentItem.name} | Duração: ${duration}s | Proxima em: ${transitionPoint}ms`);
+    // O timer deve disparar exatamente no tempo da mídia
+    // A transição visual (fade) ocorre via CSS ao mudar o activeLayer em performTransition
+    console.log(`[PlayerEngine] Mídia: ${currentItem.name} | Duração: ${duration}s | Troca em: ${ms}ms`);
     
     timerRef.current = setTimeout(() => {
       performTransition();
-    }, transitionPoint);
+    }, ms);
 
     startWatchdog(ms);
 
     return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
     };
   }, [activeLayer, itemA, itemB, isReady, performTransition, startWatchdog]);
 
@@ -394,6 +401,11 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
             alt=""
             onLoad={(e) => {
               (e.currentTarget as HTMLImageElement).style.transform = "translateZ(0)";
+              // Marcar como pronto imediatamente no carregamento da imagem ativa
+              if (activeLayer === "A") {
+                loadingStatusRef.current.A = true;
+                readyToSwitchRef.current.A = true;
+              }
             }}
             onError={performTransition}
           />
@@ -428,6 +440,11 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
             alt=""
             onLoad={(e) => {
               (e.currentTarget as HTMLImageElement).style.transform = "translateZ(0)";
+              // Marcar como pronto imediatamente no carregamento da imagem ativa
+              if (activeLayer === "B") {
+                loadingStatusRef.current.B = true;
+                readyToSwitchRef.current.B = true;
+              }
             }}
             onError={performTransition}
           />
