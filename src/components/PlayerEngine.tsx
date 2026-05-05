@@ -338,7 +338,6 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     const init = async () => {
       if (timerRef.current) clearTimeout(timerRef.current);
       if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
-      if (watchdogTimerRef.current) clearTimeout(watchdogTimerRef.current);
       
       currentIndexRef.current = 0;
       const item0 = playlist[0];
