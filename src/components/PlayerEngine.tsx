@@ -325,7 +325,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
         // 1. Travamento Geral ou Imagem
         if (elapsedSinceTransition > expectedMs + FREEZE_THRESHOLD) {
           console.error(`[PlayerEngine] Heartbeat detectou atraso excessivo. Forçando próxima.`);
-          performTransition();
+          performTransition("heartbeat_freeze");
         }
 
         // 2. Travamento de Vídeo
@@ -336,7 +336,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
               console.warn("[PlayerEngine] Vídeo parado no frame:", currentVideo.currentTime);
               if (elapsedSinceTransition > expectedMs + 5000) {
                 console.error("[PlayerEngine] Vídeo travado por muito tempo, pulando.");
-                performTransition();
+                performTransition("video_freeze");
               }
             }
             (currentVideo as any)._lastRecordedTime = currentVideo.currentTime;
