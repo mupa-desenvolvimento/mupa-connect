@@ -133,7 +133,7 @@ export default function PlayerPage() {
 
   // 1.5 Realtime Updates via Firebase
   useEffect(() => {
-    if (!deviceCode) return;
+    if (!deviceCode || isPreview) return;
     
     const unsubscribe = FirebaseRealtimeService.subscribeToDeviceUpdates(deviceCode, (payload) => {
       setSyncToast({ msg: "Sincronizando conteúdo...", ts: Date.now() });
