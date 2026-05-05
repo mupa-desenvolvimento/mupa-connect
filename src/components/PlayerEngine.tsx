@@ -200,7 +200,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
       // Watchdog (Safety Fallback): Se passou do tempo + 3s de margem, FORÇA o avanço.
       if (elapsed > expectedMs + 3000) {
         console.warn(`[PlayerEngine] !!! TRAVAMENTO DETECTADO !!! Forçando avanço via Watchdog. ELAPSED: ${elapsed}ms | EXPECTED: ${expectedMs}ms`);
-        performTransition();
+        performTransition("watchdog");
       }
     }, 2000);
 
