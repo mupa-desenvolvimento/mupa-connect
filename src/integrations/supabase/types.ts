@@ -2091,6 +2091,7 @@ export type Database = {
           appearance_config: Json | null
           apps_instalados: string[] | null
           atualizado: string | null
+          autostart: boolean | null
           campanhas: string[] | null
           comando: string | null
           company_id: string | null
@@ -2121,6 +2122,7 @@ export type Database = {
           appearance_config?: Json | null
           apps_instalados?: string[] | null
           atualizado?: string | null
+          autostart?: boolean | null
           campanhas?: string[] | null
           comando?: string | null
           company_id?: string | null
@@ -2151,6 +2153,7 @@ export type Database = {
           appearance_config?: Json | null
           apps_instalados?: string[] | null
           atualizado?: string | null
+          autostart?: boolean | null
           campanhas?: string[] | null
           comando?: string | null
           company_id?: string | null
@@ -6731,6 +6734,7 @@ export type Database = {
           appearance_config: Json | null
           apps_instalados: string[] | null
           atualizado: string | null
+          autostart: boolean | null
           campanhas: string[] | null
           comando: string | null
           company_id: string | null
