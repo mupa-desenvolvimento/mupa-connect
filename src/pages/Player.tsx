@@ -112,20 +112,19 @@ export default function PlayerPage() {
     
     const media = activePlaylist[idx];
     if (media && deviceInfo?.id) {
-      // 1. Proof of Play Log (Legacy compat)
-      supabase.functions.invoke('device-api/proof', {
+      // 1. Firebase Realtime Heartbeat (New)
+      FirebaseRealtimeService.sendHeartbeat(deviceCode!, media.id?.toString());
+
+      // 2. Proof of Play Log (Legacy compat)
+      supabase.functions.invoke('device-api/heartbeat', { 
         body: { 
           serial: deviceInfo.serial,
-          playlist_id: manifest?.playlist_id,
           media_id: media.id,
-          payload: {
-            media_name: media.name,
-            playlist_name: manifest?.name
-          }
-        }
+          playlist_id: manifest?.playlist_id
+        } 
       }).catch(() => {});
 
-      // 2. Trade Marketing Event (New Module)
+      // 3. Trade Marketing Event (New Module)
       supabase.from('media_events').insert({
         device_id: deviceInfo.id,
         media_id: media.id?.toString(),
@@ -141,7 +140,7 @@ export default function PlayerPage() {
         if (error) console.error("[Player] Failed to log media event:", error);
       });
     }
-  }, [activePlaylist, deviceInfo, manifest]);
+  }, [activePlaylist, deviceInfo, manifest, deviceCode]);
 
   // 4. Background Sync (Polling) - Silent & Efficient
   useEffect(() => {
@@ -194,14 +193,24 @@ export default function PlayerPage() {
     };
   }, [deviceCode, reloadKey]);
 
-  // 5. Heartbeat
+  // 5. Heartbeat (Supabase + Firebase)
   useEffect(() => {
-    if (!deviceInfo?.serial) return;
-    const beat = () => supabase.functions.invoke('device-api/heartbeat', { body: { serial: deviceInfo.serial } }).catch(() => {});
+    if (!deviceInfo?.serial || !deviceCode) return;
+    
+    const currentMedia = activePlaylist[currentIndex];
+    
+    const beat = () => {
+      // Supabase heartbeat
+      supabase.functions.invoke('device-api/heartbeat', { body: { serial: deviceInfo.serial } }).catch(() => {});
+      
+      // Firebase heartbeat (every 30s)
+      FirebaseRealtimeService.sendHeartbeat(deviceCode, currentMedia?.id?.toString());
+    };
+
     beat();
     const interval = setInterval(beat, 30000);
     return () => clearInterval(interval);
-  }, [deviceInfo?.serial]);
+  }, [deviceInfo?.serial, deviceCode, activePlaylist, currentIndex]);
 
   // 6. Page-Level Watchdog (Anti-Stall)
   // Uses RequestAnimationFrame to detect if the entire engine is stuck

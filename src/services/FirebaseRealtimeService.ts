@@ -69,6 +69,25 @@ export const FirebaseRealtimeService = {
   },
 
   /**
+   * Send heartbeat and status update to Firebase Realtime Database.
+   * Based on execution of player (/play).
+   */
+  sendHeartbeat: async (deviceCode: string, mediaId?: string | null, status: string = "playing") => {
+    if (!deviceCode) return;
+    try {
+      const deviceRef = ref(database, `devices/${deviceCode}/status`);
+      await set(deviceRef, {
+        last_update: Date.now(),
+        media_id: mediaId || null,
+        status: status
+      });
+    } catch (err) {
+      // Silently fail to avoid crashing the player on connection issues
+      console.warn("[Firebase] Heartbeat failed", err);
+    }
+  },
+
+  /**
    * Notify every device linked to a given playlist (by serial AND apelido_interno).
    */
   notifyPlaylistDevices: async (playlistId: string) => {
