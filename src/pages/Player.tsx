@@ -372,9 +372,9 @@ export default function PlayerPage() {
             <div 
               className="w-[calc(100%+3rem)] -mx-6 mb-[-1.5rem] flex items-center justify-center font-display font-bold uppercase tracking-[0.3em] shadow-2xl overflow-hidden"
               style={{ 
-                height: `${appearance.footer.height || 60}px`,
-                backgroundColor: appearance.footer.background_color || "#000000AA",
-                color: appearance.footer.text_color || "#FFFFFF"
+                height: `${appearance.footer?.height || 60}px`,
+                backgroundColor: appearance.footer?.background_color || "#000000AA",
+                color: appearance.footer?.text_color || "#FFFFFF"
               }}
             >
               <div className="animate-pulse">{appearance.footer.text}</div>

@@ -227,6 +227,7 @@ export default function PlaylistEditor() {
   const [isSaving, setIsSaving] = useState(false);
   const [isDefault, setIsDefault] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [applyToAllDevices, setApplyToAllDevices] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [debugData, setDebugData] = useState<any>(null);
@@ -412,7 +413,22 @@ export default function PlaylistEditor() {
         console.warn("Silent failure updating dispositivos:", e);
       }
 
-      // 5. Notificar dispositivos vinculados via Firebase Realtime (instantâneo)
+      // 5. Aplicar para todos os dispositivos se solicitado
+      if (applyToAllDevices && (companyId || (id === "new" ? true : false))) {
+        const targetCompanyId = companyId || (playlistData?.company_id);
+        if (targetCompanyId) {
+          console.log("Applying appearance to all devices for company:", targetCompanyId);
+          await supabase
+            .from("dispositivos")
+            .update({ appearance_config: appearanceConfig })
+            .eq("company_id", targetCompanyId);
+          
+          FirebaseRealtimeService.notifyCompanyDevices(targetCompanyId).catch(() => {});
+          toast.success("Configurações aplicadas a todos os dispositivos da empresa!");
+        }
+      }
+
+      // 6. Notificar dispositivos vinculados via Firebase Realtime (instantâneo)
       if (currentPlaylistId) {
         FirebaseRealtimeService.notifyPlaylistDevices(currentPlaylistId).catch(() => {});
       }
@@ -701,6 +717,21 @@ export default function PlaylistEditor() {
                   {/* Informativo */}
                   <div className="p-3 rounded-lg bg-[#085CF0]/10 border border-[#085CF0]/20 text-[10px] text-[#085CF0] font-bold uppercase tracking-wider leading-relaxed">
                     Estas configurações serão aplicadas a todos os dispositivos que utilizam esta playlist.
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="apply_to_all" className="text-[10px] font-bold text-yellow-500 uppercase tracking-wider">Forçar em todos os dispositivos</Label>
+                        <p className="text-[9px] text-white/40 leading-tight">Substitui as configurações individuais de cada tela da empresa.</p>
+                      </div>
+                      <Switch 
+                        id="apply_to_all" 
+                        checked={applyToAllDevices} 
+                        onCheckedChange={setApplyToAllDevices}
+                        className="data-[state=checked]:bg-yellow-500"
+                      />
+                    </div>
                   </div>
 
                   {/* Identificação */}
