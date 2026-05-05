@@ -184,19 +184,23 @@ export default function PlayerPage() {
     
     const media = activePlaylist[idx];
     if (media && deviceInfo?.id && !isPreview) {
-      // 1. Firebase Realtime Heartbeat (New)
-      FirebaseRealtimeService.sendHeartbeat(deviceCode!, media.id?.toString());
+      // 1. Firebase Realtime Heartbeat
+      FirebaseRealtimeService.sendHeartbeat(deviceCode!, media.id?.toString(), "playing");
 
-      // 2. Proof of Play Log (Legacy compat)
-      supabase.functions.invoke('device-api/heartbeat', { 
-        body: { 
-          serial: deviceInfo.serial,
-          media_id: media.id,
-          playlist_id: manifest?.playlist_id
-        } 
-      }).catch(() => {});
+      // 2. Supabase Player Status Update
+      supabase
+        .from('dispositivos')
+        .update({ 
+          player_status: 'playing',
+          last_player_activity_at: new Date().toISOString(),
+          current_media_id: media.id
+        })
+        .eq('id', deviceInfo.id)
+        .then(({ error }) => {
+          if (error) console.warn("[Player] Failed to update player status:", error);
+        });
 
-      // 3. Trade Marketing Event (New Module)
+      // 3. Trade Marketing Event
       supabase.from('media_events').insert({
         device_id: deviceInfo.id,
         media_id: media.id?.toString(),
