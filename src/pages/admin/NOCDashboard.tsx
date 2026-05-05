@@ -545,7 +545,12 @@ function DeviceCard({ item, status }: any) {
           <span className="text-sm font-black uppercase truncate text-white leading-tight">{item.apelido_interno || item.serial}</span>
           <span className="text-[10px] opacity-50 font-bold uppercase tracking-wider">{item.num_filial || 'Sem Filial'}</span>
         </div>
-        <div className={cn("h-3 w-3 rounded-full shrink-0 mt-1 shadow-[0_0_10px_rgba(0,0,0,0.5)]", statusColor, status !== 'offline' && "animate-pulse")} />
+        <div className="flex flex-col items-end gap-1">
+          <div className={cn("h-3 w-3 rounded-full shrink-0 shadow-[0_0_10px_rgba(0,0,0,0.5)]", statusColor, status !== 'offline' && "animate-pulse")} />
+          {item.persistence && (
+            <Activity className="h-2.5 w-2.5 text-primary animate-pulse" />
+          )}
+        </div>
       </div>
       
       <div className="flex items-end justify-between mt-auto">
