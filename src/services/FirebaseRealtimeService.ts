@@ -63,6 +63,9 @@ export const FirebaseRealtimeService = {
         ts: Date.now(),
       });
       console.log(`[Firebase] Notified device ${deviceCode}`);
+    } catch (err) {
+      console.warn(`[Firebase] Failed to notify ${deviceCode}`, err);
+    }
   },
 
   /**
