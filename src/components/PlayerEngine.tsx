@@ -45,24 +45,25 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     if (isSwitchingRef.current || !playlistRef.current.length) return;
     
     isSwitchingRef.current = true;
-    console.log(`[PlayerEngine] Next media trigger. Motivo: ${reason}`);
+    const now = Date.now();
+    const elapsed = now - startTimeRef.current;
+    console.log(`[PlayerEngine] NEXT TRIGGER. Reason: ${reason} | Elapsed: ${elapsed}ms`);
     
-    // Log detalhado de carregamento e transição
     if (serial) {
       FirebaseRealtimeService.logEvent(serial, "transition_start", {
         reason,
         current_index: currentIndexRef.current,
+        elapsed,
         timestamp: new Date().toISOString()
       });
     }
 
     const nextIdx = (currentIndexRef.current + 1) % playlistRef.current.length;
     currentIndexRef.current = nextIdx;
+    startTimeRef.current = Date.now();
     
-    // Troca de camada para transição suave
     const nextLayer = activeLayer === "A" ? "B" : "A";
     
-    // Log para monitoramento
     if (serial) {
       FirebaseRealtimeService.logEvent(serial, "media_transition", {
         from: playlistRef.current[currentIndex]?.name,
@@ -71,49 +72,49 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
       });
     }
 
-    // Atualiza estado do React
     setCurrentIndex(nextIdx);
     setActiveLayer(nextLayer);
     onMediaChange?.(nextIdx);
 
-    // Reset da trava de segurança após um pequeno delay (tempo da transição CSS)
     setTimeout(() => {
       isSwitchingRef.current = false;
     }, 500);
   }, [activeLayer, currentIndex, onMediaChange, serial]);
 
-  /**
-   * Inicia a execução da mídia atual
-   */
+  const startDisplayTimer = useCallback((duration: number) => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    const finalDuration = Math.max(duration || 5, 3);
+    console.log(`[PlayerEngine] DURATION: ${finalDuration}s`);
+    
+    timerRef.current = setTimeout(() => {
+      nextMedia("display_timer");
+    }, finalDuration * 1000);
+  }, [nextMedia]);
+
   useEffect(() => {
     if (!playlist.length) return;
-
     const media = playlist[currentIndex];
-    if (!media) return;
-
-    // Limpa qualquer timer anterior (GARANTIA DE TIMER ÚNICO)
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
+    if (!media || !media.url) {
+      console.warn("[PlayerEngine] Midia invalida ou sem URL, pulando...");
+      nextMedia("invalid_url");
+      return;
     }
 
-    console.log(`[PlayerEngine] Start media: [${currentIndex}] ${media.name} (${media.type})`);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (loadTimerRef.current) clearTimeout(loadTimerRef.current);
 
-    // Se for imagem, define timer de saída
-    if (media.type === "image") {
-      const duration = Math.max(media.duration || 5, 3);
-      timerRef.current = setTimeout(() => {
-        nextMedia("image_timer");
-      }, duration * 1000);
-    }
-
-    // Heartbeat para o painel
-    if (serial) {
-      FirebaseRealtimeService.sendHeartbeat(serial, media.id, "playing");
-    }
+    console.log(`[PlayerEngine] START: ${currentIndex} | ${media.name}`);
+    
+    const LOAD_TIMEOUT = 10000; // 10 segundos para carregar
+    loadTimerRef.current = setTimeout(() => {
+      console.warn(`[PlayerEngine] LOAD TIMEOUT: ${media.name}`);
+      if (serial) FirebaseRealtimeService.logEvent(serial, "load_timeout", { media: media.name });
+      nextMedia("load_timeout");
+    }, LOAD_TIMEOUT);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      if (loadTimerRef.current) clearTimeout(loadTimerRef.current);
     };
   }, [currentIndex, playlist, nextMedia, serial]);
 
