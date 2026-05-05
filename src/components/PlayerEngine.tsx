@@ -241,7 +241,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
     const currentItem = activeLayer === "A" ? itemA : itemB;
     if (!currentItem) return;
     
-    // Limpar timer anterior antes de iniciar novo
+    // CONTROLE ÚNICO DE TEMPO
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
@@ -249,18 +249,22 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
 
     const duration = Math.max(currentItem.duration || 0, MIN_DURATION);
     const ms = duration * 1000;
-    const transitionPoint = Math.max(0, ms - (TRANSITION_MS / 2));
     
-    console.log(`[PlayerEngine] Mídia: ${currentItem.name} | Duração: ${duration}s | Proxima em: ${transitionPoint}ms`);
+    // O timer deve disparar exatamente no tempo da mídia
+    // A transição visual (fade) ocorre via CSS ao mudar o activeLayer em performTransition
+    console.log(`[PlayerEngine] Mídia: ${currentItem.name} | Duração: ${duration}s | Troca em: ${ms}ms`);
     
     timerRef.current = setTimeout(() => {
       performTransition();
-    }, transitionPoint);
+    }, ms);
 
     startWatchdog(ms);
 
     return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
     };
   }, [activeLayer, itemA, itemB, isReady, performTransition, startWatchdog]);
 
