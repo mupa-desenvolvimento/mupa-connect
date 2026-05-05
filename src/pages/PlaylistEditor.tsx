@@ -313,7 +313,8 @@ export default function PlaylistEditor() {
             tenant_id: tenantId as any, 
             company_id: companyId || companyData.id,
             is_active: true,
-            is_company_default: isDefault
+            is_company_default: isDefault,
+            appearance_config: appearanceConfig
           })
           .select().single();
           
