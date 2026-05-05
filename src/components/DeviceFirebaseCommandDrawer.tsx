@@ -532,7 +532,7 @@ export function DeviceFirebaseCommandDrawer({
             <section className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                  Ações Rápidas Salvas
+                  Ações Rápidas (Tenant)
                 </h3>
               </div>
               
