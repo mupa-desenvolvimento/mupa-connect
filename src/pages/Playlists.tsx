@@ -107,6 +107,23 @@ export default function PlaylistsPage() {
     }
   };
 
+  const handlePreview = (playlistId: string) => {
+    const width = window.innerWidth * 0.7;
+    const height = window.innerHeight * 0.7;
+    const left = (window.innerWidth - width) / 2;
+    const top = (window.innerHeight - height) / 2;
+
+    const popup = window.open(
+      `/play?preview=true&id=${playlistId}`,
+      "preview_player",
+      `width=${width},height=${height},top=${top},left=${left},toolbar=no,menubar=no,location=no,status=no,resizable=yes,scrollbars=no`
+    );
+
+    if (!popup || popup.closed || typeof popup.closed === "undefined") {
+      toast.error("Seu navegador bloqueou o preview. Permita popups para visualizar.");
+    }
+  };
+
   const handleDuplicate = async (playlist: any) => {
     try {
       toast.loading("Duplicando playlist...");
