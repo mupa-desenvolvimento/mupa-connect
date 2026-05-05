@@ -718,6 +718,21 @@ export default function PlaylistEditor() {
                     Estas configurações serão aplicadas a todos os dispositivos que utilizam esta playlist.
                   </div>
 
+                  <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="apply_to_all" className="text-[10px] font-bold text-yellow-500 uppercase tracking-wider">Forçar em todos os dispositivos</Label>
+                        <p className="text-[9px] text-white/40 leading-tight">Substitui as configurações individuais de cada tela da empresa.</p>
+                      </div>
+                      <Switch 
+                        id="apply_to_all" 
+                        checked={applyToAllDevices} 
+                        onCheckedChange={setApplyToAllDevices}
+                        className="data-[state=checked]:bg-yellow-500"
+                      />
+                    </div>
+                  </div>
+
                   {/* Identificação */}
                   <div className="space-y-4">
                     <h4 className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Identificação</h4>
