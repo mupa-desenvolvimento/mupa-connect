@@ -60,22 +60,27 @@ export default function DevicesPage() {
   };
 
   const { data: devices, isLoading, refetch } = useQuery({
-    queryKey: ["dispositivos-full", tenantId],
+    queryKey: ["dispositivos-full", tenantId, isSuperAdmin],
     queryFn: async () => {
       let query = supabase.from("dispositivos").select(`
         *,
         playlists:playlist_id (
           id,
           name
+        ),
+        companies:company_id (
+          id,
+          name
         )
       `);
       
-      // Filtrar por tenantId se disponível
-      if (tenantId) {
-        query = query.eq("tenant_id", tenantId);
-      } else if (!isSuperAdmin) {
-        // Fallback de segurança se não for super admin e não tiver tenantId
-        return [];
+      // Se for super admin, não filtra por tenantId para ver tudo
+      if (!isSuperAdmin) {
+        if (tenantId) {
+          query = query.eq("tenant_id", tenantId);
+        } else {
+          return [];
+        }
       }
       
       const { data, error } = await query.order("apelido_interno");
@@ -86,14 +91,18 @@ export default function DevicesPage() {
   });
 
   const { data: stores } = useQuery({
-    queryKey: ["stores-list", tenantId],
+    queryKey: ["stores-list", tenantId, isSuperAdmin],
     queryFn: async () => {
       let query = supabase.from("dispositivos").select("num_filial").not("num_filial", "is", null);
-      if (tenantId) {
-        query = query.eq("tenant_id", tenantId);
-      } else if (!isSuperAdmin) {
-        return [];
+      
+      if (!isSuperAdmin) {
+        if (tenantId) {
+          query = query.eq("tenant_id", tenantId);
+        } else {
+          return [];
+        }
       }
+      
       const { data, error } = await query;
       if (error) return [];
       const uniqueFiliais = Array.from(new Set(data.map(d => d.num_filial))).sort();
@@ -238,9 +247,10 @@ export default function DevicesPage() {
             <Table>
               <TableHeader className="sticky top-0 bg-card z-10 border-b border-border/60">
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-[30%]">Dispositivo</TableHead>
+                  <TableHead className="w-[25%]">Dispositivo</TableHead>
                   <TableHead>Serial</TableHead>
-                   <TableHead>Loja</TableHead>
+                  {isSuperAdmin && <TableHead>Empresa</TableHead>}
+                  <TableHead>Loja</TableHead>
                   <TableHead>Playlist</TableHead>
                   <TableHead>Última Atividade</TableHead>
                   <TableHead>Status</TableHead>
@@ -254,6 +264,13 @@ export default function DevicesPage() {
                     <TableRow key={d.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => openDeviceDrawer({ ...d, status })}>
                       <TableCell><div className="flex items-center gap-3"><Monitor className="h-4 w-4 text-primary opacity-70" />{d.apelido_interno}</div></TableCell>
                       <TableCell className="font-mono text-xs text-muted-foreground">{d.serial}</TableCell>
+                      {isSuperAdmin && (
+                        <TableCell>
+                          <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded font-medium">
+                            {d.companies?.name || "Global"}
+                          </span>
+                        </TableCell>
+                      )}
                       <TableCell><span className="text-xs px-2 py-1 bg-muted rounded-md">Loja {d.num_filial}</span></TableCell>
                       <TableCell>
                         {d.playlists ? (
