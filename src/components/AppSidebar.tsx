@@ -13,6 +13,7 @@ import {
   BarChart,
   Users,
   Activity,
+  User,
 } from "lucide-react";
 import {
   Sidebar,
@@ -48,6 +49,7 @@ export function AppSidebar() {
     { title: "Trade Marketing", url: "/trade-marketing", icon: BarChart, visible: isMarketing || isAdmin },
     { title: "Painel NOC", url: "/admin/monitoring", icon: Activity, visible: isTecnico },
     { title: "Download de Apps", url: "/aplicativos", icon: MonitorPlay, visible: isTecnico },
+    { title: "Face Track Demo", url: "/face-track-demo", icon: User, visible: true },
   ].filter((i) => i.visible);
 
   const orgItems = [
