@@ -15,9 +15,13 @@ interface PlayerEngineProps {
   onMediaChange?: (index: number) => void;
   volume?: number;
   serial?: string;
+  appearance?: {
+    transition_type?: "fade" | "slide-left" | "slide-right" | "zoom" | "none";
+    transition_duration?: number;
+  };
 }
 
-export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: PlayerEngineProps) {
+export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appearance }: PlayerEngineProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [activeLayer, setActiveLayer] = useState<"A" | "B">("A");
   
@@ -166,9 +170,16 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
       <div 
         key={`layer-${activeLayer}-${currentIndex}`}
         className={cn(
-          "absolute inset-0 transition-opacity duration-500 ease-in-out animate-fade-in",
-          "opacity-100 z-10"
+          "absolute inset-0 z-10",
+          (!appearance?.transition_type || appearance.transition_type === "fade") && "animate-fade-in",
+          appearance?.transition_type === "slide-left" && "animate-slide-left",
+          appearance?.transition_type === "slide-right" && "animate-slide-right",
+          appearance?.transition_type === "zoom" && "animate-zoom-in",
+          appearance?.transition_type === "none" && "opacity-100"
         )}
+        style={{
+          animationDuration: `${appearance?.transition_duration || 500}ms`
+        }}
       >
         {!currentMedia?.url ? (
           <div className="w-full h-full bg-black flex items-center justify-center text-white/20 font-mono text-xs">

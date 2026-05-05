@@ -59,6 +59,15 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { usePlaylist, useMedias, useTenant } from "@/hooks/use-playlist-data";
 import { supabase } from "@/integrations/supabase/client";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
@@ -188,6 +197,27 @@ export default function PlaylistEditor() {
   const [debugData, setDebugData] = useState<any>(null);
   const [showDebug, setShowDebug] = useState(false);
   const [mediaSearch, setMediaSearch] = useState("");
+  const [appearanceConfig, setAppearanceConfig] = useState<any>({
+    show_device_name: true,
+    show_datetime: true,
+    show_serial: false,
+    transition_type: "fade",
+    transition_duration: 500,
+    footer: {
+      enabled: false,
+      text: "Consulte o preço aqui",
+      background_color: "#000000AA",
+      text_color: "#FFFFFF",
+      height: 60
+    },
+    logo: {
+      enabled: false,
+      url: "",
+      position: "top-left",
+      size: 80,
+      opacity: 1
+    }
+  });
 
   // Monitorar mudanças no estado de itens
   useEffect(() => {
@@ -211,6 +241,13 @@ export default function PlaylistEditor() {
       console.log("Loading playlist data:", playlistData);
       setPlaylistName(playlistData.name);
       setIsDefault(playlistData.is_company_default || false);
+      
+      if (playlistData.appearance_config) {
+        setAppearanceConfig({
+          ...appearanceConfig,
+          ...(playlistData.appearance_config as any)
+        });
+      }
       
       if (playlistData.playlist_items && playlistData.playlist_items.length > 0) {
         const mappedItems = playlistData.playlist_items.map((it: any) => ({
@@ -285,7 +322,8 @@ export default function PlaylistEditor() {
             tenant_id: tenantId as any, 
             company_id: companyId || companyData.id,
             is_active: true,
-            is_company_default: isDefault
+            is_company_default: isDefault,
+            appearance_config: appearanceConfig
           })
           .select().single();
           
@@ -301,7 +339,12 @@ export default function PlaylistEditor() {
       } else {
         const { error: updateError } = await supabase
           .from("playlists")
-          .update({ name: updatedName, is_company_default: isDefault, updated_at: new Date().toISOString() })
+          .update({ 
+            name: updatedName, 
+            is_company_default: isDefault, 
+            updated_at: new Date().toISOString(),
+            appearance_config: appearanceConfig
+          })
           .eq("id", id as any);
         if (updateError) throw updateError;
       }
@@ -581,12 +624,15 @@ export default function PlaylistEditor() {
         <aside className="w-80 border-r border-white/5 bg-[#0c0c0e] flex flex-col z-40 h-full overflow-hidden">
           <Tabs defaultValue="media" className="flex-1 flex flex-col h-full overflow-hidden">
             <div className="p-4 border-b border-white/5 shrink-0">
-              <TabsList className="grid w-full grid-cols-2 bg-black/40 p-1 border border-white/5 h-10">
-                <TabsTrigger value="media" className="data-[state=active]:bg-[#085CF0] text-xs gap-2">
+              <TabsList className="grid w-full grid-cols-3 bg-black/40 p-1 border border-white/5 h-10">
+                <TabsTrigger value="media" className="data-[state=active]:bg-[#085CF0] text-[10px] gap-2 px-1">
                   <ImageIcon className="h-3.5 w-3.5" /> Mídias
                 </TabsTrigger>
-                <TabsTrigger value="campaigns" className="data-[state=active]:bg-[#085CF0] text-xs gap-2">
+                <TabsTrigger value="campaigns" className="data-[state=active]:bg-[#085CF0] text-[10px] gap-2 px-1">
                   <Layers className="h-3.5 w-3.5" /> Campanhas
+                </TabsTrigger>
+                <TabsTrigger value="appearance" className="data-[state=active]:bg-[#085CF0] text-[10px] gap-2 px-1">
+                  <Monitor className="h-3.5 w-3.5" /> Aparência
                 </TabsTrigger>
               </TabsList>
               <div className="relative mt-4">
@@ -632,6 +678,295 @@ export default function PlaylistEditor() {
                       )}
                     </div>
                   )}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+            
+            <TabsContent 
+              value="appearance" 
+              className="flex-1 m-0 p-0 border-none outline-none data-[state=active]:flex data-[state=active]:flex-col overflow-hidden"
+            >
+              <ScrollArea className="flex-1 w-full h-full">
+                <div className="p-4 space-y-6">
+                  {/* Informativo */}
+                  <div className="p-3 rounded-lg bg-[#085CF0]/10 border border-[#085CF0]/20 text-[10px] text-[#085CF0] font-bold uppercase tracking-wider leading-relaxed">
+                    Estas configurações serão aplicadas a todos os dispositivos que utilizam esta playlist.
+                  </div>
+
+                  {/* Identificação */}
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Identificação</h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="show_device_name" className="text-xs text-white/80">Mostrar Nome do Dispositivo</Label>
+                        <Switch 
+                          id="show_device_name" 
+                          checked={appearanceConfig.show_device_name !== false} 
+                          onCheckedChange={(val) => {
+                            setAppearanceConfig({...appearanceConfig, show_device_name: val});
+                            setHasUnsavedChanges(true);
+                          }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="show_datetime" className="text-xs text-white/80">Mostrar Data e Hora</Label>
+                        <Switch 
+                          id="show_datetime" 
+                          checked={appearanceConfig.show_datetime !== false} 
+                          onCheckedChange={(val) => {
+                            setAppearanceConfig({...appearanceConfig, show_datetime: val});
+                            setHasUnsavedChanges(true);
+                          }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="show_serial" className="text-xs text-white/80">Mostrar Serial (Suporte)</Label>
+                        <Switch 
+                          id="show_serial" 
+                          checked={appearanceConfig.show_serial === true} 
+                          onCheckedChange={(val) => {
+                            setAppearanceConfig({...appearanceConfig, show_serial: val});
+                            setHasUnsavedChanges(true);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator className="bg-white/5" />
+
+                  {/* Transições */}
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Transições</h4>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs text-white/60">Tipo de Transição</Label>
+                        <Select 
+                          value={appearanceConfig.transition_type || "fade"} 
+                          onValueChange={(val) => {
+                            setAppearanceConfig({...appearanceConfig, transition_type: val});
+                            setHasUnsavedChanges(true);
+                          }}
+                        >
+                          <SelectTrigger className="w-full bg-black/40 border-white/10 h-9 text-xs">
+                            <SelectValue placeholder="Selecione..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#1a1a1e] border-white/10 text-white">
+                            <SelectItem value="fade">Fade (Suave)</SelectItem>
+                            <SelectItem value="slide-left">Slide Left</SelectItem>
+                            <SelectItem value="slide-right">Slide Right</SelectItem>
+                            <SelectItem value="zoom">Zoom In</SelectItem>
+                            <SelectItem value="none">Nenhuma</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <Label className="text-xs text-white/60">Duração (ms)</Label>
+                          <span className="text-[10px] font-mono text-[#085CF0]">{appearanceConfig.transition_duration || 500}ms</span>
+                        </div>
+                        <Slider 
+                          value={[appearanceConfig.transition_duration || 500]} 
+                          min={0} 
+                          max={2000} 
+                          step={100}
+                          onValueChange={([val]) => {
+                            setAppearanceConfig({...appearanceConfig, transition_duration: val});
+                            setHasUnsavedChanges(true);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator className="bg-white/5" />
+
+                  {/* Rodapé */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Rodapé Informativo</h4>
+                      <Switch 
+                        checked={appearanceConfig.footer?.enabled} 
+                        onCheckedChange={(val) => {
+                          setAppearanceConfig({
+                            ...appearanceConfig, 
+                            footer: { ...appearanceConfig.footer, enabled: val }
+                          });
+                          setHasUnsavedChanges(true);
+                        }}
+                      />
+                    </div>
+                    {appearanceConfig.footer?.enabled && (
+                      <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                        <div className="space-y-2">
+                          <Label className="text-xs text-white/60">Texto do Rodapé</Label>
+                          <Input 
+                            value={appearanceConfig.footer.text} 
+                            onChange={(e) => {
+                              setAppearanceConfig({
+                                ...appearanceConfig,
+                                footer: { ...appearanceConfig.footer, text: e.target.value }
+                              });
+                              setHasUnsavedChanges(true);
+                            }}
+                            className="bg-black/40 border-white/10 h-9 text-xs"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-2">
+                            <Label className="text-xs text-white/60">Cor Fundo</Label>
+                            <div className="flex gap-2">
+                              <Input 
+                                type="color"
+                                value={appearanceConfig.footer.background_color.substring(0, 7)} 
+                                onChange={(e) => {
+                                  setAppearanceConfig({
+                                    ...appearanceConfig,
+                                    footer: { ...appearanceConfig.footer, background_color: e.target.value + "AA" }
+                                  });
+                                  setHasUnsavedChanges(true);
+                                }}
+                                className="w-8 h-8 p-0 border-none bg-transparent cursor-pointer"
+                              />
+                              <Input 
+                                value={appearanceConfig.footer.background_color} 
+                                onChange={(e) => {
+                                  setAppearanceConfig({
+                                    ...appearanceConfig,
+                                    footer: { ...appearanceConfig.footer, background_color: e.target.value }
+                                  });
+                                  setHasUnsavedChanges(true);
+                                }}
+                                className="bg-black/40 border-white/10 h-8 text-[10px] font-mono"
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs text-white/60">Cor Texto</Label>
+                            <div className="flex gap-2">
+                              <Input 
+                                type="color"
+                                value={appearanceConfig.footer.text_color} 
+                                onChange={(e) => {
+                                  setAppearanceConfig({
+                                    ...appearanceConfig,
+                                    footer: { ...appearanceConfig.footer, text_color: e.target.value }
+                                  });
+                                  setHasUnsavedChanges(true);
+                                }}
+                                className="w-8 h-8 p-0 border-none bg-transparent cursor-pointer"
+                              />
+                              <Input 
+                                value={appearanceConfig.footer.text_color} 
+                                onChange={(e) => {
+                                  setAppearanceConfig({
+                                    ...appearanceConfig,
+                                    footer: { ...appearanceConfig.footer, text_color: e.target.value }
+                                  });
+                                  setHasUnsavedChanges(true);
+                                }}
+                                className="bg-black/40 border-white/10 h-8 text-[10px] font-mono"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <Separator className="bg-white/5" />
+
+                  {/* Logo */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Logo Overlay</h4>
+                      <Switch 
+                        checked={appearanceConfig.logo?.enabled} 
+                        onCheckedChange={(val) => {
+                          setAppearanceConfig({
+                            ...appearanceConfig, 
+                            logo: { ...appearanceConfig.logo, enabled: val }
+                          });
+                          setHasUnsavedChanges(true);
+                        }}
+                      />
+                    </div>
+                    {appearanceConfig.logo?.enabled && (
+                      <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                        <div className="space-y-2">
+                          <Label className="text-xs text-white/60">URL do Logo</Label>
+                          <Input 
+                            value={appearanceConfig.logo.url} 
+                            onChange={(e) => {
+                              setAppearanceConfig({
+                                ...appearanceConfig,
+                                logo: { ...appearanceConfig.logo, url: e.target.value }
+                              });
+                              setHasUnsavedChanges(true);
+                            }}
+                            placeholder="https://exemplo.com/logo.png"
+                            className="bg-black/40 border-white/10 h-9 text-xs"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs text-white/60">Posição</Label>
+                          <Select 
+                            value={appearanceConfig.logo.position} 
+                            onValueChange={(val) => {
+                              setAppearanceConfig({
+                                ...appearanceConfig,
+                                logo: { ...appearanceConfig.logo, position: val }
+                              });
+                              setHasUnsavedChanges(true);
+                            }}
+                          >
+                            <SelectTrigger className="w-full bg-black/40 border-white/10 h-9 text-xs">
+                              <SelectValue placeholder="Posição..." />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#1a1a1e] border-white/10 text-white">
+                              <SelectItem value="top-left">Superior Esquerdo</SelectItem>
+                              <SelectItem value="top-right">Superior Direito</SelectItem>
+                              <SelectItem value="bottom-left">Inferior Esquerdo</SelectItem>
+                              <SelectItem value="bottom-right">Inferior Direito</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-2">
+                            <Label className="text-xs text-white/60">Tamanho (px)</Label>
+                            <Input 
+                              type="number"
+                              value={appearanceConfig.logo.size} 
+                              onChange={(e) => {
+                                setAppearanceConfig({
+                                  ...appearanceConfig,
+                                  logo: { ...appearanceConfig.logo, size: parseInt(e.target.value) }
+                                });
+                                setHasUnsavedChanges(true);
+                              }}
+                              className="bg-black/40 border-white/10 h-9 text-xs"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs text-white/60">Opacidade (%)</Label>
+                            <Slider 
+                              value={[(appearanceConfig.logo.opacity || 1) * 100]} 
+                              min={0} 
+                              max={100} 
+                              step={10}
+                              onValueChange={([val]) => {
+                                setAppearanceConfig({
+                                  ...appearanceConfig,
+                                  logo: { ...appearanceConfig.logo, opacity: val / 100 }
+                                });
+                                setHasUnsavedChanges(true);
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </ScrollArea>
             </TabsContent>

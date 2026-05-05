@@ -6,6 +6,29 @@ import { PlayerEngine } from "@/components/PlayerEngine";
 import { ManifestManager, ScheduleResolver, MediaCacheService } from "@/components/PlayerServices";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { ManifestService } from "@/services/ManifestService";
+import { cn } from "@/lib/utils";
+
+interface AppearanceConfig {
+  show_device_name?: boolean;
+  show_datetime?: boolean;
+  show_serial?: boolean;
+  transition_type?: "fade" | "slide-left" | "slide-right" | "zoom" | "none";
+  transition_duration?: number;
+  footer?: {
+    enabled: boolean;
+    text: string;
+    background_color: string;
+    text_color: string;
+    height: number;
+  };
+  logo?: {
+    enabled: boolean;
+    url: string;
+    position: "top-left" | "top-right" | "bottom-left" | "bottom-right";
+    size: number;
+    opacity?: number;
+  };
+}
 
 export default function PlayerPage() {
   const { deviceCode } = useParams();
@@ -18,6 +41,8 @@ export default function PlayerPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [lastIndexChange, setLastIndexChange] = useState(Date.now());
   const [syncToast, setSyncToast] = useState<{ msg: string; ts: number } | null>(null);
+
+  const appearance = useMemo(() => (manifest?.appearance_config || {}) as AppearanceConfig, [manifest]);
 
   // 1. Core Loader: Resolve Identity & Manifest (Offline-First)
   useEffect(() => {
@@ -266,40 +291,109 @@ export default function PlayerPage() {
   }
 
   return (
-    <div className="fixed inset-0 bg-black overflow-hidden text-white">
+    <div className="fixed inset-0 bg-black overflow-hidden text-white select-none">
       <PlayerEngine 
         playlist={activePlaylist} 
         volume={volume}
         serial={deviceInfo?.serial || deviceCode}
         onMediaChange={handleMediaChange}
+        appearance={{
+          transition_type: appearance.transition_type,
+          transition_duration: appearance.transition_duration
+        }}
       />
 
-      {/* HUD overlay - Zero flickering absolute layers */}
-      <div className="absolute top-0 left-0 right-0 p-4 flex items-start justify-between bg-gradient-to-b from-black/60 to-transparent z-20 pointer-events-none">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-gradient-primary grid place-items-center font-display font-bold text-primary-foreground">M</div>
-          <div className="leading-tight">
-            <div className="font-display font-semibold">{deviceInfo?.apelido_interno || "Player Profissional"}</div>
-            <div className="text-[11px] uppercase tracking-widest opacity-70 font-mono">
-              {deviceInfo ? `Filial ${deviceInfo.num_filial}` : `Cache Local · ${deviceCode}`}
+      {/* Top Overlay Layer */}
+      <div className="absolute inset-0 z-20 pointer-events-none flex flex-col justify-between p-6">
+        {/* Header: Device Info & Clock */}
+        <div className="flex items-start justify-between w-full">
+          {/* Device Info */}
+          {(appearance.show_device_name !== false) && (
+            <div className="flex items-center gap-3 animate-fade-in bg-black/20 backdrop-blur-sm p-3 rounded-xl border border-white/5">
+              <div className="h-10 w-10 rounded-lg bg-gradient-primary grid place-items-center font-display font-bold text-primary-foreground shadow-lg shadow-primary/20">M</div>
+              <div className="leading-tight">
+                <div className="font-display font-bold text-lg tracking-tight">
+                  {deviceInfo?.apelido_interno || "Player Profissional"}
+                </div>
+                <div className="text-[11px] uppercase tracking-[0.2em] opacity-60 font-mono font-bold">
+                  {deviceInfo ? `Filial ${deviceInfo.num_filial}` : `Offline · ${deviceCode}`}
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Date/Time */}
+          {(appearance.show_datetime !== false) && (
+            <div className="text-right animate-fade-in bg-black/20 backdrop-blur-sm p-3 rounded-xl border border-white/5">
+              <div className="font-display text-3xl font-bold tabular-nums tracking-tighter">
+                {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+              </div>
+              <div className="text-[10px] uppercase opacity-50 font-mono tracking-widest">
+                {now.toLocaleDateString("pt-BR", { weekday: 'short', day: '2-digit', month: 'short' })}
+              </div>
+            </div>
+          )}
         </div>
-        <div className="text-right">
-          <div className="font-display text-2xl tabular-nums">
-            {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-          </div>
+
+        {/* Footer Layer */}
+        <div className="flex flex-col items-center gap-4">
+          {/* Logo Overlay */}
+          {appearance.logo?.enabled && appearance.logo.url && (
+            <div 
+              className={cn(
+                "absolute pointer-events-none transition-all duration-500",
+                appearance.logo.position === "top-left" && "top-6 left-6",
+                appearance.logo.position === "top-right" && "top-6 right-6",
+                appearance.logo.position === "bottom-left" && "bottom-6 left-6",
+                appearance.logo.position === "bottom-right" && "bottom-6 right-6",
+                // Adjust position if header is enabled
+                appearance.logo.position === "top-left" && (appearance.show_device_name !== false) && "top-24",
+                appearance.logo.position === "top-right" && (appearance.show_datetime !== false) && "top-24"
+              )}
+              style={{ 
+                opacity: appearance.logo.opacity ?? 1,
+                // Handle dynamic footer offset
+                ...(appearance.logo.position.startsWith('bottom') && appearance.footer?.enabled ? {
+                  bottom: `${(appearance.footer.height || 60) + 24}px`
+                } : {})
+              }}
+            >
+              <img 
+                src={appearance.logo.url} 
+                alt="Logo" 
+                style={{ width: `${appearance.logo.size || 80}px`, height: 'auto' }}
+                className="drop-shadow-2xl"
+              />
+            </div>
+          )}
+
+          {/* Configurable Footer */}
+          {appearance.footer?.enabled && (
+            <div 
+              className="w-[calc(100%+3rem)] -mx-6 mb-[-1.5rem] flex items-center justify-center font-display font-bold uppercase tracking-[0.3em] shadow-2xl overflow-hidden"
+              style={{ 
+                height: `${appearance.footer.height || 60}px`,
+                backgroundColor: appearance.footer.background_color || "#000000AA",
+                color: appearance.footer.text_color || "#FFFFFF"
+              }}
+            >
+              <div className="animate-pulse">{appearance.footer.text}</div>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="absolute bottom-3 right-3 z-30 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-sm border border-white/10 font-mono text-xs text-white/80 tracking-wider select-none pointer-events-none">
-        ID: {deviceInfo?.serial || deviceCode}
-      </div>
+      {/* Serial Info (Discreet) */}
+      {(appearance.show_serial !== false) && (
+        <div className="absolute bottom-4 right-4 z-40 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 font-mono text-[10px] text-white/40 tracking-[0.2em] select-none pointer-events-none uppercase">
+          Device ID: {deviceInfo?.serial || deviceCode}
+        </div>
+      )}
 
       {/* Discreet sync notification */}
       {syncToast && (
-        <div className="absolute bottom-3 left-3 z-30 flex items-center gap-2 px-3 py-1.5 rounded-md bg-black/60 backdrop-blur-sm border border-white/10 font-mono text-xs text-white/80 tracking-wider select-none pointer-events-none animate-fade-in">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+        <div className="absolute bottom-20 left-6 z-40 flex items-center gap-3 px-4 py-2 rounded-xl bg-primary/20 backdrop-blur-xl border border-primary/20 font-mono text-xs text-primary-foreground tracking-wider select-none pointer-events-none animate-fade-in">
+          <span className="h-2 w-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(var(--primary),0.5)]" />
           {syncToast.msg}
         </div>
       )}

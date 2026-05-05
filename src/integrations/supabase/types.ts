@@ -2088,6 +2088,7 @@ export type Database = {
       dispositivos: {
         Row: {
           apelido_interno: string | null
+          appearance_config: Json | null
           apps_instalados: string[] | null
           atualizado: string | null
           campanhas: string[] | null
@@ -2116,6 +2117,7 @@ export type Database = {
         }
         Insert: {
           apelido_interno?: string | null
+          appearance_config?: Json | null
           apps_instalados?: string[] | null
           atualizado?: string | null
           campanhas?: string[] | null
@@ -2144,6 +2146,7 @@ export type Database = {
         }
         Update: {
           apelido_interno?: string | null
+          appearance_config?: Json | null
           apps_instalados?: string[] | null
           atualizado?: string | null
           campanhas?: string[] | null
@@ -6716,6 +6719,7 @@ export type Database = {
         Args: { empresa_param: string }
         Returns: {
           apelido_interno: string | null
+          appearance_config: Json | null
           apps_instalados: string[] | null
           atualizado: string | null
           campanhas: string[] | null

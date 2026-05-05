@@ -34,7 +34,7 @@ serve(async (req) => {
     if (path === 'manifest') {
       const { data: device, error: deviceError } = await supabaseClient
         .from('dispositivos')
-        .select('*')
+        .select("*, appearance_config")
         .or(`serial.eq."${serial}",apelido_interno.eq."${serial}"`)
         .maybeSingle()
 
@@ -71,7 +71,7 @@ serve(async (req) => {
 
       const { data: playlist, error: playlistError } = await supabaseClient
         .from('playlists')
-        .select('id, name, updated_at, schedule, fallback_media_id')
+        .select('id, name, updated_at, schedule, fallback_media_id, appearance_config')
         .eq('id', targetPlaylistId)
         .maybeSingle()
 
@@ -118,7 +118,8 @@ serve(async (req) => {
         schedules: Array.isArray(playlist.schedule) ? playlist.schedule : [],
         fallback_playlist: [],
         fallback_items: [],
-        items: mapItems(playlistItems || [])
+        items: mapItems(playlistItems || []),
+        appearance_config: device.appearance_config || playlist.appearance_config || {}
       }
 
       return new Response(JSON.stringify({ success: true, device, manifest }), {
