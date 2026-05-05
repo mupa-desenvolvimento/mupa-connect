@@ -42,8 +42,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial }: Pl
   const currentIndexRef = useRef(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const watchdogTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const lastTransitionTimeRef = useRef<number>(Date.now());
+  const lastTransitionTimeRef = useRef<number>(Date.now()); // Reutilizado como startTime do controlador central
   const heartbeatRef = useRef<number>(0);
   const lastCheckTimeRef = useRef<number>(Date.now());
   
