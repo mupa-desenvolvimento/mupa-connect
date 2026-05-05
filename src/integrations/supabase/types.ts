@@ -6354,6 +6354,13 @@ export type Database = {
         Args: { check_tenant_id: string; check_user_id: string }
         Returns: boolean
       }
+      check_device_integrity: {
+        Args: { p_device_id: number }
+        Returns: {
+          is_consistent: boolean
+          issues: string[]
+        }[]
+      }
       check_media_in_use: { Args: { media_id: string }; Returns: boolean }
       check_tenant_limit: {
         Args: {
