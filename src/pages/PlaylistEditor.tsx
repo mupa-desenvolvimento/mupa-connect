@@ -658,7 +658,11 @@ export default function PlaylistEditor() {
             {isSaving ? "SALVANDO..." : "SALVAR AGORA"}
           </Button>
           <Separator orientation="vertical" className="h-6 bg-white/10 mx-1" />
-          <Button variant="outline" className="border-white/10 hover:bg-white/5 gap-2 h-9 px-4 text-white">
+          <Button 
+            variant="outline" 
+            className="border-white/10 hover:bg-white/5 gap-2 h-9 px-4 text-white"
+            onClick={handlePreview}
+          >
             <Play className="h-4 w-4 fill-current" /> Preview
           </Button>
           <Button className="bg-[#085CF0] hover:bg-[#0750d4] text-white h-9 px-4 gap-2">
