@@ -323,6 +323,49 @@ export default function DevicesPage() {
       </div>
 
       <div className="flex-1 overflow-hidden border border-border/60 rounded-xl bg-card shadow-sm flex flex-col">
+        <div className="px-4 py-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground border-b border-border/60 bg-muted/20">
+          <div className="flex items-center gap-1.5">
+            <Monitor className="h-4 w-4 text-foreground/70" />
+            <span className="font-semibold text-foreground text-sm">{stats.total}</span> 
+            <span className="text-muted-foreground">dispositivos</span>
+            {stats.filtered !== stats.total && (
+              <Badge variant="secondary" className="ml-2 bg-primary/10 text-primary border-none text-[10px] h-5">
+                Mostrando {stats.filtered}
+              </Badge>
+            )}
+          </div>
+          
+          <div className="hidden sm:block h-4 w-px bg-border/60" />
+          
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <div className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
+              <span className="font-medium text-foreground">{stats.online}</span>
+              <span className="hidden lg:inline">online</span>
+            </div>
+            
+            <div className="flex items-center gap-1.5">
+              <div className="h-2 w-2 rounded-full bg-yellow-500" />
+              <span className="font-medium text-foreground">{stats.unstable}</span>
+              <span className="hidden lg:inline">instáveis</span>
+            </div>
+            
+            <div className="flex items-center gap-1.5">
+              <div className="h-2 w-2 rounded-full bg-red-500" />
+              <span className="font-medium text-foreground">{stats.offline}</span>
+              <span className="hidden lg:inline">offline</span>
+            </div>
+
+            {stats.noPlaylist > 0 && (
+              <div className="flex items-center gap-1.5 px-2 py-0.5 bg-destructive/10 rounded text-destructive animate-pulse">
+                <AlertTriangle className="h-3 w-3" />
+                <span className="font-bold">{stats.noPlaylist}</span>
+                <span className="hidden lg:inline">sem playlist</span>
+              </div>
+            )}
+          </div>
+        </div>
+
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="h-64 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-50" /></div>
