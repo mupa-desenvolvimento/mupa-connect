@@ -180,6 +180,19 @@ export default function DevicesPage() {
     return Array.from(new Set(devices.map(d => d.grupo_dispositivos).filter(Boolean)));
   }, [devices]);
 
+  const stats = useMemo(() => {
+    if (!devices) return { total: 0, online: 0, unstable: 0, offline: 0, noPlaylist: 0, filtered: 0 };
+    
+    return {
+      total: devices.length,
+      online: devices.filter(d => getConnectionStatus(d.last_heartbeat_at) === "online").length,
+      unstable: devices.filter(d => getConnectionStatus(d.last_heartbeat_at) === "unstable").length,
+      offline: devices.filter(d => getConnectionStatus(d.last_heartbeat_at) === "offline").length,
+      noPlaylist: devices.filter(d => !d.playlist_id).length,
+      filtered: filteredDevices.length
+    };
+  }, [devices, filteredDevices]);
+
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "Nunca";
     const date = new Date(dateStr);
