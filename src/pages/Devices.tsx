@@ -591,7 +591,7 @@ export default function DevicesPage() {
                 })}
               </TableBody>
             </Table>
-          ) : (
+          ) : viewMode === "grid" ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
               {filteredDevices.map(d => (
                 <Card key={d.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => openDeviceDrawer(d)}>
@@ -617,9 +617,10 @@ export default function DevicesPage() {
                 </Card>
               ))}
             </div>
-          ))}
+          ) : null)}
         </div>
       </div>
+
 
 
       <DeviceFirebaseCommandDrawer
