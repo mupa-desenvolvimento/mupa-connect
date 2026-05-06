@@ -86,17 +86,40 @@ export function StoreCard({ store, playlists, onRefresh }: StoreCardProps) {
 
   const handleStorePlaylistChange = async (playlistId: string) => {
     const value = playlistId === "none" ? null : playlistId;
-    const { error } = await supabase
+    
+    if (storeDevices.length > 0) {
+      if (!confirm(`Deseja aplicar esta playlist para todos os ${storeDevices.length} dispositivos desta loja?`)) {
+        return;
+      }
+    }
+
+    const { error: storeError } = await supabase
       .from("stores")
       .update({ playlist_id: value } as any)
       .eq("id", store.id);
 
-    if (error) {
+    if (storeError) {
       toast.error("Erro ao atualizar playlist da loja");
+      return;
+    }
+
+    // Apply to all devices in this store immediately
+    if (storeDevices.length > 0) {
+      const { error: devicesError } = await supabase
+        .from("dispositivos")
+        .update({ playlist_id: value })
+        .in("id", storeDevices.map(d => d.id));
+      
+      if (devicesError) {
+        toast.error("Erro ao atualizar dispositivos da loja");
+      } else {
+        toast.success(`Playlist aplicada à loja e ${storeDevices.length} dispositivos!`);
+      }
     } else {
       toast.success("Playlist da loja atualizada");
-      onRefresh();
     }
+    
+    onRefresh();
   };
 
   const handleCreateSector = async () => {
