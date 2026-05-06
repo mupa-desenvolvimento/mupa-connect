@@ -854,6 +854,15 @@ export function DeviceFirebaseCommandDrawer({
           </div>
         </ScrollArea>
       </SheetContent>
+      <PlaylistChangeModal
+        open={playlistModalOpen}
+        onOpenChange={setPlaylistModalOpen}
+        deviceIds={device ? [device.id] : []}
+        onSuccess={() => {
+          // Re-fetch logic if needed, but usually the parent will re-fetch
+          toast.success("Playlist alterada com sucesso");
+        }}
+      />
     </Sheet>
   );
 }
