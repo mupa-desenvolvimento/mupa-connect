@@ -317,8 +317,8 @@ export default function DevicesPage() {
               <SelectTrigger className="w-full md:w-[160px] h-10 bg-background/50 border-border/40"><SelectValue placeholder="Empresa" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas as Empresas</SelectItem>
-                {Array.from(new Map(devices?.map(d => [d.companies?.id, d.companies?.name]).filter(([id, name]) => id && name)).entries()).map(([id, name]) => (
-                  <SelectItem key={id} value={id}>{name}</SelectItem>
+                {companies.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
