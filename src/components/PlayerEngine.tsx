@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
+import { MediaCacheService } from "@/components/PlayerServices";
 import { cn } from "@/lib/utils";
 
 interface MediaItem {
