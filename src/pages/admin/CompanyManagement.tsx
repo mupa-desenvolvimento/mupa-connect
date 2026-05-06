@@ -33,6 +33,25 @@ export default function CompanyManagement() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("users");
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+
+  const handleRemoveUser = async (userId: string) => {
+    if (!confirm("Tem certeza que deseja remover este usuário da empresa? Isso não excluirá a conta do usuário, apenas o vínculo com esta empresa.")) return;
+
+    try {
+      const { error } = await supabase
+        .from("user_profiles")
+        .update({ company_id: null }) // Or delete the record if it's purely a link record
+        .eq("id", userId);
+
+      if (error) throw error;
+
+      toast.success("Usuário removido da empresa com sucesso");
+      refetchUsers();
+    } catch (error: any) {
+      toast.error("Erro ao remover usuário: " + error.message);
+    }
+  };
 
   const { data: company, isLoading: isCompanyLoading } = useQuery({
     queryKey: ["company-detail", id],
