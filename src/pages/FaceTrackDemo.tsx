@@ -2,13 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
   User, 
   Smile, 
   UserCheck, 
   Eye, 
   Activity,
-  AlertCircle
+  AlertCircle,
+  Play,
+  Square
 } from "lucide-react";
 import * as faceapi from "face-api.js";
 
@@ -28,11 +31,13 @@ export default function FaceTrackDemoPage() {
   const [faceDetectionActive, setFaceDetectionActive] = useState(false);
   const [detectedFaces, setDetectedFaces] = useState<DetectedFace[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isRunning, setIsRunning] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const detectionIntervalRef = useRef<number | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
     const loadModels = async () => {
@@ -50,115 +55,135 @@ export default function FaceTrackDemoPage() {
         
         console.log("[Face Track Demo] All models loaded successfully!");
         setModelsLoaded(true);
-        startCamera();
       } catch (error) {
         console.error("[Face Track Demo] Error loading models:", error);
         setError("Erro ao carregar modelos de detecção facial. Verifique se os arquivos estão em /models");
       }
     };
 
-    const startCamera = async () => {
-      if (!videoRef.current) return;
-      
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true
-        });
-        videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => {
-          console.log("[Face Track Demo] Camera started!");
-          setFaceDetectionActive(true);
-          startDetectionLoop();
-        };
-      } catch (error) {
-        console.error("[Face Track Demo] Error accessing camera:", error);
-        setError("Erro ao acessar a câmera. Verifique as permissões do navegador.");
-      }
-    };
-
-    const startDetectionLoop = () => {
-      if (detectionIntervalRef.current) {
-        clearInterval(detectionIntervalRef.current);
-      }
-      
-      detectionIntervalRef.current = window.setInterval(async () => {
-        if (!videoRef.current || !modelsLoaded) return;
-        
-        try {
-          const options = new faceapi.TinyFaceDetectorOptions();
-          const result = await faceapi
-            .detectAllFaces(videoRef.current, options)
-            .withFaceLandmarks()
-            .withFaceExpressions()
-            .withAgeAndGender();
-          
-          if (result.length > 0) {
-            console.log(`[Face Track Demo] Detected ${result.length} face(s)!`);
-          }
-          
-          const newFaces: DetectedFace[] = result.map((face, index) => {
-            const expressions = face.expressions.asSortedArray();
-            const mostProbableExpression = expressions[0];
-            
-            return {
-              id: `face_${Date.now()}_${index}`,
-              age: Math.round(face.age),
-              gender: face.gender,
-              genderProbability: face.genderProbability,
-              emotion: mostProbableExpression.expression,
-              emotionProbability: mostProbableExpression.probability,
-              allEmotions: expressions.map((exp: any) => ({
-                expression: exp.expression,
-                probability: exp.probability
-              })),
-              timestamp: new Date()
-            };
-          });
-          
-          setDetectedFaces(newFaces);
-          
-          if (result.length > 0 && overlayCanvasRef.current && videoRef.current) {
-            const displaySize = { 
-              width: videoRef.current.videoWidth, 
-              height: videoRef.current.videoHeight 
-            };
-            
-            faceapi.matchDimensions(overlayCanvasRef.current, displaySize);
-            const resizedDetections = faceapi.resizeResults(result, displaySize);
-            
-            const ctx = overlayCanvasRef.current.getContext('2d');
-            if (ctx) {
-              ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
-              faceapi.draw.drawDetections(overlayCanvasRef.current, resizedDetections);
-              faceapi.draw.drawFaceLandmarks(overlayCanvasRef.current, resizedDetections);
-            }
-          } else if (overlayCanvasRef.current) {
-            const ctx = overlayCanvasRef.current.getContext('2d');
-            if (ctx) {
-              ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
-            }
-          }
-        } catch (err) {
-          console.error("[Face Track Demo] Detection error:", err);
-        }
-      }, 1000); // Detect every 1 second
-    };
-
-    const cleanup = () => {
-      if (detectionIntervalRef.current) {
-        clearInterval(detectionIntervalRef.current);
-      }
-      
-      if (videoRef.current?.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
-
     loadModels();
 
+    const cleanup = () => {
+      stopDemo();
+    };
+
     return cleanup;
-  }, [modelsLoaded]);
+  }, []);
+
+  const startDemo = async () => {
+    if (!videoRef.current || !modelsLoaded) return;
+    
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true
+      });
+      streamRef.current = stream;
+      videoRef.current.srcObject = stream;
+      videoRef.current.onloadedmetadata = () => {
+        console.log("[Face Track Demo] Camera started!");
+        setFaceDetectionActive(true);
+        setIsRunning(true);
+        startDetectionLoop();
+      };
+    } catch (error) {
+      console.error("[Face Track Demo] Error accessing camera:", error);
+      setError("Erro ao acessar a câmera. Verifique as permissões do navegador.");
+    }
+  };
+
+  const stopDemo = () => {
+    if (detectionIntervalRef.current) {
+      clearInterval(detectionIntervalRef.current);
+      detectionIntervalRef.current = null;
+    }
+    
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    
+    setFaceDetectionActive(false);
+    setIsRunning(false);
+    setDetectedFaces([]);
+    
+    if (overlayCanvasRef.current) {
+      const ctx = overlayCanvasRef.current.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
+      }
+    }
+  };
+
+  const startDetectionLoop = () => {
+    if (detectionIntervalRef.current) {
+      clearInterval(detectionIntervalRef.current);
+    }
+    
+    detectionIntervalRef.current = window.setInterval(async () => {
+      if (!videoRef.current || !modelsLoaded || !isRunning) return;
+      
+      try {
+        const options = new faceapi.TinyFaceDetectorOptions();
+        const result = await faceapi
+          .detectAllFaces(videoRef.current, options)
+          .withFaceLandmarks()
+          .withFaceExpressions()
+          .withAgeAndGender();
+        
+        if (result.length > 0) {
+          console.log(`[Face Track Demo] Detected ${result.length} face(s)!`);
+        }
+        
+        const newFaces: DetectedFace[] = result.map((face, index) => {
+          const expressions = face.expressions.asSortedArray();
+          const mostProbableExpression = expressions[0];
+          
+          return {
+            id: `face_${Date.now()}_${index}`,
+            age: Math.round(face.age),
+            gender: face.gender,
+            genderProbability: face.genderProbability,
+            emotion: mostProbableExpression.expression,
+            emotionProbability: mostProbableExpression.probability,
+            allEmotions: expressions.map((exp: any) => ({
+              expression: exp.expression,
+              probability: exp.probability
+            })),
+            timestamp: new Date()
+          };
+        });
+        
+        setDetectedFaces(newFaces);
+        
+        if (result.length > 0 && overlayCanvasRef.current && videoRef.current) {
+          const displaySize = { 
+            width: videoRef.current.videoWidth, 
+            height: videoRef.current.videoHeight 
+          };
+          
+          faceapi.matchDimensions(overlayCanvasRef.current, displaySize);
+          const resizedDetections = faceapi.resizeResults(result, displaySize);
+          
+          const ctx = overlayCanvasRef.current.getContext('2d');
+          if (ctx) {
+            ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
+            faceapi.draw.drawDetections(overlayCanvasRef.current, resizedDetections);
+          }
+        } else if (overlayCanvasRef.current) {
+          const ctx = overlayCanvasRef.current.getContext('2d');
+          if (ctx) {
+            ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
+          }
+        }
+      } catch (err) {
+        console.error("[Face Track Demo] Detection error:", err);
+      }
+    }, 1000); // Detect every 1 second
+  };
 
   const getEmotionIcon = (emotion: string) => {
     switch (emotion.toLowerCase()) {
@@ -206,6 +231,29 @@ export default function FaceTrackDemoPage() {
         <PageHeader 
           title="Face Track Demo" 
           description="Demonstração de detecção facial para análise de audiência"
+          actions={
+            <div className="flex gap-2">
+              {!isRunning ? (
+                <Button 
+                  onClick={startDemo}
+                  disabled={!modelsLoaded || !!error}
+                  className="gap-2"
+                >
+                  <Play className="h-4 w-4" />
+                  Começar Demo
+                </Button>
+              ) : (
+                <Button 
+                  onClick={stopDemo}
+                  variant="destructive"
+                  className="gap-2"
+                >
+                  <Square className="h-4 w-4" />
+                  Parar Demo
+                </Button>
+              )}
+            </div>
+          }
         />
         
         <div className="flex-1 p-6 flex items-center justify-center">
@@ -215,6 +263,15 @@ export default function FaceTrackDemoPage() {
                 <div className="flex items-center gap-3 text-red-400">
                   <AlertCircle className="h-6 w-6" />
                   <p className="font-medium">{error}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : !modelsLoaded ? (
+            <Card className="max-w-md bg-card">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <Activity className="h-6 w-6 text-primary animate-spin" />
+                  <p className="font-medium">Carregando modelos de detecção...</p>
                 </div>
               </CardContent>
             </Card>
@@ -236,11 +293,11 @@ export default function FaceTrackDemoPage() {
                 className="absolute top-0 left-0 w-full h-full pointer-events-none"
               />
               
-              {!faceDetectionActive && !error && (
+              {!isRunning && !error && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm">
                   <div className="text-center">
-                    <Activity className="h-12 w-12 mx-auto mb-4 text-primary animate-spin" />
-                    <p className="text-white/60 font-mono">Iniciando detecção facial...</p>
+                    <Activity className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-white/60 font-mono">Clique em "Começar Demo" para iniciar</p>
                   </div>
                 </div>
               )}
