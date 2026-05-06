@@ -210,6 +210,24 @@ export default function DevicesPage() {
     }
   };
 
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredDevices.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredDevices.map(d => d.id)));
+    }
+  };
+
+  const toggleSelect = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
       <PageHeader
@@ -217,6 +235,21 @@ export default function DevicesPage() {
         description="Monitoramento real dos terminais da rede com status de exibição."
         actions={
           <div className="flex items-center gap-2">
+            {selectedIds.size > 0 && (
+              <div className="flex items-center gap-2 mr-2 animate-in fade-in slide-in-from-right-4">
+                <Badge variant="secondary" className="h-9 px-3 font-mono">
+                  {selectedIds.size} selecionado(s)
+                </Badge>
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  className="h-9 bg-primary text-primary-foreground"
+                  onClick={() => setPlaylistModalOpen(true)}
+                >
+                  <Layers className="h-4 w-4 mr-2" /> Alterar Playlist
+                </Button>
+              </div>
+            )}
             <div className="hidden sm:flex border rounded-lg p-1 bg-muted/30 mr-2">
               <Button variant={viewMode === "table" ? "secondary" : "ghost"} size="sm" className="h-7 w-7 p-0" onClick={() => setViewMode("table")}><List className="h-4 w-4" /></Button>
               <Button variant={viewMode === "grid" ? "secondary" : "ghost"} size="sm" className="h-7 w-7 p-0" onClick={() => setViewMode("grid")}><LayoutGrid className="h-4 w-4" /></Button>
@@ -226,7 +259,7 @@ export default function DevicesPage() {
                 <Megaphone className="h-4 w-4 mr-2" /> Comandos
               </Button>
             )}
-            <Button variant="outline" size="sm" onClick={() => refetch()} className="h-9"><RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} /> Atualizar</Button>
+            <Button variant="outline" size="sm" onClick={() => {refetch(); setSelectedIds(new Set());}} className="h-9"><RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} /> Atualizar</Button>
             {isAdmin && (
               <Button 
                 className="bg-gradient-primary text-primary-foreground shadow-glow h-9"
