@@ -174,7 +174,7 @@ export default function CompanyManagement() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Colaboradores</CardTitle>
-              <Button size="sm" className="flex gap-2">
+              <Button size="sm" className="flex gap-2" onClick={() => setIsAddUserModalOpen(true)}>
                 <UserPlus className="h-4 w-4" /> Adicionar Usuário
               </Button>
             </CardHeader>
@@ -182,7 +182,7 @@ export default function CompanyManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Usuário (ID)</TableHead>
+                    <TableHead>Usuário</TableHead>
                     <TableHead>Perfil</TableHead>
                     <TableHead>Data Cadastro</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
@@ -199,15 +199,27 @@ export default function CompanyManagement() {
                     </TableRow>
                   ) : companyUsers?.map((user) => (
                     <TableRow key={user.id}>
-                      <TableCell className="font-mono text-xs">{user.id}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="capitalize">
+                        <div className="flex flex-col">
+                          <span className="font-medium text-sm">{user.name}</span>
+                          <span className="text-[10px] text-muted-foreground">{user.email}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={`capitalize ${
+                          user.role === 'admin' ? 'bg-purple-50 text-purple-600 border-purple-200' : 'bg-blue-50 text-blue-600 border-blue-200'
+                        }`}>
                           {user.role}
                         </Badge>
                       </TableCell>
-                      <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{new Date(user.created_at).toLocaleDateString()}</TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8"
+                          onClick={() => handleRemoveUser(user.id)}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </TableCell>
