@@ -29,16 +29,31 @@ export function MediaUpload({ tenantId, companyId, currentFolderId, onUploadComp
   const [isProcessing, setIsProcessing] = useState(false);
 
   const optimizeImage = async (file: File) => {
+    // Check if the file is a PNG and if it should be converted to WebP
+    // We only keep PNG if we detect it's small enough or user explicitly wants it (future), 
+    // but per requirements, we convert to WebP/JPG by default.
+    const isPng = file.type === 'image/png';
+    const targetType = isPng ? 'image/webp' : file.type;
+    
     const options = {
-      maxSizeMB: 1,
+      maxSizeMB: 0.8, // Reduced from 1MB for better X96 performance
       maxWidthOrHeight: 1920,
       useWebWorker: true,
-      fileType: file.type as any, // Mantém o tipo original
+      fileType: targetType as any,
+      initialQuality: 0.8,
     };
+
     try {
+      console.log(`[MediaUpload] Optimizing ${file.name} (${file.type}) to ${targetType}`);
       const compressedBlob = await imageCompression(file, options);
-      // Converte o Blob de volta para File para preservar o nome original
-      return new File([compressedBlob], file.name, { type: file.type });
+      
+      // Update file name extension if type changed
+      let newName = file.name;
+      if (isPng) {
+        newName = file.name.replace(/\.png$/i, '.webp');
+      }
+      
+      return new File([compressedBlob], newName, { type: targetType });
     } catch (error) {
       console.error('Image optimization failed', error);
       return file;
