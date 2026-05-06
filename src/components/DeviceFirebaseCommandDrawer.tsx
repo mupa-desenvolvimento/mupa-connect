@@ -587,6 +587,25 @@ export function DeviceFirebaseCommandDrawer({
                   />
                 </div>
 
+                <div className="flex items-center justify-between py-2 border-t mt-2">
+                  <div className="space-y-0.5">
+                    <Label className="text-xs font-medium flex items-center gap-2">
+                      <Layers className="h-3 w-3" /> Playlist Atual
+                    </Label>
+                    <p className="text-[10px] text-muted-foreground truncate max-w-[150px]">
+                      {device?.playlists?.name || "Sem Playlist"}
+                    </p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-8 text-[10px]"
+                    onClick={() => setPlaylistModalOpen(true)}
+                  >
+                    <RefreshCw className="h-3 w-3 mr-1" /> Trocar
+                  </Button>
+                </div>
+
                 <Button 
                   className="w-full h-9 text-xs"
                   onClick={handleUpdateDevice} 
