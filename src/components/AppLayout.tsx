@@ -19,6 +19,7 @@ import {
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
+import { SupportCompanySelector } from "./SupportCompanySelector";
 
 
 export default function AppLayout() {
@@ -78,12 +79,13 @@ export default function AppLayout() {
                 className="pl-8 h-9 w-[320px] bg-muted/40 border-transparent focus-visible:bg-card"
               />
             </div>
-            <div className="ml-auto flex items-center gap-1">
+            <div className="ml-auto flex items-center gap-2">
+              <SupportCompanySelector />
               <Button variant="ghost" size="icon" aria-label="Notificações">
                 <Bell className="h-4 w-4" />
               </Button>
               <ThemeToggle />
-              
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="ml-2 h-8 w-8 rounded-full bg-gradient-accent grid place-items-center text-xs font-semibold text-accent-foreground relative overflow-hidden">
