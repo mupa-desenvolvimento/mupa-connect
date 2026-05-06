@@ -182,6 +182,17 @@ export default function DevicesPage() {
     return Array.from(new Set(devices.map(d => d.grupo_dispositivos).filter(Boolean)));
   }, [devices]);
 
+  const companies = useMemo(() => {
+    if (!devices) return [];
+    const unique = new Map<string, string>();
+    devices.forEach(d => {
+      if (d.companies?.id && d.companies?.name) {
+        unique.set(d.companies.id, d.companies.name);
+      }
+    });
+    return Array.from(unique.entries()).map(([id, name]) => ({ id, name }));
+  }, [devices]);
+
   const stats = useMemo(() => {
     if (!devices) return { total: 0, online: 0, unstable: 0, offline: 0, noPlaylist: 0, filtered: 0 };
     
