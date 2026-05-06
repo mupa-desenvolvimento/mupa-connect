@@ -460,6 +460,15 @@ export default function DevicesPage() {
         device={selectedDevice}
         onSuccess={() => refetch()}
       />
+      <PlaylistChangeModal
+        open={playlistModalOpen}
+        onOpenChange={setPlaylistModalOpen}
+        deviceIds={Array.from(selectedIds)}
+        onSuccess={() => {
+          refetch();
+          setSelectedIds(new Set());
+        }}
+      />
     </div>
   );
 }
