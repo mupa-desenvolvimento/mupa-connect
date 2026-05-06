@@ -16,7 +16,8 @@ import {
   Trash2,
   Mail,
   Shield,
-  Loader2
+  Loader2,
+  ExternalLink as ExternalLinkIcon
 } from "lucide-react";
 import {
   Table,
@@ -28,6 +29,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { AddUserToCompanyModal } from "@/components/super-admin/AddUserToCompanyModal";
 
 export default function CompanyManagement() {
   const { id } = useParams();
