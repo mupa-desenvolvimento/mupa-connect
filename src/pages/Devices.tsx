@@ -163,18 +163,19 @@ export default function DevicesPage() {
       const matchesStore = storeFilter === "all" || d.num_filial === storeFilter;
       const matchesGroup = groupFilter === "all" || d.grupo_dispositivos === groupFilter;
       const matchesStatus = statusFilter === "all" || connStatus === statusFilter;
+      const matchesCompany = companyFilter === "all" || d.company_id === companyFilter;
       const matchesPlaylist = 
         playlistFilter === "all" ? true :
         playlistFilter === "has" ? !!d.playlist_id :
         !d.playlist_id;
-      return matchesSearch && matchesStore && matchesGroup && matchesStatus && matchesPlaylist;
+      return matchesSearch && matchesStore && matchesGroup && matchesStatus && matchesPlaylist && matchesCompany;
     }).sort((a, b) => {
       // Prioridade: Sem playlist no topo
       if (!a.playlist_id && b.playlist_id) return -1;
       if (a.playlist_id && !b.playlist_id) return 1;
       return (a.apelido_interno || "").localeCompare(b.apelido_interno || "");
     });
-  }, [devices, search, storeFilter, groupFilter, statusFilter, playlistFilter]);
+  }, [devices, search, storeFilter, groupFilter, statusFilter, playlistFilter, companyFilter]);
 
   const groups = useMemo(() => {
     if (!devices) return [];
