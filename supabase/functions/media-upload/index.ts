@@ -50,8 +50,8 @@ serve(async (req) => {
 
     console.log(`Campos recebidos - Tenant: ${tenantId}, Company: ${companyId}, Folder: ${folderId}, File: ${file?.name}`)
 
-    if (!file || !tenantId || !companyId) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+    if (!file || !tenantId) {
+      return new Response(JSON.stringify({ error: 'Missing required fields (file or tenantId)' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -64,7 +64,12 @@ serve(async (req) => {
       .eq('id', user.id)
       .single()
 
-    if (profileError || profile.tenant_id !== tenantId || profile.company_id !== companyId) {
+    let resolvedCompanyId = companyId || profile?.company_id || null
+
+    const tenantMatch = profile?.tenant_id === tenantId
+    const companyMatch = !companyId || profile?.company_id === companyId
+
+    if (profileError || !tenantMatch || !companyMatch) {
        console.log('Validação de perfil falhou, verificando super admin...')
        const { data: roleData } = await supabaseClient
         .from("user_roles")
@@ -140,7 +145,7 @@ serve(async (req) => {
         file_size: file.size,
         folder_id: folderId || null,
         tenant_id: tenantId,
-        company_id: companyId,
+        company_id: resolvedCompanyId,
         status: 'ready'
       })
       .select()
