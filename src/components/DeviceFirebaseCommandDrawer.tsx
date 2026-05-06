@@ -172,6 +172,7 @@ export function DeviceFirebaseCommandDrawer({
   const [newActionLabel, setNewActionLabel] = useState("");
   const [newActionPayload, setNewActionPayload] = useState("");
   const [editingActionId, setEditingActionId] = useState<string | null>(null);
+  const [playlistModalOpen, setPlaylistModalOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
