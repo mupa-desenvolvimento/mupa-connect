@@ -35,6 +35,7 @@ import AppDownloadProxy from "./pages/AppDownloadProxy";
 import SharedMonitoringPage from "./pages/monitoring/SharedMonitoring";
 import TradeMarketingDashboard from "./pages/TradeMarketing";
 import FaceTrackDemo from "./pages/FaceTrackDemo";
+import CompanyManagement from "./pages/admin/CompanyManagement";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
