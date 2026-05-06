@@ -341,6 +341,7 @@ export default function DevicesPage() {
                     <TableRow key={d.id} className={cn("hover:bg-muted/30 cursor-pointer transition-colors", selectedIds.has(d.id) && "bg-primary/5")} onClick={() => openDeviceDrawer({ ...d, status: connStatus })}>
                       <TableCell onClick={(e) => toggleSelect(e, d.id)}>
                         <Checkbox checked={selectedIds.has(d.id)} onCheckedChange={() => {}} />
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Monitor className="h-4 w-4 text-primary opacity-70" />
