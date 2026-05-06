@@ -85,7 +85,7 @@ serve(async (req) => {
 
       const { data: playlistItems, error: itemsError } = await supabaseClient
         .from('playlist_items')
-        .select('id, media_id, position, ordem, duracao, tipo, media_items(id, name, file_url, thumbnail_url, type, duration)')
+        .select('id, media_id, position, ordem, duracao, tipo, media_items(id, name, file_url, optimized_url, thumbnail_url, type, duration)')
         .eq('playlist_id', playlist.id)
 
       if (itemsError) {
@@ -103,7 +103,7 @@ serve(async (req) => {
           return {
             id: item.media_id || item.id,
             type: item.tipo || media?.type || 'image',
-            url: media?.file_url,
+            url: media?.optimized_url || media?.file_url,
             duration: item.duracao || media?.duration || 10,
             name: media?.name || 'Sem nome'
           }

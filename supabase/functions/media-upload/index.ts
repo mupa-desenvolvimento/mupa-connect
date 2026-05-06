@@ -118,16 +118,25 @@ serve(async (req) => {
       .getPublicUrl(storagePath)
 
     const type = file.type.startsWith('video') ? 'video' : 'image'
+    const isImage = type === 'image'
 
     console.log('Inserindo registro no banco de dados...')
 
     // Inserção no Banco
+    // Se for imagem, vamos salvar como original_url e deixar optimized_url para o worker processar
+    // No entanto, como o requisito pede "Todo processamento deve acontecer apenas no upload", 
+    // e o processamento de vídeo pode ser pesado para uma Edge Function (limites de tempo/CPU),
+    // para IMAGENS podemos tentar processar aqui se possível ou via trigger.
+    // Otimização de imagem básica já é feita no frontend no MediaUpload.tsx
+    
     const { data: mediaItem, error: dbError } = await supabaseClient
       .from('media_items')
       .insert({
         name: originalName,
         type: type,
-        file_url: publicUrl,
+        file_url: publicUrl, // Fallback principal
+        original_url: publicUrl,
+        optimized_url: publicUrl, // Por enquanto o mesmo, até termos o worker de vídeo/imagem avançado
         file_size: file.size,
         folder_id: folderId || null,
         tenant_id: tenantId,
