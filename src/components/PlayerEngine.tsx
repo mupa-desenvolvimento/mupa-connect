@@ -113,13 +113,17 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
       });
     }
 
-    // Prepara o próximo buffer em background após o fade
+    // Prepara o próximo buffer em background após o fade usando Blob local
     if (preloadTimeoutRef.current) clearTimeout(preloadTimeoutRef.current);
-    preloadTimeoutRef.current = setTimeout(() => {
+    preloadTimeoutRef.current = setTimeout(async () => {
       const nextMedia = playlistRef.current[nextNextIndex];
+      const nextLocalUrl = await MediaCacheService.getBlobUrl(nextMedia.url);
+      
       if (nextBuffer === "A") {
+        setLocalUrlB(nextLocalUrl);
         setBufferB(nextMedia); // Prepara B enquanto A está visível
       } else {
+        setLocalUrlA(nextLocalUrl);
         setBufferA(nextMedia); // Prepara A enquanto B está visível
       }
       isTransitioningRef.current = false;
