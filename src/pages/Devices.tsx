@@ -317,6 +317,12 @@ export default function DevicesPage() {
             <Table>
               <TableHeader className="sticky top-0 bg-card z-10 border-b border-border/60">
                 <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-10">
+                    <Checkbox 
+                      checked={filteredDevices.length > 0 && selectedIds.size === filteredDevices.length}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead className="w-[25%]">Dispositivo</TableHead>
                   <TableHead>Serial</TableHead>
                   {isSuperAdmin && <TableHead>Empresa</TableHead>}
