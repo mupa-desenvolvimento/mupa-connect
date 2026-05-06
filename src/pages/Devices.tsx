@@ -301,6 +301,24 @@ export default function DevicesPage() {
               {stores?.map(s => <SelectItem key={s.id} value={s.code || s.id.toString()}>{s.name}</SelectItem>)}
             </SelectContent>
           </Select>
+          {isSuperAdmin && (
+            <Select value={companyFilter} onValueChange={setCompanyFilter}>
+              <SelectTrigger className="w-full md:w-[160px] h-10 bg-background/50 border-border/40"><SelectValue placeholder="Empresa" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as Empresas</SelectItem>
+                {Array.from(new Map(devices?.map(d => [d.companies?.id, d.companies?.name]).filter(([id, name]) => id && name)).entries()).map(([id, name]) => (
+                  <SelectItem key={id} value={id}>{name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Select value={groupFilter} onValueChange={setGroupFilter}>
+            <SelectTrigger className="w-full md:w-[130px] h-10 bg-background/50 border-border/40"><SelectValue placeholder="Grupo" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os Grupos</SelectItem>
+              {groups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+            </SelectContent>
+          </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full md:w-[130px] h-10 bg-background/50 border-border/40"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
@@ -318,8 +336,17 @@ export default function DevicesPage() {
               <SelectItem value="none">Sem Playlist</SelectItem>
             </SelectContent>
           </Select>
-          {(search || storeFilter !== "all" || groupFilter !== "all" || statusFilter !== "all" || playlistFilter !== "all") && (
-            <Button variant="ghost" size="sm" className="h-10 text-muted-foreground hover:text-primary" onClick={() => {setSearch(""); setStoreFilter("all"); setGroupFilter("all"); setStatusFilter("all"); setPlaylistFilter("all");}}><FilterX className="h-4 w-4 mr-2" /> Limpar</Button>
+          {(search || storeFilter !== "all" || groupFilter !== "all" || statusFilter !== "all" || playlistFilter !== "all" || companyFilter !== "all") && (
+            <Button variant="ghost" size="sm" className="h-10 text-muted-foreground hover:text-primary" onClick={() => {
+              setSearch(""); 
+              setStoreFilter("all"); 
+              setGroupFilter("all"); 
+              setStatusFilter("all"); 
+              setPlaylistFilter("all");
+              setCompanyFilter("all");
+            }}>
+              <FilterX className="h-4 w-4 mr-2" /> Limpar
+            </Button>
           )}
         </div>
       </div>
