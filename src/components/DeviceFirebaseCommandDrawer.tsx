@@ -34,7 +34,9 @@ import {
   PlusCircle,
   Play,
   Pencil,
+  RefreshCw
 } from "lucide-react";
+import { PlaylistChangeModal } from "./PlaylistChangeModal";
 import { cn } from "@/lib/utils";
 
 type DeviceStatus = "online" | "unstable" | "offline";
