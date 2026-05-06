@@ -20,12 +20,17 @@ import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { SupportCompanySelector } from "./SupportCompanySelector";
+import { BottomNav } from "./BottomNav";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 
 
 export default function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [session, setSession] = useState<Session | null>(null);
+
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -69,9 +74,16 @@ export default function AppLayout() {
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
 
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className={cn("flex-1 flex flex-col min-w-0", isMobile && "pb-16")}>
           <header className="h-14 flex items-center gap-3 border-b border-border bg-background/80 backdrop-blur sticky top-0 z-30 px-3">
-            <SidebarTrigger />
+            <SidebarTrigger className={cn(isMobile && "hidden")} />
+            {isMobile && (
+              <div className="flex items-center gap-2">
+                <img src="/Artboard 15.svg" alt="Mupa" className="h-7 w-7" />
+                <span className="font-display font-bold text-sm tracking-tight">Mupa</span>
+              </div>
+            )}
+
             <div className="relative hidden md:block">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -119,9 +131,11 @@ export default function AppLayout() {
           <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-hidden">
             <Outlet />
           </main>
+          {isMobile && <BottomNav />}
         </div>
       </div>
     </SidebarProvider>
+
   );
 }
 
