@@ -3184,6 +3184,8 @@ export type Database = {
           id: string
           metadata: Json | null
           name: string
+          optimized_url: string | null
+          original_url: string | null
           resolution: string | null
           status: string
           tenant_id: string | null
@@ -3204,6 +3206,8 @@ export type Database = {
           id?: string
           metadata?: Json | null
           name?: string
+          optimized_url?: string | null
+          original_url?: string | null
           resolution?: string | null
           status?: string
           tenant_id?: string | null
@@ -3224,6 +3228,8 @@ export type Database = {
           id?: string
           metadata?: Json | null
           name?: string
+          optimized_url?: string | null
+          original_url?: string | null
           resolution?: string | null
           status?: string
           tenant_id?: string | null
