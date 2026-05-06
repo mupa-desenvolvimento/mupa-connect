@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 
 /**
  * MediaCacheService manages the local storage of media files using the Cache API.
- * This ensures that media can be played offline and transitions are fluid.
+ * Optimized for Android 9 / X96 with a local-first approach.
  */
 export const MediaCacheService = {
-  CACHE_NAME: "mupa-media-cache-v3",
+  CACHE_NAME: "mupa-media-cache-v4",
   downloadQueue: [] as { url: string; type?: 'image' | 'video'; priority?: number; serial?: string; resolve: (val: string) => void; reject: (err: any) => void }[],
   activeDownloads: 0,
   MAX_CONCURRENT: 2,
+  blobUrlCache: new Map<string, string>(),
 
   async logPerformance(serial: string, event: string, message: string, metadata: any = {}, duration?: number) {
     if (!serial) return;
@@ -42,7 +43,8 @@ export const MediaCacheService = {
   },
 
   /**
-   * Caches media using a queue system to prevent network congestion
+   * Caches media using a queue system to prevent network congestion.
+   * Returns the original URL, but ensures it's in Cache API.
    */
   async cacheMedia(url: string, type?: 'image' | 'video', priority = 0, serial?: string): Promise<string> {
     if (!url) return "";
@@ -50,7 +52,11 @@ export const MediaCacheService = {
     // Check if already in cache
     const cache = await caches.open(this.CACHE_NAME);
     const cachedResponse = await cache.match(url);
-    if (cachedResponse) return url;
+    if (cachedResponse) {
+      // Warm up the blob URL cache
+      this.getBlobUrl(url).catch(() => {});
+      return url;
+    }
 
     return new Promise((resolve, reject) => {
       // Add to queue with priority (higher number = higher priority)
@@ -79,9 +85,11 @@ export const MediaCacheService = {
       
       if (!response.ok) throw new Error(`Failed to fetch ${item.url} - Status ${response.status}`);
       
-      // For videos, we might want to verify headers or partially cache if needed, 
-      // but standard Cache API put is usually sufficient for service workers/blob usage.
-      await cache.put(item.url, response);
+      // Clone response before putting it in cache because body can only be consumed once
+      await cache.put(item.url, response.clone());
+      
+      // Warm up blob URL cache immediately after download
+      await this.getBlobUrl(item.url);
       
       const duration = Date.now() - startTime;
       console.log(`[MediaCache] Successfully cached: ${item.url} in ${duration}ms`);
@@ -104,19 +112,31 @@ export const MediaCacheService = {
     }
   },
 
+  /**
+   * Retrieves a Blob URL from Cache API for fluid local playback.
+   * Caches the Blob URL itself to prevent memory leaks and redundant operations.
+   */
   async getBlobUrl(url: string): Promise<string> {
     if (!url) return "";
+    
+    // Return from memory cache if available
+    if (this.blobUrlCache.has(url)) {
+      return this.blobUrlCache.get(url)!;
+    }
+
     try {
       const cache = await caches.open(this.CACHE_NAME);
       const response = await cache.match(url);
       if (response) {
         const blob = await response.blob();
-        return URL.createObjectURL(blob);
+        const blobUrl = URL.createObjectURL(blob);
+        this.blobUrlCache.set(url, blobUrl);
+        return blobUrl;
       }
     } catch (e) {
       console.error("[MediaCache] Failed to create blob URL", e);
     }
-    return url;
+    return url; // Fallback to original URL
   },
 
   async clearOldCache(currentUrls: string[]) {
@@ -126,6 +146,13 @@ export const MediaCacheService = {
       for (const request of keys) {
         if (!currentUrls.includes(request.url)) {
           await cache.delete(request);
+          
+          // Also revoke and remove from memory cache
+          if (this.blobUrlCache.has(request.url)) {
+            URL.revokeObjectURL(this.blobUrlCache.get(request.url)!);
+            this.blobUrlCache.delete(request.url);
+          }
+          
           console.log(`[MediaCache] Deleted old cache: ${request.url}`);
         }
       }
