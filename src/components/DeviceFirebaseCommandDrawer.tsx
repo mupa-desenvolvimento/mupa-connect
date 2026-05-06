@@ -52,6 +52,8 @@ interface DeviceLike {
   is_maintenance?: boolean;
   autostart?: boolean;
   persistence?: boolean;
+  playlist_id?: string | null;
+  playlists?: { name: string } | null;
 }
 
 interface Props {
