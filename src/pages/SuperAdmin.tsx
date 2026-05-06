@@ -17,7 +17,8 @@ import {
   Users,
   CheckCircle2,
   XCircle,
-  Filter
+  Filter,
+  Activity
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
