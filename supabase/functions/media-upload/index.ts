@@ -145,7 +145,7 @@ serve(async (req) => {
         file_size: file.size,
         folder_id: folderId || null,
         tenant_id: tenantId,
-        company_id: companyId,
+        company_id: resolvedCompanyId,
         status: 'ready'
       })
       .select()
