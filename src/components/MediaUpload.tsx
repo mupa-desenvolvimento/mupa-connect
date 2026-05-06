@@ -128,7 +128,12 @@ export function MediaUpload({ tenantId, companyId, currentFolderId, onUploadComp
           const formData = new FormData();
           formData.append('file', fileToUpload);
           formData.append('tenantId', tenantId);
-          formData.append('companyId', companyId || '');
+          
+          // Sempre enviar companyId se disponível para consistência no banco
+          if (companyId) {
+            formData.append('companyId', companyId);
+          }
+          
           if (currentFolderId) formData.append('folderId', currentFolderId);
 
           console.log('Iniciando invoke da função media-upload...');
