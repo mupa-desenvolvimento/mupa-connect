@@ -14,6 +14,7 @@ import {
   Users,
   Activity,
   User,
+  Building2
 } from "lucide-react";
 import {
   Sidebar,
