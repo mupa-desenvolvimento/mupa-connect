@@ -20,7 +20,9 @@ import {
   Megaphone,
   Layers,
   AlertTriangle,
-  Edit2
+  Edit2,
+  CheckSquare,
+  Square
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -43,6 +45,8 @@ import { BulkCommandDialog } from "@/components/BulkCommandDialog";
 import { useUserRole } from "@/hooks/use-user-role";
 import { CreateDeviceModal } from "@/components/CreateDeviceModal";
 import { EditDeviceModal } from "@/components/EditDeviceModal";
+import { PlaylistChangeModal } from "@/components/PlaylistChangeModal";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type ConnectionStatus = "online" | "unstable" | "offline";
 type PlayerStatus = "reproduzindo" | "parado" | "erro";
