@@ -17,7 +17,7 @@ import {
   Mail,
   Shield,
   Loader2,
-  ExternalLink as ExternalLinkIcon
+  ExternalLink
 } from "lucide-react";
 import {
   Table,
