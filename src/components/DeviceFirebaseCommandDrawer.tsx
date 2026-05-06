@@ -34,7 +34,9 @@ import {
   PlusCircle,
   Play,
   Pencil,
+  RefreshCw
 } from "lucide-react";
+import { PlaylistChangeModal } from "./PlaylistChangeModal";
 import { cn } from "@/lib/utils";
 
 type DeviceStatus = "online" | "unstable" | "offline";
@@ -50,6 +52,8 @@ interface DeviceLike {
   is_maintenance?: boolean;
   autostart?: boolean;
   persistence?: boolean;
+  playlist_id?: string | null;
+  playlists?: { name: string } | null;
 }
 
 interface Props {
@@ -168,6 +172,7 @@ export function DeviceFirebaseCommandDrawer({
   const [newActionLabel, setNewActionLabel] = useState("");
   const [newActionPayload, setNewActionPayload] = useState("");
   const [editingActionId, setEditingActionId] = useState<string | null>(null);
+  const [playlistModalOpen, setPlaylistModalOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -582,6 +587,25 @@ export function DeviceFirebaseCommandDrawer({
                   />
                 </div>
 
+                <div className="flex items-center justify-between py-2 border-t mt-2">
+                  <div className="space-y-0.5">
+                    <Label className="text-xs font-medium flex items-center gap-2">
+                      <Layers className="h-3 w-3" /> Playlist Atual
+                    </Label>
+                    <p className="text-[10px] text-muted-foreground truncate max-w-[150px]">
+                      {device?.playlists?.name || "Sem Playlist"}
+                    </p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-8 text-[10px]"
+                    onClick={() => setPlaylistModalOpen(true)}
+                  >
+                    <RefreshCw className="h-3 w-3 mr-1" /> Trocar
+                  </Button>
+                </div>
+
                 <Button 
                   className="w-full h-9 text-xs"
                   onClick={handleUpdateDevice} 
@@ -830,6 +854,15 @@ export function DeviceFirebaseCommandDrawer({
           </div>
         </ScrollArea>
       </SheetContent>
+      <PlaylistChangeModal
+        open={playlistModalOpen}
+        onOpenChange={setPlaylistModalOpen}
+        deviceIds={device ? [device.id] : []}
+        onSuccess={() => {
+          // Re-fetch logic if needed, but usually the parent will re-fetch
+          toast.success("Playlist alterada com sucesso");
+        }}
+      />
     </Sheet>
   );
 }

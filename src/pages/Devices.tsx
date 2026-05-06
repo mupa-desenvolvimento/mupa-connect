@@ -20,8 +20,11 @@ import {
   Megaphone,
   Layers,
   AlertTriangle,
-  Edit2
+  Edit2,
+  CheckSquare,
+  Square
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,6 +46,8 @@ import { BulkCommandDialog } from "@/components/BulkCommandDialog";
 import { useUserRole } from "@/hooks/use-user-role";
 import { CreateDeviceModal } from "@/components/CreateDeviceModal";
 import { EditDeviceModal } from "@/components/EditDeviceModal";
+import { PlaylistChangeModal } from "@/components/PlaylistChangeModal";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type ConnectionStatus = "online" | "unstable" | "offline";
 type PlayerStatus = "reproduzindo" | "parado" | "erro";
@@ -59,6 +64,8 @@ export default function DevicesPage() {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [playlistModalOpen, setPlaylistModalOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const { tenantId, isSuperAdmin, isTecnico, isAdmin } = useUserRole();
 
   const openDeviceDrawer = (device: any) => {
@@ -204,6 +211,24 @@ export default function DevicesPage() {
     }
   };
 
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredDevices.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredDevices.map(d => d.id)));
+    }
+  };
+
+  const toggleSelect = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
       <PageHeader
@@ -211,6 +236,21 @@ export default function DevicesPage() {
         description="Monitoramento real dos terminais da rede com status de exibição."
         actions={
           <div className="flex items-center gap-2">
+            {selectedIds.size > 0 && (
+              <div className="flex items-center gap-2 mr-2 animate-in fade-in slide-in-from-right-4">
+                <Badge variant="secondary" className="h-9 px-3 font-mono">
+                  {selectedIds.size} selecionado(s)
+                </Badge>
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  className="h-9 bg-primary text-primary-foreground"
+                  onClick={() => setPlaylistModalOpen(true)}
+                >
+                  <Layers className="h-4 w-4 mr-2" /> Alterar Playlist
+                </Button>
+              </div>
+            )}
             <div className="hidden sm:flex border rounded-lg p-1 bg-muted/30 mr-2">
               <Button variant={viewMode === "table" ? "secondary" : "ghost"} size="sm" className="h-7 w-7 p-0" onClick={() => setViewMode("table")}><List className="h-4 w-4" /></Button>
               <Button variant={viewMode === "grid" ? "secondary" : "ghost"} size="sm" className="h-7 w-7 p-0" onClick={() => setViewMode("grid")}><LayoutGrid className="h-4 w-4" /></Button>
@@ -220,7 +260,7 @@ export default function DevicesPage() {
                 <Megaphone className="h-4 w-4 mr-2" /> Comandos
               </Button>
             )}
-            <Button variant="outline" size="sm" onClick={() => refetch()} className="h-9"><RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} /> Atualizar</Button>
+            <Button variant="outline" size="sm" onClick={() => {refetch(); setSelectedIds(new Set());}} className="h-9"><RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} /> Atualizar</Button>
             {isAdmin && (
               <Button 
                 className="bg-gradient-primary text-primary-foreground shadow-glow h-9"
@@ -277,6 +317,12 @@ export default function DevicesPage() {
             <Table>
               <TableHeader className="sticky top-0 bg-card z-10 border-b border-border/60">
                 <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-10">
+                    <Checkbox 
+                      checked={filteredDevices.length > 0 && selectedIds.size === filteredDevices.length}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead className="w-[25%]">Dispositivo</TableHead>
                   <TableHead>Serial</TableHead>
                   {isSuperAdmin && <TableHead>Empresa</TableHead>}
@@ -292,7 +338,10 @@ export default function DevicesPage() {
                   const connStatus = getConnectionStatus(d.last_heartbeat_at);
                   const playStatus = getPlayerStatus(d.player_status);
                   return (
-                    <TableRow key={d.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => openDeviceDrawer({ ...d, status: connStatus })}>
+                    <TableRow key={d.id} className={cn("hover:bg-muted/30 cursor-pointer transition-colors", selectedIds.has(d.id) && "bg-primary/5")} onClick={() => openDeviceDrawer({ ...d, status: connStatus })}>
+                      <TableCell onClick={(e) => toggleSelect(e, d.id)}>
+                        <Checkbox checked={selectedIds.has(d.id)} onCheckedChange={() => {}} />
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Monitor className="h-4 w-4 text-primary opacity-70" />
@@ -410,6 +459,15 @@ export default function DevicesPage() {
         onOpenChange={setEditModalOpen}
         device={selectedDevice}
         onSuccess={() => refetch()}
+      />
+      <PlaylistChangeModal
+        open={playlistModalOpen}
+        onOpenChange={setPlaylistModalOpen}
+        deviceIds={Array.from(selectedIds)}
+        onSuccess={() => {
+          refetch();
+          setSelectedIds(new Set());
+        }}
       />
     </div>
   );
