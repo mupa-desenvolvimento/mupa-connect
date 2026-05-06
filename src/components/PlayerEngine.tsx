@@ -22,224 +22,199 @@ interface PlayerEngineProps {
 }
 
 export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appearance }: PlayerEngineProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [activeLayer, setActiveLayer] = useState<"A" | "B">("A");
+  // Buffers A e B para Double Buffering
+  const [bufferA, setBufferA] = useState<MediaItem | null>(null);
+  const [bufferB, setBufferB] = useState<MediaItem | null>(null);
+  const [activeBuffer, setActiveBuffer] = useState<"A" | "B">("A");
   
-  // Refs para controle de estado sem disparar renders desnecessários
-  const isSwitchingRef = useRef(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const loadTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const playlistRef = useRef(playlist);
+  // Refs para controle preciso sem re-render (essencial para performance Android 9)
   const currentIndexRef = useRef(0);
+  const nextIndexRef = useRef(1);
+  const isTransitioningRef = useRef(false);
   const startTimeRef = useRef(Date.now());
+  const playlistRef = useRef(playlist);
   
-  // Elementos de mídia
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoARef = useRef<HTMLVideoElement>(null);
+  const videoBRef = useRef<HTMLVideoElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const preloadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Sincronizar playlist
+  // Sincronizar playlist sem disparar re-render
   useEffect(() => {
     playlistRef.current = playlist;
+    if (playlist.length > 0 && !bufferA && !bufferB) {
+      // Inicialização
+      setBufferA(playlist[0]);
+      if (playlist.length > 1) {
+        setBufferB(playlist[1]);
+      }
+      currentIndexRef.current = 0;
+      nextIndexRef.current = playlist.length > 1 ? 1 : 0;
+    }
   }, [playlist]);
 
-  /**
-   * Função centralizada para avançar a mídia (CONTROLE ÚNICO)
-   */
-  const nextMedia = useCallback((reason: string = "timer") => {
-    if (isSwitchingRef.current || !playlistRef.current.length) return;
-    
-    isSwitchingRef.current = true;
-    const now = Date.now();
-    const elapsed = now - startTimeRef.current;
-    console.log(`[PlayerEngine] NEXT TRIGGER. Reason: ${reason} | Elapsed: ${elapsed}ms`);
-    
-    if (serial) {
-      FirebaseRealtimeService.logEvent(serial, "transition_start", {
-        reason,
-        current_index: currentIndexRef.current,
-        elapsed,
-        timestamp: new Date().toISOString()
-      });
-    }
+  const preloadImage = (src: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve();
+      img.onerror = reject;
+      img.src = src;
+    });
+  };
 
-    const nextIdx = (currentIndexRef.current + 1) % playlistRef.current.length;
-    currentIndexRef.current = nextIdx;
+  const getNextIndex = (current: number) => {
+    if (!playlistRef.current.length) return 0;
+    return (current + 1) % playlistRef.current.length;
+  };
+
+  const swapBuffers = useCallback(() => {
+    if (isTransitioningRef.current) return;
+    isTransitioningRef.current = true;
+
+    const prevIndex = currentIndexRef.current;
+    const newIndex = nextIndexRef.current;
+    const nextNextIndex = getNextIndex(newIndex);
+
+    console.log(`[PlayerEngine] Swapping buffers: ${prevIndex} -> ${newIndex}. Next will be ${nextNextIndex}`);
+
+    // Troca o buffer ativo
+    const nextBuffer = activeBuffer === "A" ? "B" : "A";
+    setActiveBuffer(nextBuffer);
+    
+    // Atualiza referências
+    currentIndexRef.current = newIndex;
+    nextIndexRef.current = nextNextIndex;
     startTimeRef.current = Date.now();
-    
-    const nextLayer = activeLayer === "A" ? "B" : "A";
-    
+
+    // Callback de mudança
+    onMediaChange?.(newIndex);
+
+    // Logs
     if (serial) {
       FirebaseRealtimeService.logEvent(serial, "media_transition", {
-        from: playlistRef.current[currentIndex]?.name,
-        to: playlistRef.current[nextIdx]?.name,
-        reason
+        from: playlistRef.current[prevIndex]?.name,
+        to: playlistRef.current[newIndex]?.name,
+        index: newIndex
       });
     }
 
-    setCurrentIndex(nextIdx);
-    setActiveLayer(nextLayer);
-    onMediaChange?.(nextIdx);
-
-    setTimeout(() => {
-      isSwitchingRef.current = false;
+    // Prepara o próximo buffer em background após o fade
+    if (preloadTimeoutRef.current) clearTimeout(preloadTimeoutRef.current);
+    preloadTimeoutRef.current = setTimeout(() => {
+      const nextMedia = playlistRef.current[nextNextIndex];
+      if (nextBuffer === "A") {
+        setBufferB(nextMedia); // Prepara B enquanto A está visível
+      } else {
+        setBufferA(nextMedia); // Prepara A enquanto B está visível
+      }
+      isTransitioningRef.current = false;
     }, 500);
-  }, [activeLayer, currentIndex, onMediaChange, serial]);
 
-  const startDisplayTimer = useCallback((duration: number) => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    const finalDuration = Math.max(duration || 5, 3);
-    console.log(`[PlayerEngine] DURATION: ${finalDuration}s`);
-    
-    timerRef.current = setTimeout(() => {
-      nextMedia("display_timer");
-    }, finalDuration * 1000);
-  }, [nextMedia]);
+  }, [activeBuffer, onMediaChange, serial]);
 
+  // Controle de tempo de exibição
   useEffect(() => {
-    if (!playlist.length) return;
-    const media = playlist[currentIndex];
-    if (!media || !media.url) {
-      console.warn("[PlayerEngine] Midia invalida ou sem URL, pulando...");
-      nextMedia("invalid_url");
-      return;
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+    const currentMedia = playlistRef.current[currentIndexRef.current];
+    if (!currentMedia) return;
+
+    if (currentMedia.type === "image") {
+      timeoutRef.current = setTimeout(() => {
+        swapBuffers();
+      }, currentMedia.duration * 1000);
     }
-
-    if (timerRef.current) clearTimeout(timerRef.current);
-    if (loadTimerRef.current) clearTimeout(loadTimerRef.current);
-
-    console.log(`[PlayerEngine] START: ${currentIndex} | ${media.name}`);
-    
-    const LOAD_TIMEOUT = 10000; // 10 segundos para carregar
-    loadTimerRef.current = setTimeout(() => {
-      console.warn(`[PlayerEngine] LOAD TIMEOUT: ${media.name}`);
-      if (serial) FirebaseRealtimeService.logEvent(serial, "load_timeout", { media: media.name });
-      nextMedia("load_timeout");
-    }, LOAD_TIMEOUT);
+    // Vídeos são controlados pelo evento onEnded
 
     return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      if (loadTimerRef.current) clearTimeout(loadTimerRef.current);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [currentIndex, playlist, nextMedia, serial]);
+  }, [activeBuffer, swapBuffers]);
 
-  // Watchdog de segurança (CRÍTICO para WebView)
-  // Verifica se o tempo real decorrido excedeu a duração da mídia + margem de erro
+  // Segurança: Watchdog (5s de timeout se a mídia não carregar ou travar)
   useEffect(() => {
     const watchdog = setInterval(() => {
-      if (isSwitchingRef.current) return;
-      
-      const media = playlistRef.current[currentIndexRef.current];
-      if (!media) return;
-
       const now = Date.now();
+      const currentMedia = playlistRef.current[currentIndexRef.current];
+      if (!currentMedia) return;
+
       const elapsed = now - startTimeRef.current;
-      const duration = Math.max(media.duration || 5, 3);
-      const threshold = (duration * 1000) + 15000; // Duração + 15 segundos de folga para watchdog pesado
+      const maxDuration = (currentMedia.duration * 1000) + 5000; // 5s de margem
 
-      // 1. Recuperação de Vídeo Travado
-      if (media.type === "video" && videoRef.current) {
-        if (videoRef.current.paused && !videoRef.current.ended && videoRef.current.readyState > 2) {
-          console.warn("[PlayerEngine] Vídeo pausado inesperadamente, tentando play...");
-          videoRef.current.play().catch(() => nextMedia("watchdog_video_fail"));
-        }
+      if (elapsed > maxDuration) {
+        console.warn("[PlayerEngine] Watchdog triggered - media stuck or failed to load");
+        swapBuffers();
       }
-
-      // 2. Recuperação de Travamento Lógico (Time-based)
-      if (elapsed > threshold) {
-        console.error(`[PlayerEngine] !!! WATCHDOG TRIGGER !!! Forçando avanço. Motivo: ${media.name} travado.`);
-        if (serial) {
-          FirebaseRealtimeService.logEvent(serial, "watchdog_force_next", {
-            media: media.name,
-            elapsed,
-            threshold
-          });
-        }
-        nextMedia("watchdog_timeout");
-      }
-    }, 3000);
+    }, 2000);
 
     return () => clearInterval(watchdog);
-  }, [nextMedia, serial]);
+  }, [swapBuffers]);
 
   if (!playlist.length) return null;
 
-  const currentMedia = playlist[currentIndex];
+  const renderMedia = (media: MediaItem | null, bufferId: "A" | "B", isActive: boolean) => {
+    if (!media) return null;
 
-  return (
-    <div className="relative w-full h-full bg-black overflow-hidden">
-      {/* Camada Unificada de Exibição */}
+    const isVideo = media.type === "video";
+    const videoRef = bufferId === "A" ? videoARef : videoBRef;
+
+    return (
       <div 
-        key={`layer-${activeLayer}-${currentIndex}`}
         className={cn(
-          "absolute inset-0 z-10",
-          (!appearance?.transition_type || appearance.transition_type === "fade") && "animate-fade-in",
-          appearance?.transition_type === "slide-left" && "animate-slide-left",
-          appearance?.transition_type === "slide-right" && "animate-slide-right",
-          appearance?.transition_type === "zoom" && "animate-zoom-in",
-          appearance?.transition_type === "none" && "opacity-100"
+          "player-layer player-gpu-accel",
+          isActive ? "opacity-100 z-10" : "opacity-0 z-0"
         )}
-        style={{
-          animationDuration: `${appearance?.transition_duration || 500}ms`
-        }}
       >
-        {!currentMedia?.url ? (
-          <div className="w-full h-full bg-black flex items-center justify-center text-white/20 font-mono text-xs">
-            URL INVALIDA
-          </div>
-        ) : currentMedia.type === "video" ? (
+        {isVideo ? (
           <video
-            key={`video-${currentIndex}`}
             ref={videoRef}
-            src={currentMedia.url}
-            autoPlay
+            src={media.url}
             muted={volume === 0}
             playsInline
-            className="w-full h-full object-cover"
-            onLoadStart={() => {
-              if (serial) FirebaseRealtimeService.logEvent(serial, "video_load_start", { media: currentMedia.name });
-            }}
-            onCanPlay={() => {
-              if (loadTimerRef.current) {
-                clearTimeout(loadTimerRef.current);
-                loadTimerRef.current = null;
+            preload="auto"
+            className="w-full h-full object-cover player-gpu-accel"
+            onCanPlayThrough={() => {
+              if (isActive) {
+                videoRef.current?.play().catch(console.error);
               }
-              if (serial) FirebaseRealtimeService.logEvent(serial, "video_can_play", { media: currentMedia.name });
             }}
-            onEnded={() => nextMedia("video_ended")}
-            onError={(e) => {
-              console.error("[PlayerEngine] Video error:", currentMedia.url);
-              if (serial) FirebaseRealtimeService.logEvent(serial, "video_error", { media: currentMedia.name, url: currentMedia.url });
-              nextMedia("video_error");
+            onEnded={() => {
+              if (isActive) swapBuffers();
+            }}
+            onError={() => {
+              if (isActive) swapBuffers();
             }}
           />
         ) : (
           <img
-            key={`img-${currentIndex}`}
-            src={currentMedia.url}
-            className="w-full h-full object-cover"
+            src={media.url}
             alt=""
+            className="w-full h-full object-cover player-gpu-accel"
             onLoad={() => {
-              if (loadTimerRef.current) {
-                clearTimeout(loadTimerRef.current);
-                loadTimerRef.current = null;
-              }
-              if (serial) FirebaseRealtimeService.logEvent(serial, "image_load_success", { media: currentMedia.name });
-              startDisplayTimer(currentMedia.duration);
+              // Já pré-carregado via src, mas garantimos aqui
             }}
             onError={() => {
-              console.error("[PlayerEngine] Erro ao carregar mídia:", currentMedia.url);
-              if (serial) FirebaseRealtimeService.logEvent(serial, "image_error", { media: currentMedia.name, url: currentMedia.url });
-              nextMedia("image_error");
+              if (isActive) swapBuffers();
             }}
           />
         )}
       </div>
+    );
+  };
 
-      {/* Pré-carregamento da próxima mídia (Opcional/Oculto) */}
-      <div className="hidden">
-        {playlist[(currentIndex + 1) % playlist.length]?.type === "image" && (
-          <img src={playlist[(currentIndex + 1) % playlist.length].url} alt="" />
-        )}
-      </div>
+  // Efeito para dar play no vídeo quando o buffer se torna ativo
+  useEffect(() => {
+    if (activeBuffer === "A" && bufferA?.type === "video" && videoARef.current) {
+      videoARef.current.play().catch(console.error);
+    } else if (activeBuffer === "B" && bufferB?.type === "video" && videoBRef.current) {
+      videoBRef.current.play().catch(console.error);
+    }
+  }, [activeBuffer, bufferA, bufferB]);
+
+  return (
+    <div className="relative w-full h-full bg-black overflow-hidden player-gpu-accel">
+      {renderMedia(bufferA, "A", activeBuffer === "A")}
+      {renderMedia(bufferB, "B", activeBuffer === "B")}
     </div>
   );
 }
