@@ -170,6 +170,27 @@ export default function PlayerPage() {
     return () => unsubscribe();
   }, [deviceCode]);
 
+  // 1.8 Proactive Cache Management
+  useEffect(() => {
+    if (!manifest || !deviceCode || isPreview) return;
+
+    const syncMediaCache = async () => {
+      console.log("[Player] Syncing media cache for current manifest...");
+      const items = ScheduleResolver.getActivePlaylist(manifest);
+      const urls = items.map(item => item.url).filter(Boolean);
+
+      // Cache all current items
+      await Promise.all(items.map(item => 
+        MediaCacheService.cacheMedia(item.url, item.type, 0, deviceCode)
+      ));
+
+      // Clean old cache entries
+      MediaCacheService.clearOldCache(urls);
+    };
+
+    syncMediaCache();
+  }, [manifest, deviceCode]);
+
   // 2. Schedule & Queue Resolver
   const activePlaylist = useMemo(() => {
     return ScheduleResolver.getActivePlaylist(manifest);
