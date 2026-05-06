@@ -120,6 +120,12 @@ const App = () => {
                     <SuperAdmin />
                   </ProtectedRoute>
                 } />
+
+                <Route path="/superadmin/companies/:id" element={
+                  <ProtectedRoute allowedRoles={["admin_global"]}>
+                    <CompanyManagement />
+                  </ProtectedRoute>
+                } />
                 
                 <Route path="/admin/player-logs" element={
                   <ProtectedRoute allowedRoles={["admin_global"]}>
