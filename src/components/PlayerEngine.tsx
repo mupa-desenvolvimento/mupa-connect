@@ -28,6 +28,10 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
   const [bufferB, setBufferB] = useState<MediaItem | null>(null);
   const [activeBuffer, setActiveBuffer] = useState<"A" | "B">("A");
   
+  // URL local (Blob) para evitar rede durante o play
+  const [localUrlA, setLocalUrlA] = useState<string>("");
+  const [localUrlB, setLocalUrlB] = useState<string>("");
+  
   // Refs para controle preciso sem re-render (essencial para performance Android 9)
   const currentIndexRef = useRef(0);
   const nextIndexRef = useRef(1);
@@ -40,17 +44,27 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const preloadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Sincronizar playlist sem disparar re-render
+  // Sincronizar playlist e inicializar buffers com Blob URLs
   useEffect(() => {
     playlistRef.current = playlist;
     if (playlist.length > 0 && !bufferA && !bufferB) {
-      // Inicialização
-      setBufferA(playlist[0]);
-      if (playlist.length > 1) {
-        setBufferB(playlist[1]);
-      }
-      currentIndexRef.current = 0;
-      nextIndexRef.current = playlist.length > 1 ? 1 : 0;
+      const init = async () => {
+        const firstMedia = playlist[0];
+        const firstUrl = await MediaCacheService.getBlobUrl(firstMedia.url);
+        setLocalUrlA(firstUrl);
+        setBufferA(firstMedia);
+
+        if (playlist.length > 1) {
+          const secondMedia = playlist[1];
+          const secondUrl = await MediaCacheService.getBlobUrl(secondMedia.url);
+          setLocalUrlB(secondUrl);
+          setBufferB(secondMedia);
+        }
+        
+        currentIndexRef.current = 0;
+        nextIndexRef.current = playlist.length > 1 ? 1 : 0;
+      };
+      init();
     }
   }, [playlist]);
 
