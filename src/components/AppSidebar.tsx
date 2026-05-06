@@ -14,6 +14,7 @@ import {
   Users,
   Activity,
   User,
+  Building2
 } from "lucide-react";
 import {
   Sidebar,
@@ -98,7 +99,7 @@ export function AppSidebar() {
             <SidebarGroupLabel>Administração Global</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {renderItem({ title: "SuperAdmin", url: "/superadmin", icon: ShieldCheck })}
+                {renderItem({ title: "Empresas & Revendas", url: "/superadmin", icon: Building2 })}
                 {renderItem({ title: "Aplicativos", url: "/admin/apps", icon: MonitorPlay })}
                 {renderItem({ title: "Monitoramento", url: "/admin/player-logs", icon: LayoutDashboard })}
               </SidebarMenu>
