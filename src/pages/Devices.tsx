@@ -59,6 +59,7 @@ export default function DevicesPage() {
   const [groupFilter, setGroupFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [playlistFilter, setPlaylistFilter] = useState("all");
+  const [companyFilter, setCompanyFilter] = useState("all");
   const [selectedDevice, setSelectedDevice] = useState<any | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -162,23 +163,48 @@ export default function DevicesPage() {
       const matchesStore = storeFilter === "all" || d.num_filial === storeFilter;
       const matchesGroup = groupFilter === "all" || d.grupo_dispositivos === groupFilter;
       const matchesStatus = statusFilter === "all" || connStatus === statusFilter;
+      const matchesCompany = companyFilter === "all" || d.company_id === companyFilter;
       const matchesPlaylist = 
         playlistFilter === "all" ? true :
         playlistFilter === "has" ? !!d.playlist_id :
         !d.playlist_id;
-      return matchesSearch && matchesStore && matchesGroup && matchesStatus && matchesPlaylist;
+      return matchesSearch && matchesStore && matchesGroup && matchesStatus && matchesPlaylist && matchesCompany;
     }).sort((a, b) => {
       // Prioridade: Sem playlist no topo
       if (!a.playlist_id && b.playlist_id) return -1;
       if (a.playlist_id && !b.playlist_id) return 1;
       return (a.apelido_interno || "").localeCompare(b.apelido_interno || "");
     });
-  }, [devices, search, storeFilter, groupFilter, statusFilter, playlistFilter]);
+  }, [devices, search, storeFilter, groupFilter, statusFilter, playlistFilter, companyFilter]);
 
   const groups = useMemo(() => {
     if (!devices) return [];
     return Array.from(new Set(devices.map(d => d.grupo_dispositivos).filter(Boolean)));
   }, [devices]);
+
+  const companies = useMemo(() => {
+    if (!devices) return [];
+    const unique = new Map<string, string>();
+    devices.forEach(d => {
+      if (d.companies?.id && d.companies?.name) {
+        unique.set(d.companies.id, d.companies.name);
+      }
+    });
+    return Array.from(unique.entries()).map(([id, name]) => ({ id, name }));
+  }, [devices]);
+
+  const stats = useMemo(() => {
+    if (!devices) return { total: 0, online: 0, unstable: 0, offline: 0, noPlaylist: 0, filtered: 0 };
+    
+    return {
+      total: devices.length,
+      online: devices.filter(d => getConnectionStatus(d.last_heartbeat_at) === "online").length,
+      unstable: devices.filter(d => getConnectionStatus(d.last_heartbeat_at) === "unstable").length,
+      offline: devices.filter(d => getConnectionStatus(d.last_heartbeat_at) === "offline").length,
+      noPlaylist: devices.filter(d => !d.playlist_id).length,
+      filtered: filteredDevices.length
+    };
+  }, [devices, filteredDevices]);
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "Nunca";
@@ -286,6 +312,24 @@ export default function DevicesPage() {
               {stores?.map(s => <SelectItem key={s.id} value={s.code || s.id.toString()}>{s.name}</SelectItem>)}
             </SelectContent>
           </Select>
+          {isSuperAdmin && (
+            <Select value={companyFilter} onValueChange={setCompanyFilter}>
+              <SelectTrigger className="w-full md:w-[160px] h-10 bg-background/50 border-border/40"><SelectValue placeholder="Empresa" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as Empresas</SelectItem>
+                {companies.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Select value={groupFilter} onValueChange={setGroupFilter}>
+            <SelectTrigger className="w-full md:w-[130px] h-10 bg-background/50 border-border/40"><SelectValue placeholder="Grupo" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os Grupos</SelectItem>
+              {groups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+            </SelectContent>
+          </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full md:w-[130px] h-10 bg-background/50 border-border/40"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
@@ -303,13 +347,65 @@ export default function DevicesPage() {
               <SelectItem value="none">Sem Playlist</SelectItem>
             </SelectContent>
           </Select>
-          {(search || storeFilter !== "all" || groupFilter !== "all" || statusFilter !== "all" || playlistFilter !== "all") && (
-            <Button variant="ghost" size="sm" className="h-10 text-muted-foreground hover:text-primary" onClick={() => {setSearch(""); setStoreFilter("all"); setGroupFilter("all"); setStatusFilter("all"); setPlaylistFilter("all");}}><FilterX className="h-4 w-4 mr-2" /> Limpar</Button>
+          {(search || storeFilter !== "all" || groupFilter !== "all" || statusFilter !== "all" || playlistFilter !== "all" || companyFilter !== "all") && (
+            <Button variant="ghost" size="sm" className="h-10 text-muted-foreground hover:text-primary" onClick={() => {
+              setSearch(""); 
+              setStoreFilter("all"); 
+              setGroupFilter("all"); 
+              setStatusFilter("all"); 
+              setPlaylistFilter("all");
+              setCompanyFilter("all");
+            }}>
+              <FilterX className="h-4 w-4 mr-2" /> Limpar
+            </Button>
           )}
         </div>
       </div>
 
       <div className="flex-1 overflow-hidden border border-border/60 rounded-xl bg-card shadow-sm flex flex-col">
+        <div className="px-4 py-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground border-b border-border/60 bg-muted/20">
+          <div className="flex items-center gap-1.5">
+            <Monitor className="h-4 w-4 text-foreground/70" />
+            <span className="font-semibold text-foreground text-sm">{stats.total}</span> 
+            <span className="text-muted-foreground">dispositivos</span>
+            {stats.filtered !== stats.total && (
+              <Badge variant="secondary" className="ml-2 bg-primary/10 text-primary border-none text-[10px] h-5">
+                Mostrando {stats.filtered}
+              </Badge>
+            )}
+          </div>
+          
+          <div className="hidden sm:block h-4 w-px bg-border/60" />
+          
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <div className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
+              <span className="font-medium text-foreground">{stats.online}</span>
+              <span className="hidden lg:inline">online</span>
+            </div>
+            
+            <div className="flex items-center gap-1.5">
+              <div className="h-2 w-2 rounded-full bg-yellow-500" />
+              <span className="font-medium text-foreground">{stats.unstable}</span>
+              <span className="hidden lg:inline">instáveis</span>
+            </div>
+            
+            <div className="flex items-center gap-1.5">
+              <div className="h-2 w-2 rounded-full bg-red-500" />
+              <span className="font-medium text-foreground">{stats.offline}</span>
+              <span className="hidden lg:inline">offline</span>
+            </div>
+
+            {stats.noPlaylist > 0 && (
+              <div className="flex items-center gap-1.5 px-2 py-0.5 bg-destructive/10 rounded text-destructive animate-pulse">
+                <AlertTriangle className="h-3 w-3" />
+                <span className="font-bold">{stats.noPlaylist}</span>
+                <span className="hidden lg:inline">sem playlist</span>
+              </div>
+            )}
+          </div>
+        </div>
+
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="h-64 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-50" /></div>
