@@ -176,6 +176,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
 
     const isVideo = media.type === "video";
     const videoRef = bufferId === "A" ? videoARef : videoBRef;
+    const localUrl = bufferId === "A" ? localUrlA : localUrlB;
 
     return (
       <div 
@@ -187,7 +188,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
         {isVideo ? (
           <video
             ref={videoRef}
-            src={media.url}
+            src={localUrl}
             muted={volume === 0}
             playsInline
             preload="auto"
@@ -206,12 +207,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
           />
         ) : (
           <img
-            src={media.url}
+            src={localUrl}
             alt=""
             className="w-full h-full object-cover player-gpu-accel"
-            onLoad={() => {
-              // Já pré-carregado via src, mas garantimos aqui
-            }}
             onError={() => {
               if (isActive) swapBuffers();
             }}
