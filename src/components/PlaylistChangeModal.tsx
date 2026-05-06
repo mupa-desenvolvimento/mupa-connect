@@ -49,7 +49,7 @@ export function PlaylistChangeModal({ open, onOpenChange, deviceIds, onSuccess }
       const { error } = await supabase
         .from("dispositivos")
         .update({ playlist_id: playlistValue })
-        .in("id", deviceIds);
+        .in("id", deviceIds.map(id => Number(id)));
 
       if (error) throw error;
 
