@@ -13,7 +13,11 @@ import {
   ShieldCheck, 
   Store,
   ExternalLink,
-  Edit
+  Edit,
+  Users,
+  CheckCircle2,
+  XCircle,
+  Filter
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -23,8 +27,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreateUserModal } from "@/components/CreateUserModal";
+import { CreateCompanyModal } from "@/components/admin/CreateCompanyModal";
+import { useQuery } from "@tanstack/react-query";
 
 export default function SuperAdminDashboard() {
   const [stats, setStats] = useState({
