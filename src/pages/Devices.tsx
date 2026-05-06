@@ -591,9 +591,36 @@ export default function DevicesPage() {
                 })}
               </TableBody>
             </Table>
-          )}
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
+              {filteredDevices.map(d => (
+                <Card key={d.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => openDeviceDrawer(d)}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Monitor className="h-4 w-4 text-primary" />
+                        <span className="font-semibold truncate max-w-[150px]">{d.apelido_interno}</span>
+                      </div>
+                      <StatusBadge status={getConnectionStatus(d.last_heartbeat_at)} />
+                    </div>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Serial:</span>
+                        <span className="font-mono">{d.serial}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Playlist:</span>
+                        <span className="truncate max-w-[120px]">{d.playlists?.name || "N/A"}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ))}
         </div>
       </div>
+
 
       <DeviceFirebaseCommandDrawer
         device={selectedDevice}
