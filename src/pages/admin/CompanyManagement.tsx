@@ -319,6 +319,13 @@ export default function CompanyManagement() {
           </Card>
         </TabsContent>
       </Tabs>
+      <AddUserToCompanyModal
+        isOpen={isAddUserModalOpen}
+        onClose={() => setIsAddUserModalOpen(false)}
+        onSuccess={() => refetchUsers()}
+        companyId={id!}
+        tenantId={company?.tenant_id}
+      />
     </div>
   );
 }
