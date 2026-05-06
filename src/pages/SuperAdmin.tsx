@@ -42,85 +42,96 @@ import { CreateCompanyModal } from "@/components/admin/CreateCompanyModal";
 import { useQuery } from "@tanstack/react-query";
 
 export default function SuperAdminDashboard() {
-  const [stats, setStats] = useState({
-    tenants: 0,
-    companies: 0,
-    users: 0,
-    devices: 0
-  });
   const [loading, setLoading] = useState(true);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
-  useEffect(() => {
-    async function fetchStats() {
-      try {
-        const [
-          { count: tenantCount },
-          { count: companyCount },
-          { count: userCount },
-          { count: deviceCount }
-        ] = await Promise.all([
-          supabase.from("tenants").select("*", { count: "exact", head: true }),
-          supabase.from("companies").select("*", { count: "exact", head: true }),
-          supabase.from("users").select("*", { count: "exact", head: true }),
-          supabase.from("dispositivos").select("*", { count: "exact", head: true })
-        ]);
+  // Fetch stats
+  const { data: stats, isLoading: isStatsLoading } = useQuery({
+    queryKey: ["superadmin-stats"],
+    queryFn: async () => {
+      const [
+        { count: tenantCount },
+        { count: companyCount },
+        { count: userCount },
+        { count: deviceCount },
+        { count: onlineCount }
+      ] = await Promise.all([
+        supabase.from("tenants").select("*", { count: "exact", head: true }),
+        supabase.from("companies").select("*", { count: "exact", head: true }),
+        supabase.from("user_profiles").select("*", { count: "exact", head: true }),
+        supabase.from("dispositivos").select("*", { count: "exact", head: true }),
+        supabase.from("dispositivos").select("*", { count: "exact", head: true }).eq('online', true)
+      ]);
 
-        setStats({
-          tenants: tenantCount || 0,
-          companies: companyCount || 0,
-          users: userCount || 0,
-          devices: deviceCount || 0
-        });
-      } catch (error: any) {
-        console.error("Error fetching superadmin stats:", error);
-        if (error?.message?.includes("Refresh Token") || error?.status === 400 || error?.status === 401) {
-          toast.error("Sessão expirada. Redirecionando...");
-          await supabase.auth.signOut();
-          navigate("/auth");
-        }
-      } finally {
-        setLoading(false);
-      }
+      return {
+        tenants: tenantCount || 0,
+        companies: companyCount || 0,
+        users: userCount || 0,
+        devices: deviceCount || 0,
+        online: onlineCount || 0
+      };
     }
+  });
 
-    fetchStats();
-  }, []);
+  // Fetch Companies
+  const { data: companies, isLoading: isCompaniesLoading, refetch: refetchCompanies } = useQuery({
+    queryKey: ["admin-companies"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("companies")
+        .select(`
+          *,
+          tenants (name),
+          user_profiles (count),
+          dispositivos (count)
+        `);
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const filteredCompanies = companies?.filter(c => 
+    c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    c.cnpj?.includes(searchTerm)
+  );
 
   return (
-    <>
+    <div className="space-y-6">
       <PageHeader
-        title="Painel SuperAdmin"
-        description="Gestão global da rede Mupa 3.0"
+        title="Painel Central Multiempresa"
+        description="Gestão global de infraestrutura, empresas e usuários"
         actions={
           <div className="flex gap-2">
-            <Button variant="outline" className="flex gap-2">
-              <Building2 className="h-4 w-4" /> Nova Revenda
+            <Button variant="outline" className="flex gap-2" onClick={() => setIsUserModalOpen(true)}>
+              <UserPlus className="h-4 w-4" /> Novo Usuário
             </Button>
-            <Button className="bg-gradient-primary text-primary-foreground flex gap-2" onClick={() => setIsUserModalOpen(true)}>
+            <Button className="bg-gradient-primary text-primary-foreground flex gap-2" onClick={() => setIsCompanyModalOpen(true)}>
               <Plus className="h-4 w-4" /> Nova Empresa
             </Button>
           </div>
         }
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {[
-          { label: "Revendas (Tenants)", value: stats.tenants, icon: ShieldCheck, color: "text-blue-500" },
-          { label: "Empresas", value: stats.companies, icon: Building2, color: "text-[#085CF0]" },
-          { label: "Usuários", value: stats.users, icon: UserPlus, color: "text-green-500" },
-          { label: "Dispositivos", value: stats.devices, icon: Store, color: "text-orange-500" },
+          { label: "Revendas (Tenants)", value: stats?.tenants, icon: ShieldCheck, color: "text-blue-500" },
+          { label: "Empresas", value: stats?.companies, icon: Building2, color: "text-[#085CF0]" },
+          { label: "Usuários Totais", value: stats?.users, icon: Users, color: "text-green-500" },
+          { label: "Dispositivos", value: stats?.devices, icon: Store, color: "text-orange-500" },
+          { label: "Online Agora", value: stats?.online, icon: CheckCircle2, color: "text-emerald-500" },
         ].map((s) => (
           <Card key={s.label}>
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">{s.label}</p>
-                  <p className="text-3xl font-bold mt-1">{loading ? "..." : s.value}</p>
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">{s.label}</p>
+                  <p className="text-2xl font-bold mt-1">{isStatsLoading ? "..." : s.value}</p>
                 </div>
-                <div className={`p-3 rounded-xl bg-muted ${s.color}`}>
-                  <s.icon className="h-6 w-6" />
+                <div className={`p-2.5 rounded-xl bg-muted/50 ${s.color}`}>
+                  <s.icon className="h-5 w-5" />
                 </div>
               </div>
             </CardContent>
@@ -128,69 +139,136 @@ export default function SuperAdminDashboard() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-lg font-display">Ações Rápidas</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Button 
-              variant="outline" 
-              className="h-24 flex flex-col gap-2 border-dashed"
-              onClick={() => window.location.href = "/admin/device-validation"}
-            >
-              <ShieldCheck className="h-6 w-6 text-orange-500" />
-              <span>Validação de Dispositivos</span>
-            </Button>
-            <Button variant="outline" className="h-24 flex flex-col gap-2 border-dashed" onClick={() => setIsUserModalOpen(true)}>
-              <Building2 className="h-6 w-6" />
-              <span>Cadastrar Empresa</span>
-            </Button>
-            <Button variant="outline" className="h-24 flex flex-col gap-2 border-dashed">
-              <ShieldCheck className="h-6 w-6" />
-              <span>Gerenciar Revendas</span>
-            </Button>
-            <Button variant="outline" className="h-24 flex flex-col gap-2 border-dashed" onClick={() => setIsUserModalOpen(true)}>
-              <Edit className="h-6 w-6" />
-              <span>Vincular Usuário</span>
-            </Button>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="companies" className="space-y-4">
+        <TabsList className="bg-muted/50 p-1">
+          <TabsTrigger value="companies" className="flex gap-2">
+            <Building2 className="h-4 w-4" /> Empresas
+          </TabsTrigger>
+          <TabsTrigger value="activity" className="flex gap-2">
+            <Activity className="h-4 w-4" /> Atividade Global
+          </TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-display">Últimos Cadastros</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 rounded-lg border bg-card/50">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                    SC
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Stock Center</p>
-                    <p className="text-xs text-muted-foreground">Empresa · Passo Fundo</p>
-                  </div>
+        <TabsContent value="companies" className="space-y-4">
+          <Card>
+            <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0">
+              <div className="flex items-center gap-4 flex-1">
+                <div className="relative flex-1 max-w-sm">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Buscar empresa ou CNPJ..." 
+                    className="pl-9"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
                 </div>
-                <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">Ativo</Badge>
+                <Button variant="outline" size="icon">
+                  <Filter className="h-4 w-4" />
+                </Button>
               </div>
-              
-              <div className="flex items-center justify-between p-3 rounded-lg border bg-card/50 opacity-60">
-                <p className="text-sm text-muted-foreground italic">Mais dados em breve...</p>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Empresa</TableHead>
+                    <TableHead>Revenda (Tenant)</TableHead>
+                    <TableHead className="text-center">Usuários</TableHead>
+                    <TableHead className="text-center">Dispositivos</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isCompaniesLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-24 text-center">Carregando empresas...</TableCell>
+                    </TableRow>
+                  ) : filteredCompanies?.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">Nenhuma empresa encontrada.</TableCell>
+                    </TableRow>
+                  ) : filteredCompanies?.map((company) => (
+                    <TableRow key={company.id}>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-semibold">{company.name}</span>
+                          <span className="text-[10px] text-muted-foreground uppercase font-mono">{company.cnpj || "Sem CNPJ"}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="font-normal bg-blue-50/50 text-blue-600 border-blue-200">
+                          {company.tenants?.name || "Global"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center font-medium">
+                        {company.user_profiles?.[0]?.count || 0}
+                      </TableCell>
+                      <TableCell className="text-center font-medium">
+                        {company.dispositivos?.[0]?.count || 0}
+                      </TableCell>
+                      <TableCell>
+                        {company.is_active ? (
+                          <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/20">Ativo</Badge>
+                        ) : (
+                          <Badge variant="destructive" className="bg-rose-500/10 text-rose-600 border-rose-500/20 hover:bg-rose-500/20">Inativo</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => navigate(`/superadmin/companies/${company.id}`)}>
+                              <ExternalLink className="h-4 w-4 mr-2" /> Gerenciar Detalhes
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Edit className="h-4 w-4 mr-2" /> Editar Cadastro
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive">
+                              {company.is_active ? "Desativar Empresa" : "Ativar Empresa"}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="activity">
+           <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Atividade Recente do Sistema</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground italic">Logs globais de auditoria serão exibidos aqui.</p>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       <CreateUserModal 
         isOpen={isUserModalOpen} 
         onClose={() => setIsUserModalOpen(false)} 
+        onSuccess={() => refetchCompanies()}
+      />
+
+      <CreateCompanyModal
+        isOpen={isCompanyModalOpen}
+        onClose={() => setIsCompanyModalOpen(false)}
         onSuccess={() => {
-          window.location.reload();
+          refetchCompanies();
         }}
       />
-    </>
+    </div>
   );
 }
