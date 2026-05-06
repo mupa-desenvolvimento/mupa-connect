@@ -33,12 +33,8 @@ export default function FaceTrackDemoPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const detectionIntervalRef = useRef<number | null>(null);
-  const initializedRef = useRef(false);
 
   useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
-
     const loadModels = async () => {
       try {
         const MODEL_URL = '/models';
@@ -70,14 +66,7 @@ export default function FaceTrackDemoPage() {
         });
         videoRef.current.srcObject = stream;
         videoRef.current.onloadedmetadata = () => {
-          console.log("[Face Track Demo] Camera started! Video dimensions:", videoRef.current?.videoWidth, "x", videoRef.current?.videoHeight);
-          
-          // Initialize canvas dimensions
-          if (canvasRef.current) {
-            canvasRef.current.width = videoRef.current.videoWidth;
-            canvasRef.current.height = videoRef.current.videoHeight;
-          }
-          
+          console.log("[Face Track Demo] Camera started!");
           setFaceDetectionActive(true);
           startDetectionLoop();
         };
@@ -92,26 +81,16 @@ export default function FaceTrackDemoPage() {
         clearInterval(detectionIntervalRef.current);
       }
       
-      console.log("[Face Track Demo] Starting detection loop...");
-      
       detectionIntervalRef.current = window.setInterval(async () => {
-        if (!videoRef.current || !canvasRef.current || !modelsLoaded) return;
-        
-        console.log("[Face Track Demo] Detection running... Video ready:", !!videoRef.current.videoWidth, "x", !!videoRef.current.videoHeight);
+        if (!videoRef.current || !modelsLoaded) return;
         
         try {
-          const options = new faceapi.TinyFaceDetectorOptions({
-            inputSize: 320,
-            scoreThreshold: 0.3
-          });
-          
+          const options = new faceapi.TinyFaceDetectorOptions();
           const result = await faceapi
             .detectAllFaces(videoRef.current, options)
             .withFaceLandmarks()
             .withFaceExpressions()
             .withAgeAndGender();
-          
-          console.log(`[Face Track Demo] Detection result length:`, result.length);
           
           if (result.length > 0) {
             console.log(`[Face Track Demo] Detected ${result.length} face(s)!`);
@@ -138,7 +117,7 @@ export default function FaceTrackDemoPage() {
           
           setDetectedFaces(newFaces);
           
-          if (result.length > 0 && overlayCanvasRef.current) {
+          if (result.length > 0 && overlayCanvasRef.current && videoRef.current) {
             const displaySize = { 
               width: videoRef.current.videoWidth, 
               height: videoRef.current.videoHeight 
@@ -179,7 +158,7 @@ export default function FaceTrackDemoPage() {
     loadModels();
 
     return cleanup;
-  }, []);
+  }, [modelsLoaded]);
 
   const getEmotionIcon = (emotion: string) => {
     switch (emotion.toLowerCase()) {
