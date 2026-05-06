@@ -100,7 +100,7 @@ export default function PlayerPage() {
 
           const { data: items, error: itemsError } = await supabase
             .from("playlist_items")
-            .select("id, media_id, position, ordem, duracao, tipo, media_items(id, name, file_url, thumbnail_url, type, duration)")
+            .select("id, media_id, position, ordem, duracao, tipo, media_items(id, name, file_url, optimized_url, thumbnail_url, type, duration)")
             .eq("playlist_id", previewPlaylistId);
 
           if (itemsError) throw itemsError;
@@ -112,7 +112,7 @@ export default function PlayerPage() {
               return {
                 id: item.media_id || item.id,
                 type: item.tipo || media?.type || "image",
-                url: media?.file_url,
+                url: media?.optimized_url || media?.file_url,
                 duration: item.duracao || media?.duration || 10,
                 name: media?.name || "Sem nome"
               };
