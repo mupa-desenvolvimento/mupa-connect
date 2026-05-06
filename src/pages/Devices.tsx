@@ -469,12 +469,9 @@ export default function DevicesPage() {
                 </div>
               )}
             </div>
-          ) : (
-            viewMode === "table" ? (
-
-            <div className="h-64 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-50" /></div>
-          ) : (
+          ) : viewMode === "table" ? (
             <Table>
+
               <TableHeader className="sticky top-0 bg-card z-10 border-b border-border/60">
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="w-10">
