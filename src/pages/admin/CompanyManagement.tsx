@@ -58,16 +58,33 @@ export default function CompanyManagement() {
         .select(`
           id,
           role,
-          created_at,
-          tenant_id
+          created_at
         `)
         .eq("company_id", id);
       
       if (error) throw error;
 
-      // Manually fetch names from the 'users' view or auth
-      // For now, let's assume we show the ID or placeholder
-      return data;
+      if (data.length === 0) return [];
+
+      // Fetch profile details for these users
+      const userIds = data.map(u => u.id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", userIds);
+
+      if (profilesError) throw profilesError;
+
+      const profileMap = (profiles || []).reduce((acc: any, p) => {
+        acc[p.id] = p;
+        return acc;
+      }, {});
+
+      return data.map(u => ({
+        ...u,
+        name: profileMap[u.id]?.full_name || "Usuário sem nome",
+        email: profileMap[u.id]?.email || "sem-email@mupa.app"
+      }));
     }
   });
 
