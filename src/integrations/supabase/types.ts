@@ -5257,6 +5257,30 @@ export type Database = {
           },
         ]
       }
+      seq_produto_assai: {
+        Row: {
+          CODACESSONUM: string | null
+          created_at: string
+          DESCCOMPLETA: string | null
+          id: number
+          SEQPRODUTO: string | null
+        }
+        Insert: {
+          CODACESSONUM?: string | null
+          created_at?: string
+          DESCCOMPLETA?: string | null
+          id?: number
+          SEQPRODUTO?: string | null
+        }
+        Update: {
+          CODACESSONUM?: string | null
+          created_at?: string
+          DESCCOMPLETA?: string | null
+          id?: number
+          SEQPRODUTO?: string | null
+        }
+        Relationships: []
+      }
       states: {
         Row: {
           code: string | null
