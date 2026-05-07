@@ -228,6 +228,8 @@ import QueryErrorsReport from "./pages/QueryErrorsReport";
                 } />
 
                 <Route path="/admin/analytics/consultas" element={<ProductQueriesAnalytics />} />
+                <Route path="/admin/analytics/erros" element={<QueryErrorsReport />} />
+
                 <Route path="/admin/monitoring" element={
                   <ProtectedRoute requireTecnico>
                     <NOCDashboard />
