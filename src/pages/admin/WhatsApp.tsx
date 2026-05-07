@@ -72,13 +72,34 @@ export default function WhatsAppManagement() {
   const [showAddRecipientDialog, setShowAddRecipientDialog] = useState(false);
   const [showTestMessageDialog, setShowTestMessageDialog] = useState(false);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  
   const [newInstance, setNewInstance] = useState({ name: "", description: "" });
-  const [newRecipient, setNewRecipient] = useState({ name: "", phone: "" });
+  const [newRecipient, setNewRecipient] = useState({ 
+    id: "", 
+    name: "", 
+    phone: "", 
+    company_id: "", 
+    error_notifications: true, 
+    device_status_notifications: true, 
+    playlist_notifications: true 
+  });
   const [newTemplate, setNewTemplate] = useState({ name: "", content: "", category: "" });
   const [testMessage, setTestMessage] = useState({ instanceName: "", recipientPhone: "", message: "" });
   const [creating, setCreating] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
   const queryClient = useQueryClient();
+
+  const recipientInputRef = usePhoneMask();
+  const testInputRef = usePhoneMask();
+
+  const { data: companies } = useQuery({
+    queryKey: ["companies"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("companies").select("id, name").order("name");
+      if (error) throw error;
+      return data;
+    }
+  });
 
   const callApi = async (action: string, payload: Record<string, unknown> = {}) => {
     const { data, error } = await supabase.functions.invoke("whatsapp-evolution", {
