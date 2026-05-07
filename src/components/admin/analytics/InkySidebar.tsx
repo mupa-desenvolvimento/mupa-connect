@@ -76,7 +76,7 @@ export function InkySidebar({ isOpen, onClose, logs, filters }: InkySidebarProps
     today.setHours(0, 0, 0, 0);
 
     const { data, error } = await supabase
-      .from("inky_insights" as any)
+      .from("inky_insights")
       .select("*")
       .eq("tenant_id", tenantId)
       .gte("created_at", today.toISOString())
@@ -84,7 +84,7 @@ export function InkySidebar({ isOpen, onClose, logs, filters }: InkySidebarProps
       .limit(1);
 
     if (data && data.length > 0) {
-      const saved = data[0];
+      const saved = data[0] as any;
       setInsights(saved.insight_data as InkyInsight[]);
       setExecutiveSummary(saved.executive_summary || "");
     } else {
@@ -198,7 +198,7 @@ export function InkySidebar({ isOpen, onClose, logs, filters }: InkySidebarProps
       setIsAnalyzing(false);
 
       // Salva no banco para cache
-      await supabase.from("inky_insights" as any).insert({
+      await (supabase.from("inky_insights") as any).insert({
         tenant_id: tenantId,
         company_id: companyId,
         analysis_type: 'general',
