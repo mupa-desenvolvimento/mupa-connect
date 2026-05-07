@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
@@ -17,7 +17,9 @@ import {
   Legend,
   Cell,
   PieChart,
-  Pie
+  Pie,
+  LineChart,
+  Line
 } from "recharts";
 import { 
   AlertTriangle, 
@@ -37,7 +39,14 @@ import {
   List,
   Download,
   FileSpreadsheet,
-  File
+  File,
+  Sparkles,
+  Brain,
+  Zap,
+  ChevronRight,
+  Loader2,
+  TrendingUp,
+  History
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format, subDays, startOfDay, endOfDay, parseISO } from "date-fns";
@@ -73,6 +82,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const COLORS = ["#ef4444", "#f59e0b", "#3b82f6", "#8b5cf6", "#ec4899", "#10b981"];
 
