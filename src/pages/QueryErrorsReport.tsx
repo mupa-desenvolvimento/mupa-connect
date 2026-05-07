@@ -749,7 +749,7 @@ export default function QueryErrorsReport() {
                       <div className="grid grid-cols-2 gap-2">
                         <div className="p-2 rounded-lg bg-muted/40 border border-border/50">
                           <p className="text-[10px] text-muted-foreground uppercase font-semibold">Loja</p>
-                          <p className="text-xs truncate font-medium">{item.store_name || 'Matriz'}</p>
+                          <p className="text-xs truncate font-bold">{item.store_name}</p>
                         </div>
                         <div className="p-2 rounded-lg bg-muted/40 border border-border/50">
                           <p className="text-[10px] text-muted-foreground uppercase font-semibold">Terminal</p>
