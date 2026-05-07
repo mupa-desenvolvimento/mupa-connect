@@ -43,6 +43,8 @@ export default function CampaignsPage() {
   const queryClient = useQueryClient();
   const [view, setView] = useState<"grid" | "list" | "calendar" | "timeline">("grid");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
 
   const { data: campaigns, isLoading } = useQuery({
     queryKey: ["campaigns", tenantId || companyId],
