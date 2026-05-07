@@ -37,7 +37,8 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { useMedias, useTenant } from "@/hooks/use-playlist-data";
+import { useMedias } from "@/hooks/use-playlist-data";
+import { useUserRole } from "@/hooks/use-user-role";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -179,7 +180,7 @@ const SortableCampaignItem = ({ item, index, onRemove, onUpdateDuration }: any) 
 };
 
 export function CampaignContentManager({ campaignId }: CampaignContentManagerProps) {
-  const { data: tenantId } = useTenant();
+  const { tenantId } = useUserRole();
   const { data: libraryMedia, isLoading: loadingLibrary } = useMedias(tenantId as string);
   const [campaignItems, setCampaignItems] = useState<CampaignMedia[]>([]);
   const [loading, setLoading] = useState(true);
