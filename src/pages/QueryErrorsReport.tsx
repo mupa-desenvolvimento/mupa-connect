@@ -132,11 +132,20 @@ export default function QueryErrorsReport() {
 
       // Step 2: Enrich with real store and device data
       const uniqueSerials = Array.from(new Set(errorRows.map(e => e.device_serial?.trim())));
+      const uniqueStoreIds = Array.from(new Set(errorRows.map(e => e.store_id).filter(Boolean)));
       
       const { data: devicesData } = await supabase
         .from("dispositivos")
         .select("serial, apelido_interno, store_id, num_filial, stores(name)")
         .in("serial", uniqueSerials);
+
+      const { data: storesData } = await supabase
+        .from("stores")
+        .select("id, name")
+        .in("id", uniqueStoreIds);
+
+      const storeMap = new Map();
+      storesData?.forEach(s => storeMap.set(s.id, s.name));
 
       const deviceMap = new Map();
       devicesData?.forEach(d => {
@@ -145,7 +154,7 @@ export default function QueryErrorsReport() {
           deviceMap.set(serial, {
             apelido: d.apelido_interno,
             num_filial: d.num_filial,
-            store_name: (d.stores as any)?.name || (d.num_filial ? `Loja ${d.num_filial}` : null)
+            store_name: (d.stores as any)?.name || storeMap.get(d.store_id) || (d.num_filial ? `Loja ${d.num_filial}` : null)
           });
         }
       });
