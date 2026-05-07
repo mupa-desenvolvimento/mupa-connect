@@ -301,7 +301,7 @@ export default function QueryErrorsReport() {
       `"${item.device_serial}"`,
       `"${item.product_name || 'Produto s/ Nome'}"`,
       `"${item.ean || 'N/A'}"`,
-      `"${item.store_name || 'Loja Central'}"`,
+      `"${item.store_name}"`,
       `"${item.error_type}"`,
       item.error_count,
       `"${format(parseISO(item.last_occurrence), "dd/MM/yyyy HH:mm")}"`,
