@@ -107,17 +107,14 @@ export default function QueryErrorsReport() {
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
 
   const { data: errors, isLoading, refetch } = useQuery({
-    queryKey: ["product-query-errors", period, selectedStore, selectedDevice, selectedErrorType, dateRange],
+    queryKey: ["product-query-errors-enriched", period, selectedStore, selectedDevice, selectedErrorType, dateRange],
     queryFn: async () => {
-      let query = supabase
-        .from("product_query_errors")
-        .select("*");
+      // Step 1: Fetch errors
+      let query = supabase.from("product_query_errors").select("*");
 
       if (period === "custom" && dateRange?.from) {
         query = query.gte("created_at", startOfDay(dateRange.from).toISOString());
-        if (dateRange.to) {
-          query = query.lte("created_at", endOfDay(dateRange.to).toISOString());
-        }
+        if (dateRange.to) query = query.lte("created_at", endOfDay(dateRange.to).toISOString());
       } else if (period !== "all") {
         const days = parseInt(period);
         const date = subDays(new Date(), days);
@@ -128,9 +125,37 @@ export default function QueryErrorsReport() {
       if (selectedDevice !== "all") query = query.eq("device_serial", selectedDevice);
       if (selectedErrorType !== "all") query = query.eq("error_type", selectedErrorType);
 
-      const { data, error } = await query.order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
+      const { data: errorRows, error: fetchError } = await query.order("created_at", { ascending: false });
+      if (fetchError) throw fetchError;
+
+      if (!errorRows || errorRows.length === 0) return [];
+
+      // Step 2: Enrich with real store and device data
+      const uniqueSerials = Array.from(new Set(errorRows.map(e => e.device_serial?.trim())));
+      
+      const { data: devicesData } = await supabase
+        .from("dispositivos")
+        .select("serial, apelido_interno, store_id, num_filial, stores(name)")
+        .in("serial", uniqueSerials);
+
+      const deviceMap = new Map();
+      devicesData?.forEach(d => {
+        deviceMap.set(d.serial?.trim(), {
+          apelido: d.apelido_interno,
+          num_filial: d.num_filial,
+          store_name: (d.stores as any)?.name || (d.num_filial ? `Loja ${d.num_filial}` : null)
+        });
+      });
+
+      return errorRows.map(e => {
+        const enrichment = deviceMap.get(e.device_serial?.trim());
+        return {
+          ...e,
+          device_name: enrichment?.apelido || e.device_name,
+          store_name: enrichment?.store_name || e.store_name,
+          num_filial: enrichment?.num_filial
+        };
+      });
     },
   });
 
