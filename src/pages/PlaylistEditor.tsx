@@ -254,7 +254,7 @@ const SortableItem = ({ item, index, isSelected, onSelect, timelineMode = false 
   );
 };
 
-const DraggableMediaItem = ({ media, onClick }: any) => {
+const DraggableMediaItem = ({ media, onClick, isSelected, onToggleSelect }: any) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `library-${media.id}`,
     data: {
@@ -272,24 +272,46 @@ const DraggableMediaItem = ({ media, onClick }: any) => {
     <div 
       ref={setNodeRef} 
       style={style}
-      {...listeners} 
-      {...attributes}
       className={cn(
-        "relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer border border-white/10 hover:border-[#085CF0] group transition-all",
+        "relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer border transition-all group",
+        isSelected ? "border-[#085CF0] ring-2 ring-[#085CF0]/20" : "border-white/10 hover:border-[#085CF0]",
         isDragging && "opacity-50 ring-2 ring-[#085CF0] z-50"
       )}
-      onClick={() => onClick(media.id)}
+      onClick={(e) => {
+        if (e.shiftKey || e.ctrlKey || e.metaKey) {
+          onToggleSelect(media.id);
+        } else {
+          onClick(media.id);
+        }
+      }}
     >
       <img src={media.thumbnail_url || media.file_url} className="w-full h-full object-cover" />
       <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
-      <div className="absolute bottom-1 left-1 right-1 text-[10px] truncate bg-black/60 px-1 rounded font-bold text-white/90">
+      
+      <div 
+        {...listeners} 
+        {...attributes}
+        className="absolute inset-0 z-10"
+      />
+
+      <div className="absolute top-1 right-1 z-20">
+        <div 
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleSelect(media.id);
+          }}
+          className={cn(
+            "h-4 w-4 rounded border flex items-center justify-center transition-colors",
+            isSelected ? "bg-[#085CF0] border-[#085CF0]" : "bg-black/40 border-white/20 hover:border-white/40"
+          )}
+        >
+          {isSelected && <CheckCircle2 className="h-3 w-3 text-white" />}
+        </div>
+      </div>
+
+      <div className="absolute bottom-1 left-1 right-1 text-[10px] truncate bg-black/60 px-1 rounded font-bold text-white/90 z-20">
         {media.name}
       </div>
-      {isDragging && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#085CF0]/20">
-          <Plus className="h-6 w-6 text-white" />
-        </div>
-      )}
     </div>
   );
 };
