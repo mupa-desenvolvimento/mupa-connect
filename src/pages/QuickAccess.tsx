@@ -115,9 +115,9 @@ export default function QuickAccessPage() {
         payload: payload
       });
 
-      toast.success(`${label} enviado com sucesso!`);
+      toast.success(`${label} enviado com sucesso (200 OK)!`);
     } catch (err) {
-      toast.error(`Falha ao enviar ${label}`);
+      toast.error(`Falha ao enviar ${label} (Erro no servidor)`);
     } finally {
       setSendingCommand(null);
     }
