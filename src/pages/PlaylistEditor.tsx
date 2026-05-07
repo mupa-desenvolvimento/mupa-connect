@@ -679,6 +679,12 @@ export default function PlaylistEditor() {
                     key={media.id} 
                     media={media} 
                     onClick={addItem} 
+                    isSelected={selectedLibraryIds.includes(media.id)}
+                    onToggleSelect={(id: string) => {
+                      setSelectedLibraryIds(prev => 
+                        prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+                      );
+                    }}
                   />
                 ))}
               </TabsContent>
