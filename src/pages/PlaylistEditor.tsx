@@ -136,7 +136,7 @@ const SortableItem = ({ item, index, isSelected, onSelect }: any) => {
   });
   
   const media = item.media;
-  const isCampaign = item.type === 'campaign';
+  const isCampaignItem = item.campaignId;
   const campaign = item.campaign;
   
   const style = { 
@@ -159,7 +159,7 @@ const SortableItem = ({ item, index, isSelected, onSelect }: any) => {
     >
       {/* Thumbnail Area */}
       <div className="relative h-[160px] w-full overflow-hidden bg-black/40">
-        {!isCampaign ? (
+        {!isCampaignItem ? (
           <img 
             src={media?.thumbnail_url || media?.file_url} 
             alt={media?.name} 
@@ -208,11 +208,11 @@ const SortableItem = ({ item, index, isSelected, onSelect }: any) => {
       {/* Content Info */}
       <div className="flex-1 p-3 flex flex-col justify-between relative bg-gradient-to-b from-[#1A1A1E] to-[#141417]">
         <p className="text-xs font-bold text-white/90 line-clamp-2 leading-tight">
-          {isCampaign ? campaign?.name : (media?.name || 'Sem nome')}
+          {isCampaignItem ? campaign?.name : (media?.name || 'Sem nome')}
         </p>
         
         <div className="flex items-center justify-between mt-auto pt-2">
-          {!isCampaign ? (
+          {!isCampaignItem ? (
             <div className="flex items-center gap-1.5">
               {media?.type === 'video' ? <Video className="h-3 w-3 text-white/40" /> : <ImageIcon className="h-3 w-3 text-white/40" />}
               <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest">{item.type}</span>
@@ -235,8 +235,8 @@ const SortableItem = ({ item, index, isSelected, onSelect }: any) => {
       <div 
         className="h-1.5 w-full mt-auto"
         style={{ 
-          backgroundColor: isCampaign ? (campaign?.color || '#085CF0') : 'transparent',
-          boxShadow: isCampaign ? `0 -4px 12px ${(campaign?.color || '#085CF0')}40` : 'none'
+          backgroundColor: isCampaignItem ? (campaign?.color || '#085CF0') : 'transparent',
+          boxShadow: isCampaignItem ? `0 -4px 12px ${(campaign?.color || '#085CF0')}40` : 'none'
         }}
       />
     </div>
@@ -619,8 +619,8 @@ export default function PlaylistEditor() {
     
     if (!over) return;
 
-    // Handle library to campaign content drop
-    if (over.id === 'campaign-drop-zone' && active.data.current?.type === 'library-media') {
+    // Handle library to timeline drop (now including potential campaign contents)
+    if (over.id === 'playlist-timeline-drop-zone' && active.data.current?.type === 'library-media') {
       const mediaId = active.data.current.mediaId;
       if (selectedLibraryIds.includes(mediaId)) {
         addMultipleItems(selectedLibraryIds);
@@ -653,33 +653,40 @@ export default function PlaylistEditor() {
   };
 
   const addCampaignToPlaylist = async (campaign: any) => {
-    if (id === 'new') {
-      toast.error("Salve a playlist antes de adicionar campanhas.");
-      return;
-    }
-
-    // First check if campaign is already in playlist
-    if (campaigns.some((c: any) => c.id === campaign.id)) {
-      toast.error("Esta campanha já faz parte desta playlist.");
-      return;
-    }
-
     try {
-      const { data, error } = await supabase.from("playlist_campaigns").insert({
-        playlist_id: id as any,
-        campaign_id: campaign.id,
-        tenant_id: tenantId,
+      // Buscar os conteúdos da campanha
+      const { data: contents, error: contentsError } = await supabase
+        .from("campaign_contents")
+        .select("*, media:media_items(*)")
+        .eq("campaign_id", campaign.id)
+        .eq("is_active", true)
+        .order("position");
+
+      if (contentsError) throw contentsError;
+
+      if (!contents || contents.length === 0) {
+        toast.error(`A campanha "${campaign.name}" não possui conteúdos.`);
+        return;
+      }
+
+      // Transformar os conteúdos da campanha em itens da playlist
+      const newItems: EditorPlaylistItem[] = contents.map(content => ({
+        id: `campaign-item-${Date.now()}-${Math.random()}`,
+        mediaId: content.media_id,
+        duration: content.duration_override || content.media?.duration || 10,
         priority: 1,
-        is_active: true,
-        position: items.length
-      }).select().single();
+        type: content.media?.type === 'video' ? 'video' : 'image',
+        media: content.media,
+        campaignId: campaign.id,
+        campaign: campaign
+      }));
 
-      if (error) throw error;
-
-      queryClient.invalidateQueries({ queryKey: ["playlist-campaigns", id] });
-      toast.success(`Campanha ${campaign.name} adicionada à playlist`);
+      const updatedItems = [...items, ...newItems];
+      setItems(updatedItems);
+      setHasUnsavedChanges(true);
+      toast.success(`${contents.length} itens da campanha "${campaign.name}" adicionados.`);
     } catch (err: any) {
-      toast.error(`Erro ao adicionar campanha: ${err.message}`);
+      toast.error(`Erro ao processar campanha: ${err.message}`);
     }
   };
 
@@ -687,47 +694,24 @@ export default function PlaylistEditor() {
     const media = medias?.find(m => m.id === mediaId);
     if (!media) return;
 
-    if (selectedItem?.type === 'campaign') {
-      const { error } = await supabase.from("campaign_contents").insert({
-        campaign_id: selectedItem.campaignId,
-        media_id: mediaId,
-        tenant_id: tenantId,
-        position: (campaignContents?.length || 0) + 1,
-        is_active: true
-      });
-      if (error) toast.error("Erro ao adicionar à campanha");
-      else { toast.success(`Adicionado à campanha ${selectedItem.campaign?.name}`); refetchCampaignContents(); }
-      return;
-    }
-
-    const newItem: EditorPlaylistItem = { id: `temp-${Date.now()}`, mediaId: media.id, duration: media.duration || 10, priority: 1, type: media.type === 'video' ? 'video' : 'image', media: media };
-    const newItems = [...items, newItem]; setItems(newItems); setSelectedItem(newItem); setHasUnsavedChanges(true); toast.success(`${media.name} adicionado`);
+    const newItem: EditorPlaylistItem = { 
+      id: `temp-${Date.now()}`, 
+      mediaId: media.id, 
+      duration: media.duration || 10, 
+      priority: 1, 
+      type: media.type === 'video' ? 'video' : 'image', 
+      media: media 
+    };
+    const newItems = [...items, newItem]; 
+    setItems(newItems); 
+    setSelectedItem(newItem); 
+    setHasUnsavedChanges(true); 
+    toast.success(`${media.name} adicionado`);
   };
 
   const addMultipleItems = async (mediaIds: string[]) => {
     if (mediaIds.length === 0) return;
     
-    if (selectedItem?.type === 'campaign') {
-      const contentsToInsert = mediaIds.map((mediaId, index) => ({
-        campaign_id: selectedItem.campaignId,
-        media_id: mediaId,
-        tenant_id: tenantId,
-        position: (campaignContents?.length || 0) + index + 1,
-        is_active: true
-      }));
-
-      const { error } = await supabase.from("campaign_contents").insert(contentsToInsert);
-      
-      if (error) {
-        toast.error("Erro ao adicionar itens à campanha");
-      } else {
-        toast.success(`${mediaIds.length} itens adicionados à campanha ${selectedItem.campaign?.name}`);
-        setSelectedLibraryIds([]);
-        refetchCampaignContents();
-      }
-      return;
-    }
-
     // Adding to regular playlist
     const newPlaylistItems: EditorPlaylistItem[] = mediaIds.map(mediaId => {
       const media = medias?.find(m => m.id === mediaId);
@@ -885,7 +869,7 @@ export default function PlaylistEditor() {
               {selectedItem ? (
                 <div className="flex-1 flex flex-col min-h-0">
                   <div className="flex-1 flex items-center justify-center p-8 bg-black/20 overflow-hidden">
-                    {selectedItem.type === 'campaign' ? (
+                    {selectedItem.campaignId ? (
                       <div className="flex flex-col items-center gap-4 text-center">
                         <div 
                           className="w-32 h-32 rounded-[2rem] flex items-center justify-center border-4 shadow-[0_0_30px_rgba(var(--campaign-color-rgb),0.2)]"
@@ -901,11 +885,14 @@ export default function PlaylistEditor() {
                           <h3 className="text-2xl font-bold text-white tracking-tight">{selectedItem.campaign?.name}</h3>
                           <div className="flex items-center justify-center gap-3 mt-2">
                             <Badge variant="outline" className="text-[10px] border-white/10 bg-white/5 uppercase tracking-widest px-3">
-                              Campanha
+                              Parte da Campanha
                             </Badge>
-                            <Badge variant="outline" className="text-[10px] border-[#085CF0]/30 bg-[#085CF0]/10 text-[#085CF0] uppercase tracking-widest px-3">
-                              Prioridade {selectedItem.priority}
-                            </Badge>
+                            <div className="relative h-12 w-24 rounded-lg overflow-hidden border border-white/10 bg-black">
+                               <img 
+                                src={selectedItem.media?.thumbnail_url || selectedItem.media?.file_url} 
+                                className="w-full h-full object-contain" 
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -924,52 +911,6 @@ export default function PlaylistEditor() {
                     )}
                   </div>
 
-                  {selectedItem.type === 'campaign' && (
-                    <div className="h-[300px] border-t border-white/10 bg-[#0c0c0e]/80 backdrop-blur-md flex flex-col">
-                      <div className="h-12 border-b border-white/5 flex items-center justify-between px-6 shrink-0 bg-black/20">
-                        <div className="flex items-center gap-3">
-                          <Layers className="h-4 w-4 text-[#085CF0]" />
-                          <span className="text-xs font-bold uppercase tracking-[0.2em] text-white/80">Conteúdos da Campanha</span>
-                          <Badge variant="secondary" className="h-5 px-2 text-[10px] bg-white/10">{campaignContents?.length || 0}</Badge>
-                        </div>
-                      </div>
-                      <CampaignDropZone>
-                        <ScrollArea className="flex-1">
-                          <div className="p-6 flex gap-4">
-                            {campaignContents?.map((content: any, idx: number) => (
-                              <div key={content.id} className="relative group shrink-0 w-40 animate-in fade-in slide-in-from-right-4 duration-300">
-                                <div className="aspect-video rounded-xl overflow-hidden border border-white/5 bg-black/40 relative shadow-lg group-hover:border-[#085CF0]/50 transition-all">
-                                  <img src={content.media?.thumbnail_url || content.media?.file_url} className="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
-                                  <div className="absolute top-2 left-2 bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold text-white border border-white/10">{idx + 1}</div>
-                                  <button 
-                                    onClick={async (e) => {
-                                      e.stopPropagation();
-                                      const { error } = await supabase.from("campaign_contents").delete().eq("id", content.id);
-                                      if (error) toast.error("Erro ao remover");
-                                      else { toast.success("Removido"); refetchCampaignContents(); }
-                                    }}
-                                    className="absolute top-2 right-2 h-7 w-7 rounded-xl bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-xl hover:scale-110 active:scale-95"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </button>
-                                </div>
-                                <p className="text-[10px] font-bold text-white/60 mt-3 truncate px-1 group-hover:text-white transition-colors">{content.media?.name}</p>
-                              </div>
-                            ))}
-                            {(!campaignContents || campaignContents.length === 0) && (
-                              <div className="w-full h-40 border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center text-white/10 gap-3 hover:border-white/10 transition-colors">
-                                <div className="p-3 rounded-full bg-white/[0.02]">
-                                  <Plus className="h-8 w-8" />
-                                </div>
-                                <span className="text-xs font-bold uppercase tracking-widest">Arraste mídias aqui</span>
-                              </div>
-                            )}
-                          </div>
-                          <ScrollBar orientation="horizontal" />
-                        </ScrollArea>
-                      </CampaignDropZone>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-white/5">
@@ -988,8 +929,16 @@ export default function PlaylistEditor() {
                     {selectedItem.isLocked && <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[9px] uppercase font-bold">Bloqueado</Badge>}
                   </div>
                   <h4 className="text-lg font-bold text-white leading-tight">
-                    {selectedItem.type === 'campaign' ? selectedItem.campaign?.name : selectedItem.media?.name}
+                    {selectedItem.media?.name}
                   </h4>
+                  {selectedItem.campaign && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <Megaphone className="h-3.5 w-3.5" style={{ color: selectedItem.campaign.color }} />
+                      <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: selectedItem.campaign.color }}>
+                        {selectedItem.campaign.name}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 
                 <ScrollArea className="flex-1">
@@ -999,27 +948,25 @@ export default function PlaylistEditor() {
                       <div className="space-y-2">
                         <Label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Configurações</Label>
                         <div className="space-y-4 pt-2">
-                          {selectedItem.type !== 'campaign' && (
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs font-medium text-white/80">Duração</span>
-                                <span className="text-xs font-mono text-[#085CF0]">{selectedItem.duration}s</span>
-                              </div>
-                              <Slider 
-                                disabled={selectedItem.isLocked}
-                                value={[selectedItem.duration]} 
-                                min={1} 
-                                max={600} 
-                                step={1}
-                                onValueChange={([val]) => {
-                                  setSelectedItem({...selectedItem, duration: val});
-                                  setItems(items.map(it => it.id === selectedItem.id ? {...it, duration: val} : it));
-                                  setHasUnsavedChanges(true);
-                                }}
-                                className="py-2"
-                              />
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-medium text-white/80">Duração</span>
+                              <span className="text-xs font-mono text-[#085CF0]">{selectedItem.duration}s</span>
                             </div>
-                          )}
+                            <Slider 
+                              disabled={selectedItem.isLocked}
+                              value={[selectedItem.duration]} 
+                              min={1} 
+                              max={600} 
+                              step={1}
+                              onValueChange={([val]) => {
+                                setSelectedItem({...selectedItem, duration: val});
+                                setItems(items.map(it => it.id === selectedItem.id ? {...it, duration: val} : it));
+                                setHasUnsavedChanges(true);
+                              }}
+                              className="py-2"
+                            />
+                          </div>
                           
                           <div className="space-y-2">
                             <span className="text-xs font-medium text-white/80">Prioridade</span>
