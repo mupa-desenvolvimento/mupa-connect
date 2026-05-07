@@ -61,23 +61,38 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ReportGeneratorModal } from "@/components/ReportGeneratorModal";
+import { InkySidebar } from "@/components/admin/analytics/InkySidebar";
+import { Sparkles } from "lucide-react";
 
 const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
+import { useTenant } from "@/hooks/use-tenant";
+
 export default function ProductQueriesAnalytics() {
+  const { tenantId, companyId } = useTenant();
   const [period, setPeriod] = useState("all");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [selectedStore, setSelectedStore] = useState("all");
   const [selectedDevice, setSelectedDevice] = useState("all");
   const [reportModalOpen, setReportModalOpen] = useState(false);
-
+  const [inkySidebarOpen, setInkySidebarOpen] = useState(false);
 
   const { data: logs, isLoading, refetch } = useQuery({
-    queryKey: ["product-queries-logs", period, selectedStore, selectedDevice, dateRange],
+    queryKey: ["product-queries-logs", period, selectedStore, selectedDevice, dateRange, tenantId, companyId],
     queryFn: async () => {
       let query = supabase
         .from("product_queries_log")
         .select("*");
+
+      // Multi-tenant filters
+      if (tenantId) {
+        // @ts-ignore
+        query = query.eq("tenant_id", tenantId);
+      }
+      if (companyId) {
+        // @ts-ignore
+        query = query.eq("company_id", companyId);
+      }
 
       if (period === "custom" && dateRange?.from) {
         query = query.gte("created_at", startOfDay(dateRange.from).toISOString());
@@ -90,46 +105,79 @@ export default function ProductQueriesAnalytics() {
         query = query.gte("created_at", date.toISOString());
       }
 
-
       if (selectedStore !== "all") {
         query = query.eq("loja", selectedStore);
       }
 
       if (selectedDevice !== "all") {
-        query = query.eq("device_id", selectedDevice);
+        query = query.or(`device_id.eq.${selectedDevice},device_serial.eq.${selectedDevice}`);
       }
 
       const { data, error } = await query.order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
+    enabled: !!tenantId || !!companyId
   });
 
   const { data: stores } = useQuery({
-    queryKey: ["filter-stores"],
+    queryKey: ["filter-stores", tenantId, companyId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("product_queries_log")
         .select("loja")
         .not("loja", "is", null);
+
+      if (tenantId) {
+        // @ts-ignore
+        query = query.eq("tenant_id", tenantId);
+      }
+      if (companyId) {
+        // @ts-ignore
+        query = query.eq("company_id", companyId);
+      }
       
+      const { data, error } = await query;
       if (error) return [];
       const uniqueStores = Array.from(new Set((data as any[]).map(d => d.loja)));
       return uniqueStores.sort() as string[];
-    }
+    },
+    enabled: !!tenantId || !!companyId
   });
 
   const { data: devices } = useQuery({
-    queryKey: ["filter-devices"],
+    queryKey: ["filter-devices", tenantId, companyId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("product_queries_log")
-        .select("device_id, apelido");
+        .select("device_id, apelido, device_serial");
+
+      if (tenantId) {
+        // @ts-ignore
+        query = query.eq("tenant_id", tenantId);
+      }
+      if (companyId) {
+        // @ts-ignore
+        query = query.eq("company_id", companyId);
+      }
       
+      const { data, error } = await query;
       if (error) return [];
-      const uniqueDevices = Array.from(new Map((data as any[]).map(d => [d.device_id, d.apelido || d.device_id])).entries());
-      return uniqueDevices.map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
-    }
+      
+      const uniqueDevicesMap = new Map();
+      (data as any[]).forEach(d => {
+        const id = d.device_id || d.device_serial;
+        const name = d.apelido || d.device_id || d.device_serial;
+        if (id && !uniqueDevicesMap.has(id)) {
+          uniqueDevicesMap.set(id, name);
+        }
+      });
+
+      return Array.from(uniqueDevicesMap.entries())
+        .map(([id, name]) => ({ id, name }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    },
+    enabled: !!tenantId || !!companyId
   });
 
   // KPI Calculations
@@ -164,10 +212,11 @@ export default function ProductQueriesAnalytics() {
     .slice(0, 5) as any[];
 
   const devicesRanking = logs?.reduce((acc: any, log) => {
-    const name = log.apelido || log.device_id;
-    if (!acc[log.device_id]) acc[log.device_id] = { name, count: 0, errors: 0 };
-    acc[log.device_id].count++;
-    if (log.status_code !== 200) acc[log.device_id].errors++;
+    const deviceKey = log.device_serial || log.device_id;
+    const name = log.apelido || deviceKey;
+    if (!acc[deviceKey]) acc[deviceKey] = { name, serial: log.device_serial || log.device_id, count: 0, errors: 0 };
+    acc[deviceKey].count++;
+    if (log.status_code !== 200) acc[deviceKey].errors++;
     return acc;
   }, {});
 
@@ -206,125 +255,147 @@ export default function ProductQueriesAnalytics() {
   }
 
   return (
-    <div className="space-y-6 pb-10">
-      <PageHeader
-        title="Inteligência de Consultas"
-        description="Insights operacionais e performance de consultas EAN"
-        actions={
-          <div className="flex flex-wrap gap-2">
-            <div className="flex items-center gap-2">
-              <Select value={period} onValueChange={(val) => {
-                setPeriod(val);
-                if (val !== 'custom') setDateRange(undefined);
-              }}>
+    <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden gap-6 pb-4">
+      <div className="flex-none">
+        <PageHeader
+          title="Inteligência de Consultas"
+          description="Insights operacionais e performance de consultas EAN"
+          actions={
+            <div className="flex flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <Select value={period} onValueChange={(val) => {
+                  setPeriod(val);
+                  if (val !== 'custom') setDateRange(undefined);
+                }}>
+                  <SelectTrigger className="w-[140px]">
+                    <Calendar className="mr-2 h-4 w-4" />
+                    <SelectValue placeholder="Período" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todo período</SelectItem>
+                    <SelectItem value="1">Hoje</SelectItem>
+                    <SelectItem value="7">Últimos 7 dias</SelectItem>
+                    <SelectItem value="30">Últimos 30 dias</SelectItem>
+                    <SelectItem value="custom">Personalizado</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {period === "custom" && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-[240px] justify-start text-left font-normal",
+                          !dateRange && "text-muted-foreground"
+                        )}
+                      >
+                        <Calendar className="mr-2 h-4 w-4" />
+                        {dateRange?.from ? (
+                          dateRange.to ? (
+                            <>
+                              {format(dateRange.from, "dd/MM/yy")} -{" "}
+                              {format(dateRange.to, "dd/MM/yy")}
+                            </>
+                          ) : (
+                            format(dateRange.from, "dd/MM/yy")
+                          )
+                        ) : (
+                          <span>Selecione uma data</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        initialFocus
+                        mode="range"
+                        defaultMonth={dateRange?.from}
+                        selected={dateRange}
+                        onSelect={setDateRange}
+                        numberOfMonths={2}
+                        locale={ptBR}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
+
+
+              <Select value={selectedStore} onValueChange={setSelectedStore}>
                 <SelectTrigger className="w-[140px]">
-                  <Calendar className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Período" />
+                  <Store className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="Loja" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todo período</SelectItem>
-                  <SelectItem value="1">Hoje</SelectItem>
-                  <SelectItem value="7">Últimos 7 dias</SelectItem>
-                  <SelectItem value="30">Últimos 30 dias</SelectItem>
-                  <SelectItem value="custom">Personalizado</SelectItem>
+                  <SelectItem value="all">Todas Lojas</SelectItem>
+                  {stores?.map(store => (
+                    <SelectItem key={store} value={store}>{store}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
-              {period === "custom" && (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-[240px] justify-start text-left font-normal",
-                        !dateRange && "text-muted-foreground"
-                      )}
-                    >
-                      <Calendar className="mr-2 h-4 w-4" />
-                      {dateRange?.from ? (
-                        dateRange.to ? (
-                          <>
-                            {format(dateRange.from, "dd/MM/yy")} -{" "}
-                            {format(dateRange.to, "dd/MM/yy")}
-                          </>
-                        ) : (
-                          format(dateRange.from, "dd/MM/yy")
-                        )
-                      ) : (
-                        <span>Selecione uma data</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <CalendarComponent
-                      initialFocus
-                      mode="range"
-                      defaultMonth={dateRange?.from}
-                      selected={dateRange}
-                      onSelect={setDateRange}
-                      numberOfMonths={2}
-                      locale={ptBR}
-                    />
-                  </PopoverContent>
-                </Popover>
-              )}
+              <Select value={selectedDevice} onValueChange={setSelectedDevice}>
+                <SelectTrigger className="w-[180px]">
+                  <Monitor className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="Dispositivo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos Dispositivos</SelectItem>
+                  {devices?.map(dev => (
+                    <SelectItem key={dev.id} value={dev.id}>{dev.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Button variant="outline" size="icon" onClick={() => refetch()} title="Atualizar">
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+
+              <Button 
+                variant="outline"
+                className="border-primary/50 hover:bg-primary/5 text-primary group" 
+                onClick={() => setInkySidebarOpen(true)}
+              >
+                <Sparkles className="mr-2 h-4 w-4 group-hover:animate-pulse" />
+                Analisar com IA
+              </Button>
+
+              <Button 
+                className="bg-gradient-primary shadow-glow" 
+                onClick={() => setReportModalOpen(true)}
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Gerar Relatório
+              </Button>
             </div>
+          }
+        />
+      </div>
 
+      <div className="flex-1 overflow-y-auto space-y-6 pr-2 custom-scrollbar">
+        <ReportGeneratorModal
+          isOpen={reportModalOpen}
+          onClose={() => setReportModalOpen(false)}
+          logs={logs || []}
+          filters={{
+            period,
+            dateRange,
+            store: selectedStore,
+            device: selectedDevice
+          }}
+        />
 
-            <Select value={selectedStore} onValueChange={setSelectedStore}>
-              <SelectTrigger className="w-[140px]">
-                <Store className="mr-2 h-4 w-4" />
-                <SelectValue placeholder="Loja" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas Lojas</SelectItem>
-                {stores?.map(store => (
-                  <SelectItem key={store} value={store}>{store}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedDevice} onValueChange={setSelectedDevice}>
-              <SelectTrigger className="w-[180px]">
-                <Monitor className="mr-2 h-4 w-4" />
-                <SelectValue placeholder="Dispositivo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos Dispositivos</SelectItem>
-                {devices?.map(dev => (
-                  <SelectItem key={dev.id} value={dev.id}>{dev.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button variant="outline" size="icon" onClick={() => refetch()} title="Atualizar">
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-
-            <Button 
-              className="bg-gradient-primary shadow-glow" 
-              onClick={() => setReportModalOpen(true)}
-            >
-              <FileText className="mr-2 h-4 w-4" />
-              Gerar Relatório
-            </Button>
-          </div>
-        }
-      />
-
-      <ReportGeneratorModal
-        isOpen={reportModalOpen}
-        onClose={() => setReportModalOpen(false)}
-        logs={logs || []}
-        filters={{
-          period,
-          dateRange,
-          store: selectedStore,
-          device: selectedDevice
-        }}
-      />
-
-      {/* KPI Cards */}
+        <InkySidebar 
+          isOpen={inkySidebarOpen} 
+          onClose={() => setInkySidebarOpen(false)} 
+          logs={logs || []}
+          filters={{
+            period,
+            dateRange,
+            store: selectedStore,
+            device: selectedDevice
+          }}
+        />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-border/60">
           <CardContent className="p-5">
@@ -402,14 +473,47 @@ export default function ProductQueriesAnalytics() {
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={timelineData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                  <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}
-                    itemStyle={{ color: 'hsl(var(--primary))' }}
+                  <defs>
+                    <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.1}/>
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
+                  <XAxis 
+                    dataKey="date" 
+                    stroke="hsl(var(--muted-foreground))" 
+                    fontSize={11} 
+                    tickLine={false} 
+                    axisLine={false} 
+                    tick={{ dy: 10 }}
                   />
-                  <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  <YAxis 
+                    stroke="hsl(var(--muted-foreground))" 
+                    fontSize={11} 
+                    tickLine={false} 
+                    axisLine={false} 
+                    tickFormatter={(val) => Math.floor(val).toString()}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      borderColor: 'hsl(var(--border))',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      fontSize: '12px'
+                    }}
+                    cursor={{ stroke: 'hsl(var(--primary))', strokeWidth: 1, strokeDasharray: '4 4' }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="count" 
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth={3} 
+                    dot={{ r: 4, fill: 'hsl(var(--background))', strokeWidth: 2 }} 
+                    activeDot={{ r: 6, strokeWidth: 0 }}
+                    name="Consultas"
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -584,15 +688,42 @@ export default function ProductQueriesAnalytics() {
                   .filter((p: any) => p.errors > 0)
                   .sort((a: any, b: any) => b.errors - a.errors)
                   .slice(0, 5)
-                  .map((prod: any) => (
-                    <TableRow key={`error-prod-${prod.ean}`}>
-                      <TableCell className="font-mono text-xs">{prod.ean}</TableCell>
-                      <TableCell className="max-w-[150px] truncate">{prod.desc}</TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant="destructive">{prod.errors}</Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  .map((prod: any) => {
+                    const errorRate = (prod.errors / prod.count) * 100;
+                    const isNotFound = prod.desc === "Descrição não encontrada." || !prod.desc;
+                    
+                    return (
+                      <TableRow key={`error-prod-${prod.ean}`}>
+                        <TableCell className="font-mono text-xs">{prod.ean}</TableCell>
+                        <TableCell className="max-w-[200px]">
+                          <div className="flex flex-col">
+                            <span className={cn("text-xs font-medium truncate", isNotFound && "text-muted-foreground italic")}>
+                              {isNotFound ? "Produto não identificado" : prod.desc}
+                            </span>
+                            {isNotFound && (
+                              <Badge variant="outline" className="w-fit text-[10px] h-4 px-1 mt-1 opacity-70">
+                                Sem cadastro
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex flex-col items-end gap-1">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="destructive" className="h-5 px-1.5 text-[10px]">{prod.errors}</Badge>
+                              <span className="text-[10px] text-muted-foreground font-bold">{errorRate.toFixed(0)}%</span>
+                            </div>
+                            <div className="w-16 h-1 bg-muted rounded-full overflow-hidden">
+                              <div 
+                                className={cn("h-full rounded-full", errorRate > 50 ? "bg-destructive" : "bg-warning")} 
+                                style={{ width: `${Math.min(errorRate, 100)}%` }} 
+                              />
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 {Object.values(productCounts || {}).filter((p: any) => p.errors > 0).length === 0 && (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
@@ -640,6 +771,101 @@ export default function ProductQueriesAnalytics() {
             </Table>
           </CardContent>
         </Card>
+      </div>
+      {/* Full List Table */}
+      <Card className="mt-2 flex-1 flex flex-col min-h-[400px] overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between flex-none py-3">
+          <CardTitle className="text-sm font-bold flex items-center gap-2">
+            <BarChart className="h-4 w-4 text-primary" />
+            Log Detalhado de Consultas
+          </CardTitle>
+          <Badge variant="outline" className="bg-muted/50 font-mono">{logs?.length || 0} registros</Badge>
+        </CardHeader>
+        <CardContent className="flex-1 overflow-hidden p-0">
+          <div className="h-full overflow-y-auto custom-scrollbar relative">
+            <Table>
+              <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
+                <TableRow>
+                  <TableHead className="w-[140px]">Data/Hora</TableHead>
+                  <TableHead>Loja</TableHead>
+                  <TableHead>Dispositivo</TableHead>
+                  <TableHead>EAN</TableHead>
+                  <TableHead>Produto</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {logs?.slice(0, 50).map((log, index) => {
+                  const isNotFound = log.descricao_produto === "Descrição não encontrada." || !log.descricao_produto;
+                  const isCriticalError = log.status_code && log.status_code >= 500;
+                  const isWarningError = log.status_code && log.status_code >= 400 && log.status_code < 500;
+                  
+                  return (
+                    <TableRow 
+                      key={log.id} 
+                      className={cn(
+                        "hover:bg-muted/40 transition-colors cursor-default group",
+                        index % 2 === 1 && "bg-muted/10"
+                      )}
+                    >
+                      <TableCell className="text-[11px] font-medium text-muted-foreground">
+                        {format(parseISO(log.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}
+                      </TableCell>
+                      <TableCell className="text-xs font-semibold">{log.loja || "—"}</TableCell>
+                      <TableCell className="max-w-[150px]">
+                        <div className="flex flex-col">
+                          <span className="text-[11px] font-mono font-bold text-foreground">
+                            {log.device_serial || log.device_id}
+                          </span>
+                          {log.apelido && log.apelido !== "aguardando_ativação" && (
+                            <span className="text-[10px] text-muted-foreground italic truncate">
+                              {log.apelido}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-[10px]">{log.ean || "—"}</TableCell>
+                      <TableCell className="max-w-[200px]">
+                        <span className={cn(
+                          "text-xs truncate block",
+                          isNotFound ? "text-muted-foreground italic" : "font-medium"
+                        )} title={log.descricao_produto}>
+                          {isNotFound ? "Produto não identificado" : log.descricao_produto}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge 
+                          variant={log.status_code === 200 ? "default" : "destructive"}
+                          className={cn(
+                            "text-[10px] h-5 px-2 font-bold shadow-sm",
+                            log.status_code === 200 && "bg-success hover:bg-success/80 text-success-foreground",
+                            isCriticalError && "bg-destructive border-2 border-white/20 animate-pulse",
+                            isWarningError && !isCriticalError && "bg-orange-500 hover:bg-orange-600"
+                          )}
+                        >
+                          {log.status_code}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+                {(!logs || logs.length === 0) && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                      Nenhuma consulta encontrada para os filtros selecionados.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          {logs && logs.length > 50 && (
+            <p className="text-center text-[11px] text-muted-foreground mt-4 italic">
+              Exibindo os 50 registros mais recentes. Use a exportação para ver o relatório completo.
+            </p>
+          )}
+        </CardContent>
+      </Card>
       </div>
     </div>
   );

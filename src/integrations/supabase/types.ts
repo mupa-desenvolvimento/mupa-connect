@@ -2108,6 +2108,7 @@ export type Database = {
           campanhas: string[] | null
           comando: string | null
           company_id: string | null
+          created_at: string | null
           current_media_id: string | null
           current_playlist_id: string | null
           device_type: string | null
@@ -2142,6 +2143,7 @@ export type Database = {
           campanhas?: string[] | null
           comando?: string | null
           company_id?: string | null
+          created_at?: string | null
           current_media_id?: string | null
           current_playlist_id?: string | null
           device_type?: string | null
@@ -2176,6 +2178,7 @@ export type Database = {
           campanhas?: string[] | null
           comando?: string | null
           company_id?: string | null
+          created_at?: string | null
           current_media_id?: string | null
           current_playlist_id?: string | null
           device_type?: string | null
@@ -2950,6 +2953,60 @@ export type Database = {
             columns: ["zone_id"]
             isOneToOne: false
             referencedRelation: "zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inky_insights: {
+        Row: {
+          analysis_type: string
+          company_id: string | null
+          created_at: string
+          executive_summary: string | null
+          filters_used: Json | null
+          id: string
+          insight_data: Json
+          period_end: string | null
+          period_start: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          analysis_type: string
+          company_id?: string | null
+          created_at?: string
+          executive_summary?: string | null
+          filters_used?: Json | null
+          id?: string
+          insight_data: Json
+          period_end?: string | null
+          period_start?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          analysis_type?: string
+          company_id?: string | null
+          created_at?: string
+          executive_summary?: string | null
+          filters_used?: Json | null
+          id?: string
+          insight_data?: Json
+          period_end?: string | null
+          period_start?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inky_insights_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inky_insights_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -3924,6 +3981,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           playlist_id: string
+          position: number | null
           priority: number | null
           tenant_id: string | null
           updated_at: string | null
@@ -3934,6 +3992,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           playlist_id: string
+          position?: number | null
           priority?: number | null
           tenant_id?: string | null
           updated_at?: string | null
@@ -3944,6 +4003,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           playlist_id?: string
+          position?: number | null
           priority?: number | null
           tenant_id?: string | null
           updated_at?: string | null
@@ -4085,6 +4145,7 @@ export type Database = {
           end_date: string | null
           end_time: string | null
           id: string
+          is_locked: boolean | null
           is_schedule_override: boolean | null
           media_id: string | null
           ordem: number
@@ -4105,6 +4166,7 @@ export type Database = {
           end_date?: string | null
           end_time?: string | null
           id?: string
+          is_locked?: boolean | null
           is_schedule_override?: boolean | null
           media_id?: string | null
           ordem: number
@@ -4125,6 +4187,7 @@ export type Database = {
           end_date?: string | null
           end_time?: string | null
           id?: string
+          is_locked?: boolean | null
           is_schedule_override?: boolean | null
           media_id?: string | null
           ordem?: number
@@ -4805,43 +4868,118 @@ export type Database = {
           apelido: string | null
           codigo_etiqueta: string | null
           codigo_produto: string | null
+          company_id: string | null
           consulted_at: string | null
           created_at: string | null
           descricao_produto: string | null
           device_id: string
+          device_serial: string | null
           ean: string | null
           id: number
           link_imagem: string | null
           loja: string | null
           status_code: number | null
+          tenant_id: string | null
         }
         Insert: {
           apelido?: string | null
           codigo_etiqueta?: string | null
           codigo_produto?: string | null
+          company_id?: string | null
           consulted_at?: string | null
           created_at?: string | null
           descricao_produto?: string | null
           device_id: string
+          device_serial?: string | null
           ean?: string | null
           id?: never
           link_imagem?: string | null
           loja?: string | null
           status_code?: number | null
+          tenant_id?: string | null
         }
         Update: {
           apelido?: string | null
           codigo_etiqueta?: string | null
           codigo_produto?: string | null
+          company_id?: string | null
           consulted_at?: string | null
           created_at?: string | null
           descricao_produto?: string | null
           device_id?: string
+          device_serial?: string | null
           ean?: string | null
           id?: never
           link_imagem?: string | null
           loja?: string | null
           status_code?: number | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_queries_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_queries_log_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_query_errors: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          device_name: string | null
+          device_serial: string
+          ean: string | null
+          error_message: string | null
+          error_type: string
+          id: string
+          product_code: string | null
+          product_name: string | null
+          status: string | null
+          store_id: string | null
+          store_name: string | null
+          tenant_id: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          device_name?: string | null
+          device_serial: string
+          ean?: string | null
+          error_message?: string | null
+          error_type: string
+          id?: string
+          product_code?: string | null
+          product_name?: string | null
+          status?: string | null
+          store_id?: string | null
+          store_name?: string | null
+          tenant_id: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          device_name?: string | null
+          device_serial?: string
+          ean?: string | null
+          error_message?: string | null
+          error_type?: string
+          id?: string
+          product_code?: string | null
+          product_name?: string | null
+          status?: string | null
+          store_id?: string | null
+          store_name?: string | null
+          tenant_id?: string
         }
         Relationships: []
       }
@@ -6781,6 +6919,7 @@ export type Database = {
           end_date: string | null
           end_time: string | null
           id: string
+          is_locked: boolean | null
           is_schedule_override: boolean | null
           media_id: string | null
           ordem: number
@@ -7050,6 +7189,7 @@ export type Database = {
           end_date: string | null
           end_time: string | null
           id: string
+          is_locked: boolean | null
           is_schedule_override: boolean | null
           media_id: string | null
           ordem: number
@@ -7213,6 +7353,7 @@ export type Database = {
           campanhas: string[] | null
           comando: string | null
           company_id: string | null
+          created_at: string | null
           current_media_id: string | null
           current_playlist_id: string | null
           device_type: string | null
@@ -7420,6 +7561,7 @@ export type Database = {
           end_date: string | null
           end_time: string | null
           id: string
+          is_locked: boolean | null
           is_schedule_override: boolean | null
           media_id: string | null
           ordem: number
@@ -7449,6 +7591,7 @@ export type Database = {
           end_date: string | null
           end_time: string | null
           id: string
+          is_locked: boolean | null
           is_schedule_override: boolean | null
           media_id: string | null
           ordem: number
@@ -7533,6 +7676,29 @@ export type Database = {
           _link_midia: string
         }
         Returns: Json
+      }
+      validate_monitoring_view_token: {
+        Args: { _token: string }
+        Returns: {
+          company_id: string
+          config: Json
+          expires_at: string
+          id: string
+          is_active: boolean
+          tenant_id: string
+        }[]
+      }
+      validate_quick_access_token: {
+        Args: { _token: string }
+        Returns: {
+          company_id: string
+          device_id: number
+          expires_at: string
+          id: string
+          is_active: boolean
+          store_id: string
+          tenant_id: string
+        }[]
       }
     }
     Enums: {

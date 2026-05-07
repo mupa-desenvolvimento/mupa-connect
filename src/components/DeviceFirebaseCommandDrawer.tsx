@@ -365,8 +365,9 @@ export function DeviceFirebaseCommandDrawer({
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
       }
+      
       toast.success(`${cfg.label} enviado`, {
-        description: `Serial ${device.serial}`,
+        description: `Status: 200 OK - Serial ${device.serial}`,
       });
       if (cfg.field) setInput(cfg.key, "");
     } catch (e) {

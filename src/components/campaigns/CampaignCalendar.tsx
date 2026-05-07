@@ -30,17 +30,17 @@ export function CampaignCalendar({ campaigns, onSelectCampaign }: CampaignCalend
   const renderHeader = () => {
     return (
       <div className="flex items-center justify-between mb-4 px-2">
-        <h2 className="text-xl font-bold capitalize">
+        <h2 className="text-xl font-bold capitalize bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
           {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
         </h2>
-        <div className="flex gap-1">
-          <Button variant="outline" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
+        <div className="flex gap-2">
+          <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setCurrentMonth(new Date())}>
+          <Button variant="outline" size="sm" className="h-9 px-4 font-bold" onClick={() => setCurrentMonth(new Date())}>
             Hoje
           </Button>
-          <Button variant="outline" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
+          <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
@@ -53,7 +53,7 @@ export function CampaignCalendar({ campaigns, onSelectCampaign }: CampaignCalend
     const date = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
     for (let i = 0; i < 7; i++) {
       days.push(
-        <div key={i} className="text-center font-bold text-xs text-muted-foreground uppercase py-2">
+        <div key={i} className="text-center font-bold text-[10px] text-muted-foreground/60 uppercase py-3 tracking-widest bg-muted/20">
           {date[i]}
         </div>
       );
@@ -81,7 +81,6 @@ export function CampaignCalendar({ campaigns, onSelectCampaign }: CampaignCalend
         const dayCampaigns = campaigns.filter(c => {
           const start = new Date(c.start_date);
           const end = new Date(c.end_date);
-          // Zero out time for comparison
           const d = new Date(cloneDay);
           d.setHours(0,0,0,0);
           start.setHours(0,0,0,0);
@@ -89,23 +88,22 @@ export function CampaignCalendar({ campaigns, onSelectCampaign }: CampaignCalend
           return d >= start && d <= end;
         });
 
-        // Detect conflicts (overlapping campaigns)
-        const hasConflict = dayCampaigns.length > 1;
+        const hasConflict = dayCampaigns.length > 2;
 
         days.push(
           <div
             key={day.toString()}
             className={cn(
-              "min-h-[120px] p-2 border-r border-b border-border/40 transition-colors",
-              !isSameMonth(day, monthStart) ? "bg-muted/20" : "bg-card hover:bg-muted/10",
-              isSameDay(day, new Date()) && "bg-primary/5"
+              "min-h-[140px] p-3 border-r border-b border-border/40 transition-all duration-300",
+              !isSameMonth(day, monthStart) ? "bg-muted/5 opacity-40" : "bg-card hover:bg-muted/10",
+              isSameDay(day, new Date()) && "bg-primary/5 ring-1 ring-inset ring-primary/20"
             )}
           >
-            <div className="flex justify-between items-start mb-1">
+            <div className="flex justify-between items-center mb-2">
               <span className={cn(
-                "text-sm font-medium",
-                !isSameMonth(day, monthStart) ? "text-muted-foreground/50" : "text-foreground",
-                isSameDay(day, new Date()) && "bg-primary text-primary-foreground h-6 w-6 flex items-center justify-center rounded-full"
+                "text-xs font-bold tracking-tight",
+                !isSameMonth(day, monthStart) ? "text-muted-foreground/40" : "text-muted-foreground",
+                isSameDay(day, new Date()) && "bg-primary text-primary-foreground h-6 w-6 flex items-center justify-center rounded-lg shadow-glow-sm scale-110"
               )}>
                 {formattedDate}
               </span>
@@ -113,26 +111,41 @@ export function CampaignCalendar({ campaigns, onSelectCampaign }: CampaignCalend
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
-                      <AlertTriangle className="h-4 w-4 text-warning" />
+                      <div className="bg-amber-500/10 p-1 rounded">
+                        <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                      </div>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Múltiplas campanhas agendadas para este dia.</p>
+                      <p className="font-bold text-[10px]">ALTA DENSIDADE</p>
+                      <p className="text-[10px]">Múltiplas campanhas agendadas.</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               )}
             </div>
-            <div className="space-y-1 overflow-y-auto max-h-[80px] scrollbar-none">
-              {dayCampaigns.map(c => (
+            <div className="space-y-1.5 overflow-hidden">
+              {dayCampaigns.slice(0, 4).map(c => (
                 <div
                   key={c.id}
                   onClick={() => onSelectCampaign(c.id)}
-                  className="text-[10px] p-1 rounded border border-transparent hover:border-foreground/20 cursor-pointer truncate font-medium transition-all"
-                  style={{ backgroundColor: `${c.color}20`, color: c.color, borderLeftColor: c.color, borderLeftWidth: '3px' }}
+                  className="text-[10px] p-1.5 rounded-lg border-l-4 shadow-sm hover:scale-[1.02] cursor-pointer truncate font-black uppercase tracking-tight transition-all"
+                  style={{ 
+                    backgroundColor: `${c.color}15`, 
+                    color: c.color, 
+                    borderLeftColor: c.color,
+                    borderRight: `1px solid ${c.color}30`,
+                    borderTop: `1px solid ${c.color}30`,
+                    borderBottom: `1px solid ${c.color}30`
+                  }}
                 >
                   {c.name}
                 </div>
               ))}
+              {dayCampaigns.length > 4 && (
+                <div className="text-[9px] text-center font-bold text-muted-foreground bg-muted/30 py-0.5 rounded-full">
+                  + {dayCampaigns.length - 4} mais
+                </div>
+              )}
             </div>
           </div>
         );
@@ -145,13 +158,13 @@ export function CampaignCalendar({ campaigns, onSelectCampaign }: CampaignCalend
       );
       days = [];
     }
-    return <div className="flex-1 overflow-y-auto">{rows}</div>;
+    return <div className="flex-1 overflow-y-auto custom-scrollbar">{rows}</div>;
   };
 
   return (
     <div className="flex flex-col h-full">
       {renderHeader()}
-      <div className="border border-border/60 rounded-xl overflow-hidden shadow-sm flex flex-col flex-1">
+      <div className="border border-border/60 rounded-2xl overflow-hidden shadow-sm flex flex-col flex-1 bg-card/50 backdrop-blur-sm">
         {renderDays()}
         {renderCells()}
       </div>

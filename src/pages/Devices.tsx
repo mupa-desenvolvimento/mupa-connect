@@ -482,6 +482,7 @@ export default function DevicesPage() {
                   </TableHead>
                   <TableHead className="w-[25%]">Dispositivo</TableHead>
                   <TableHead>Serial</TableHead>
+                  <TableHead className="w-[120px] text-[11px] opacity-75 font-medium hidden md:table-cell">Cadastrado</TableHead>
                   {isSuperAdmin && <TableHead>Empresa</TableHead>}
                   <TableHead>Loja</TableHead>
                   <TableHead>Playlist</TableHead>
@@ -529,6 +530,16 @@ export default function DevicesPage() {
                         </div>
                       </TableCell>
                       <TableCell className="font-mono text-xs text-muted-foreground">{d.serial}</TableCell>
+                      <TableCell className="hidden md:table-cell py-2">
+                        <div className="flex flex-col text-[11px] leading-tight text-muted-foreground/75 w-[120px]">
+                          <span className="font-medium">
+                            {(d as any).created_at ? new Date((d as any).created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '--/--'}
+                          </span>
+                          <span className="text-[10px] opacity-80">
+                            {(d as any).created_at ? new Date((d as any).created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                          </span>
+                        </div>
+                      </TableCell>
                       {isSuperAdmin && (
                         <TableCell>
                           <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded font-medium">

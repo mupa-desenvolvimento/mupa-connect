@@ -211,11 +211,11 @@ export function BulkCommandDialog({
       const fail = results.length - ok;
 
       if (fail === 0) {
-        toast.success(`Comando enviado para ${ok} dispositivo(s)`);
+        toast.success(`Comando enviado com sucesso (200 OK) para ${ok} dispositivo(s)`);
         onOpenChange(false);
         reset();
       } else {
-        toast.warning(`Enviado: ${ok} · Falhou: ${fail}`);
+        toast.warning(`Status: ${ok} Sucessos (200) · ${fail} Falhas`);
       }
     } catch (e) {
       toast.error("Erro inesperado no envio em massa", {

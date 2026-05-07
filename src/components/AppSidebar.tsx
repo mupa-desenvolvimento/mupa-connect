@@ -15,7 +15,8 @@ import {
   Activity,
   User,
   Building2,
-  MessageSquare
+  MessageSquare,
+  AlertOctagon
 } from "lucide-react";
 
 import {
@@ -49,6 +50,8 @@ export function AppSidebar() {
     { title: "Campanhas", url: "/campanhas", icon: Megaphone, visible: isMarketing },
     { title: "Mídias", url: "/midias", icon: ImageIcon, visible: isMarketing },
     { title: "Inteligência EAN", url: "/admin/analytics/consultas", icon: BarChart3, visible: true },
+    { title: "Erros de Consulta", url: "/admin/analytics/erros", icon: AlertOctagon, visible: isTecnico },
+
     { title: "Trade Marketing", url: "/trade-marketing", icon: BarChart, visible: isMarketing || isAdmin },
     { title: "Painel NOC", url: "/admin/monitoring", icon: Activity, visible: isTecnico },
     { title: "Download de Apps", url: "/aplicativos", icon: MonitorPlay, visible: isTecnico },
