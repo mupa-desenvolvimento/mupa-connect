@@ -241,8 +241,6 @@ const SortableItem = ({ item, index, isSelected, onSelect }: any) => {
     </div>
   );
 };
-  );
-};
 
 const DraggableMediaItem = ({ media, onClick, isSelected, onToggleSelect }: any) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
