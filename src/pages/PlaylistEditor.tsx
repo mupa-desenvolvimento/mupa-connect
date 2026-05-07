@@ -254,6 +254,74 @@ const SortableItem = ({ item, index, isSelected, onSelect, timelineMode = false 
   );
 };
 
+const DraggableMediaItem = ({ media, onClick }: any) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `library-${media.id}`,
+    data: {
+      type: 'library-media',
+      mediaId: media.id,
+      media: media
+    }
+  });
+
+  const style = transform ? {
+    transform: CSS.Translate.toString(transform),
+  } : undefined;
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style}
+      {...listeners} 
+      {...attributes}
+      className={cn(
+        "relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer border border-white/10 hover:border-[#085CF0] group transition-all",
+        isDragging && "opacity-50 ring-2 ring-[#085CF0] z-50"
+      )}
+      onClick={() => onClick(media.id)}
+    >
+      <img src={media.thumbnail_url || media.file_url} className="w-full h-full object-cover" />
+      <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
+      <div className="absolute bottom-1 left-1 right-1 text-[10px] truncate bg-black/60 px-1 rounded font-bold text-white/90">
+        {media.name}
+      </div>
+      {isDragging && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[#085CF0]/20">
+          <Plus className="h-6 w-6 text-white" />
+        </div>
+      )}
+    </div>
+  );
+};
+
+const CampaignDropZone = ({ children, isActive }: any) => {
+  const { setNodeRef, isOver } = useDroppable({
+    id: 'campaign-drop-zone',
+    data: {
+      accepts: ['library-media']
+    }
+  });
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      className={cn(
+        "flex-1 flex flex-col transition-all duration-200",
+        isOver && "bg-[#085CF0]/10 ring-2 ring-[#085CF0]/30 ring-inset rounded-xl"
+      )}
+    >
+      {children}
+      {isOver && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
+          <div className="bg-[#085CF0] text-white px-4 py-2 rounded-full font-bold text-xs flex items-center gap-2 shadow-xl animate-bounce">
+            <Plus className="h-4 w-4" /> Solte para adicionar à campanha
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function PlaylistEditor() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
