@@ -924,14 +924,48 @@ export default function PlaylistEditor() {
                   ))}
                 </TabsContent>
 
-                <TabsContent value="campaigns" className="h-full m-0 p-4 overflow-y-auto grid grid-cols-2 gap-3 pb-20">
-                  {allCampaigns?.map((campaign) => (
-                    <DraggableCampaignItem 
-                      key={campaign.id} 
-                      campaign={campaign} 
-                      onClick={addCampaignToPlaylist} 
-                    />
-                  ))}
+                <TabsContent value="campaigns" className="h-full m-0 p-4 overflow-y-auto flex flex-col gap-3 pb-20">
+                  <div className="flex flex-col gap-3">
+                    {filteredLibraryCampaigns?.map((campaign) => (
+                      <React.Fragment key={campaign.id}>
+                        <DraggableCampaignItem 
+                          campaign={campaign} 
+                          onClick={addCampaignToPlaylist} 
+                          onEdit={setEditingCampaignId}
+                          onExpand={(cid: string) => setExpandedCampaignId(expandedCampaignId === cid ? null : cid)}
+                        />
+                        <AnimatePresence>
+                          {expandedCampaignId === campaign.id && (
+                            <motion.div 
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden bg-black/40 rounded-xl border border-white/5"
+                            >
+                              <div className="p-3">
+                                <CampaignContentManager campaignId={campaign.id} />
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </React.Fragment>
+                    ))}
+
+                    {filteredLibraryCampaigns?.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
+                        <Layers className="h-10 w-10 text-white/5" />
+                        <p className="text-xs text-white/40">Nenhuma campanha encontrada</p>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-8 text-[10px] border-white/10"
+                          onClick={() => setEditingCampaignId("new")}
+                        >
+                          Criar Campanha
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="appearance" className="h-full m-0 p-4 space-y-4">
