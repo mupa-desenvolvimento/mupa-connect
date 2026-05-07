@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +31,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useUserRole } from "@/hooks/use-user-role";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const campaignSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
@@ -42,6 +48,7 @@ const campaignSchema = z.object({
   priority: z.coerce.number().min(0).max(100).default(0),
   color: z.string().default("#9b87f5"),
   is_active: z.boolean().default(true),
+  playlist_ids: z.array(z.string()).default([]),
 });
 
 export type CampaignFormValues = z.infer<typeof campaignSchema>;
@@ -64,6 +71,23 @@ const PRESET_COLORS = [
 ];
 
 export function CampaignForm({ initialData, onSubmit, isLoading }: CampaignFormProps) {
+  const { tenantId } = useUserRole();
+  
+  const { data: playlists } = useQuery({
+    queryKey: ["playlists-for-campaign", tenantId],
+    queryFn: async () => {
+      if (!tenantId) return [];
+      const { data, error } = await supabase
+        .from("playlists")
+        .select("id, name")
+        .eq("tenant_id", tenantId)
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!tenantId,
+  });
+
   const form = useForm<CampaignFormValues>({
     resolver: zodResolver(campaignSchema),
     defaultValues: {
@@ -76,6 +100,7 @@ export function CampaignForm({ initialData, onSubmit, isLoading }: CampaignFormP
       priority: initialData?.priority || 0,
       color: initialData?.color || "#9b87f5",
       is_active: initialData?.is_active ?? true,
+      playlist_ids: initialData?.playlist_ids || [],
     },
   });
 
@@ -299,7 +324,58 @@ export function CampaignForm({ initialData, onSubmit, isLoading }: CampaignFormP
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-border/20">
+        <div className="space-y-4 pt-4 border-t border-border/20">
+          <FormField
+            control={form.control}
+            name="playlist_ids"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-base">Vincular às Playlists</FormLabel>
+                <FormDescription>
+                  Selecione em quais playlists esta campanha deve ser exibida.
+                </FormDescription>
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {playlists?.map((playlist) => (
+                    <div 
+                      key={playlist.id}
+                      className={cn(
+                        "flex items-center space-x-3 p-3 rounded-xl border transition-all cursor-pointer",
+                        field.value.includes(playlist.id) 
+                          ? "bg-primary/10 border-primary shadow-sm" 
+                          : "bg-muted/30 border-transparent hover:border-border/60"
+                      )}
+                      onClick={() => {
+                        const current = field.value;
+                        const next = current.includes(playlist.id)
+                          ? current.filter(id => id !== playlist.id)
+                          : [...current, playlist.id];
+                        field.onChange(next);
+                      }}
+                    >
+                      <div className={cn(
+                        "h-4 w-4 rounded-md border flex items-center justify-center transition-colors",
+                        field.value.includes(playlist.id)
+                          ? "bg-primary border-primary text-primary-foreground"
+                          : "border-muted-foreground/30"
+                      )}>
+                        {field.value.includes(playlist.id) && <Check className="h-3 w-3 stroke-[3]" />}
+                      </div>
+                      <span className="text-sm font-medium truncate">{playlist.name}</span>
+                    </div>
+                  ))}
+                </div>
+                {(!playlists || playlists.length === 0) && (
+                  <div className="text-sm text-muted-foreground bg-muted/20 p-4 rounded-lg border border-dashed text-center">
+                    Nenhuma playlist encontrada para este tenant.
+                  </div>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="flex justify-end gap-3 pt-6 border-t border-border/20">
           <Button 
             type="submit" 
             className="bg-gradient-primary text-primary-foreground min-w-[120px]"
