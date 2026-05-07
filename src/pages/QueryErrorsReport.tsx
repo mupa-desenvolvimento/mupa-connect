@@ -160,6 +160,78 @@ export default function QueryErrorsReport() {
     }
   };
 
+  const handleExportCSV = () => {
+    const headers = ["Dispositivo", "Serial", "Produto", "EAN", "Loja", "Erro", "Quantidade", "Última Ocorrência", "Status"];
+    const csvData = filteredList.map(item => [
+      `"${item.device_name || 'Desconhecido'}"`,
+      `"${item.device_serial}"`,
+      `"${item.product_name || 'Produto s/ Nome'}"`,
+      `"${item.ean || 'N/A'}"`,
+      `"${item.store_name || 'Loja Central'}"`,
+      `"${item.error_type}"`,
+      item.error_count,
+      `"${format(parseISO(item.last_occurrence), "dd/MM/yyyy HH:mm")}"`,
+      `"${item.status === 'active' ? 'Ativo' : 'Resolvido'}"`
+    ]);
+
+    const csvContent = [headers, ...csvData].map(e => e.join(",")).join("\n");
+    const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `relatorio-erros-${format(new Date(), "yyyy-MM-dd")}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast({ title: "Sucesso", description: "Relatório CSV exportado com sucesso." });
+  };
+
+  const handleExportExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(filteredList.map(item => ({
+      "Dispositivo": item.device_name || 'Desconhecido',
+      "Serial": item.device_serial,
+      "Produto": item.product_name || 'Produto s/ Nome',
+      "EAN": item.ean || 'N/A',
+      "Loja": item.store_name || 'Loja Central',
+      "Erro": item.error_type,
+      "Quantidade": item.error_count,
+      "Última Ocorrência": format(parseISO(item.last_occurrence), "dd/MM/yyyy HH:mm"),
+      "Status": item.status === 'active' ? 'Ativo' : 'Resolvido'
+    })));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Erros de Consulta");
+    XLSX.writeFile(workbook, `relatorio-erros-${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+    toast({ title: "Sucesso", description: "Relatório Excel exportado com sucesso." });
+  };
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Relatório de Erros de Consulta de Produtos", 14, 15);
+    doc.setFontSize(10);
+    doc.text(`Gerado em: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, 14, 22);
+    
+    const tableColumn = ["Dispositivo", "Produto", "Erro", "Qtd", "Última Ocorrência"];
+    const tableRows = filteredList.map(item => [
+      item.device_name || item.device_serial,
+      item.product_name || item.ean,
+      item.error_type,
+      item.error_count,
+      format(parseISO(item.last_occurrence), "dd/MM/yy HH:mm")
+    ]);
+
+    (doc as any).autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 25,
+      styles: { fontSize: 8 },
+      headStyles: { fillStyle: 'f', fillColor: [59, 130, 246] }
+    });
+    
+    doc.save(`relatorio-erros-${format(new Date(), "yyyy-MM-dd")}.pdf`);
+    toast({ title: "Sucesso", description: "Relatório PDF exportado com sucesso." });
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
