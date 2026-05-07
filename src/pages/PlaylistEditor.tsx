@@ -383,16 +383,21 @@ export default function PlaylistEditor() {
         const { error: updateError } = await supabase.from("playlists").update({ name: updatedName, is_company_default: isDefault, updated_at: new Date().toISOString(), appearance_config: appearanceConfig }).eq("id", id as any);
         if (updateError) throw updateError;
       }
+
+      const regularItems = updatedItems.filter(it => it.type !== 'campaign');
+      const campaignItems = updatedItems.filter(it => it.type === 'campaign');
+
+      // Update regular items
       await supabase.from("playlist_items").delete().eq("playlist_id", currentPlaylistId as any);
-      if (updatedItems.length > 0) {
-        const itemsToInsert = updatedItems.map((it, idx) => ({ 
+      if (regularItems.length > 0) {
+        const itemsToInsert = regularItems.map((it, idx) => ({ 
           playlist_id: currentPlaylistId as any, 
           media_id: it.mediaId, 
           duracao: it.duration, 
           prioridade: it.priority, 
           tipo: it.type, 
           ordem: idx + 1, 
-          position: idx + 1, 
+          position: updatedItems.indexOf(it), // Use overall position in timeline
           conteudo_id: it.mediaId, 
           ativo: true,
           is_locked: it.isLocked || false
@@ -400,8 +405,17 @@ export default function PlaylistEditor() {
         const { error: insertError } = await supabase.from("playlist_items").insert(itemsToInsert);
         if (insertError) throw insertError;
       }
+
+      // Update campaign positions
+      for (const campaignItem of campaignItems) {
+        await supabase.from("playlist_campaigns")
+          .update({ position: updatedItems.indexOf(campaignItem) })
+          .eq("id", campaignItem.dbId!);
+      }
+
       queryClient.invalidateQueries({ queryKey: ["playlists"] });
       queryClient.invalidateQueries({ queryKey: ["playlist", currentPlaylistId] });
+      queryClient.invalidateQueries({ queryKey: ["playlist-campaigns", currentPlaylistId] });
       if (applyToAllDevices && (companyId || playlistData?.company_id)) {
         const targetId = companyId || playlistData?.company_id;
         await supabase.from("dispositivos").update({ appearance_config: appearanceConfig }).eq("company_id", targetId);
