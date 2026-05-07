@@ -23,8 +23,9 @@ import {
   XCircle,
   AlertTriangle,
   Clock,
-  MoreVertical,
-  ChevronRight
+  MoreVertical, 
+  ChevronRight,
+  FileText
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
@@ -834,7 +835,23 @@ export default function WhatsAppManagement() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="test-msg">Mensagem</Label>
+              <div className="flex justify-between items-center">
+                <Label htmlFor="test-msg">Mensagem</Label>
+                {templates && templates.length > 0 && (
+                  <Select onValueChange={(v) => setTestMessage({ ...testMessage, message: v })}>
+                    <SelectTrigger className="w-[180px] h-7 text-[10px] bg-primary/5 border-primary/20">
+                      <SelectValue placeholder="Usar template..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templates.map((t) => (
+                        <SelectItem key={t.id} value={t.content} className="text-xs">
+                          {t.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
               <Textarea
                 id="test-msg"
                 placeholder="Digite sua mensagem de teste..."
