@@ -7674,6 +7674,29 @@ export type Database = {
         }
         Returns: Json
       }
+      validate_monitoring_view_token: {
+        Args: { _token: string }
+        Returns: {
+          company_id: string
+          config: Json
+          expires_at: string
+          id: string
+          is_active: boolean
+          tenant_id: string
+        }[]
+      }
+      validate_quick_access_token: {
+        Args: { _token: string }
+        Returns: {
+          company_id: string
+          device_id: number
+          expires_at: string
+          id: string
+          is_active: boolean
+          store_id: string
+          tenant_id: string
+        }[]
+      }
     }
     Enums: {
       app_role:
