@@ -184,7 +184,10 @@ export default function WhatsAppManagement() {
         title="WhatsApp Integration" 
         description="Manage WhatsApp instances, automations, and operational alerts."
         actions={
-          <Button className="bg-gradient-primary text-primary-foreground shadow-glow">
+          <Button
+            className="bg-gradient-primary text-primary-foreground shadow-glow"
+            onClick={() => setShowCreateDialog(true)}
+          >
             <Plus className="mr-2 h-4 w-4" /> Nova Instância
           </Button>
         }
