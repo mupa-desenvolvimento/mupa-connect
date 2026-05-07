@@ -663,7 +663,8 @@ export default function PlaylistEditor() {
                           <Plus className="h-3 w-3" /> Adicionar Mídia
                         </Button>
                       </div>
-                      <ScrollArea className="flex-1">
+                      <CampaignDropZone>
+                        <ScrollArea className="flex-1">
                         <div className="p-4 flex gap-3">
                           {campaignContents?.map((content: any, idx: number) => (
                             <div key={content.id} className="relative group shrink-0 w-32">
