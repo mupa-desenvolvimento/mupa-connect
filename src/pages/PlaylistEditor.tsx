@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
+// ... (mantenha os imports dnd-kit)
 import { 
   DndContext, 
   closestCenter,
@@ -10,6 +11,7 @@ import {
   DragOverlay,
   defaultDropAnimationSideEffects
 } from "@dnd-kit/core";
+// ... (mantenha outros imports)
 import {
   arrayMove,
   SortableContext,
@@ -44,37 +46,13 @@ import {
   ChevronDown,
   ChevronUp,
   X,
-  Pause
+  Pause,
+  AlertTriangle,
+  ExternalLink
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Separator } from "@/components/ui/separator";
-import { Slider } from "@/components/ui/slider";
-import { toast } from "sonner";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { usePlaylist, useMedias, useTenant } from "@/hooks/use-playlist-data";
-import { supabase } from "@/integrations/supabase/client";
-import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
-import { useQueryClient } from "@tanstack/react-query";
-import { cn } from "@/lib/utils";
-import { handlePlaylistError } from "@/utils/error-handlers";
+// ... keep existing code
+import { useQuery } from "@tanstack/react-query";
+// ... keep existing code
 import { PlaylistErrorBanner } from "@/components/PlaylistErrorBanner";
 
 // --- Constants ---
@@ -253,6 +231,43 @@ export default function PlaylistEditor() {
   const playheadIntervalRef = useRef<number | null>(null);
 
   const totalDuration = useMemo(() => items.reduce((acc, it) => acc + it.duration, 0), [items]);
+
+  // Buscar campanhas vinculadas a esta playlist
+  const { data: campaignLinks } = useQuery({
+    queryKey: ["playlist-campaigns", id],
+    queryFn: async () => {
+      if (!id || id === 'new') return [];
+      const { data, error } = await supabase
+        .from("playlist_campaigns")
+        .select(`
+          id,
+          priority,
+          campaigns (
+            id,
+            name,
+            color,
+            start_date,
+            end_date,
+            start_time,
+            end_time
+          )
+        `)
+        .eq("playlist_id", id)
+        .eq("is_active", true);
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id && id !== 'new'
+  });
+
+  const campaigns = useMemo(() => {
+    return campaignLinks?.map((cl: any) => ({
+      ...cl.campaigns,
+      linkId: cl.id,
+      priority: cl.priority
+    })) || [];
+  }, [campaignLinks]);
 
   // Sincronização do preview baseada no tempo da timeline
   useEffect(() => {
