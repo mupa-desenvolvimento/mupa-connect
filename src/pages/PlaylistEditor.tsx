@@ -1147,6 +1147,34 @@ export default function PlaylistEditor() {
               </div>
             )}
           </div>
+          
+          {/* Campaign Dialog Overlay */}
+          {editingCampaignId && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+              <div className="w-full max-w-5xl h-[90vh] shadow-2xl relative">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute -top-12 right-0 text-white/60 hover:text-white"
+                  onClick={() => {
+                    setEditingCampaignId(null);
+                    refetchCampaigns();
+                  }}
+                >
+                  <X className="h-6 w-6" />
+                </Button>
+                <CampaignEditor 
+                  campaignId={editingCampaignId === "new" ? null : editingCampaignId} 
+                  onClose={() => {
+                    setEditingCampaignId(null);
+                    refetchCampaigns();
+                  }} 
+                />
+              </div>
+            </div>
+          )}
+            )}
+          </div>
 
             {/* Timeline Area */}
             <div className="h-72 bg-[#0c0c0e] border-t border-white/5 flex flex-col overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.3)] shrink-0">
