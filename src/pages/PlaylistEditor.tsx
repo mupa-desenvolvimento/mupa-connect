@@ -561,7 +561,15 @@ export default function PlaylistEditor() {
                               <div className="aspect-video rounded-lg overflow-hidden border border-white/10 bg-black/40 relative">
                                 <img src={content.media?.thumbnail_url || content.media?.file_url} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
                                 <div className="absolute top-1 left-1 bg-black/60 px-1 rounded text-[8px] font-mono text-white">{idx + 1}</div>
-                                <button className="absolute top-1 right-1 h-5 w-5 rounded bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button 
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    const { error } = await supabase.from("campaign_contents").delete().eq("id", content.id);
+                                    if (error) toast.error("Erro ao remover");
+                                    else { toast.success("Removido"); refetchCampaignContents(); }
+                                  }}
+                                  className="absolute top-1 right-1 h-5 w-5 rounded bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
                                   <Trash2 className="h-3 w-3" />
                                 </button>
                               </div>
