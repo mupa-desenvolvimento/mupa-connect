@@ -740,13 +740,16 @@ export default function ProductQueriesAnalytics() {
         </Card>
       </div>
       {/* Full List Table */}
-      <Card className="mt-6">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-medium">Log Detalhado de Consultas</CardTitle>
-          <Badge variant="outline">{logs?.length || 0} registros</Badge>
+      <Card className="mt-2 flex-1 flex flex-col min-h-[400px] overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between flex-none py-3">
+          <CardTitle className="text-sm font-bold flex items-center gap-2">
+            <BarChart className="h-4 w-4 text-primary" />
+            Log Detalhado de Consultas
+          </CardTitle>
+          <Badge variant="outline" className="bg-muted/50 font-mono">{logs?.length || 0} registros</Badge>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-md border overflow-hidden">
+        <CardContent className="flex-1 overflow-hidden p-0">
+          <div className="h-full overflow-y-auto custom-scrollbar relative">
             <Table>
               <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
                 <TableRow>
