@@ -48,6 +48,8 @@ import { CreateDeviceModal } from "@/components/CreateDeviceModal";
 import { EditDeviceModal } from "@/components/EditDeviceModal";
 import { PlaylistChangeModal } from "@/components/PlaylistChangeModal";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 
 type ConnectionStatus = "online" | "unstable" | "offline";
 type PlayerStatus = "reproduzindo" | "parado" | "erro";
@@ -67,7 +69,9 @@ export default function DevicesPage() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [playlistModalOpen, setPlaylistModalOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const isMobile = useIsMobile();
   const { tenantId, isSuperAdmin, isTecnico, isAdmin } = useUserRole();
+
 
   const openDeviceDrawer = (device: any) => {
     setSelectedDevice(device);
@@ -256,7 +260,7 @@ export default function DevicesPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
+    <div className={cn("flex flex-col gap-4", !isMobile && "h-[calc(100vh-8rem)]")}>
       <PageHeader
         title="Dispositivos"
         description="Monitoramento real dos terminais da rede com status de exibição."
@@ -408,9 +412,66 @@ export default function DevicesPage() {
 
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
-            <div className="h-64 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-50" /></div>
-          ) : (
+            <div className="flex flex-col items-center justify-center h-64 gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Carregando dispositivos...</p>
+            </div>
+          ) : isMobile ? (
+            <div className="p-4 space-y-3">
+              {filteredDevices.map(d => {
+                const connStatus = getConnectionStatus(d.last_heartbeat_at);
+                const pStatus = getPlayerStatus(d.player_status);
+                return (
+                  <Card key={d.id} className="border-border/60" onClick={() => openDeviceDrawer(d)}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "h-10 w-10 rounded-lg flex items-center justify-center",
+                            connStatus === "online" ? "bg-green-500/10 text-green-500" :
+                            connStatus === "unstable" ? "bg-yellow-500/10 text-yellow-500" :
+                            "bg-red-500/10 text-red-500"
+                          )}>
+                            <Monitor className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-sm leading-none mb-1">{d.apelido_interno || "Sem nome"}</h3>
+                            <p className="text-[10px] text-muted-foreground uppercase font-mono tracking-tighter">{d.serial}</p>
+                          </div>
+                        </div>
+                        <StatusBadge status={connStatus} />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs">
+                        <div>
+                          <p className="text-muted-foreground text-[10px] uppercase font-bold mb-0.5">Playlist</p>
+                          <div className="flex items-center gap-1.5 truncate">
+                            <Play className="h-3 w-3 text-primary" />
+                            <span className="truncate">{d.playlists?.name || "Sem playlist"}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-[10px] uppercase font-bold mb-0.5">Último Acesso</p>
+                          <div className="flex items-center gap-1.5">
+                            <Activity className="h-3 w-3 text-muted-foreground" />
+                            <span>{formatDate(d.last_heartbeat_at)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+              {filteredDevices.length === 0 && (
+                <div className="py-20 text-center">
+                  <Monitor className="h-12 w-12 mx-auto text-muted-foreground/20 mb-4" />
+                  <p className="text-sm text-muted-foreground italic">Nenhum dispositivo encontrado</p>
+                </div>
+              )}
+            </div>
+          ) : viewMode === "table" ? (
             <Table>
+
               <TableHeader className="sticky top-0 bg-card z-10 border-b border-border/60">
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="w-10">
@@ -503,19 +564,9 @@ export default function DevicesPage() {
                       <TableCell className="text-right" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-end gap-1">
                           {isSuperAdmin && (
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              className="h-8 w-8 text-primary hover:bg-primary/10" 
-                              onClick={() => {
-                                setSelectedDevice(d);
-                                setEditModalOpen(true);
-                              }}
-                              title="Editar Avançado"
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-primary hover:bg-primary/10" onClick={() => { setSelectedDevice(d); setEditModalOpen(true); }} title="Editar Avançado"><Edit2 className="h-4 w-4" /></Button>
                           )}
+
                           {isTecnico && (
                             <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10" onClick={() => handleRebootDevice(d.id.toString(), d.apelido_interno)} title="Reiniciar"><RotateCcw className="h-4 w-4" /></Button>
                           )}
@@ -527,9 +578,37 @@ export default function DevicesPage() {
                 })}
               </TableBody>
             </Table>
-          )}
+          ) : viewMode === "grid" ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
+              {filteredDevices.map(d => (
+                <Card key={d.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => openDeviceDrawer(d)}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Monitor className="h-4 w-4 text-primary" />
+                        <span className="font-semibold truncate max-w-[150px]">{d.apelido_interno}</span>
+                      </div>
+                      <StatusBadge status={getConnectionStatus(d.last_heartbeat_at)} />
+                    </div>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Serial:</span>
+                        <span className="font-mono">{d.serial}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Playlist:</span>
+                        <span className="truncate max-w-[120px]">{d.playlists?.name || "N/A"}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
+
+
 
       <DeviceFirebaseCommandDrawer
         device={selectedDevice}

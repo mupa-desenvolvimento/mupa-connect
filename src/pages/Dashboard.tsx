@@ -10,12 +10,16 @@ import { format, subHours, startOfDay, endOfDay } from "date-fns";
 import { LineChart, Line, ResponsiveContainer } from "recharts";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/use-user-role";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 
   // Removendo estatísticas estáticas para usar dinâmicas via useQuery
 
 
 export default function DashboardPage() {
   const { tenantId, isSuperAdmin, isLoading: roleLoading } = useUserRole();
+  const isMobile = useIsMobile();
+
 
   const { data: statsData } = useQuery({
     queryKey: ["dashboard-stats", tenantId, isSuperAdmin],
@@ -126,7 +130,7 @@ export default function DashboardPage() {
   const topDevice = Object.values(deviceCounts || {}).sort((a: any, b: any) => b.count - a.count)[0] as any;
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex flex-col gap-4 overflow-y-auto pr-2">
+    <div className={cn("flex flex-col gap-4 overflow-y-auto pr-2", !isMobile && "h-[calc(100vh-8rem)]")}>
       <PageHeader
         title="Dashboard"
         description="Visão geral da operação Mupa 3.0 — em tempo real."
