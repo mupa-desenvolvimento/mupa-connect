@@ -88,7 +88,7 @@ import { handlePlaylistError } from "@/utils/error-handlers";
 import { PlaylistErrorBanner } from "@/components/PlaylistErrorBanner";
 import { format } from "date-fns";
 
-const PIXELS_PER_SECOND = 15;
+const PIXELS_PER_SECOND = 12;
 
 const formatTime = (seconds: number) => {
   const mins = Math.floor(seconds / 60);
@@ -99,12 +99,14 @@ const formatTime = (seconds: number) => {
 interface EditorPlaylistItem {
   id: string; 
   dbId?: string; 
-  mediaId: string;
+  mediaId?: string;
   duration: number;
   priority: number;
-  type: string;
+  type: 'image' | 'video' | 'campaign';
   media?: any;
   isLocked?: boolean;
+  campaign?: any;
+  campaignId?: string;
 }
 
 const DEFAULT_APPEARANCE_CONFIG = {
@@ -129,13 +131,29 @@ const SortableItem = ({ item, index, isSelected, onSelect, timelineMode = false 
     id: item.id,
     disabled: item.isLocked 
   });
+  
   const media = item.media;
+  const isCampaign = item.type === 'campaign';
+  const campaign = item.campaign;
+  
   const style = { 
     transform: CSS.Transform.toString(transform), 
     transition, 
-    zIndex: isDragging ? 10 : 1, 
-    opacity: isDragging ? 0.5 : 1,
-    width: item.duration * PIXELS_PER_SECOND 
+    zIndex: isDragging ? 50 : 1, 
+    opacity: isDragging ? 0.6 : 1,
+    width: Math.max(100, item.duration * PIXELS_PER_SECOND)
+  };
+
+  const getBorderColor = () => {
+    if (isSelected) return 'border-[#085CF0]';
+    if (isCampaign) return `border-[${campaign?.color || '#085CF0'}]/30`;
+    return 'border-white/10';
+  };
+
+  const getBgColor = () => {
+    if (isSelected) return 'bg-[#085CF0]/10';
+    if (isCampaign) return `bg-[${campaign?.color || '#085CF0'}]/5`;
+    return 'bg-white/5';
   };
 
   return (
@@ -143,43 +161,87 @@ const SortableItem = ({ item, index, isSelected, onSelect, timelineMode = false 
       ref={setNodeRef} 
       style={style} 
       onClick={() => onSelect(item)}
-      className={`relative shrink-0 h-28 rounded-xl border transition-all cursor-pointer group overflow-hidden ${
-        isSelected ? 'border-[#085CF0] ring-2 ring-[#085CF0]/20 bg-[#085CF0]/10 shadow-lg' : 'border-white/10 bg-white/5 hover:border-white/20'
-      } ${item.isLocked ? 'opacity-80' : ''}`}
+      className={cn(
+        "relative shrink-0 h-24 rounded-xl border transition-all cursor-pointer group overflow-hidden",
+        getBorderColor(),
+        getBgColor(),
+        isSelected && "ring-2 ring-[#085CF0]/20 shadow-lg",
+        item.isLocked && "opacity-80"
+      )}
     >
       <div className="absolute inset-0">
-        <img src={media?.thumbnail_url || media?.file_url} alt={media?.name} className="w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+        {!isCampaign ? (
+          <>
+            <img 
+              src={media?.thumbnail_url || media?.file_url} 
+              alt={media?.name} 
+              className="w-full h-full object-cover opacity-30 group-hover:opacity-50 transition-opacity" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
+          </>
+        ) : (
+          <div 
+            className="absolute inset-0 opacity-10"
+            style={{ backgroundColor: campaign?.color || '#085CF0' }}
+          />
+        )}
       </div>
       
-      <div className="absolute top-2 left-2 flex gap-1.5">
-        <span className="text-[10px] font-mono font-bold text-white/90 px-1.5 py-0.5 rounded bg-black/60 border border-white/10">{index + 1}</span>
+      <div className="absolute top-2 left-2 flex gap-1.5 z-10">
+        <span className="text-[10px] font-mono font-bold text-white/90 px-1.5 py-0.5 rounded bg-black/60 border border-white/10">
+          {index + 1}
+        </span>
         {item.isLocked && (
           <div className="bg-amber-500/20 text-amber-500 border border-amber-500/30 rounded px-1.5 py-0.5 flex items-center">
             <Lock className="h-2.5 w-2.5" />
           </div>
         )}
+        {isCampaign && (
+          <div 
+            className="rounded px-1.5 py-0.5 flex items-center gap-1 border"
+            style={{ 
+              backgroundColor: `${campaign?.color || '#085CF0'}20`,
+              borderColor: `${campaign?.color || '#085CF0'}40`,
+              color: campaign?.color || '#085CF0'
+            }}
+          >
+            <Megaphone className="h-2.5 w-2.5" />
+            <span className="text-[9px] font-bold uppercase tracking-tighter">Campanha</span>
+          </div>
+        )}
       </div>
 
-      <div className="absolute top-2 right-2">
+      <div className="absolute top-2 right-2 z-10">
         <span className="text-[10px] font-bold text-white/90 px-1.5 py-0.5 rounded bg-black/60 border border-white/10 flex items-center gap-1">
           <Clock className="h-2.5 w-2.5 text-[#085CF0]" /> {item.duration}s
         </span>
       </div>
 
       {!item.isLocked && (
-        <div {...attributes} {...listeners} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white/0 group-hover:text-white/100 group-hover:bg-[#085CF0]/80 transition-all cursor-grab active:cursor-grabbing">
+        <div 
+          {...attributes} 
+          {...listeners} 
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white/0 group-hover:text-white group-hover:bg-[#085CF0]/80 transition-all cursor-grab active:cursor-grabbing z-20"
+        >
           <GripVertical className="h-4 w-4" />
         </div>
       )}
 
-      <div className="absolute bottom-2 left-2 right-2">
-        <p className="text-[10px] font-bold text-white truncate drop-shadow-md">{media?.name || 'Sem nome'}</p>
+      <div className="absolute bottom-2 left-2 right-2 z-10">
+        <p className="text-[10px] font-bold text-white truncate drop-shadow-md">
+          {isCampaign ? campaign?.name : (media?.name || 'Sem nome')}
+        </p>
         <div className="flex items-center gap-2 mt-1">
-          <Badge variant="outline" className="text-[8px] h-3.5 px-1 py-0 border-white/10 bg-black/40 text-white/40 uppercase">
-            {item.type}
-          </Badge>
-          {item.priority > 1 && (
+          {!isCampaign ? (
+            <Badge variant="outline" className="text-[8px] h-3.5 px-1 py-0 border-white/10 bg-black/40 text-white/40 uppercase">
+              {item.type}
+            </Badge>
+          ) : (
+            <span className="text-[8px] font-bold text-white/40 uppercase tracking-widest">
+              Prioridade {item.priority}
+            </span>
+          )}
+          {item.priority > 1 && !isCampaign && (
             <Badge variant="outline" className="text-[8px] h-3.5 px-1 py-0 border-blue-500/30 bg-blue-500/10 text-blue-400 font-bold">
               P{item.priority}
             </Badge>
@@ -231,32 +293,41 @@ export default function PlaylistEditor() {
 
   const campaigns = useMemo(() => campaignLinks?.map((cl: any) => ({ ...cl.campaigns, linkId: cl.id, priority: cl.priority })) || [], [campaignLinks]);
 
+  const { data: campaignContents, refetch: refetchCampaignContents } = useQuery({
+    queryKey: ["campaign-contents", selectedItem?.campaignId],
+    queryFn: async () => {
+      if (!selectedItem?.campaignId) return [];
+      const { data, error } = await supabase
+        .from("campaign_contents")
+        .select(`*, media:media_items (*)`)
+        .eq("campaign_id", selectedItem.campaignId)
+        .eq("is_active", true)
+        .order("position", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedItem?.campaignId && selectedItem.type === 'campaign'
+  });
+
   useEffect(() => {
     if (!isPlaying) return;
     let startTime = Date.now() - (currentTime * 1000);
     const updatePlayhead = () => {
       const now = Date.now();
       const elapsed = (now - startTime) / 1000;
-      if (elapsed >= totalDuration) { setCurrentTime(0); startTime = Date.now(); } else { setCurrentTime(elapsed); }
+      if (elapsed >= (totalDuration || 5)) { setCurrentTime(0); startTime = Date.now(); } else { setCurrentTime(elapsed); }
       playheadIntervalRef.current = requestAnimationFrame(updatePlayhead);
     };
     playheadIntervalRef.current = requestAnimationFrame(updatePlayhead);
     return () => { if (playheadIntervalRef.current) cancelAnimationFrame(playheadIntervalRef.current); };
   }, [isPlaying, totalDuration]);
 
-  useEffect(() => {
-    let accumulatedTime = 0;
-    for (const item of items) {
-      accumulatedTime += item.duration;
-      if (currentTime <= accumulatedTime) { setSelectedItem(item); break; }
-    }
-  }, [currentTime, items]);
-
   const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest('.dnd-item')) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left + (timelineScrollRef.current?.scrollLeft || 0);
     const time = x / PIXELS_PER_SECOND;
-    setCurrentTime(Math.min(Math.max(0, time), totalDuration));
+    setCurrentTime(Math.min(Math.max(0, time), totalDuration || 5));
   };
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
@@ -266,22 +337,42 @@ export default function PlaylistEditor() {
       setPlaylistName(playlistData.name);
       setIsDefault(playlistData.is_company_default || false);
       setAppearanceConfig(normalizeAppearanceConfig(playlistData.appearance_config));
-      if (playlistData.playlist_items && playlistData.playlist_items.length > 0) {
-        const mappedItems = playlistData.playlist_items.map((it: any) => ({ 
-          id: it.id, 
-          dbId: it.id, 
-          mediaId: it.media_id, 
-          duration: it.duracao, 
-          priority: it.prioridade || 1, 
-          type: it.tipo, 
-          isLocked: it.is_locked || false,
-          media: medias?.find(m => m.id === it.media_id) 
-        }));
-        setItems(mappedItems);
-        if (!selectedItem) setSelectedItem(mappedItems[0]);
-      } else { setItems([]); }
-    } else if (id === 'new') { setPlaylistName("Nova Playlist"); setItems([]); setSelectedItem(null); }
-  }, [playlistData, medias, id]);
+      
+      const mappedItems: EditorPlaylistItem[] = (playlistData.playlist_items || []).map((it: any) => ({ 
+        id: it.id, 
+        dbId: it.id, 
+        mediaId: it.media_id, 
+        duration: it.duracao, 
+        priority: it.prioridade || 1, 
+        type: it.tipo as any, 
+        isLocked: it.is_locked || false,
+        media: medias?.find(m => m.id === it.media_id),
+        position: it.position || it.ordem || 0
+      }));
+
+      const mappedCampaigns: EditorPlaylistItem[] = (campaignLinks || []).map((cl: any) => ({
+        id: `campaign-${cl.id}`,
+        dbId: cl.id,
+        duration: 5, // Visual width for campaign block in timeline
+        priority: cl.priority || 1,
+        type: 'campaign' as any,
+        campaign: cl.campaigns,
+        campaignId: cl.campaigns.id,
+        position: cl.position || 0
+      }));
+
+      const combinedItems = [...mappedItems, ...mappedCampaigns].sort((a, b) => (a as any).position - (b as any).position);
+      setItems(combinedItems);
+      
+      if (!selectedItem && combinedItems.length > 0) {
+        setSelectedItem(combinedItems[0]);
+      }
+    } else if (id === 'new') { 
+      setPlaylistName("Nova Playlist"); 
+      setItems([]); 
+      setSelectedItem(null); 
+    }
+  }, [playlistData, medias, campaignLinks, id]);
 
   const savePlaylist = async (updatedItems: EditorPlaylistItem[], updatedName: string) => {
     if (isSaving || !tenantId || !updatedName || updatedName.trim() === "" || updatedName === "...") { 
@@ -301,16 +392,21 @@ export default function PlaylistEditor() {
         const { error: updateError } = await supabase.from("playlists").update({ name: updatedName, is_company_default: isDefault, updated_at: new Date().toISOString(), appearance_config: appearanceConfig }).eq("id", id as any);
         if (updateError) throw updateError;
       }
+
+      const regularItems = updatedItems.filter(it => it.type !== 'campaign');
+      const campaignItems = updatedItems.filter(it => it.type === 'campaign');
+
+      // Update regular items
       await supabase.from("playlist_items").delete().eq("playlist_id", currentPlaylistId as any);
-      if (updatedItems.length > 0) {
-        const itemsToInsert = updatedItems.map((it, idx) => ({ 
+      if (regularItems.length > 0) {
+        const itemsToInsert = regularItems.map((it, idx) => ({ 
           playlist_id: currentPlaylistId as any, 
           media_id: it.mediaId, 
           duracao: it.duration, 
           prioridade: it.priority, 
           tipo: it.type, 
           ordem: idx + 1, 
-          position: idx + 1, 
+          position: updatedItems.indexOf(it), // Use overall position in timeline
           conteudo_id: it.mediaId, 
           ativo: true,
           is_locked: it.isLocked || false
@@ -318,8 +414,17 @@ export default function PlaylistEditor() {
         const { error: insertError } = await supabase.from("playlist_items").insert(itemsToInsert);
         if (insertError) throw insertError;
       }
+
+      // Update campaign positions
+      for (const campaignItem of campaignItems) {
+        await supabase.from("playlist_campaigns")
+          .update({ position: updatedItems.indexOf(campaignItem) })
+          .eq("id", campaignItem.dbId!);
+      }
+
       queryClient.invalidateQueries({ queryKey: ["playlists"] });
       queryClient.invalidateQueries({ queryKey: ["playlist", currentPlaylistId] });
+      queryClient.invalidateQueries({ queryKey: ["playlist-campaigns", currentPlaylistId] });
       if (applyToAllDevices && (companyId || playlistData?.company_id)) {
         const targetId = companyId || playlistData?.company_id;
         await supabase.from("dispositivos").update({ appearance_config: appearanceConfig }).eq("company_id", targetId);
@@ -348,9 +453,23 @@ export default function PlaylistEditor() {
     }
   };
 
-  const addItem = (mediaId: string) => {
+  const addItem = async (mediaId: string) => {
     const media = medias?.find(m => m.id === mediaId);
     if (!media) return;
+
+    if (selectedItem?.type === 'campaign') {
+      const { error } = await supabase.from("campaign_contents").insert({
+        campaign_id: selectedItem.campaignId,
+        media_id: mediaId,
+        tenant_id: tenantId,
+        position: (campaignContents?.length || 0) + 1,
+        is_active: true
+      });
+      if (error) toast.error("Erro ao adicionar à campanha");
+      else { toast.success(`Adicionado à campanha ${selectedItem.campaign?.name}`); refetchCampaignContents(); }
+      return;
+    }
+
     const newItem: EditorPlaylistItem = { id: `temp-${Date.now()}`, mediaId: media.id, duration: media.duration || 10, priority: 1, type: media.type === 'video' ? 'video' : 'image', media: media };
     const newItems = [...items, newItem]; setItems(newItems); setSelectedItem(newItem); setHasUnsavedChanges(true); toast.success(`${media.name} adicionado`);
   };
@@ -404,36 +523,112 @@ export default function PlaylistEditor() {
 
         <main className="flex-1 flex flex-col overflow-hidden relative">
           <div className="flex-1 overflow-hidden flex flex-col p-6 gap-6">
-            <div className="flex-1 relative bg-black/40 rounded-2xl border border-white/5 overflow-hidden shadow-2xl">
+            <div className="flex-1 relative bg-black/40 rounded-2xl border border-white/5 overflow-hidden shadow-2xl flex flex-col">
               {selectedItem ? (
-                <div className="absolute inset-0 flex flex-col">
-                  <div className="flex-1 flex items-center justify-center p-8 bg-black/20">
-                    {selectedItem.media?.type === 'video' ? <Video className="h-16 w-16 text-white/10" /> : <ImageIcon className="h-16 w-16 text-white/10" />}
-                    <img src={selectedItem.media?.thumbnail_url || selectedItem.media?.file_url} className="max-h-full max-w-full rounded shadow-2xl" />
+                <div className="flex-1 flex flex-col min-h-0">
+                  <div className="flex-1 flex items-center justify-center p-8 bg-black/20 overflow-hidden">
+                    {selectedItem.type === 'campaign' ? (
+                      <div className="flex flex-col items-center gap-4 text-center">
+                        <div 
+                          className="w-24 h-24 rounded-3xl flex items-center justify-center border-4"
+                          style={{ 
+                            backgroundColor: `${selectedItem.campaign?.color || '#085CF0'}10`,
+                            borderColor: `${selectedItem.campaign?.color || '#085CF0'}`,
+                            color: selectedItem.campaign?.color || '#085CF0'
+                          }}
+                        >
+                          <Megaphone className="h-10 w-10" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bold text-white">{selectedItem.campaign?.name}</h3>
+                          <p className="text-sm text-white/40 mt-1 uppercase tracking-widest font-mono">
+                            Campanha • Prioridade {selectedItem.priority}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="relative h-full flex items-center justify-center">
+                        {selectedItem.media?.type === 'video' ? <Video className="h-16 w-16 text-white/10 absolute" /> : <ImageIcon className="h-16 w-16 text-white/10 absolute" />}
+                        <img 
+                          src={selectedItem.media?.thumbnail_url || selectedItem.media?.file_url} 
+                          className="max-h-full max-w-full rounded shadow-2xl relative z-10" 
+                        />
+                      </div>
+                    )}
                   </div>
-                  <div className="h-28 bg-card/60 backdrop-blur-md border-t border-white/10 flex items-center justify-between px-6">
+
+                  {selectedItem.type === 'campaign' && (
+                    <div className="h-64 border-t border-white/10 bg-[#0c0c0e]/80 backdrop-blur-md flex flex-col">
+                      <div className="h-10 border-b border-white/5 flex items-center justify-between px-6 shrink-0 bg-black/20">
+                        <div className="flex items-center gap-2">
+                          <Layers className="h-3 w-3 text-white/40" />
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">Conteúdos da Campanha</span>
+                        </div>
+                        <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-2 text-[#085CF0] hover:bg-[#085CF0]/10">
+                          <Plus className="h-3 w-3" /> Adicionar Mídia
+                        </Button>
+                      </div>
+                      <ScrollArea className="flex-1">
+                        <div className="p-4 flex gap-3">
+                          {campaignContents?.map((content: any, idx: number) => (
+                            <div key={content.id} className="relative group shrink-0 w-32">
+                              <div className="aspect-video rounded-lg overflow-hidden border border-white/10 bg-black/40 relative">
+                                <img src={content.media?.thumbnail_url || content.media?.file_url} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
+                                <div className="absolute top-1 left-1 bg-black/60 px-1 rounded text-[8px] font-mono text-white">{idx + 1}</div>
+                                <button 
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    const { error } = await supabase.from("campaign_contents").delete().eq("id", content.id);
+                                    if (error) toast.error("Erro ao remover");
+                                    else { toast.success("Removido"); refetchCampaignContents(); }
+                                  }}
+                                  className="absolute top-1 right-1 h-5 w-5 rounded bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </button>
+                              </div>
+                              <p className="text-[9px] font-bold text-white/60 mt-2 truncate">{content.media?.name}</p>
+                            </div>
+                          ))}
+                          {(!campaignContents || campaignContents.length === 0) && (
+                            <div className="w-full h-32 border-2 border-dashed border-white/5 rounded-xl flex flex-col items-center justify-center text-white/10 gap-2">
+                              <Plus className="h-6 w-6" />
+                              <span className="text-[10px] font-bold uppercase">Nenhum conteúdo</span>
+                            </div>
+                          )}
+                        </div>
+                        <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
+                    </div>
+                  )}
+
+                  <div className="h-28 bg-card/60 backdrop-blur-md border-t border-white/10 flex items-center justify-between px-6 shrink-0">
                     <div className="flex flex-col gap-1.5">
                       <div className="flex items-center gap-2">
                         {selectedItem.isLocked && <Lock className="h-3 w-3 text-amber-500" />}
-                        <span className="text-xs font-bold text-white uppercase tracking-wider">{selectedItem.media?.name}</span>
+                        <span className="text-xs font-bold text-white uppercase tracking-wider">
+                          {selectedItem.type === 'campaign' ? selectedItem.campaign?.name : selectedItem.media?.name}
+                        </span>
                       </div>
                       <div className="flex items-center gap-6">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-3 w-3 text-[#085CF0]" />
-                          <input 
-                            type="number" 
-                            disabled={selectedItem.isLocked}
-                            value={selectedItem.duration} 
-                            onChange={(e) => { 
-                              const d = parseInt(e.target.value); 
-                              setSelectedItem({...selectedItem, duration: d}); 
-                              setItems(items.map(it => it.id === selectedItem.id ? {...it, duration: d} : it)); 
-                              setHasUnsavedChanges(true); 
-                            }} 
-                            className="w-16 bg-black/40 border-white/10 rounded h-8 text-xs px-2 focus:ring-1 focus:ring-[#085CF0] disabled:opacity-50" 
-                          /> 
-                          <span className="text-[10px] text-white/40 font-bold uppercase">segundos</span>
-                        </div>
+                        {selectedItem.type !== 'campaign' && (
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-3 w-3 text-[#085CF0]" />
+                            <input 
+                              type="number" 
+                              disabled={selectedItem.isLocked}
+                              value={selectedItem.duration} 
+                              onChange={(e) => { 
+                                const d = parseInt(e.target.value); 
+                                setSelectedItem({...selectedItem, duration: d}); 
+                                setItems(items.map(it => it.id === selectedItem.id ? {...it, duration: d} : it)); 
+                                setHasUnsavedChanges(true); 
+                              }} 
+                              className="w-16 bg-black/40 border-white/10 rounded h-8 text-xs px-2 focus:ring-1 focus:ring-[#085CF0] disabled:opacity-50 text-white" 
+                            /> 
+                            <span className="text-[10px] text-white/40 font-bold uppercase">segundos</span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-2">
                           <Layers className="h-3 w-3 text-[#085CF0]" />
                           <Select 
@@ -446,7 +641,7 @@ export default function PlaylistEditor() {
                               setHasUnsavedChanges(true);
                             }}
                           >
-                            <SelectTrigger className="w-20 h-8 text-xs bg-black/40 border-white/10 disabled:opacity-50">
+                            <SelectTrigger className="w-20 h-8 text-xs bg-black/40 border-white/10 disabled:opacity-50 text-white">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="bg-[#0c0c0e] border-white/10 text-white">
@@ -494,83 +689,52 @@ export default function PlaylistEditor() {
               )}
             </div>
 
-            <div className="h-64 bg-[#0c0c0e] border border-white/5 rounded-2xl flex flex-col overflow-hidden shadow-inner">
+            <div className="h-44 bg-[#0c0c0e] border border-white/5 rounded-2xl flex flex-col overflow-hidden shadow-inner shrink-0">
               <div className="h-10 border-b border-white/5 flex items-center justify-between px-4 bg-black/20 shrink-0">
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-[#085CF0] animate-pulse" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">Timeline Principal</span>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-[#085CF0] animate-pulse" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">Timeline Principal</span>
+                  </div>
+                  <Separator orientation="vertical" className="h-4 bg-white/5" />
+                  <div className="flex items-center gap-3 text-[10px] text-white/40 font-mono">
+                    <span className="text-[#085CF0] font-bold">{currentTime.toFixed(1)}s</span>
+                    <span className="opacity-20">/</span>
+                    <span>{totalDuration?.toFixed(1) || '0.0'}s</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-6">
-                   <div className="flex items-center gap-3 text-[10px] text-white/40 font-mono">
-                     <span className="text-[#085CF0] font-bold">{currentTime.toFixed(1)}s</span>
-                     <span className="opacity-20">/</span>
-                     <span>{totalDuration}s</span>
-                   </div>
-                   <div className="flex items-center gap-1">
-                     <Button 
-                       variant="ghost" 
-                       size="icon" 
-                       className="h-7 w-7 text-white/60 hover:text-[#085CF0] hover:bg-[#085CF0]/10" 
-                       onClick={() => setIsPlaying(!isPlaying)}
-                     >
-                       {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 fill-current" />}
-                     </Button>
-                   </div>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7 text-white/60 hover:text-[#085CF0] hover:bg-[#085CF0]/10" 
+                    onClick={() => setIsPlaying(!isPlaying)}
+                  >
+                    {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 fill-current" />}
+                  </Button>
                 </div>
               </div>
-              <div className="flex-1 overflow-x-auto relative" ref={timelineScrollRef} onClick={handleTimelineClick}>
-                <div className="h-full relative px-6 flex items-center" style={{ width: Math.max(800, totalDuration * PIXELS_PER_SECOND + 100) }}>
-                  <div className="absolute top-0 bottom-0 w-0.5 bg-[#085CF0] z-30" style={{ left: (currentTime * PIXELS_PER_SECOND) + 24 }} />
+              <div className="flex-1 overflow-x-auto relative scrollbar-thin scrollbar-thumb-white/10" ref={timelineScrollRef} onClick={handleTimelineClick}>
+                <div className="h-full relative px-6 flex items-center" style={{ width: Math.max(800, (totalDuration || 0) * PIXELS_PER_SECOND + 100) }}>
+                  <div className="absolute top-0 bottom-0 w-0.5 bg-[#085CF0] z-30 pointer-events-none" style={{ left: ((currentTime || 0) * PIXELS_PER_SECOND) + 24 }} />
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} onDragStart={(e) => setActiveId(e.active.id as string)} modifiers={[restrictToHorizontalAxis]}>
-                    <div className="flex gap-3">
+                    <div className="flex gap-2">
                       <SortableContext items={items.map(it => it.id)} strategy={horizontalListSortingStrategy}>
                         {items.map((item, index) => (
-                          <SortableItem 
-                            key={item.id} 
-                            item={item} 
-                            index={index} 
-                            isSelected={selectedItem?.id === item.id} 
-                            onSelect={setSelectedItem} 
-                          />
+                          <div key={item.id} className="dnd-item">
+                            <SortableItem 
+                              item={item} 
+                              index={index} 
+                              isSelected={selectedItem?.id === item.id} 
+                              onSelect={setSelectedItem} 
+                            />
+                          </div>
                         ))}
                       </SortableContext>
                     </div>
                   </DndContext>
                 </div>
               </div>
-              <AnimatePresence>
-                {campaigns.length > 0 && (
-                  <div className="border-t border-white/5 bg-black/40 flex flex-col shrink-0">
-                    <div className="h-8 border-b border-white/5 flex items-center justify-between px-4 bg-black/20">
-                      <div className="flex items-center gap-2">
-                        <Megaphone className="h-3 w-3 text-white/40" />
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-white/40">Campanhas Ativas</span>
-                      </div>
-                    </div>
-                    <div className="h-12 flex items-center gap-3 px-4 overflow-x-auto scrollbar-none">
-                      {campaigns.map(c => (
-                        <motion.div 
-                          key={c.id} 
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          className="h-8 shrink-0 rounded-lg border flex items-center px-3 gap-3 cursor-pointer hover:brightness-110 transition-all" 
-                          style={{ 
-                            backgroundColor: `${c.color || '#085CF0'}15`, 
-                            borderColor: `${c.color || '#085CF0'}40`, 
-                            color: c.color || '#085CF0' 
-                          }}
-                        >
-                           <div className="flex flex-col">
-                             <span className="text-[10px] font-bold truncate max-w-[120px] leading-none">{c.name}</span>
-                             <span className="text-[8px] opacity-60 font-mono mt-0.5 uppercase">PRIORIDADE {c.priority}</span>
-                           </div>
-                           <ChevronRight className="h-3 w-3 opacity-40" />
-                        </motion.div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </AnimatePresence>
             </div>
           </div>
         </main>

@@ -1,0 +1,1 @@
+ALTER TABLE public.playlist_campaigns ADD COLUMN IF NOT EXISTS position INTEGER DEFAULT 0;
