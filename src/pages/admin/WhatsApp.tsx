@@ -713,6 +713,22 @@ export default function WhatsAppManagement() {
              </Card>
           </TabsContent>
 
+          <TabsContent value="templates">
+            <TemplatesPanel />
+          </TabsContent>
+
+          <TabsContent value="groups">
+            <GroupsPanel />
+          </TabsContent>
+
+          <TabsContent value="send">
+            <ManualSendPanel />
+          </TabsContent>
+
+          <TabsContent value="history">
+            <SendHistoryPanel />
+          </TabsContent>
+
         </div>
       </Tabs>
 
