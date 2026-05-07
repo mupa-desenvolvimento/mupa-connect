@@ -754,62 +754,95 @@ export default function PlaylistEditor() {
           <aside className="w-80 border-r border-white/5 bg-[#0c0c0e] flex flex-col z-40 overflow-hidden">
             <Tabs defaultValue="media" className="flex-1 flex flex-col h-full overflow-hidden">
               <div className="p-4 space-y-4 shrink-0">
-                <TabsList className="grid w-full grid-cols-2 bg-black/40"><TabsTrigger value="media" className="text-[10px] gap-2">Mídias</TabsTrigger><TabsTrigger value="appearance" className="text-[10px] gap-2">Aparência</TabsTrigger></TabsList>
-                <div className="flex items-center gap-2">
-                  <div className="relative flex-1">
+                <TabsList className="grid w-full grid-cols-3 bg-black/40">
+                  <TabsTrigger value="media" className="text-[10px] gap-2">Mídias</TabsTrigger>
+                  <TabsTrigger value="campaigns" className="text-[10px] gap-2">Campanhas</TabsTrigger>
+                  <TabsTrigger value="appearance" className="text-[10px] gap-2">Aparência</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="media" className="m-0">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/40" />
+                        <input 
+                          placeholder="Buscar mídias..." 
+                          className="w-full h-8 pl-8 text-[10px] bg-black/40 border border-white/5 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-[#085CF0]" 
+                          value={mediaSearch}
+                          onChange={(e) => setMediaSearch(e.target.value)}
+                        />
+                      </div>
+                      {selectedLibraryIds.length > 0 && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 px-2 text-[10px] text-red-500 hover:bg-red-500/10"
+                          onClick={() => setSelectedLibraryIds([])}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                    {selectedLibraryIds.length > 0 && (
+                      <div className="bg-[#085CF0]/10 border border-[#085CF0]/30 rounded-lg p-2 flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-[#085CF0]">
+                          {selectedLibraryIds.length} selecionados
+                        </span>
+                        <Button 
+                          size="sm" 
+                          className="h-6 px-2 text-[9px] bg-[#085CF0] hover:bg-[#085CF0]/80"
+                          onClick={() => addMultipleItems(selectedLibraryIds)}
+                        >
+                          Adicionar
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="campaigns" className="m-0">
+                  <div className="relative">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/40" />
-                    <Input 
-                      placeholder="Buscar mídias..." 
-                      className="h-8 pl-8 text-[10px] bg-black/40 border-white/5" 
-                      value={mediaSearch}
-                      onChange={(e) => setMediaSearch(e.target.value)}
+                    <input 
+                      placeholder="Buscar campanhas..." 
+                      className="w-full h-8 pl-8 text-[10px] bg-black/40 border border-white/5 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-[#085CF0]" 
                     />
                   </div>
-                  {selectedLibraryIds.length > 0 && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-8 px-2 text-[10px] text-red-500 hover:bg-red-500/10"
-                      onClick={() => setSelectedLibraryIds([])}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
-                {selectedLibraryIds.length > 0 && (
-                  <div className="bg-[#085CF0]/10 border border-[#085CF0]/30 rounded-lg p-2 flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-[#085CF0]">
-                      {selectedLibraryIds.length} selecionados
-                    </span>
-                    <Button 
-                      size="sm" 
-                      className="h-6 px-2 text-[9px] bg-[#085CF0] hover:bg-[#085CF0]/80"
-                      onClick={() => addMultipleItems(selectedLibraryIds)}
-                    >
-                      Adicionar {selectedLibraryIds.length}
-                    </Button>
-                  </div>
-                )}
+                </TabsContent>
               </div>
-              <TabsContent value="media" className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-3">
-                {medias?.filter(m => m.name.toLowerCase().includes(mediaSearch.toLowerCase())).map((media) => (
-                  <DraggableMediaItem 
-                    key={media.id} 
-                    media={media} 
-                    onClick={addItem} 
-                    isSelected={selectedLibraryIds.includes(media.id)}
-                    onToggleSelect={(id: string) => {
-                      setSelectedLibraryIds(prev => 
-                        prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-                      );
-                    }}
-                  />
-                ))}
-              </TabsContent>
-              <TabsContent value="appearance" className="p-4 space-y-4">
-                <div className="flex items-center justify-between"><Label className="text-xs">Mostrar Nome</Label><Switch checked={appearanceConfig.show_device_name} onCheckedChange={(v) => { setAppearanceConfig({...appearanceConfig, show_device_name: v}); setHasUnsavedChanges(true); }} /></div>
-                <div className="flex items-center justify-between"><Label className="text-xs">Data e Hora</Label><Switch checked={appearanceConfig.show_datetime} onCheckedChange={(v) => { setAppearanceConfig({...appearanceConfig, show_datetime: v}); setHasUnsavedChanges(true); }} /></div>
-              </TabsContent>
+
+              <div className="flex-1 overflow-hidden relative">
+                <TabsContent value="media" className="h-full m-0 p-4 overflow-y-auto grid grid-cols-2 gap-3 pb-20">
+                  {medias?.filter(m => m.name.toLowerCase().includes(mediaSearch.toLowerCase())).map((media) => (
+                    <DraggableMediaItem 
+                      key={media.id} 
+                      media={media} 
+                      onClick={addItem} 
+                      isSelected={selectedLibraryIds.includes(media.id)}
+                      onToggleSelect={(id: string) => {
+                        setSelectedLibraryIds(prev => 
+                          prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+                        );
+                      }}
+                    />
+                  ))}
+                </TabsContent>
+
+                <TabsContent value="campaigns" className="h-full m-0 p-4 overflow-y-auto grid grid-cols-2 gap-3 pb-20">
+                  {allCampaigns?.map((campaign) => (
+                    <DraggableCampaignItem 
+                      key={campaign.id} 
+                      campaign={campaign} 
+                      onClick={addCampaignToPlaylist} 
+                    />
+                  ))}
+                </TabsContent>
+
+                <TabsContent value="appearance" className="h-full m-0 p-4 space-y-4">
+                  <div className="flex items-center justify-between"><Label className="text-xs">Mostrar Nome</Label><Switch checked={appearanceConfig.show_device_name} onCheckedChange={(v) => { setAppearanceConfig({...appearanceConfig, show_device_name: v}); setHasUnsavedChanges(true); }} /></div>
+                  <div className="flex items-center justify-between"><Label className="text-xs">Data e Hora</Label><Switch checked={appearanceConfig.show_datetime} onCheckedChange={(v) => { setAppearanceConfig({...appearanceConfig, show_datetime: v}); setHasUnsavedChanges(true); }} /></div>
+                </TabsContent>
+              </div>
             </Tabs>
           </aside>
 
