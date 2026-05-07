@@ -1116,37 +1116,37 @@ export default function PlaylistEditor() {
                 <TimelineDropZone>
                   <div 
                     className="h-full flex items-center" 
-                    style={{ width: Math.max(items.length * 200 + 100, 800) }}
                     ref={timelineScrollRef} 
                     onClick={handleTimelineClick}
                   >
-                  {/* Playhead */}
-                  <div 
-                    className="absolute top-0 bottom-0 w-[2px] bg-[#085CF0] z-30 pointer-events-none shadow-[0_0_15px_rgba(8,92,240,0.5)] transition-all duration-100 ease-linear" 
-                    style={{ left: ((currentTime || 0) * PIXELS_PER_SECOND) + 32 }} 
-                  />
-                  
-                  <div className="flex gap-4 items-center">
-                    <SortableContext items={items.map(it => it.id)} strategy={horizontalListSortingStrategy}>
-                      {items.map((item, index) => (
-                        <div key={item.id} className="dnd-item animate-in zoom-in-95 fade-in duration-300">
-                          <SortableItem 
-                            item={item} 
-                            index={index} 
-                            isSelected={selectedItem?.id === item.id} 
-                            onSelect={setSelectedItem} 
-                          />
-                        </div>
-                      ))}
-                    </SortableContext>
+                    {/* Playhead */}
+                    <div 
+                      className="absolute top-0 bottom-0 w-[2px] bg-[#085CF0] z-30 pointer-events-none shadow-[0_0_15px_rgba(8,92,240,0.5)] transition-all duration-100 ease-linear" 
+                      style={{ left: ((currentTime || 0) * PIXELS_PER_SECOND) + 32 }} 
+                    />
                     
-                    {/* Add Item Placeholder */}
-                    <div className="w-[180px] h-[240px] border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center text-white/5 gap-3 hover:border-white/10 hover:text-white/10 transition-all">
-                       <Plus className="h-10 w-10" />
-                       <span className="text-[10px] font-bold uppercase tracking-widest">Adicionar Item</span>
+                    <div className="flex gap-4 items-center">
+                      <SortableContext items={items.map(it => it.id)} strategy={horizontalListSortingStrategy}>
+                        {items.map((item, index) => (
+                          <div key={item.id} className="dnd-item animate-in zoom-in-95 fade-in duration-300">
+                            <SortableItem 
+                              item={item} 
+                              index={index} 
+                              isSelected={selectedItem?.id === item.id} 
+                              onSelect={setSelectedItem} 
+                            />
+                          </div>
+                        ))}
+                      </SortableContext>
+                      
+                      {/* Add Item Placeholder */}
+                      <div className="w-[180px] h-[240px] border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center text-white/5 gap-3 hover:border-white/10 hover:text-white/10 transition-all">
+                         <Plus className="h-10 w-10" />
+                         <span className="text-[10px] font-bold uppercase tracking-widest">Adicionar Item</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </TimelineDropZone>
                 <ScrollBar orientation="horizontal" className="bg-transparent" />
               </ScrollArea>
             </div>
