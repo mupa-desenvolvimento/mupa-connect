@@ -36,6 +36,8 @@ import SharedMonitoringPage from "./pages/monitoring/SharedMonitoring";
 import TradeMarketingDashboard from "./pages/TradeMarketing";
 import FaceTrackDemo from "./pages/FaceTrackDemo";
 import CompanyManagement from "./pages/admin/CompanyManagement";
+import WhatsAppManagement from "./pages/admin/WhatsApp";
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
@@ -144,6 +146,13 @@ const App = () => {
                     <DeviceValidation />
                   </ProtectedRoute>
                 } />
+
+                <Route path="/superadmin/whatsapp" element={
+                  <ProtectedRoute allowedRoles={["admin_global"]}>
+                    <WhatsAppManagement />
+                  </ProtectedRoute>
+                } />
+
 
                 {/* COMPANY ADMIN ONLY */}
                 <Route path="/usuarios" element={
