@@ -88,7 +88,7 @@ import { handlePlaylistError } from "@/utils/error-handlers";
 import { PlaylistErrorBanner } from "@/components/PlaylistErrorBanner";
 import { format } from "date-fns";
 
-const PIXELS_PER_SECOND = 15;
+const PIXELS_PER_SECOND = 12;
 
 const formatTime = (seconds: number) => {
   const mins = Math.floor(seconds / 60);
@@ -99,12 +99,14 @@ const formatTime = (seconds: number) => {
 interface EditorPlaylistItem {
   id: string; 
   dbId?: string; 
-  mediaId: string;
+  mediaId?: string;
   duration: number;
   priority: number;
-  type: string;
+  type: 'image' | 'video' | 'campaign';
   media?: any;
   isLocked?: boolean;
+  campaign?: any;
+  campaignId?: string;
 }
 
 const DEFAULT_APPEARANCE_CONFIG = {
