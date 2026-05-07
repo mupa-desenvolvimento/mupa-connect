@@ -587,16 +587,21 @@ export default function PlaylistEditor() {
     
     if (!over) return;
 
-    // Handle library to campaign drop
+    // Handle library to campaign content drop
     if (over.id === 'campaign-drop-zone' && active.data.current?.type === 'library-media') {
       const mediaId = active.data.current.mediaId;
-      
-      // If the dragged item is part of the selection, add all selected
       if (selectedLibraryIds.includes(mediaId)) {
         addMultipleItems(selectedLibraryIds);
       } else {
         addItem(mediaId);
       }
+      return;
+    }
+
+    // Handle library campaign to playlist timeline drop
+    if (over.id === 'playlist-timeline-drop-zone' && active.data.current?.type === 'library-campaign') {
+      const campaign = active.data.current.campaign;
+      addCampaignToPlaylist(campaign);
       return;
     }
 
@@ -612,6 +617,37 @@ export default function PlaylistEditor() {
           setHasUnsavedChanges(true);
         }
       }
+    }
+  };
+
+  const addCampaignToPlaylist = async (campaign: any) => {
+    if (id === 'new') {
+      toast.error("Salve a playlist antes de adicionar campanhas.");
+      return;
+    }
+
+    // First check if campaign is already in playlist
+    if (campaigns.some((c: any) => c.id === campaign.id)) {
+      toast.error("Esta campanha já faz parte desta playlist.");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.from("playlist_campaigns").insert({
+        playlist_id: id as any,
+        campaign_id: campaign.id,
+        tenant_id: tenantId,
+        priority: 1,
+        is_active: true,
+        position: items.length
+      }).select().single();
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["playlist-campaigns", id] });
+      toast.success(`Campanha ${campaign.name} adicionada à playlist`);
+    } catch (err: any) {
+      toast.error(`Erro ao adicionar campanha: ${err.message}`);
     }
   };
 
