@@ -85,6 +85,12 @@ export default function WhatsAppManagement() {
     return data;
   };
 
+  const isValidPhone = (phone: string) => {
+    const cleaned = phone.replace(/\D/g, "");
+    // WhatsApp numbers with country code are usually between 10 and 15 digits
+    return /^\d{10,15}$/.test(cleaned);
+  };
+
   const handleGenerateQR = async (instanceName: string) => {
     try {
       setConnectingInstance(instanceName);
