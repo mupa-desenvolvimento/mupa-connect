@@ -667,83 +667,52 @@ export default function PlaylistEditor() {
               )}
             </div>
 
-            <div className="h-64 bg-[#0c0c0e] border border-white/5 rounded-2xl flex flex-col overflow-hidden shadow-inner">
+            <div className="h-44 bg-[#0c0c0e] border border-white/5 rounded-2xl flex flex-col overflow-hidden shadow-inner shrink-0">
               <div className="h-10 border-b border-white/5 flex items-center justify-between px-4 bg-black/20 shrink-0">
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-[#085CF0] animate-pulse" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">Timeline Principal</span>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-[#085CF0] animate-pulse" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">Timeline Principal</span>
+                  </div>
+                  <Separator orientation="vertical" className="h-4 bg-white/5" />
+                  <div className="flex items-center gap-3 text-[10px] text-white/40 font-mono">
+                    <span className="text-[#085CF0] font-bold">{currentTime.toFixed(1)}s</span>
+                    <span className="opacity-20">/</span>
+                    <span>{totalDuration?.toFixed(1) || '0.0'}s</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-6">
-                   <div className="flex items-center gap-3 text-[10px] text-white/40 font-mono">
-                     <span className="text-[#085CF0] font-bold">{currentTime.toFixed(1)}s</span>
-                     <span className="opacity-20">/</span>
-                     <span>{totalDuration}s</span>
-                   </div>
-                   <div className="flex items-center gap-1">
-                     <Button 
-                       variant="ghost" 
-                       size="icon" 
-                       className="h-7 w-7 text-white/60 hover:text-[#085CF0] hover:bg-[#085CF0]/10" 
-                       onClick={() => setIsPlaying(!isPlaying)}
-                     >
-                       {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 fill-current" />}
-                     </Button>
-                   </div>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7 text-white/60 hover:text-[#085CF0] hover:bg-[#085CF0]/10" 
+                    onClick={() => setIsPlaying(!isPlaying)}
+                  >
+                    {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 fill-current" />}
+                  </Button>
                 </div>
               </div>
-              <div className="flex-1 overflow-x-auto relative" ref={timelineScrollRef} onClick={handleTimelineClick}>
-                <div className="h-full relative px-6 flex items-center" style={{ width: Math.max(800, totalDuration * PIXELS_PER_SECOND + 100) }}>
-                  <div className="absolute top-0 bottom-0 w-0.5 bg-[#085CF0] z-30" style={{ left: (currentTime * PIXELS_PER_SECOND) + 24 }} />
+              <div className="flex-1 overflow-x-auto relative scrollbar-thin scrollbar-thumb-white/10" ref={timelineScrollRef} onClick={handleTimelineClick}>
+                <div className="h-full relative px-6 flex items-center" style={{ width: Math.max(800, (totalDuration || 0) * PIXELS_PER_SECOND + 100) }}>
+                  <div className="absolute top-0 bottom-0 w-0.5 bg-[#085CF0] z-30 pointer-events-none" style={{ left: ((currentTime || 0) * PIXELS_PER_SECOND) + 24 }} />
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} onDragStart={(e) => setActiveId(e.active.id as string)} modifiers={[restrictToHorizontalAxis]}>
-                    <div className="flex gap-3">
+                    <div className="flex gap-2">
                       <SortableContext items={items.map(it => it.id)} strategy={horizontalListSortingStrategy}>
                         {items.map((item, index) => (
-                          <SortableItem 
-                            key={item.id} 
-                            item={item} 
-                            index={index} 
-                            isSelected={selectedItem?.id === item.id} 
-                            onSelect={setSelectedItem} 
-                          />
+                          <div key={item.id} className="dnd-item">
+                            <SortableItem 
+                              item={item} 
+                              index={index} 
+                              isSelected={selectedItem?.id === item.id} 
+                              onSelect={setSelectedItem} 
+                            />
+                          </div>
                         ))}
                       </SortableContext>
                     </div>
                   </DndContext>
                 </div>
               </div>
-              <AnimatePresence>
-                {campaigns.length > 0 && (
-                  <div className="border-t border-white/5 bg-black/40 flex flex-col shrink-0">
-                    <div className="h-8 border-b border-white/5 flex items-center justify-between px-4 bg-black/20">
-                      <div className="flex items-center gap-2">
-                        <Megaphone className="h-3 w-3 text-white/40" />
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-white/40">Campanhas Ativas</span>
-                      </div>
-                    </div>
-                    <div className="h-12 flex items-center gap-3 px-4 overflow-x-auto scrollbar-none">
-                      {campaigns.map(c => (
-                        <motion.div 
-                          key={c.id} 
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          className="h-8 shrink-0 rounded-lg border flex items-center px-3 gap-3 cursor-pointer hover:brightness-110 transition-all" 
-                          style={{ 
-                            backgroundColor: `${c.color || '#085CF0'}15`, 
-                            borderColor: `${c.color || '#085CF0'}40`, 
-                            color: c.color || '#085CF0' 
-                          }}
-                        >
-                           <div className="flex flex-col">
-                             <span className="text-[10px] font-bold truncate max-w-[120px] leading-none">{c.name}</span>
-                             <span className="text-[8px] opacity-60 font-mono mt-0.5 uppercase">PRIORIDADE {c.priority}</span>
-                           </div>
-                           <ChevronRight className="h-3 w-3 opacity-40" />
-                        </motion.div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </AnimatePresence>
             </div>
           </div>
         </main>
