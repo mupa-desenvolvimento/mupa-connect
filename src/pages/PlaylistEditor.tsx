@@ -407,6 +407,17 @@ export default function PlaylistEditor() {
 
   const totalDuration = useMemo(() => items.reduce((acc, it) => acc + it.duration, 0), [items]);
 
+  const { data: allCampaigns } = useQuery({
+    queryKey: ["all-campaigns", tenantId],
+    queryFn: async () => {
+      if (!tenantId) return [];
+      const { data, error } = await supabase.from("campaigns").select("*").eq("tenant_id", tenantId).eq("is_active", true);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!tenantId
+  });
+
   const { data: campaignLinks } = useQuery({
     queryKey: ["playlist-campaigns", id],
     queryFn: async () => {
