@@ -35,9 +35,8 @@ import { cn } from "@/lib/utils";
 export default function CampaignsPage() {
   const { tenantId, companyId, isSuperAdmin, isMarketing } = useUserRole();
   const queryClient = useQueryClient();
-  const [view, setView] = useState<"grid" | "list" | "calendar" | "timeline">("grid");
+  const [view, setView] = useState<"grid" | "list" | "calendar" | "timeline" | "editor">("grid");
   const [searchQuery, setSearchQuery] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
 
   const { data: campaigns, isLoading, refetch } = useQuery({
