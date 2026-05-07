@@ -571,6 +571,7 @@ export type Database = {
           is_active: boolean | null
           media_id: string
           position: number | null
+          tenant_id: string | null
           weight: number | null
         }
         Insert: {
@@ -581,6 +582,7 @@ export type Database = {
           is_active?: boolean | null
           media_id: string
           position?: number | null
+          tenant_id?: string | null
           weight?: number | null
         }
         Update: {
@@ -591,6 +593,7 @@ export type Database = {
           is_active?: boolean | null
           media_id?: string
           position?: number | null
+          tenant_id?: string | null
           weight?: number | null
         }
         Relationships: [
@@ -606,6 +609,13 @@ export type Database = {
             columns: ["media_id"]
             isOneToOne: false
             referencedRelation: "media_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_contents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -939,6 +949,7 @@ export type Database = {
           advertiser_id: string | null
           budget: number | null
           campaign_type: string | null
+          color: string | null
           company_id: string | null
           contract_id: string | null
           created_at: string | null
@@ -964,6 +975,7 @@ export type Database = {
           advertiser_id?: string | null
           budget?: number | null
           campaign_type?: string | null
+          color?: string | null
           company_id?: string | null
           contract_id?: string | null
           created_at?: string | null
@@ -989,6 +1001,7 @@ export type Database = {
           advertiser_id?: string | null
           budget?: number | null
           campaign_type?: string | null
+          color?: string | null
           company_id?: string | null
           contract_id?: string | null
           created_at?: string | null
@@ -3903,6 +3916,61 @@ export type Database = {
           serial?: string
         }
         Relationships: []
+      }
+      playlist_campaigns: {
+        Row: {
+          campaign_id: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          playlist_id: string
+          priority: number | null
+          tenant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          playlist_id: string
+          priority?: number | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          playlist_id?: string
+          priority?: number | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "playlist_campaigns_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "playlist_campaigns_playlist_id_fkey"
+            columns: ["playlist_id"]
+            isOneToOne: false
+            referencedRelation: "playlists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "playlist_campaigns_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       playlist_channel_items: {
         Row: {
