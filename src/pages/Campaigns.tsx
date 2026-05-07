@@ -27,6 +27,7 @@ import {
 import { toast } from "sonner";
 import { CampaignCalendar } from "@/components/campaigns/CampaignCalendar";
 import { CampaignTimeline } from "@/components/campaigns/CampaignTimeline";
+import { CampaignDialog } from "@/components/campaigns/CampaignDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,6 +43,8 @@ export default function CampaignsPage() {
   const queryClient = useQueryClient();
   const [view, setView] = useState<"grid" | "list" | "calendar" | "timeline">("grid");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
 
   const { data: campaigns, isLoading } = useQuery({
     queryKey: ["campaigns", tenantId || companyId],
@@ -65,7 +68,13 @@ export default function CampaignsPage() {
   ) || [];
 
   const handleEdit = (id: string) => {
-    toast.info("Em breve: Edição de campanha");
+    setSelectedCampaignId(id);
+    setIsDialogOpen(true);
+  };
+
+  const handleCreate = () => {
+    setSelectedCampaignId(null);
+    setIsDialogOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -88,7 +97,11 @@ export default function CampaignsPage() {
         description="Gerencie campanhas temporárias, ofertas e conteúdos sazonais com precisão visual."
         actions={
           isMarketing && (
-            <Button className="bg-gradient-primary text-primary-foreground shadow-glow h-9" size="sm">
+            <Button 
+              className="bg-gradient-primary text-primary-foreground shadow-glow h-9" 
+              size="sm"
+              onClick={handleCreate}
+            >
               <Plus className="h-4 w-4 mr-2" /> Nova campanha
             </Button>
           )
@@ -280,6 +293,12 @@ export default function CampaignsPage() {
           </>
         )}
       </div>
+
+      <CampaignDialog 
+        open={isDialogOpen} 
+        onOpenChange={setIsDialogOpen} 
+        campaignId={selectedCampaignId}
+      />
     </div>
   );
 }
