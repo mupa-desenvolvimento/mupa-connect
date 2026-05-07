@@ -26,9 +26,14 @@ import {
   MoreVertical, 
   ChevronRight,
   FileText,
+  Send,
   Building2,
   Pencil
 } from "lucide-react";
+import { TemplatesPanel } from "@/components/whatsapp/TemplatesPanel";
+import { GroupsPanel } from "@/components/whatsapp/GroupsPanel";
+import { ManualSendPanel } from "@/components/whatsapp/ManualSendPanel";
+import { SendHistoryPanel } from "@/components/whatsapp/SendHistoryPanel";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { usePhoneMask } from "@/hooks/usePhoneMask";
@@ -380,21 +385,30 @@ export default function WhatsAppManagement() {
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-background border">
+        <TabsList className="bg-background border flex-wrap h-auto">
           <TabsTrigger value="instances" className="gap-2">
             <Smartphone className="h-4 w-4" /> Instâncias
           </TabsTrigger>
           <TabsTrigger value="recipients" className="gap-2">
             <Users className="h-4 w-4" /> Destinatários
           </TabsTrigger>
+          <TabsTrigger value="groups" className="gap-2">
+            <Users className="h-4 w-4" /> Grupos
+          </TabsTrigger>
           <TabsTrigger value="templates" className="gap-2">
             <FileText className="h-4 w-4" /> Templates
           </TabsTrigger>
+          <TabsTrigger value="send" className="gap-2">
+            <Send className="h-4 w-4" /> Envio Manual
+          </TabsTrigger>
+          <TabsTrigger value="history" className="gap-2">
+            <History className="h-4 w-4" /> Histórico Envios
+          </TabsTrigger>
           <TabsTrigger value="automations" className="gap-2">
-            <Bell className="h-4 w-4" /> Alertas & Regras
+            <Bell className="h-4 w-4" /> Alertas
           </TabsTrigger>
           <TabsTrigger value="logs" className="gap-2">
-            <History className="h-4 w-4" /> Histórico
+            <History className="h-4 w-4" /> Logs
           </TabsTrigger>
         </TabsList>
 
@@ -632,73 +646,6 @@ export default function WhatsAppManagement() {
                     <Button variant="outline" className="w-full">Editar Configurações</Button>
                   </CardContent>
                 </Card>
-          <TabsContent value="templates">
-             <div className="space-y-4">
-               <div className="flex justify-between items-center gap-4 bg-card p-4 rounded-xl border border-border/60">
-                 <div className="relative flex-1 max-w-sm">
-                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                   <Input placeholder="Buscar template..." className="pl-10" />
-                 </div>
-                 <Button className="gap-2" onClick={() => {
-                   setNewTemplate({ name: "", content: "", category: "" });
-                   setShowTemplateDialog(true);
-                 }}>
-                   <Plus className="h-4 w-4" /> Novo Template
-                 </Button>
-               </div>
-
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                 {templates?.map((template) => (
-                   <Card key={template.id} className="border-border/60 hover:shadow-md transition-shadow">
-                     <CardHeader className="pb-3">
-                       <div className="flex justify-between items-start">
-                         <div>
-                           <CardTitle className="text-lg">{template.name}</CardTitle>
-                           <CardDescription>{template.category || "Geral"}</CardDescription>
-                         </div>
-                         <DropdownMenu>
-                           <DropdownMenuTrigger asChild>
-                             <Button variant="ghost" size="icon">
-                               <MoreVertical className="h-4 w-4" />
-                             </Button>
-                           </DropdownMenuTrigger>
-                           <DropdownMenuContent align="end">
-                             <DropdownMenuItem onClick={() => {
-                               setNewTemplate({
-                                 name: template.name,
-                                 content: template.content,
-                                 category: template.category || "",
-                               });
-                               setShowTemplateDialog(true);
-                             }}>
-                               <Settings className="h-4 w-4 mr-2" /> Editar
-                             </DropdownMenuItem>
-                             <DropdownMenuItem
-                               className="text-destructive focus:text-destructive"
-                               onClick={() => handleDeleteTemplate(template.id)}
-                             >
-                               <XCircle className="h-4 w-4 mr-2" /> Remover
-                             </DropdownMenuItem>
-                           </DropdownMenuContent>
-                         </DropdownMenu>
-                       </div>
-                     </CardHeader>
-                     <CardContent>
-                       <p className="text-xs text-muted-foreground line-clamp-4 bg-muted/30 p-3 rounded-lg border italic">
-                         "{template.content}"
-                       </p>
-                     </CardContent>
-                   </Card>
-                 ))}
-                 {(!templates || templates.length === 0) && (
-                   <div className="col-span-full h-24 flex items-center justify-center text-muted-foreground border border-dashed rounded-xl italic">
-                     Nenhum template cadastrado.
-                   </div>
-                 )}
-               </div>
-             </div>
-          </TabsContent>
-
                 <Card className="border-border/60">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -764,6 +711,22 @@ export default function WhatsAppManagement() {
                  </TableBody>
                </Table>
              </Card>
+          </TabsContent>
+
+          <TabsContent value="templates">
+            <TemplatesPanel />
+          </TabsContent>
+
+          <TabsContent value="groups">
+            <GroupsPanel />
+          </TabsContent>
+
+          <TabsContent value="send">
+            <ManualSendPanel />
+          </TabsContent>
+
+          <TabsContent value="history">
+            <SendHistoryPanel />
           </TabsContent>
 
         </div>
