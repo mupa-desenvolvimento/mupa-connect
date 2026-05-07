@@ -748,9 +748,9 @@ export default function ProductQueriesAnalytics() {
         <CardContent>
           <div className="rounded-md border overflow-hidden">
             <Table>
-              <TableHeader className="bg-muted/50">
+              <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
                 <TableRow>
-                  <TableHead className="w-[150px]">Data/Hora</TableHead>
+                  <TableHead className="w-[140px]">Data/Hora</TableHead>
                   <TableHead>Loja</TableHead>
                   <TableHead>Dispositivo</TableHead>
                   <TableHead>EAN</TableHead>
@@ -759,32 +759,60 @@ export default function ProductQueriesAnalytics() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {logs?.slice(0, 50).map((log) => (
-                  <TableRow key={log.id} className="hover:bg-muted/30 transition-colors">
-                    <TableCell className="text-xs font-medium">
-                      {format(parseISO(log.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}
-                    </TableCell>
-                    <TableCell className="text-xs">{log.loja || "—"}</TableCell>
-                    <TableCell className="text-xs max-w-[120px] truncate" title={log.apelido || log.device_id}>
-                      {log.apelido || log.device_id}
-                    </TableCell>
-                    <TableCell className="font-mono text-[10px]">{log.ean || "—"}</TableCell>
-                    <TableCell className="text-xs max-w-[200px] truncate" title={log.descricao_produto}>
-                      {log.descricao_produto || "—"}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge 
-                        variant={log.status_code === 200 ? "default" : "destructive"}
-                        className={cn(
-                          "text-[10px] h-5 px-1.5",
-                          log.status_code === 200 && "bg-success hover:bg-success/80 text-success-foreground"
-                        )}
-                      >
-                        {log.status_code}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {logs?.slice(0, 50).map((log, index) => {
+                  const isNotFound = log.descricao_produto === "Descrição não encontrada." || !log.descricao_produto;
+                  const isCriticalError = log.status_code && log.status_code >= 500;
+                  const isWarningError = log.status_code && log.status_code >= 400 && log.status_code < 500;
+                  
+                  return (
+                    <TableRow 
+                      key={log.id} 
+                      className={cn(
+                        "hover:bg-muted/40 transition-colors cursor-default group",
+                        index % 2 === 1 && "bg-muted/10"
+                      )}
+                    >
+                      <TableCell className="text-[11px] font-medium text-muted-foreground">
+                        {format(parseISO(log.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}
+                      </TableCell>
+                      <TableCell className="text-xs font-semibold">{log.loja || "—"}</TableCell>
+                      <TableCell className="max-w-[150px]">
+                        <div className="flex flex-col">
+                          <span className="text-[11px] font-mono font-bold text-foreground">
+                            {log.device_serial || log.device_id}
+                          </span>
+                          {log.apelido && log.apelido !== "aguardando_ativação" && (
+                            <span className="text-[10px] text-muted-foreground italic truncate">
+                              {log.apelido}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-[10px]">{log.ean || "—"}</TableCell>
+                      <TableCell className="max-w-[200px]">
+                        <span className={cn(
+                          "text-xs truncate block",
+                          isNotFound ? "text-muted-foreground italic" : "font-medium"
+                        )} title={log.descricao_produto}>
+                          {isNotFound ? "Produto não identificado" : log.descricao_produto}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge 
+                          variant={log.status_code === 200 ? "default" : "destructive"}
+                          className={cn(
+                            "text-[10px] h-5 px-2 font-bold shadow-sm",
+                            log.status_code === 200 && "bg-success hover:bg-success/80 text-success-foreground",
+                            isCriticalError && "bg-destructive border-2 border-white/20 animate-pulse",
+                            isWarningError && !isCriticalError && "bg-orange-500 hover:bg-orange-600"
+                          )}
+                        >
+                          {log.status_code}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
                 {(!logs || logs.length === 0) && (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
