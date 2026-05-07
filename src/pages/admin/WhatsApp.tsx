@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useQueryClient } from "@tanstack/react-query";
@@ -25,9 +25,13 @@ import {
   Clock,
   MoreVertical, 
   ChevronRight,
-  FileText
+  FileText,
+  Building2,
+  Pencil
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { usePhoneMask } from "@/hooks/usePhoneMask";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -68,13 +72,34 @@ export default function WhatsAppManagement() {
   const [showAddRecipientDialog, setShowAddRecipientDialog] = useState(false);
   const [showTestMessageDialog, setShowTestMessageDialog] = useState(false);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  
   const [newInstance, setNewInstance] = useState({ name: "", description: "" });
-  const [newRecipient, setNewRecipient] = useState({ name: "", phone: "" });
+  const [newRecipient, setNewRecipient] = useState({ 
+    id: "", 
+    name: "", 
+    phone: "", 
+    company_id: "", 
+    error_notifications: true, 
+    device_status_notifications: true, 
+    playlist_notifications: true 
+  });
   const [newTemplate, setNewTemplate] = useState({ name: "", content: "", category: "" });
   const [testMessage, setTestMessage] = useState({ instanceName: "", recipientPhone: "", message: "" });
   const [creating, setCreating] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
   const queryClient = useQueryClient();
+
+  const recipientInputRef = usePhoneMask();
+  const testInputRef = usePhoneMask();
+
+  const { data: companies } = useQuery({
+    queryKey: ["companies"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("companies").select("id, name").order("name");
+      if (error) throw error;
+      return data;
+    }
+  });
 
   const callApi = async (action: string, payload: Record<string, unknown> = {}) => {
     const { data, error } = await supabase.functions.invoke("whatsapp-evolution", {
@@ -163,40 +188,70 @@ export default function WhatsAppManagement() {
     if (!newRecipient.name.trim() || !newRecipient.phone.trim()) {
       return toast.error("Nome e telefone são obrigatórios");
     }
-    if (!isValidPhone(newRecipient.phone)) {
-      return toast.error("Por favor, insira um telefone válido com DDI e DDD (ex: 5511999999999)");
+    const cleanedPhone = newRecipient.phone.replace(/\D/g, "");
+    if (!isValidPhone(cleanedPhone)) {
+      return toast.error("Por favor, insira um telefone válido com DDI e DDD");
     }
     try {
       setCreating(true);
-      const { error } = await supabase.from("whatsapp_recipients").insert({
+      const recipientData = {
         name: newRecipient.name.trim(),
-        phone: newRecipient.phone.replace(/\D/g, ""),
+        phone: cleanedPhone,
+        company_id: newRecipient.company_id || null,
+        error_notifications: newRecipient.error_notifications,
+        device_status_notifications: newRecipient.device_status_notifications,
+        playlist_notifications: newRecipient.playlist_notifications,
         is_active: true,
-      });
+      };
+
+      let error;
+      if (newRecipient.id) {
+        const { error: updateError } = await supabase
+          .from("whatsapp_recipients")
+          .update(recipientData)
+          .eq("id", newRecipient.id);
+        error = updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from("whatsapp_recipients")
+          .insert(recipientData);
+        error = insertError;
+      }
+
       if (error) throw error;
-      toast.success("Destinatário cadastrado");
+      toast.success(newRecipient.id ? "Destinatário atualizado" : "Destinatário cadastrado");
       setShowAddRecipientDialog(false);
-      setNewRecipient({ name: "", phone: "" });
+      setNewRecipient({ 
+        id: "", 
+        name: "", 
+        phone: "", 
+        company_id: "", 
+        error_notifications: true, 
+        device_status_notifications: true, 
+        playlist_notifications: true 
+      });
       queryClient.invalidateQueries({ queryKey: ["whatsapp-recipients"] });
     } catch (err: any) {
-      toast.error(err.message || "Erro ao cadastrar destinatário");
+      toast.error(err.message || "Erro ao salvar destinatário");
     } finally {
       setCreating(false);
     }
   };
 
   const handleSendTestMessage = async () => {
-    if (!testMessage.instanceName || !testMessage.recipientPhone || !testMessage.message.trim()) {
+    const inputPhone = testInputRef.current?.value || testMessage.recipientPhone;
+    if (!testMessage.instanceName || !inputPhone || !testMessage.message.trim()) {
       return toast.error("Todos os campos são obrigatórios");
     }
-    if (!isValidPhone(testMessage.recipientPhone)) {
-      return toast.error("Telefone de destino inválido. Use o formato: 5511999999999");
+    const cleanedPhone = inputPhone.replace(/\D/g, "");
+    if (!isValidPhone(cleanedPhone)) {
+      return toast.error("Telefone de destino inválido. Por favor, confira o número.");
     }
     try {
       setSendingTest(true);
       await callApi("sendMessage", {
         instanceName: testMessage.instanceName,
-        phone: testMessage.recipientPhone.replace(/\D/g, ""),
+        phone: cleanedPhone,
         message: testMessage.message.trim(),
       });
       toast.success("Mensagem de teste enviada!");
@@ -468,50 +523,74 @@ export default function WhatsAppManagement() {
                      </TableRow>
                    </TableHeader>
                    <TableBody>
-                     {recipients?.map((recipient) => (
-                       <TableRow key={recipient.id}>
-                         <TableCell className="font-medium">{recipient.name}</TableCell>
-                         <TableCell className="font-mono text-xs">{recipient.phone}</TableCell>
-                         <TableCell>{recipient.companies?.name || "Global"}</TableCell>
-                         <TableCell>
-                           <div className="flex flex-wrap gap-1">
-                             {recipient.alert_types?.map((type: string) => (
-                               <Badge key={type} variant="outline" className="text-[10px] py-0 h-4 bg-primary/5 border-primary/20">
-                                 {type}
-                               </Badge>
-                             ))}
-                           </div>
-                         </TableCell>
-                         <TableCell>
-                           <Badge variant={recipient.is_active ? "default" : "secondary"} className={cn("text-[10px]", recipient.is_active && "bg-green-500/10 text-green-600 hover:bg-green-500/20")}>
-                             {recipient.is_active ? "Ativo" : "Inativo"}
-                           </Badge>
-                         </TableCell>
-                         <TableCell className="text-right">
-                           <DropdownMenu>
-                             <DropdownMenuTrigger asChild>
-                               <Button variant="ghost" size="icon" className="h-8 w-8">
-                                 <MoreVertical className="h-4 w-4" />
-                               </Button>
-                             </DropdownMenuTrigger>
-                             <DropdownMenuContent align="end">
-                               <DropdownMenuItem onClick={() => {
-                                 setTestMessage({ ...testMessage, recipientPhone: recipient.phone });
-                                 setShowTestMessageDialog(true);
-                               }}>
-                                 <MessageSquare className="h-4 w-4 mr-2" /> Testar Envio
-                               </DropdownMenuItem>
-                               <DropdownMenuItem
-                                 className="text-destructive focus:text-destructive"
-                                 onClick={() => handleDeleteRecipient(recipient.id)}
-                               >
-                                 <XCircle className="h-4 w-4 mr-2" /> Remover
-                               </DropdownMenuItem>
-                             </DropdownMenuContent>
-                           </DropdownMenu>
-                         </TableCell>
-                       </TableRow>
-                     ))}
+                      {recipients?.map((recipient) => (
+                        <TableRow key={recipient.id}>
+                          <TableCell className="font-medium">{recipient.name}</TableCell>
+                          <TableCell className="font-mono text-xs">{recipient.phone}</TableCell>
+                          <TableCell>{recipient.companies?.name || "Global"}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {recipient.error_notifications && (
+                                <Badge variant="outline" className="text-[10px] py-0 h-4 bg-red-500/5 border-red-200 text-red-600">
+                                  Erros
+                                </Badge>
+                              )}
+                              {recipient.device_status_notifications && (
+                                <Badge variant="outline" className="text-[10px] py-0 h-4 bg-blue-500/5 border-blue-200 text-blue-600">
+                                  Status
+                                </Badge>
+                              )}
+                              {recipient.playlist_notifications && (
+                                <Badge variant="outline" className="text-[10px] py-0 h-4 bg-green-500/5 border-green-200 text-green-600">
+                                  Playlist
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={recipient.is_active ? "default" : "secondary"} className={cn("text-[10px]", recipient.is_active && "bg-green-500/10 text-green-600 hover:bg-green-500/20")}>
+                              {recipient.is_active ? "Ativo" : "Inativo"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => {
+                                  setNewRecipient({
+                                    id: recipient.id,
+                                    name: recipient.name,
+                                    phone: recipient.phone,
+                                    company_id: recipient.company_id || "",
+                                    error_notifications: recipient.error_notifications ?? true,
+                                    device_status_notifications: recipient.device_status_notifications ?? true,
+                                    playlist_notifications: recipient.playlist_notifications ?? true
+                                  });
+                                  setShowAddRecipientDialog(true);
+                                }}>
+                                  <Pencil className="h-4 w-4 mr-2" /> Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => {
+                                  setTestMessage({ ...testMessage, recipientPhone: recipient.phone });
+                                  setShowTestMessageDialog(true);
+                                }}>
+                                  <MessageSquare className="h-4 w-4 mr-2" /> Testar Envio
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => handleDeleteRecipient(recipient.id)}
+                                >
+                                  <XCircle className="h-4 w-4 mr-2" /> Remover
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
                      {(!recipients || recipients.length === 0) && (
                        <TableRow>
                          <TableCell colSpan={6} className="h-24 text-center text-muted-foreground italic">
@@ -750,42 +829,104 @@ export default function WhatsAppManagement() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showAddRecipientDialog} onOpenChange={setShowAddRecipientDialog}>
-        <DialogContent>
+      <Dialog open={showAddRecipientDialog} onOpenChange={(open) => {
+        setShowAddRecipientDialog(open);
+        if (!open) setNewRecipient({ 
+          id: "", name: "", phone: "", company_id: "", 
+          error_notifications: true, device_status_notifications: true, playlist_notifications: true 
+        });
+      }}>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Novo Destinatário</DialogTitle>
+            <DialogTitle>{newRecipient.id ? "Editar Destinatário" : "Novo Destinatário"}</DialogTitle>
             <DialogDescription>
-              Cadastre um número para receber notificações automáticas.
+              Configure um número para receber notificações automáticas do sistema.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="rec-name">Nome</Label>
-              <Input
-                id="rec-name"
-                placeholder="Ex: João Silva"
-                value={newRecipient.name}
-                onChange={(e) => setNewRecipient({ ...newRecipient, name: e.target.value })}
-              />
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="rec-name">Nome</Label>
+                <Input
+                  id="rec-name"
+                  placeholder="Ex: João Silva"
+                  value={newRecipient.name}
+                  onChange={(e) => setNewRecipient({ ...newRecipient, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="rec-phone">Telefone (Máscara ativa)</Label>
+                <Input
+                  id="rec-phone"
+                  ref={recipientInputRef}
+                  placeholder="+55 (11) 99999-9999"
+                  defaultValue={newRecipient.phone}
+                />
+              </div>
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="rec-phone">Telefone (com DDI e DDD)</Label>
-              <Input
-                id="rec-phone"
-                type="tel"
-                placeholder="Ex: 5511999999999"
-                value={newRecipient.phone}
-                onChange={(e) => setNewRecipient({ ...newRecipient, phone: e.target.value })}
-              />
+              <Label htmlFor="rec-company">Empresa (Opcional)</Label>
+              <Select 
+                value={newRecipient.company_id} 
+                onValueChange={(v) => setNewRecipient({ ...newRecipient, company_id: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma empresa (ou deixe em branco para Global)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Global (Todas as empresas)</SelectItem>
+                  {companies?.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-4 pt-2 border-t">
+              <Label className="text-sm font-semibold">Notificações Ativas</Label>
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="text-sm">Erros do Sistema</Label>
+                  <p className="text-[10px] text-muted-foreground italic">Alertas de falhas críticas de hardware ou rede.</p>
+                </div>
+                <Switch 
+                  checked={newRecipient.error_notifications}
+                  onCheckedChange={(v) => setNewRecipient({ ...newRecipient, error_notifications: v })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="text-sm">Status de Dispositivos</Label>
+                  <p className="text-[10px] text-muted-foreground italic">Alertas quando um player fica offline/online.</p>
+                </div>
+                <Switch 
+                  checked={newRecipient.device_status_notifications}
+                  onCheckedChange={(v) => setNewRecipient({ ...newRecipient, device_status_notifications: v })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="text-sm">Playlists e Mídia</Label>
+                  <p className="text-[10px] text-muted-foreground italic">Atualizações de conteúdo e downloads.</p>
+                </div>
+                <Switch 
+                  checked={newRecipient.playlist_notifications}
+                  onCheckedChange={(v) => setNewRecipient({ ...newRecipient, playlist_notifications: v })}
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddRecipientDialog(false)} disabled={creating}>
               Cancelar
             </Button>
-            <Button onClick={handleAddRecipient} disabled={creating}>
-              {creating ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
-              Cadastrar
+            <Button onClick={handleAddRecipient} disabled={creating} className="bg-gradient-primary text-white">
+              {creating ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+              {newRecipient.id ? "Atualizar" : "Salvar"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -822,14 +963,13 @@ export default function WhatsAppManagement() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="test-phone">Número de Destino</Label>
+              <Label htmlFor="test-phone">Número de Destino (Máscara ativa)</Label>
               <div className="flex gap-2">
                 <Input
                   id="test-phone"
-                  type="tel"
-                  placeholder="Ex: 5511999999999"
-                  value={testMessage.recipientPhone}
-                  onChange={(e) => setTestMessage({ ...testMessage, recipientPhone: e.target.value })}
+                  ref={testInputRef}
+                  placeholder="+55 (11) 99999-9999"
+                  defaultValue={testMessage.recipientPhone}
                   className="flex-1"
                 />
                 <Select 
