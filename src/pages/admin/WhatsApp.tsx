@@ -196,7 +196,7 @@ export default function WhatsAppManagement() {
       setSendingTest(true);
       await callApi("sendMessage", {
         instanceName: testMessage.instanceName,
-        phone: testMessage.recipientPhone,
+        phone: testMessage.recipientPhone.replace(/\D/g, ""),
         message: testMessage.message.trim(),
       });
       toast.success("Mensagem de teste enviada!");
