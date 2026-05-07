@@ -83,10 +83,10 @@ export default function ProductQueriesAnalytics() {
 
       // Multi-tenant filters
       if (tenantId) {
-        query = query.eq("tenant_id", tenantId);
+        query = query.eq("tenant_id" as any, tenantId);
       }
       if (companyId) {
-        query = query.eq("company_id", companyId);
+        query = query.eq("company_id" as any, companyId);
       }
 
       if (period === "custom" && dateRange?.from) {
@@ -123,8 +123,8 @@ export default function ProductQueriesAnalytics() {
         .select("loja")
         .not("loja", "is", null);
 
-      if (tenantId) query = query.eq("tenant_id", tenantId);
-      if (companyId) query = query.eq("company_id", companyId);
+      if (tenantId) query = query.eq("tenant_id" as any, tenantId);
+      if (companyId) query = query.eq("company_id" as any, companyId);
       
       const { data, error } = await query;
       if (error) return [];
@@ -141,8 +141,8 @@ export default function ProductQueriesAnalytics() {
         .from("product_queries_log")
         .select("device_id, apelido, device_serial");
 
-      if (tenantId) query = query.eq("tenant_id", tenantId);
-      if (companyId) query = query.eq("company_id", companyId);
+      if (tenantId) query = query.eq("tenant_id" as any, tenantId);
+      if (companyId) query = query.eq("company_id" as any, companyId);
       
       const { data, error } = await query;
       if (error) return [];
