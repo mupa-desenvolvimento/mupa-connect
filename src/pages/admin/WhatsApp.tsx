@@ -858,8 +858,7 @@ export default function WhatsAppManagement() {
                   id="rec-phone"
                   ref={recipientInputRef}
                   placeholder="+55 (11) 99999-9999"
-                  value={newRecipient.phone}
-                  onAccept={(v: string) => setNewRecipient({ ...newRecipient, phone: v })}
+                  defaultValue={newRecipient.phone}
                 />
               </div>
             </div>
