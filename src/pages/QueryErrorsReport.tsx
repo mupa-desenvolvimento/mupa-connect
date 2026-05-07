@@ -166,13 +166,12 @@ export default function QueryErrorsReport() {
     queryKey: ["filter-stores-errors"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("product_query_errors")
-        .select("store_id, store_name")
-        .not("store_id", "is", null);
+        .from("stores")
+        .select("id, name")
+        .order("name");
       
       if (error) return [];
-      const uniqueStores = Array.from(new Map((data as any[]).map(d => [d.store_id, d.store_name || d.store_id])).entries());
-      return uniqueStores.map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+      return data.map(d => ({ id: d.id, name: d.name }));
     }
   });
 
