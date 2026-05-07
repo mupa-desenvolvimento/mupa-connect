@@ -410,14 +410,82 @@ export default function PlaylistEditor() {
                     {selectedItem.media?.type === 'video' ? <Video className="h-16 w-16 text-white/10" /> : <ImageIcon className="h-16 w-16 text-white/10" />}
                     <img src={selectedItem.media?.thumbnail_url || selectedItem.media?.file_url} className="max-h-full max-w-full rounded shadow-2xl" />
                   </div>
-                  <div className="h-24 bg-card/40 backdrop-blur-md border-t border-white/5 flex items-center justify-between px-6">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">{selectedItem.media?.name}</span>
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2"><Clock className="h-3 w-3 text-[#085CF0]" /><input type="number" value={selectedItem.duration} onChange={(e) => { const d = parseInt(e.target.value); setSelectedItem({...selectedItem, duration: d}); setItems(items.map(it => it.id === selectedItem.id ? {...it, duration: d} : it)); setHasUnsavedChanges(true); }} className="w-16 bg-black/20 border-white/10 rounded h-7 text-xs px-2" /> <span className="text-xs text-white/40">segundos</span></div>
+                  <div className="h-28 bg-card/60 backdrop-blur-md border-t border-white/10 flex items-center justify-between px-6">
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2">
+                        {selectedItem.isLocked && <Lock className="h-3 w-3 text-amber-500" />}
+                        <span className="text-xs font-bold text-white uppercase tracking-wider">{selectedItem.media?.name}</span>
+                      </div>
+                      <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-3 w-3 text-[#085CF0]" />
+                          <input 
+                            type="number" 
+                            disabled={selectedItem.isLocked}
+                            value={selectedItem.duration} 
+                            onChange={(e) => { 
+                              const d = parseInt(e.target.value); 
+                              setSelectedItem({...selectedItem, duration: d}); 
+                              setItems(items.map(it => it.id === selectedItem.id ? {...it, duration: d} : it)); 
+                              setHasUnsavedChanges(true); 
+                            }} 
+                            className="w-16 bg-black/40 border-white/10 rounded h-8 text-xs px-2 focus:ring-1 focus:ring-[#085CF0] disabled:opacity-50" 
+                          /> 
+                          <span className="text-[10px] text-white/40 font-bold uppercase">segundos</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Layers className="h-3 w-3 text-[#085CF0]" />
+                          <Select 
+                            disabled={selectedItem.isLocked}
+                            value={selectedItem.priority.toString()} 
+                            onValueChange={(v) => {
+                              const p = parseInt(v);
+                              setSelectedItem({...selectedItem, priority: p});
+                              setItems(items.map(it => it.id === selectedItem.id ? {...it, priority: p} : it));
+                              setHasUnsavedChanges(true);
+                            }}
+                          >
+                            <SelectTrigger className="w-20 h-8 text-xs bg-black/40 border-white/10 disabled:opacity-50">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#0c0c0e] border-white/10 text-white">
+                              {[1,2,3,4,5,6,7,8,9,10].map(p => (
+                                <SelectItem key={p} value={p.toString()}>P{p}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <span className="text-[10px] text-white/40 font-bold uppercase">prioridade</span>
+                        </div>
                       </div>
                     </div>
-                    <Button variant="ghost" className="text-red-500 hover:text-red-400 hover:bg-red-500/10" onClick={() => removeItem(selectedItem.id)}><Trash2 className="h-4 w-4 mr-2" /> Remover</Button>
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className={cn(
+                          "h-9 px-4 gap-2 text-xs border-white/10",
+                          selectedItem.isLocked ? "bg-amber-500/10 text-amber-500 hover:bg-amber-500/20" : "bg-white/5 text-white/60 hover:text-white"
+                        )}
+                        onClick={() => {
+                          const newLocked = !selectedItem.isLocked;
+                          setSelectedItem({...selectedItem, isLocked: newLocked});
+                          setItems(items.map(it => it.id === selectedItem.id ? {...it, isLocked: newLocked} : it));
+                          setHasUnsavedChanges(true);
+                          toast.success(newLocked ? "Conteúdo bloqueado" : "Conteúdo desbloqueado");
+                        }}
+                      >
+                        {selectedItem.isLocked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                        {selectedItem.isLocked ? "Desbloquear" : "Bloquear"}
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        disabled={selectedItem.isLocked}
+                        className="h-9 px-4 text-red-500 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-50" 
+                        onClick={() => removeItem(selectedItem.id)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" /> Remover
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ) : (
