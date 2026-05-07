@@ -517,19 +517,39 @@ export default function PlaylistEditor() {
                   </DndContext>
                 </div>
               </div>
-              {campaigns.length > 0 && (
-                <div className="h-10 border-t border-white/5 bg-black/20 flex items-center relative overflow-hidden">
-                  <div className="absolute left-0 top-0 bottom-0 w-24 bg-black border-r border-white/5 z-10 flex items-center px-3 text-[9px] font-bold text-white/40">CAMPANHAS</div>
-                  <div className="flex-1 flex gap-2 ml-24 px-4 overflow-x-auto scrollbar-none">
-                    {campaigns.map(c => (
-                      <div key={c.id} className="h-6 rounded border border-dashed flex items-center px-2 gap-2" style={{ backgroundColor: `${c.color}20`, borderColor: c.color, color: c.color }}>
-                         <span className="text-[9px] font-bold truncate max-w-[100px]">{c.name}</span>
-                         <Badge variant="outline" className="h-3.5 px-1 text-[8px] border-current opacity-70">P{c.priority}</Badge>
+              <AnimatePresence>
+                {campaigns.length > 0 && (
+                  <div className="border-t border-white/5 bg-black/40 flex flex-col shrink-0">
+                    <div className="h-8 border-b border-white/5 flex items-center justify-between px-4 bg-black/20">
+                      <div className="flex items-center gap-2">
+                        <Megaphone className="h-3 w-3 text-white/40" />
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-white/40">Campanhas Ativas</span>
                       </div>
-                    ))}
+                    </div>
+                    <div className="h-12 flex items-center gap-3 px-4 overflow-x-auto scrollbar-none">
+                      {campaigns.map(c => (
+                        <motion.div 
+                          key={c.id} 
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          className="h-8 shrink-0 rounded-lg border flex items-center px-3 gap-3 cursor-pointer hover:brightness-110 transition-all" 
+                          style={{ 
+                            backgroundColor: `${c.color || '#085CF0'}15`, 
+                            borderColor: `${c.color || '#085CF0'}40`, 
+                            color: c.color || '#085CF0' 
+                          }}
+                        >
+                           <div className="flex flex-col">
+                             <span className="text-[10px] font-bold truncate max-w-[120px] leading-none">{c.name}</span>
+                             <span className="text-[8px] opacity-60 font-mono mt-0.5 uppercase">PRIORIDADE {c.priority}</span>
+                           </div>
+                           <ChevronRight className="h-3 w-3 opacity-40" />
+                        </motion.div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </main>
