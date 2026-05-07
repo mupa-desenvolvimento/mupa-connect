@@ -380,21 +380,30 @@ export default function WhatsAppManagement() {
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-background border">
+        <TabsList className="bg-background border flex-wrap h-auto">
           <TabsTrigger value="instances" className="gap-2">
             <Smartphone className="h-4 w-4" /> Instâncias
           </TabsTrigger>
           <TabsTrigger value="recipients" className="gap-2">
             <Users className="h-4 w-4" /> Destinatários
           </TabsTrigger>
+          <TabsTrigger value="groups" className="gap-2">
+            <Users className="h-4 w-4" /> Grupos
+          </TabsTrigger>
           <TabsTrigger value="templates" className="gap-2">
             <FileText className="h-4 w-4" /> Templates
           </TabsTrigger>
+          <TabsTrigger value="send" className="gap-2">
+            <Send className="h-4 w-4" /> Envio Manual
+          </TabsTrigger>
+          <TabsTrigger value="history" className="gap-2">
+            <History className="h-4 w-4" /> Histórico Envios
+          </TabsTrigger>
           <TabsTrigger value="automations" className="gap-2">
-            <Bell className="h-4 w-4" /> Alertas & Regras
+            <Bell className="h-4 w-4" /> Alertas
           </TabsTrigger>
           <TabsTrigger value="logs" className="gap-2">
-            <History className="h-4 w-4" /> Histórico
+            <History className="h-4 w-4" /> Logs
           </TabsTrigger>
         </TabsList>
 
