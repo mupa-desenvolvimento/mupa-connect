@@ -4142,6 +4142,7 @@ export type Database = {
           end_date: string | null
           end_time: string | null
           id: string
+          is_locked: boolean | null
           is_schedule_override: boolean | null
           media_id: string | null
           ordem: number
@@ -4162,6 +4163,7 @@ export type Database = {
           end_date?: string | null
           end_time?: string | null
           id?: string
+          is_locked?: boolean | null
           is_schedule_override?: boolean | null
           media_id?: string | null
           ordem: number
@@ -4182,6 +4184,7 @@ export type Database = {
           end_date?: string | null
           end_time?: string | null
           id?: string
+          is_locked?: boolean | null
           is_schedule_override?: boolean | null
           media_id?: string | null
           ordem?: number
@@ -6913,6 +6916,7 @@ export type Database = {
           end_date: string | null
           end_time: string | null
           id: string
+          is_locked: boolean | null
           is_schedule_override: boolean | null
           media_id: string | null
           ordem: number
@@ -7182,6 +7186,7 @@ export type Database = {
           end_date: string | null
           end_time: string | null
           id: string
+          is_locked: boolean | null
           is_schedule_override: boolean | null
           media_id: string | null
           ordem: number
@@ -7553,6 +7558,7 @@ export type Database = {
           end_date: string | null
           end_time: string | null
           id: string
+          is_locked: boolean | null
           is_schedule_override: boolean | null
           media_id: string | null
           ordem: number
@@ -7582,6 +7588,7 @@ export type Database = {
           end_date: string | null
           end_time: string | null
           id: string
+          is_locked: boolean | null
           is_schedule_override: boolean | null
           media_id: string | null
           ordem: number
