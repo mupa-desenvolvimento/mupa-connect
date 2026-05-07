@@ -46,7 +46,14 @@ import {
   X,
   Pause,
   AlertTriangle,
-  ExternalLink
+  ExternalLink,
+  Lock,
+  Unlock,
+  ChevronRight,
+  Eye,
+  History,
+  MoreVertical,
+  Edit
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
