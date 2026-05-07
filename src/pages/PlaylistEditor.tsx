@@ -96,6 +96,7 @@ interface EditorPlaylistItem {
   priority: number;
   type: string;
   media?: any;
+  isLocked?: boolean;
 }
 
 const DEFAULT_APPEARANCE_CONFIG = {
