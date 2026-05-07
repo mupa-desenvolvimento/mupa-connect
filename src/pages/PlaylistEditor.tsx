@@ -305,7 +305,52 @@ const DraggableMediaItem = ({ media, onClick, isSelected, onToggleSelect }: any)
   );
 };
 
-const CampaignDropZone = ({ children, isActive }: any) => {
+const DraggableCampaignItem = ({ campaign, onClick }: any) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `library-campaign-${campaign.id}`,
+    data: {
+      type: 'library-campaign',
+      campaignId: campaign.id,
+      campaign: campaign
+    }
+  });
+
+  const style = transform ? {
+    transform: CSS.Translate.toString(transform),
+  } : undefined;
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style}
+      className={cn(
+        "relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer border transition-all group border-white/10 hover:border-[#085CF0]",
+        isDragging && "opacity-50 ring-2 ring-[#085CF0] z-50"
+      )}
+      onClick={() => onClick(campaign.id)}
+    >
+      <div className="w-full h-full flex items-center justify-center relative overflow-hidden bg-black/40">
+        <div 
+          className="absolute inset-0 opacity-10"
+          style={{ backgroundColor: campaign.color || '#085CF0' }}
+        />
+        <Megaphone className="h-8 w-8 relative z-10" style={{ color: campaign.color || '#085CF0' }} />
+      </div>
+      
+      <div 
+        {...listeners} 
+        {...attributes}
+        className="absolute inset-0 z-10"
+      />
+
+      <div className="absolute bottom-1 left-1 right-1 text-[10px] truncate bg-black/60 px-1 rounded font-bold text-white/90 z-20">
+        {campaign.name}
+      </div>
+    </div>
+  );
+};
+
+const CampaignDropZone = ({ children }: any) => {
   const { setNodeRef, isOver } = useDroppable({
     id: 'campaign-drop-zone',
     data: {
@@ -317,7 +362,7 @@ const CampaignDropZone = ({ children, isActive }: any) => {
     <div 
       ref={setNodeRef} 
       className={cn(
-        "flex-1 flex flex-col transition-all duration-200",
+        "flex-1 flex flex-col transition-all duration-200 relative",
         isOver && "bg-[#085CF0]/10 ring-2 ring-[#085CF0]/30 ring-inset rounded-xl"
       )}
     >
@@ -326,6 +371,34 @@ const CampaignDropZone = ({ children, isActive }: any) => {
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
           <div className="bg-[#085CF0] text-white px-4 py-2 rounded-full font-bold text-xs flex items-center gap-2 shadow-xl animate-bounce">
             <Plus className="h-4 w-4" /> Solte para adicionar à campanha
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const TimelineDropZone = ({ children }: any) => {
+  const { setNodeRef, isOver } = useDroppable({
+    id: 'playlist-timeline-drop-zone',
+    data: {
+      accepts: ['library-campaign']
+    }
+  });
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      className={cn(
+        "h-full relative px-8 flex items-center min-w-full",
+        isOver && "bg-[#085CF0]/5 ring-2 ring-[#085CF0]/20 ring-inset"
+      )}
+    >
+      {children}
+      {isOver && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
+          <div className="bg-[#085CF0] text-white px-4 py-2 rounded-full font-bold text-xs flex items-center gap-2 shadow-xl animate-bounce">
+            <Plus className="h-4 w-4" /> Adicionar Campanha à Playlist
           </div>
         </div>
       )}
@@ -361,6 +434,17 @@ export default function PlaylistEditor() {
   const playheadIntervalRef = useRef<number | null>(null);
 
   const totalDuration = useMemo(() => items.reduce((acc, it) => acc + it.duration, 0), [items]);
+
+  const { data: allCampaigns } = useQuery({
+    queryKey: ["all-campaigns", tenantId],
+    queryFn: async () => {
+      if (!tenantId) return [];
+      const { data, error } = await supabase.from("campaigns").select("*").eq("tenant_id", tenantId).eq("is_active", true);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!tenantId
+  });
 
   const { data: campaignLinks } = useQuery({
     queryKey: ["playlist-campaigns", id],
@@ -531,16 +615,21 @@ export default function PlaylistEditor() {
     
     if (!over) return;
 
-    // Handle library to campaign drop
+    // Handle library to campaign content drop
     if (over.id === 'campaign-drop-zone' && active.data.current?.type === 'library-media') {
       const mediaId = active.data.current.mediaId;
-      
-      // If the dragged item is part of the selection, add all selected
       if (selectedLibraryIds.includes(mediaId)) {
         addMultipleItems(selectedLibraryIds);
       } else {
         addItem(mediaId);
       }
+      return;
+    }
+
+    // Handle library campaign to playlist timeline drop
+    if (over.id === 'playlist-timeline-drop-zone' && active.data.current?.type === 'library-campaign') {
+      const campaign = active.data.current.campaign;
+      addCampaignToPlaylist(campaign);
       return;
     }
 
@@ -556,6 +645,37 @@ export default function PlaylistEditor() {
           setHasUnsavedChanges(true);
         }
       }
+    }
+  };
+
+  const addCampaignToPlaylist = async (campaign: any) => {
+    if (id === 'new') {
+      toast.error("Salve a playlist antes de adicionar campanhas.");
+      return;
+    }
+
+    // First check if campaign is already in playlist
+    if (campaigns.some((c: any) => c.id === campaign.id)) {
+      toast.error("Esta campanha já faz parte desta playlist.");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.from("playlist_campaigns").insert({
+        playlist_id: id as any,
+        campaign_id: campaign.id,
+        tenant_id: tenantId,
+        priority: 1,
+        is_active: true,
+        position: items.length
+      }).select().single();
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["playlist-campaigns", id] });
+      toast.success(`Campanha ${campaign.name} adicionada à playlist`);
+    } catch (err: any) {
+      toast.error(`Erro ao adicionar campanha: ${err.message}`);
     }
   };
 
@@ -662,62 +782,95 @@ export default function PlaylistEditor() {
           <aside className="w-80 border-r border-white/5 bg-[#0c0c0e] flex flex-col z-40 overflow-hidden">
             <Tabs defaultValue="media" className="flex-1 flex flex-col h-full overflow-hidden">
               <div className="p-4 space-y-4 shrink-0">
-                <TabsList className="grid w-full grid-cols-2 bg-black/40"><TabsTrigger value="media" className="text-[10px] gap-2">Mídias</TabsTrigger><TabsTrigger value="appearance" className="text-[10px] gap-2">Aparência</TabsTrigger></TabsList>
-                <div className="flex items-center gap-2">
-                  <div className="relative flex-1">
+                <TabsList className="grid w-full grid-cols-3 bg-black/40">
+                  <TabsTrigger value="media" className="text-[10px] gap-2">Mídias</TabsTrigger>
+                  <TabsTrigger value="campaigns" className="text-[10px] gap-2">Campanhas</TabsTrigger>
+                  <TabsTrigger value="appearance" className="text-[10px] gap-2">Aparência</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="media" className="m-0">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/40" />
+                        <input 
+                          placeholder="Buscar mídias..." 
+                          className="w-full h-8 pl-8 text-[10px] bg-black/40 border border-white/5 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-[#085CF0]" 
+                          value={mediaSearch}
+                          onChange={(e) => setMediaSearch(e.target.value)}
+                        />
+                      </div>
+                      {selectedLibraryIds.length > 0 && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 px-2 text-[10px] text-red-500 hover:bg-red-500/10"
+                          onClick={() => setSelectedLibraryIds([])}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                    {selectedLibraryIds.length > 0 && (
+                      <div className="bg-[#085CF0]/10 border border-[#085CF0]/30 rounded-lg p-2 flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-[#085CF0]">
+                          {selectedLibraryIds.length} selecionados
+                        </span>
+                        <Button 
+                          size="sm" 
+                          className="h-6 px-2 text-[9px] bg-[#085CF0] hover:bg-[#085CF0]/80"
+                          onClick={() => addMultipleItems(selectedLibraryIds)}
+                        >
+                          Adicionar
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="campaigns" className="m-0">
+                  <div className="relative">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/40" />
-                    <Input 
-                      placeholder="Buscar mídias..." 
-                      className="h-8 pl-8 text-[10px] bg-black/40 border-white/5" 
-                      value={mediaSearch}
-                      onChange={(e) => setMediaSearch(e.target.value)}
+                    <input 
+                      placeholder="Buscar campanhas..." 
+                      className="w-full h-8 pl-8 text-[10px] bg-black/40 border border-white/5 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-[#085CF0]" 
                     />
                   </div>
-                  {selectedLibraryIds.length > 0 && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-8 px-2 text-[10px] text-red-500 hover:bg-red-500/10"
-                      onClick={() => setSelectedLibraryIds([])}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
-                {selectedLibraryIds.length > 0 && (
-                  <div className="bg-[#085CF0]/10 border border-[#085CF0]/30 rounded-lg p-2 flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-[#085CF0]">
-                      {selectedLibraryIds.length} selecionados
-                    </span>
-                    <Button 
-                      size="sm" 
-                      className="h-6 px-2 text-[9px] bg-[#085CF0] hover:bg-[#085CF0]/80"
-                      onClick={() => addMultipleItems(selectedLibraryIds)}
-                    >
-                      Adicionar {selectedLibraryIds.length}
-                    </Button>
-                  </div>
-                )}
+                </TabsContent>
               </div>
-              <TabsContent value="media" className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-3">
-                {medias?.filter(m => m.name.toLowerCase().includes(mediaSearch.toLowerCase())).map((media) => (
-                  <DraggableMediaItem 
-                    key={media.id} 
-                    media={media} 
-                    onClick={addItem} 
-                    isSelected={selectedLibraryIds.includes(media.id)}
-                    onToggleSelect={(id: string) => {
-                      setSelectedLibraryIds(prev => 
-                        prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-                      );
-                    }}
-                  />
-                ))}
-              </TabsContent>
-              <TabsContent value="appearance" className="p-4 space-y-4">
-                <div className="flex items-center justify-between"><Label className="text-xs">Mostrar Nome</Label><Switch checked={appearanceConfig.show_device_name} onCheckedChange={(v) => { setAppearanceConfig({...appearanceConfig, show_device_name: v}); setHasUnsavedChanges(true); }} /></div>
-                <div className="flex items-center justify-between"><Label className="text-xs">Data e Hora</Label><Switch checked={appearanceConfig.show_datetime} onCheckedChange={(v) => { setAppearanceConfig({...appearanceConfig, show_datetime: v}); setHasUnsavedChanges(true); }} /></div>
-              </TabsContent>
+
+              <div className="flex-1 overflow-hidden relative">
+                <TabsContent value="media" className="h-full m-0 p-4 overflow-y-auto grid grid-cols-2 gap-3 pb-20">
+                  {medias?.filter(m => m.name.toLowerCase().includes(mediaSearch.toLowerCase())).map((media) => (
+                    <DraggableMediaItem 
+                      key={media.id} 
+                      media={media} 
+                      onClick={addItem} 
+                      isSelected={selectedLibraryIds.includes(media.id)}
+                      onToggleSelect={(id: string) => {
+                        setSelectedLibraryIds(prev => 
+                          prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+                        );
+                      }}
+                    />
+                  ))}
+                </TabsContent>
+
+                <TabsContent value="campaigns" className="h-full m-0 p-4 overflow-y-auto grid grid-cols-2 gap-3 pb-20">
+                  {allCampaigns?.map((campaign) => (
+                    <DraggableCampaignItem 
+                      key={campaign.id} 
+                      campaign={campaign} 
+                      onClick={addCampaignToPlaylist} 
+                    />
+                  ))}
+                </TabsContent>
+
+                <TabsContent value="appearance" className="h-full m-0 p-4 space-y-4">
+                  <div className="flex items-center justify-between"><Label className="text-xs">Mostrar Nome</Label><Switch checked={appearanceConfig.show_device_name} onCheckedChange={(v) => { setAppearanceConfig({...appearanceConfig, show_device_name: v}); setHasUnsavedChanges(true); }} /></div>
+                  <div className="flex items-center justify-between"><Label className="text-xs">Data e Hora</Label><Switch checked={appearanceConfig.show_datetime} onCheckedChange={(v) => { setAppearanceConfig({...appearanceConfig, show_datetime: v}); setHasUnsavedChanges(true); }} /></div>
+                </TabsContent>
+              </div>
             </Tabs>
           </aside>
 
@@ -960,39 +1113,40 @@ export default function PlaylistEditor() {
               </div>
               
               <ScrollArea className="flex-1">
-                <div 
-                  className="h-full relative px-8 flex items-center min-w-full" 
-                  style={{ width: Math.max(items.length * 200 + 100, 800) }}
-                  ref={timelineScrollRef} 
-                  onClick={handleTimelineClick}
-                >
-                  {/* Playhead */}
+                <TimelineDropZone>
                   <div 
-                    className="absolute top-0 bottom-0 w-[2px] bg-[#085CF0] z-30 pointer-events-none shadow-[0_0_15px_rgba(8,92,240,0.5)] transition-all duration-100 ease-linear" 
-                    style={{ left: ((currentTime || 0) * PIXELS_PER_SECOND) + 32 }} 
-                  />
-                  
-                  <div className="flex gap-4 items-center">
-                    <SortableContext items={items.map(it => it.id)} strategy={horizontalListSortingStrategy}>
-                      {items.map((item, index) => (
-                        <div key={item.id} className="dnd-item animate-in zoom-in-95 fade-in duration-300">
-                          <SortableItem 
-                            item={item} 
-                            index={index} 
-                            isSelected={selectedItem?.id === item.id} 
-                            onSelect={setSelectedItem} 
-                          />
-                        </div>
-                      ))}
-                    </SortableContext>
+                    className="h-full flex items-center" 
+                    ref={timelineScrollRef} 
+                    onClick={handleTimelineClick}
+                  >
+                    {/* Playhead */}
+                    <div 
+                      className="absolute top-0 bottom-0 w-[2px] bg-[#085CF0] z-30 pointer-events-none shadow-[0_0_15px_rgba(8,92,240,0.5)] transition-all duration-100 ease-linear" 
+                      style={{ left: ((currentTime || 0) * PIXELS_PER_SECOND) + 32 }} 
+                    />
                     
-                    {/* Add Item Placeholder */}
-                    <div className="w-[180px] h-[240px] border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center text-white/5 gap-3 hover:border-white/10 hover:text-white/10 transition-all">
-                       <Plus className="h-10 w-10" />
-                       <span className="text-[10px] font-bold uppercase tracking-widest">Adicionar Item</span>
+                    <div className="flex gap-4 items-center">
+                      <SortableContext items={items.map(it => it.id)} strategy={horizontalListSortingStrategy}>
+                        {items.map((item, index) => (
+                          <div key={item.id} className="dnd-item animate-in zoom-in-95 fade-in duration-300">
+                            <SortableItem 
+                              item={item} 
+                              index={index} 
+                              isSelected={selectedItem?.id === item.id} 
+                              onSelect={setSelectedItem} 
+                            />
+                          </div>
+                        ))}
+                      </SortableContext>
+                      
+                      {/* Add Item Placeholder */}
+                      <div className="w-[180px] h-[240px] border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center text-white/5 gap-3 hover:border-white/10 hover:text-white/10 transition-all">
+                         <Plus className="h-10 w-10" />
+                         <span className="text-[10px] font-bold uppercase tracking-widest">Adicionar Item</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </TimelineDropZone>
                 <ScrollBar orientation="horizontal" className="bg-transparent" />
               </ScrollArea>
             </div>
