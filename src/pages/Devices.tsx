@@ -533,10 +533,10 @@ export default function DevicesPage() {
                       <TableCell className="hidden md:table-cell py-2">
                         <div className="flex flex-col text-[11px] leading-tight text-muted-foreground/75 w-[120px]">
                           <span className="font-medium">
-                            {d.created_at ? new Date(d.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '--/--'}
+                            {(d as any).created_at ? new Date((d as any).created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '--/--'}
                           </span>
                           <span className="text-[10px] opacity-80">
-                            {d.created_at ? new Date(d.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                            {(d as any).created_at ? new Date((d as any).created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
                           </span>
                         </div>
                       </TableCell>

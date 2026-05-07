@@ -2108,6 +2108,7 @@ export type Database = {
           campanhas: string[] | null
           comando: string | null
           company_id: string | null
+          created_at: string | null
           current_media_id: string | null
           current_playlist_id: string | null
           device_type: string | null
@@ -2142,6 +2143,7 @@ export type Database = {
           campanhas?: string[] | null
           comando?: string | null
           company_id?: string | null
+          created_at?: string | null
           current_media_id?: string | null
           current_playlist_id?: string | null
           device_type?: string | null
@@ -2176,6 +2178,7 @@ export type Database = {
           campanhas?: string[] | null
           comando?: string | null
           company_id?: string | null
+          created_at?: string | null
           current_media_id?: string | null
           current_playlist_id?: string | null
           device_type?: string | null
@@ -7342,6 +7345,7 @@ export type Database = {
           campanhas: string[] | null
           comando: string | null
           company_id: string | null
+          created_at: string | null
           current_media_id: string | null
           current_playlist_id: string | null
           device_type: string | null
