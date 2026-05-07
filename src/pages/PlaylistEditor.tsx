@@ -131,13 +131,29 @@ const SortableItem = ({ item, index, isSelected, onSelect, timelineMode = false 
     id: item.id,
     disabled: item.isLocked 
   });
+  
   const media = item.media;
+  const isCampaign = item.type === 'campaign';
+  const campaign = item.campaign;
+  
   const style = { 
     transform: CSS.Transform.toString(transform), 
     transition, 
-    zIndex: isDragging ? 10 : 1, 
-    opacity: isDragging ? 0.5 : 1,
-    width: item.duration * PIXELS_PER_SECOND 
+    zIndex: isDragging ? 50 : 1, 
+    opacity: isDragging ? 0.6 : 1,
+    width: Math.max(100, item.duration * PIXELS_PER_SECOND)
+  };
+
+  const getBorderColor = () => {
+    if (isSelected) return 'border-[#085CF0]';
+    if (isCampaign) return `border-[${campaign?.color || '#085CF0'}]/30`;
+    return 'border-white/10';
+  };
+
+  const getBgColor = () => {
+    if (isSelected) return 'bg-[#085CF0]/10';
+    if (isCampaign) return `bg-[${campaign?.color || '#085CF0'}]/5`;
+    return 'bg-white/5';
   };
 
   return (
@@ -145,43 +161,87 @@ const SortableItem = ({ item, index, isSelected, onSelect, timelineMode = false 
       ref={setNodeRef} 
       style={style} 
       onClick={() => onSelect(item)}
-      className={`relative shrink-0 h-28 rounded-xl border transition-all cursor-pointer group overflow-hidden ${
-        isSelected ? 'border-[#085CF0] ring-2 ring-[#085CF0]/20 bg-[#085CF0]/10 shadow-lg' : 'border-white/10 bg-white/5 hover:border-white/20'
-      } ${item.isLocked ? 'opacity-80' : ''}`}
+      className={cn(
+        "relative shrink-0 h-24 rounded-xl border transition-all cursor-pointer group overflow-hidden",
+        getBorderColor(),
+        getBgColor(),
+        isSelected && "ring-2 ring-[#085CF0]/20 shadow-lg",
+        item.isLocked && "opacity-80"
+      )}
     >
       <div className="absolute inset-0">
-        <img src={media?.thumbnail_url || media?.file_url} alt={media?.name} className="w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+        {!isCampaign ? (
+          <>
+            <img 
+              src={media?.thumbnail_url || media?.file_url} 
+              alt={media?.name} 
+              className="w-full h-full object-cover opacity-30 group-hover:opacity-50 transition-opacity" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
+          </>
+        ) : (
+          <div 
+            className="absolute inset-0 opacity-10"
+            style={{ backgroundColor: campaign?.color || '#085CF0' }}
+          />
+        )}
       </div>
       
-      <div className="absolute top-2 left-2 flex gap-1.5">
-        <span className="text-[10px] font-mono font-bold text-white/90 px-1.5 py-0.5 rounded bg-black/60 border border-white/10">{index + 1}</span>
+      <div className="absolute top-2 left-2 flex gap-1.5 z-10">
+        <span className="text-[10px] font-mono font-bold text-white/90 px-1.5 py-0.5 rounded bg-black/60 border border-white/10">
+          {index + 1}
+        </span>
         {item.isLocked && (
           <div className="bg-amber-500/20 text-amber-500 border border-amber-500/30 rounded px-1.5 py-0.5 flex items-center">
             <Lock className="h-2.5 w-2.5" />
           </div>
         )}
+        {isCampaign && (
+          <div 
+            className="rounded px-1.5 py-0.5 flex items-center gap-1 border"
+            style={{ 
+              backgroundColor: `${campaign?.color || '#085CF0'}20`,
+              borderColor: `${campaign?.color || '#085CF0'}40`,
+              color: campaign?.color || '#085CF0'
+            }}
+          >
+            <Megaphone className="h-2.5 w-2.5" />
+            <span className="text-[9px] font-bold uppercase tracking-tighter">Campanha</span>
+          </div>
+        )}
       </div>
 
-      <div className="absolute top-2 right-2">
+      <div className="absolute top-2 right-2 z-10">
         <span className="text-[10px] font-bold text-white/90 px-1.5 py-0.5 rounded bg-black/60 border border-white/10 flex items-center gap-1">
           <Clock className="h-2.5 w-2.5 text-[#085CF0]" /> {item.duration}s
         </span>
       </div>
 
       {!item.isLocked && (
-        <div {...attributes} {...listeners} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white/0 group-hover:text-white/100 group-hover:bg-[#085CF0]/80 transition-all cursor-grab active:cursor-grabbing">
+        <div 
+          {...attributes} 
+          {...listeners} 
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white/0 group-hover:text-white group-hover:bg-[#085CF0]/80 transition-all cursor-grab active:cursor-grabbing z-20"
+        >
           <GripVertical className="h-4 w-4" />
         </div>
       )}
 
-      <div className="absolute bottom-2 left-2 right-2">
-        <p className="text-[10px] font-bold text-white truncate drop-shadow-md">{media?.name || 'Sem nome'}</p>
+      <div className="absolute bottom-2 left-2 right-2 z-10">
+        <p className="text-[10px] font-bold text-white truncate drop-shadow-md">
+          {isCampaign ? campaign?.name : (media?.name || 'Sem nome')}
+        </p>
         <div className="flex items-center gap-2 mt-1">
-          <Badge variant="outline" className="text-[8px] h-3.5 px-1 py-0 border-white/10 bg-black/40 text-white/40 uppercase">
-            {item.type}
-          </Badge>
-          {item.priority > 1 && (
+          {!isCampaign ? (
+            <Badge variant="outline" className="text-[8px] h-3.5 px-1 py-0 border-white/10 bg-black/40 text-white/40 uppercase">
+              {item.type}
+            </Badge>
+          ) : (
+            <span className="text-[8px] font-bold text-white/40 uppercase tracking-widest">
+              Prioridade {item.priority}
+            </span>
+          )}
+          {item.priority > 1 && !isCampaign && (
             <Badge variant="outline" className="text-[8px] h-3.5 px-1 py-0 border-blue-500/30 bg-blue-500/10 text-blue-400 font-bold">
               P{item.priority}
             </Badge>
