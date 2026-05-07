@@ -494,12 +494,28 @@ export default function PlaylistEditor() {
               )}
             </div>
 
-            <div className="h-48 bg-[#0c0c0e] border border-white/5 rounded-2xl flex flex-col overflow-hidden">
-              <div className="h-8 border-b border-white/5 flex items-center justify-between px-4 bg-black/20 shrink-0">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Timeline da Playlist</span>
-                <div className="flex items-center gap-4">
-                   <div className="flex items-center gap-2 text-[10px] text-[#085CF0] font-mono"><Clock className="h-3 w-3" /> {currentTime.toFixed(1)}s / {totalDuration}s</div>
-                   <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsPlaying(!isPlaying)}>{isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3 fill-current" />}</Button>
+            <div className="h-64 bg-[#0c0c0e] border border-white/5 rounded-2xl flex flex-col overflow-hidden shadow-inner">
+              <div className="h-10 border-b border-white/5 flex items-center justify-between px-4 bg-black/20 shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-[#085CF0] animate-pulse" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">Timeline Principal</span>
+                </div>
+                <div className="flex items-center gap-6">
+                   <div className="flex items-center gap-3 text-[10px] text-white/40 font-mono">
+                     <span className="text-[#085CF0] font-bold">{currentTime.toFixed(1)}s</span>
+                     <span className="opacity-20">/</span>
+                     <span>{totalDuration}s</span>
+                   </div>
+                   <div className="flex items-center gap-1">
+                     <Button 
+                       variant="ghost" 
+                       size="icon" 
+                       className="h-7 w-7 text-white/60 hover:text-[#085CF0] hover:bg-[#085CF0]/10" 
+                       onClick={() => setIsPlaying(!isPlaying)}
+                     >
+                       {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 fill-current" />}
+                     </Button>
+                   </div>
                 </div>
               </div>
               <div className="flex-1 overflow-x-auto relative" ref={timelineScrollRef} onClick={handleTimelineClick}>
