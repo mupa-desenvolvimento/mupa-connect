@@ -49,6 +49,35 @@ import { ptBR } from "date-fns/locale";
 
 export default function WhatsAppManagement() {
   const [activeTab, setActiveTab] = useState("instances");
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [showQrDialog, setShowQrDialog] = useState(false);
+  const [connectingInstance, setConnectingInstance] = useState<string | null>(null);
+
+  const handleGenerateQR = async (instanceName: string) => {
+    try {
+      setConnectingInstance(instanceName);
+      toast.info("Gerando QR Code...");
+      
+      const { data, error } = await supabase.functions.invoke('whatsapp-evolution', {
+        body: { action: 'getQRCode', instanceName }
+      });
+
+      if (error) throw error;
+      
+      if (data?.base64) {
+        setQrCodeUrl(data.base64);
+        setShowQrDialog(true);
+      } else {
+        toast.error("Não foi possível obter o QR Code");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao conectar");
+    } finally {
+      setConnectingInstance(null);
+    }
+  };
+
+  const [activeTab, setActiveTab] = useState("instances");
 
   const { data: instances, isLoading: loadingInstances } = useQuery({
     queryKey: ["whatsapp-instances"],
@@ -146,10 +175,21 @@ export default function WhatsAppManagement() {
                     </div>
                     <div className="flex gap-2 pt-2">
                       {instance.status !== "connected" ? (
-                        <Button variant="outline" className="w-full gap-2 border-primary/20 text-primary hover:bg-primary/5">
-                          <QrCode className="h-4 w-4" /> Gerar QR
+                        <Button 
+                          variant="outline" 
+                          className="w-full gap-2 border-primary/20 text-primary hover:bg-primary/5"
+                          onClick={() => handleGenerateQR(instance.instance_key || instance.name)}
+                          disabled={connectingInstance === (instance.instance_key || instance.name)}
+                        >
+                          {connectingInstance === (instance.instance_key || instance.name) ? (
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <QrCode className="h-4 w-4" />
+                          )}
+                          Gerar QR
                         </Button>
                       ) : (
+
                         <Button variant="outline" className="w-full gap-2 border-destructive/20 text-destructive hover:bg-destructive/5">
                           <Power className="h-4 w-4" /> Desconectar
                         </Button>
@@ -335,6 +375,27 @@ export default function WhatsAppManagement() {
 
         </div>
       </Tabs>
+
+      {showQrDialog && qrCodeUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <Card className="w-full max-w-sm">
+            <CardHeader>
+              <CardTitle>Conectar WhatsApp</CardTitle>
+              <CardDescription>Escaneie o código abaixo com seu aplicativo WhatsApp.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center">
+              <div className="bg-white p-4 rounded-xl mb-4 border border-border shadow-inner">
+                <img src={qrCodeUrl} alt="QR Code" className="w-64 h-64" />
+              </div>
+              <p className="text-xs text-muted-foreground text-center mb-6">
+                Abra o WhatsApp {">"} Aparelhos Conectados {">"} Conectar um Aparelho.
+              </p>
+              <Button className="w-full" onClick={() => setShowQrDialog(false)}>Fechar</Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
+
