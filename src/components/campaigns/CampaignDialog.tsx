@@ -38,7 +38,12 @@ export function CampaignDialog({ campaignId, open, onOpenChange }: CampaignDialo
     try {
       const { data, error } = await supabase
         .from("campaigns")
-        .select("*")
+        .select(`
+          *,
+          playlist_campaigns (
+            playlist_id
+          )
+        `)
         .eq("id", id)
         .single();
 
@@ -55,6 +60,7 @@ export function CampaignDialog({ campaignId, open, onOpenChange }: CampaignDialo
           priority: data.priority || 0,
           color: data.color || "#9b87f5",
           is_active: data.is_active ?? true,
+          playlist_ids: (data.playlist_campaigns as any[])?.map((pc: any) => pc.playlist_id) || [],
         });
       }
     } catch (error: any) {
@@ -82,21 +88,51 @@ export function CampaignDialog({ campaignId, open, onOpenChange }: CampaignDialo
         company_id: companyId,
       };
 
+      let currentCampaignId = campaignId;
+
       if (campaignId) {
         const { error } = await supabase
           .from("campaigns")
           .update(payload)
           .eq("id", campaignId);
         if (error) throw error;
-        toast.success("Campanha atualizada com sucesso");
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("campaigns")
-          .insert([payload]);
+          .insert([payload])
+          .select()
+          .single();
         if (error) throw error;
-        toast.success("Campanha criada com sucesso");
+        currentCampaignId = data.id;
       }
 
+      // Sincronizar playlists
+      if (currentCampaignId) {
+        // Remover associações antigas
+        await supabase
+          .from("playlist_campaigns")
+          .delete()
+          .eq("campaign_id", currentCampaignId);
+
+        // Adicionar novas associações
+        if (values.playlist_ids && values.playlist_ids.length > 0) {
+          const associations = values.playlist_ids.map(playlistId => ({
+            campaign_id: currentCampaignId,
+            playlist_id: playlistId,
+            tenant_id: tenantId,
+            is_active: values.is_active,
+            priority: values.priority
+          }));
+
+          const { error: assocError } = await supabase
+            .from("playlist_campaigns")
+            .insert(associations);
+          
+          if (assocError) throw assocError;
+        }
+      }
+
+      toast.success(campaignId ? "Campanha atualizada" : "Campanha criada");
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
       onOpenChange(false);
     } catch (error: any) {
