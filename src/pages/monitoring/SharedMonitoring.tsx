@@ -35,12 +35,9 @@ export default function SharedMonitoringPage() {
       if (!token) return;
 
       try {
-        const { data, error: vError } = await supabase
-          .from("monitoring_views")
-          .select("*")
-          .eq("token", token)
-          .eq("is_active", true)
-          .maybeSingle() as any;
+        const { data: rows, error: vError } = await supabase
+          .rpc("validate_monitoring_view_token", { _token: token });
+        const data = Array.isArray(rows) ? rows[0] : rows;
 
         if (vError || !data) {
           setError("Link de monitoramento inválido, expirado ou inativo.");
