@@ -514,12 +514,30 @@ export default function PlaylistEditor() {
   };
 
   const handleDragEnd = (event: any) => {
-    const { active, over } = event; setActiveId(null);
-    if (over && active.id !== over.id) {
-      const oldIndex = items.findIndex((i) => i.id === active.id);
-      const newIndex = items.findIndex((i) => i.id === over.id);
-      const newItems = arrayMove(items, oldIndex, newIndex);
-      setItems(newItems); setHasUnsavedChanges(true);
+    const { active, over } = event; 
+    setActiveId(null);
+    
+    if (!over) return;
+
+    // Handle library to campaign drop
+    if (over.id === 'campaign-drop-zone' && active.data.current?.type === 'library-media') {
+      const mediaId = active.data.current.mediaId;
+      addItem(mediaId);
+      return;
+    }
+
+    // Handle timeline reordering
+    if (active.id !== over.id) {
+      const activeItem = items.find(i => i.id === active.id);
+      if (activeItem) {
+        const oldIndex = items.findIndex((i) => i.id === active.id);
+        const newIndex = items.findIndex((i) => i.id === over.id);
+        if (oldIndex !== -1 && newIndex !== -1) {
+          const newItems = arrayMove(items, oldIndex, newIndex);
+          setItems(newItems); 
+          setHasUnsavedChanges(true);
+        }
+      }
     }
   };
 
