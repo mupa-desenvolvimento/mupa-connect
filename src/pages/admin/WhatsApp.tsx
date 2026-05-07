@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -52,20 +55,28 @@ export default function WhatsAppManagement() {
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [showQrDialog, setShowQrDialog] = useState(false);
   const [connectingInstance, setConnectingInstance] = useState<string | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [newInstance, setNewInstance] = useState({ name: "", description: "" });
+  const [creating, setCreating] = useState(false);
+  const queryClient = useQueryClient();
+
+  const callApi = async (action: string, payload: Record<string, unknown> = {}) => {
+    const { data, error } = await supabase.functions.invoke("whatsapp-evolution", {
+      body: { action, ...payload },
+    });
+    if (error) throw new Error(error.message);
+    if (data?.error) throw new Error(data.error);
+    return data;
+  };
 
   const handleGenerateQR = async (instanceName: string) => {
     try {
       setConnectingInstance(instanceName);
       toast.info("Gerando QR Code...");
-      
-      const { data, error } = await supabase.functions.invoke('whatsapp-evolution', {
-        body: { action: 'getQRCode', instanceName }
-      });
-
-      if (error) throw error;
-      
-      if (data?.base64) {
-        setQrCodeUrl(data.base64);
+      const data = await callApi("getQRCode", { instanceName });
+      const base64 = data?.base64;
+      if (base64) {
+        setQrCodeUrl(base64.startsWith("data:") ? base64 : `data:image/png;base64,${base64}`);
         setShowQrDialog(true);
       } else {
         toast.error("Não foi possível obter o QR Code");
@@ -74,6 +85,56 @@ export default function WhatsAppManagement() {
       toast.error(err.message || "Erro ao conectar");
     } finally {
       setConnectingInstance(null);
+    }
+  };
+
+  const handleCreateInstance = async () => {
+    if (!newInstance.name.trim()) return toast.error("Nome obrigatório");
+    try {
+      setCreating(true);
+      await callApi("createInstance", {
+        instanceName: newInstance.name.trim().toLowerCase().replace(/\s+/g, "_"),
+        description: newInstance.description,
+      });
+      toast.success("Instância criada");
+      setShowCreateDialog(false);
+      setNewInstance({ name: "", description: "" });
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-instances"] });
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao criar instância");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleCheckStatus = async (instanceName: string) => {
+    try {
+      const data = await callApi("connectionState", { instanceName });
+      toast.success(`Status: ${data?.state || "desconhecido"}`);
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-instances"] });
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleLogout = async (instanceName: string) => {
+    try {
+      await callApi("logout", { instanceName });
+      toast.success("Desconectado");
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-instances"] });
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleDelete = async (instanceName: string) => {
+    if (!confirm(`Remover instância ${instanceName}?`)) return;
+    try {
+      await callApi("deleteInstance", { instanceName });
+      toast.success("Instância removida");
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-instances"] });
+    } catch (err: any) {
+      toast.error(err.message);
     }
   };
 
@@ -123,7 +184,10 @@ export default function WhatsAppManagement() {
         title="WhatsApp Integration" 
         description="Manage WhatsApp instances, automations, and operational alerts."
         actions={
-          <Button className="bg-gradient-primary text-primary-foreground shadow-glow">
+          <Button
+            className="bg-gradient-primary text-primary-foreground shadow-glow"
+            onClick={() => setShowCreateDialog(true)}
+          >
             <Plus className="mr-2 h-4 w-4" /> Nova Instância
           </Button>
         }
@@ -188,24 +252,51 @@ export default function WhatsAppManagement() {
                           Gerar QR
                         </Button>
                       ) : (
-
-                        <Button variant="outline" className="w-full gap-2 border-destructive/20 text-destructive hover:bg-destructive/5">
+                        <Button
+                          variant="outline"
+                          className="w-full gap-2 border-destructive/20 text-destructive hover:bg-destructive/5"
+                          onClick={() => handleLogout(instance.instance_key || instance.name)}
+                        >
                           <Power className="h-4 w-4" /> Desconectar
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" className="shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="shrink-0"
+                        onClick={() => handleCheckStatus(instance.instance_key || instance.name)}
+                        title="Atualizar status"
+                      >
                         <RefreshCw className="h-4 w-4" />
                       </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="shrink-0">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleGenerateQR(instance.instance_key || instance.name)}>
+                            <QrCode className="h-4 w-4 mr-2" /> Reconectar (QR)
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => handleDelete(instance.instance_key || instance.name)}
+                          >
+                            <XCircle className="h-4 w-4 mr-2" /> Remover
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </CardContent>
                 </Card>
               ))}
-              
+
               <Card className="border-dashed border-2 flex flex-col items-center justify-center p-8 text-center bg-muted/20">
                 <Smartphone className="h-10 w-10 text-muted-foreground mb-4 opacity-20" />
                 <h3 className="font-medium text-muted-foreground mb-2">Adicionar Novo Número</h3>
                 <p className="text-xs text-muted-foreground mb-4 max-w-[200px]">Conecte um novo WhatsApp via Evolution API.</p>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => setShowCreateDialog(true)}>
                   Começar Configuração
                 </Button>
               </Card>
@@ -394,6 +485,46 @@ export default function WhatsAppManagement() {
           </Card>
         </div>
       )}
+
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nova Instância WhatsApp</DialogTitle>
+            <DialogDescription>
+              Cria uma instância na Evolution API. O nome será usado como identificador (sem espaços).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="inst-name">Nome da instância</Label>
+              <Input
+                id="inst-name"
+                placeholder="ex: empresa_x"
+                value={newInstance.name}
+                onChange={(e) => setNewInstance({ ...newInstance, name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="inst-desc">Descrição (opcional)</Label>
+              <Input
+                id="inst-desc"
+                placeholder="Ex: Suporte técnico"
+                value={newInstance.description}
+                onChange={(e) => setNewInstance({ ...newInstance, description: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateDialog(false)} disabled={creating}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateInstance} disabled={creating}>
+              {creating ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+              Criar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
