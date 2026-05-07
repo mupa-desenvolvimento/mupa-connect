@@ -140,11 +140,14 @@ export default function QueryErrorsReport() {
 
       const deviceMap = new Map();
       devicesData?.forEach(d => {
-        deviceMap.set(d.serial?.trim(), {
-          apelido: d.apelido_interno,
-          num_filial: d.num_filial,
-          store_name: (d.stores as any)?.name || (d.num_filial ? `Loja ${d.num_filial}` : null)
-        });
+        const serial = d.serial?.trim();
+        if (serial) {
+          deviceMap.set(serial, {
+            apelido: d.apelido_interno,
+            num_filial: d.num_filial,
+            store_name: (d.stores as any)?.name || (d.num_filial ? `Loja ${d.num_filial}` : null)
+          });
+        }
       });
 
       return errorRows.map(e => {
