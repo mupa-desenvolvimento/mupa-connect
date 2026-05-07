@@ -56,8 +56,13 @@ export default function WhatsAppManagement() {
   const [showQrDialog, setShowQrDialog] = useState(false);
   const [connectingInstance, setConnectingInstance] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showAddRecipientDialog, setShowAddRecipientDialog] = useState(false);
+  const [showTestMessageDialog, setShowTestMessageDialog] = useState(false);
   const [newInstance, setNewInstance] = useState({ name: "", description: "" });
+  const [newRecipient, setNewRecipient] = useState({ name: "", phone: "" });
+  const [testMessage, setTestMessage] = useState({ instanceName: "", recipientPhone: "", message: "" });
   const [creating, setCreating] = useState(false);
+  const [sendingTest, setSendingTest] = useState(false);
   const queryClient = useQueryClient();
 
   const callApi = async (action: string, payload: Record<string, unknown> = {}) => {
@@ -133,6 +138,62 @@ export default function WhatsAppManagement() {
       await callApi("deleteInstance", { instanceName });
       toast.success("Instância removida");
       queryClient.invalidateQueries({ queryKey: ["whatsapp-instances"] });
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+  const handleAddRecipient = async () => {
+    if (!newRecipient.name.trim() || !newRecipient.phone.trim()) {
+      return toast.error("Nome e telefone são obrigatórios");
+    }
+    try {
+      setCreating(true);
+      const { error } = await supabase.from("whatsapp_recipients").insert({
+        name: newRecipient.name.trim(),
+        phone: newRecipient.phone.trim(),
+        is_active: true,
+      });
+      if (error) throw error;
+      toast.success("Destinatário cadastrado");
+      setShowAddRecipientDialog(false);
+      setNewRecipient({ name: "", phone: "" });
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-recipients"] });
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao cadastrar destinatário");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleSendTestMessage = async () => {
+    if (!testMessage.instanceName || !testMessage.recipientPhone || !testMessage.message.trim()) {
+      return toast.error("Todos os campos são obrigatórios");
+    }
+    try {
+      setSendingTest(true);
+      await callApi("sendMessage", {
+        instanceName: testMessage.instanceName,
+        phone: testMessage.recipientPhone,
+        message: testMessage.message.trim(),
+      });
+      toast.success("Mensagem de teste enviada!");
+      setShowTestMessageDialog(false);
+      setTestMessage({ ...testMessage, message: "" });
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-logs"] });
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao enviar mensagem");
+    } finally {
+      setSendingTest(false);
+    }
+  };
+
+  const handleDeleteRecipient = async (id: string) => {
+    if (!confirm("Remover este destinatário?")) return;
+    try {
+      const { error } = await supabase.from("whatsapp_recipients").delete().eq("id", id);
+      if (error) throw error;
+      toast.success("Destinatário removido");
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-recipients"] });
     } catch (err: any) {
       toast.error(err.message);
     }
