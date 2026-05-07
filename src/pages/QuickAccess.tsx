@@ -33,11 +33,9 @@ export default function QuickAccessPage() {
       if (!token) return;
 
       try {
-        const { data: tData, error: tError } = await supabase
-          .from("quick_access_tokens")
-          .select("*")
-          .eq("token", token)
-          .maybeSingle();
+        const { data: tRows, error: tError } = await supabase
+          .rpc("validate_quick_access_token", { _token: token });
+        const tData = Array.isArray(tRows) ? tRows[0] : tRows;
 
         if (tError || !tData) {
           setError("Acesso inválido ou expirado.");
