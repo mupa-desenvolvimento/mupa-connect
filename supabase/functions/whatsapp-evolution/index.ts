@@ -18,6 +18,31 @@ const json = (data: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+class EvolutionApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "EvolutionApiError";
+    this.status = status;
+  }
+}
+
+function normalizeErrorDetail(value: unknown): string {
+  if (value == null) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) return value.map(normalizeErrorDetail).filter(Boolean).join("; ");
+  if (typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    const jid = normalizeErrorDetail(record.jid);
+    if (record.exists === false && jid) return `Número não encontrado no WhatsApp: ${jid}`;
+    const nested = normalizeErrorDetail(record.message || record.error || record.response || record.raw);
+    return nested || JSON.stringify(record);
+  }
+  return String(value);
+}
+
 async function evo(path: string, method = "GET", body?: unknown) {
   const res = await fetch(`${EVOLUTION_API_URL}${path}`, {
     method,
@@ -31,13 +56,9 @@ async function evo(path: string, method = "GET", body?: unknown) {
   let data: any;
   try { data = JSON.parse(text); } catch { data = { raw: text }; }
   if (!res.ok) {
-    const detail =
-      (Array.isArray(data?.response?.message) ? data.response.message.join("; ") : data?.response?.message) ||
-      (Array.isArray(data?.message) ? data.message.join("; ") : data?.message) ||
-      data?.error ||
-      `Evolution API error ${res.status}`;
+    const detail = normalizeErrorDetail(data?.response?.message || data?.message || data?.error || data) || `Evolution API error ${res.status}`;
     console.error("Evolution API error", res.status, path, text);
-    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+    throw new EvolutionApiError(detail, res.status);
   }
   return data;
 }
@@ -143,7 +164,7 @@ serve(async (req) => {
           status,
           error_message: errorMsg,
         });
-        if (errorMsg) return json({ error: errorMsg }, 500);
+        if (errorMsg) return json({ error: errorMsg }, 400);
         return json(data);
       }
       default:
