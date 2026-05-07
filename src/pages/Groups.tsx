@@ -32,7 +32,8 @@ import {
   List 
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { DndContext, DragOverlay, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { DndContext, DragOverlay, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent, useDraggable, useDroppable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import { useQueryClient } from "@tanstack/react-query";
 import { 
   Dialog, 
@@ -139,6 +140,92 @@ const getGroupColor = (id: string, storedKey?: string | null) => {
   return GROUP_COLOR_PALETTE[hash % GROUP_COLOR_PALETTE.length];
 };
 
+// Draggable Store Component
+const DraggableStore = ({ ls }: { ls: any }) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `store-${ls.store_id}`,
+    data: {
+      type: 'store',
+      store: ls.store
+    }
+  });
+  
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 999 : 'auto',
+    cursor: 'grab',
+  };
+  
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="flex items-center gap-2 rounded-md border bg-card px-2.5 py-1.5 transition-all hover:border-primary/40 hover:shadow-sm"
+    >
+      <Store className="h-3.5 w-3.5 shrink-0 text-primary/70" />
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-medium leading-tight truncate">
+          {ls.store?.name || "—"}
+        </p>
+        <p className="text-[10px] text-muted-foreground leading-tight truncate">
+          {ls.store?.code || ""}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// Draggable Device Component
+const DraggableDevice = ({ gd }: { gd: any }) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `device-${gd.device_id}`,
+    data: {
+      type: 'device',
+      device: gd.device
+    }
+  });
+  
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 999 : 'auto',
+    cursor: 'grab',
+  };
+  
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={cn(
+        "flex items-center gap-2 rounded-md border bg-card px-2.5 py-1.5 transition-all hover:border-primary/40 hover:shadow-sm"
+      )}
+    >
+      <Monitor className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-medium leading-tight truncate">
+          {gd.device?.nome || "Dispositivo"}
+        </p>
+        <p className="text-[10px] text-muted-foreground leading-tight truncate">
+          {gd.device?.num_filial || ""}
+        </p>
+      </div>
+      <CircleDot
+        className={cn(
+          "h-3 w-3 shrink-0",
+          gd.device?.status === "active" || gd.device?.status === "online"
+            ? "text-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.2)]"
+            : "text-muted-foreground/40"
+        )}
+      />
+    </div>
+  );
+};
+
 interface GroupItemProps {
   group: any;
   level: number;
@@ -164,6 +251,15 @@ const GroupItem = ({
   const [isHovered, setIsHovered] = useState(false);
   const children = allGroups.filter(g => g.parent_id === group.id);
   const hasChildren = children.length > 0;
+
+  // Make this group a droppable target
+  const { setNodeRef, isOver } = useDroppable({
+    id: `group-${group.id}`,
+    data: {
+      type: 'group',
+      group: group
+    }
+  });
 
   const linkedStores = useMemo(() => {
     return (group.linked_store_ids || []).map((storeId: string) => {
@@ -200,10 +296,12 @@ const GroupItem = ({
 
   return (
     <div 
+      ref={setNodeRef}
       className={cn(
         "w-full group/node relative transition-all duration-200",
         isMap && level > 0 && "pl-6 sm:pl-10 mt-2",
-        isHovered && "z-10"
+        isHovered && "z-10",
+        isOver && "ring-2 ring-primary ring-offset-2 ring-offset-background rounded-xl"
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -386,20 +484,10 @@ const GroupItem = ({
                   isMap && "p-2 rounded-lg bg-card/40 border border-dashed border-border/50"
                 )}>
                   {linkedStores.map(ls => (
-                    <div
-                      key={ls.id}
-                      className="flex items-center gap-2 rounded-md border bg-card px-2.5 py-1.5 transition-all hover:border-primary/40 hover:shadow-sm"
-                    >
-                      <Store className="h-3.5 w-3.5 shrink-0 text-primary/70" />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-medium leading-tight truncate">
-                          {ls.store?.name || "—"}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground leading-tight truncate">
-                          {ls.store?.code || ""}
-                        </p>
-                      </div>
-                    </div>
+                    <DraggableStore 
+                      key={ls.id} 
+                      ls={ls}
+                    />
                   ))}
                 </div>
               </div>
@@ -421,31 +509,10 @@ const GroupItem = ({
                   isMap && "p-2 rounded-lg bg-primary/5 border border-dashed border-primary/20"
                 )}>
                   {linkedDevices.map(gd => (
-                    <div
+                    <DraggableDevice 
                       key={gd.id}
-                      className={cn(
-                        "flex items-center gap-2 rounded-md border bg-card px-2.5 py-1.5 transition-all hover:border-primary/40 hover:shadow-sm",
-                        isMap && "hover:bg-primary/[0.02]"
-                      )}
-                    >
-                      <Monitor className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-medium leading-tight truncate">
-                          {gd.device?.nome || "Dispositivo"}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground leading-tight truncate">
-                          {gd.device?.num_filial || ""}
-                        </p>
-                      </div>
-                      <CircleDot
-                        className={cn(
-                          "h-3 w-3 shrink-0",
-                          gd.device?.status === "active" || gd.device?.status === "online"
-                            ? "text-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.2)]"
-                            : "text-muted-foreground/40"
-                        )}
-                      />
-                    </div>
+                      gd={gd}
+                    />
                   ))}
                 </div>
               </div>
@@ -1147,6 +1214,27 @@ export default function GroupsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      {/* Drag Overlay for Preview */}
+      <DragOverlay>
+        {activeDragItem && (
+          <div className="bg-card p-3 rounded-lg border shadow-lg opacity-80">
+            {activeDragItem.type === 'device' && (
+              <div className="flex items-center gap-2">
+                <Monitor className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium">{activeDragItem.device.nome}</span>
+              </div>
+            )}
+            {activeDragItem.type === 'store' && (
+              <div className="flex items-center gap-2">
+                <Store className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium">{activeDragItem.store.name}</span>
+              </div>
+            )}
+          </div>
+        )}
+      </DragOverlay>
+      
       </div>
     </DndContext>
   );
