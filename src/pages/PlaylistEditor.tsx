@@ -619,8 +619,8 @@ export default function PlaylistEditor() {
     
     if (!over) return;
 
-    // Handle library to campaign content drop
-    if (over.id === 'campaign-drop-zone' && active.data.current?.type === 'library-media') {
+    // Handle library to timeline drop (now including potential campaign contents)
+    if (over.id === 'playlist-timeline-drop-zone' && active.data.current?.type === 'library-media') {
       const mediaId = active.data.current.mediaId;
       if (selectedLibraryIds.includes(mediaId)) {
         addMultipleItems(selectedLibraryIds);
