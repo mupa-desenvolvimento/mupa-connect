@@ -826,6 +826,7 @@ export default function WhatsAppManagement() {
               <div className="flex gap-2">
                 <Input
                   id="test-phone"
+                  type="tel"
                   placeholder="Ex: 5511999999999"
                   value={testMessage.recipientPhone}
                   onChange={(e) => setTestMessage({ ...testMessage, recipientPhone: e.target.value })}
