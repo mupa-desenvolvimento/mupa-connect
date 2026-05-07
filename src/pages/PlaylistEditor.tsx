@@ -305,7 +305,52 @@ const DraggableMediaItem = ({ media, onClick, isSelected, onToggleSelect }: any)
   );
 };
 
-const CampaignDropZone = ({ children, isActive }: any) => {
+const DraggableCampaignItem = ({ campaign, onClick }: any) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `library-campaign-${campaign.id}`,
+    data: {
+      type: 'library-campaign',
+      campaignId: campaign.id,
+      campaign: campaign
+    }
+  });
+
+  const style = transform ? {
+    transform: CSS.Translate.toString(transform),
+  } : undefined;
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style}
+      className={cn(
+        "relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer border transition-all group border-white/10 hover:border-[#085CF0]",
+        isDragging && "opacity-50 ring-2 ring-[#085CF0] z-50"
+      )}
+      onClick={() => onClick(campaign.id)}
+    >
+      <div className="w-full h-full flex items-center justify-center relative overflow-hidden bg-black/40">
+        <div 
+          className="absolute inset-0 opacity-10"
+          style={{ backgroundColor: campaign.color || '#085CF0' }}
+        />
+        <Megaphone className="h-8 w-8 relative z-10" style={{ color: campaign.color || '#085CF0' }} />
+      </div>
+      
+      <div 
+        {...listeners} 
+        {...attributes}
+        className="absolute inset-0 z-10"
+      />
+
+      <div className="absolute bottom-1 left-1 right-1 text-[10px] truncate bg-black/60 px-1 rounded font-bold text-white/90 z-20">
+        {campaign.name}
+      </div>
+    </div>
+  );
+};
+
+const CampaignDropZone = ({ children }: any) => {
   const { setNodeRef, isOver } = useDroppable({
     id: 'campaign-drop-zone',
     data: {
@@ -317,7 +362,7 @@ const CampaignDropZone = ({ children, isActive }: any) => {
     <div 
       ref={setNodeRef} 
       className={cn(
-        "flex-1 flex flex-col transition-all duration-200",
+        "flex-1 flex flex-col transition-all duration-200 relative",
         isOver && "bg-[#085CF0]/10 ring-2 ring-[#085CF0]/30 ring-inset rounded-xl"
       )}
     >
