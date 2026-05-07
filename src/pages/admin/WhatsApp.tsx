@@ -772,6 +772,7 @@ export default function WhatsAppManagement() {
               <Label htmlFor="rec-phone">Telefone (com DDI e DDD)</Label>
               <Input
                 id="rec-phone"
+                type="tel"
                 placeholder="Ex: 5511999999999"
                 value={newRecipient.phone}
                 onChange={(e) => setNewRecipient({ ...newRecipient, phone: e.target.value })}
