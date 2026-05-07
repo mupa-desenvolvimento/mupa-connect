@@ -66,8 +66,10 @@ export default function WhatsAppManagement() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showAddRecipientDialog, setShowAddRecipientDialog] = useState(false);
   const [showTestMessageDialog, setShowTestMessageDialog] = useState(false);
+  const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [newInstance, setNewInstance] = useState({ name: "", description: "" });
   const [newRecipient, setNewRecipient] = useState({ name: "", phone: "" });
+  const [newTemplate, setNewTemplate] = useState({ name: "", content: "", category: "" });
   const [testMessage, setTestMessage] = useState({ instanceName: "", recipientPhone: "", message: "" });
   const [creating, setCreating] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
@@ -207,6 +209,41 @@ export default function WhatsAppManagement() {
     }
   };
 
+  const handleSaveTemplate = async () => {
+    if (!newTemplate.name.trim() || !newTemplate.content.trim()) {
+      return toast.error("Nome e conteúdo são obrigatórios");
+    }
+    try {
+      setCreating(true);
+      const { error } = await supabase.from("whatsapp_templates").upsert({
+        name: newTemplate.name.trim(),
+        content: newTemplate.content.trim(),
+        category: newTemplate.category.trim() || "Geral",
+      });
+      if (error) throw error;
+      toast.success("Template salvo");
+      setShowTemplateDialog(false);
+      setNewTemplate({ name: "", content: "", category: "" });
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-templates"] });
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao salvar template");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDeleteTemplate = async (id: string) => {
+    if (!confirm("Remover este template?")) return;
+    try {
+      const { error } = await supabase.from("whatsapp_templates").delete().eq("id", id);
+      if (error) throw error;
+      toast.success("Template removido");
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-templates"] });
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
 
   const { data: instances, isLoading: loadingInstances } = useQuery({
     queryKey: ["whatsapp-instances"],
@@ -225,6 +262,18 @@ export default function WhatsAppManagement() {
       const { data, error } = await supabase
         .from("whatsapp_recipients")
         .select("*, companies(name)");
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const { data: templates } = useQuery({
+    queryKey: ["whatsapp-templates"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("whatsapp_templates")
+        .select("*")
+        .order("name");
       if (error) throw error;
       return data;
     }
@@ -269,6 +318,9 @@ export default function WhatsAppManagement() {
           </TabsTrigger>
           <TabsTrigger value="recipients" className="gap-2">
             <Users className="h-4 w-4" /> Destinatários
+          </TabsTrigger>
+          <TabsTrigger value="templates" className="gap-2">
+            <FileText className="h-4 w-4" /> Templates
           </TabsTrigger>
           <TabsTrigger value="automations" className="gap-2">
             <Bell className="h-4 w-4" /> Alertas & Regras
@@ -488,6 +540,72 @@ export default function WhatsAppManagement() {
                     <Button variant="outline" className="w-full">Editar Configurações</Button>
                   </CardContent>
                 </Card>
+          <TabsContent value="templates">
+             <div className="space-y-4">
+               <div className="flex justify-between items-center gap-4 bg-card p-4 rounded-xl border border-border/60">
+                 <div className="relative flex-1 max-w-sm">
+                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                   <Input placeholder="Buscar template..." className="pl-10" />
+                 </div>
+                 <Button className="gap-2" onClick={() => {
+                   setNewTemplate({ name: "", content: "", category: "" });
+                   setShowTemplateDialog(true);
+                 }}>
+                   <Plus className="h-4 w-4" /> Novo Template
+                 </Button>
+               </div>
+
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                 {templates?.map((template) => (
+                   <Card key={template.id} className="border-border/60 hover:shadow-md transition-shadow">
+                     <CardHeader className="pb-3">
+                       <div className="flex justify-between items-start">
+                         <div>
+                           <CardTitle className="text-lg">{template.name}</CardTitle>
+                           <CardDescription>{template.category || "Geral"}</CardDescription>
+                         </div>
+                         <DropdownMenu>
+                           <DropdownMenuTrigger asChild>
+                             <Button variant="ghost" size="icon">
+                               <MoreVertical className="h-4 w-4" />
+                             </Button>
+                           </DropdownMenuTrigger>
+                           <DropdownMenuContent align="end">
+                             <DropdownMenuItem onClick={() => {
+                               setNewTemplate({
+                                 name: template.name,
+                                 content: template.content,
+                                 category: template.category || "",
+                               });
+                               setShowTemplateDialog(true);
+                             }}>
+                               <Settings className="h-4 w-4 mr-2" /> Editar
+                             </DropdownMenuItem>
+                             <DropdownMenuItem
+                               className="text-destructive focus:text-destructive"
+                               onClick={() => handleDeleteTemplate(template.id)}
+                             >
+                               <XCircle className="h-4 w-4 mr-2" /> Remover
+                             </DropdownMenuItem>
+                           </DropdownMenuContent>
+                         </DropdownMenu>
+                       </div>
+                     </CardHeader>
+                     <CardContent>
+                       <p className="text-xs text-muted-foreground line-clamp-4 bg-muted/30 p-3 rounded-lg border italic">
+                         "{template.content}"
+                       </p>
+                     </CardContent>
+                   </Card>
+                 ))}
+                 {(!templates || templates.length === 0) && (
+                   <div className="col-span-full h-24 flex items-center justify-center text-muted-foreground border border-dashed rounded-xl italic">
+                     Nenhum template cadastrado.
+                   </div>
+                 )}
+               </div>
+             </div>
+          </TabsContent>
 
                 <Card className="border-border/60">
                   <CardHeader>
@@ -733,6 +851,56 @@ export default function WhatsAppManagement() {
             <Button onClick={handleSendTestMessage} disabled={sendingTest}>
               {sendingTest ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <MessageSquare className="h-4 w-4 mr-2" />}
               Enviar Teste
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Gerenciar Template</DialogTitle>
+            <DialogDescription>
+              Crie mensagens reutilizáveis para agilizar sua comunicação.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="tpl-name">Nome do Template</Label>
+              <Input
+                id="tpl-name"
+                placeholder="Ex: Saudação Inicial"
+                value={newTemplate.name}
+                onChange={(e) => setNewTemplate({ ...newTemplate, name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tpl-cat">Categoria</Label>
+              <Input
+                id="tpl-cat"
+                placeholder="Ex: Suporte, Vendas"
+                value={newTemplate.category}
+                onChange={(e) => setNewTemplate({ ...newTemplate, category: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tpl-content">Conteúdo da Mensagem</Label>
+              <Textarea
+                id="tpl-content"
+                placeholder="Digite o texto da mensagem..."
+                value={newTemplate.content}
+                onChange={(e) => setNewTemplate({ ...newTemplate, content: e.target.value })}
+                rows={6}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTemplateDialog(false)} disabled={creating}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveTemplate} disabled={creating}>
+              {creating ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+              Salvar Template
             </Button>
           </DialogFooter>
         </DialogContent>
