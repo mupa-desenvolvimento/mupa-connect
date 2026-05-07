@@ -170,7 +170,7 @@ export default function WhatsAppManagement() {
       setCreating(true);
       const { error } = await supabase.from("whatsapp_recipients").insert({
         name: newRecipient.name.trim(),
-        phone: newRecipient.phone.trim(),
+        phone: newRecipient.phone.replace(/\D/g, ""),
         is_active: true,
       });
       if (error) throw error;
