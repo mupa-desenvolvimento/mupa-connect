@@ -686,6 +686,66 @@ export default function ProductQueriesAnalytics() {
           </CardContent>
         </Card>
       </div>
+      {/* Full List Table */}
+      <Card className="mt-6">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-sm font-medium">Log Detalhado de Consultas</CardTitle>
+          <Badge variant="outline">{logs?.length || 0} registros</Badge>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border overflow-hidden">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  <TableHead className="w-[150px]">Data/Hora</TableHead>
+                  <TableHead>Loja</TableHead>
+                  <TableHead>Dispositivo</TableHead>
+                  <TableHead>EAN</TableHead>
+                  <TableHead>Produto</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {logs?.slice(0, 50).map((log) => (
+                  <TableRow key={log.id} className="hover:bg-muted/30 transition-colors">
+                    <TableCell className="text-xs font-medium">
+                      {format(parseISO(log.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}
+                    </TableCell>
+                    <TableCell className="text-xs">{log.loja || "—"}</TableCell>
+                    <TableCell className="text-xs max-w-[120px] truncate" title={log.apelido || log.device_id}>
+                      {log.apelido || log.device_id}
+                    </TableCell>
+                    <TableCell className="font-mono text-[10px]">{log.ean || "—"}</TableCell>
+                    <TableCell className="text-xs max-w-[200px] truncate" title={log.descricao_produto}>
+                      {log.descricao_produto || "—"}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge 
+                        variant={log.status_code === 200 ? "success" : "destructive"}
+                        className="text-[10px] h-5 px-1.5"
+                      >
+                        {log.status_code}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {(!logs || logs.length === 0) && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                      Nenhuma consulta encontrada para os filtros selecionados.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          {logs && logs.length > 50 && (
+            <p className="text-center text-[11px] text-muted-foreground mt-4 italic">
+              Exibindo os 50 registros mais recentes. Use a exportação para ver o relatório completo.
+            </p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
