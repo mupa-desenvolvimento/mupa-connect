@@ -934,52 +934,6 @@ export default function PlaylistEditor() {
                     )}
                   </div>
 
-                  {selectedItem.type === 'campaign' && (
-                    <div className="h-[300px] border-t border-white/10 bg-[#0c0c0e]/80 backdrop-blur-md flex flex-col">
-                      <div className="h-12 border-b border-white/5 flex items-center justify-between px-6 shrink-0 bg-black/20">
-                        <div className="flex items-center gap-3">
-                          <Layers className="h-4 w-4 text-[#085CF0]" />
-                          <span className="text-xs font-bold uppercase tracking-[0.2em] text-white/80">Conteúdos da Campanha</span>
-                          <Badge variant="secondary" className="h-5 px-2 text-[10px] bg-white/10">{campaignContents?.length || 0}</Badge>
-                        </div>
-                      </div>
-                      <CampaignDropZone>
-                        <ScrollArea className="flex-1">
-                          <div className="p-6 flex gap-4">
-                            {campaignContents?.map((content: any, idx: number) => (
-                              <div key={content.id} className="relative group shrink-0 w-40 animate-in fade-in slide-in-from-right-4 duration-300">
-                                <div className="aspect-video rounded-xl overflow-hidden border border-white/5 bg-black/40 relative shadow-lg group-hover:border-[#085CF0]/50 transition-all">
-                                  <img src={content.media?.thumbnail_url || content.media?.file_url} className="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
-                                  <div className="absolute top-2 left-2 bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold text-white border border-white/10">{idx + 1}</div>
-                                  <button 
-                                    onClick={async (e) => {
-                                      e.stopPropagation();
-                                      const { error } = await supabase.from("campaign_contents").delete().eq("id", content.id);
-                                      if (error) toast.error("Erro ao remover");
-                                      else { toast.success("Removido"); refetchCampaignContents(); }
-                                    }}
-                                    className="absolute top-2 right-2 h-7 w-7 rounded-xl bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-xl hover:scale-110 active:scale-95"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </button>
-                                </div>
-                                <p className="text-[10px] font-bold text-white/60 mt-3 truncate px-1 group-hover:text-white transition-colors">{content.media?.name}</p>
-                              </div>
-                            ))}
-                            {(!campaignContents || campaignContents.length === 0) && (
-                              <div className="w-full h-40 border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center text-white/10 gap-3 hover:border-white/10 transition-colors">
-                                <div className="p-3 rounded-full bg-white/[0.02]">
-                                  <Plus className="h-8 w-8" />
-                                </div>
-                                <span className="text-xs font-bold uppercase tracking-widest">Arraste mídias aqui</span>
-                              </div>
-                            )}
-                          </div>
-                          <ScrollBar orientation="horizontal" />
-                        </ScrollArea>
-                      </CampaignDropZone>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-white/5">
@@ -998,8 +952,16 @@ export default function PlaylistEditor() {
                     {selectedItem.isLocked && <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[9px] uppercase font-bold">Bloqueado</Badge>}
                   </div>
                   <h4 className="text-lg font-bold text-white leading-tight">
-                    {selectedItem.type === 'campaign' ? selectedItem.campaign?.name : selectedItem.media?.name}
+                    {selectedItem.media?.name}
                   </h4>
+                  {selectedItem.campaign && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <Megaphone className="h-3.5 w-3.5" style={{ color: selectedItem.campaign.color }} />
+                      <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: selectedItem.campaign.color }}>
+                        {selectedItem.campaign.name}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 
                 <ScrollArea className="flex-1">
