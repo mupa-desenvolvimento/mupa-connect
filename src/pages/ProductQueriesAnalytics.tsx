@@ -64,20 +64,30 @@ import { ReportGeneratorModal } from "@/components/ReportGeneratorModal";
 
 const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
+import { useTenant } from "@/hooks/use-tenant";
+
 export default function ProductQueriesAnalytics() {
+  const { tenantId, companyId } = useTenant();
   const [period, setPeriod] = useState("all");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [selectedStore, setSelectedStore] = useState("all");
   const [selectedDevice, setSelectedDevice] = useState("all");
   const [reportModalOpen, setReportModalOpen] = useState(false);
 
-
   const { data: logs, isLoading, refetch } = useQuery({
-    queryKey: ["product-queries-logs", period, selectedStore, selectedDevice, dateRange],
+    queryKey: ["product-queries-logs", period, selectedStore, selectedDevice, dateRange, tenantId, companyId],
     queryFn: async () => {
       let query = supabase
         .from("product_queries_log")
         .select("*");
+
+      // Multi-tenant filters
+      if (tenantId) {
+        query = query.eq("tenant_id", tenantId);
+      }
+      if (companyId) {
+        query = query.eq("company_id", companyId);
+      }
 
       if (period === "custom" && dateRange?.from) {
         query = query.gte("created_at", startOfDay(dateRange.from).toISOString());
@@ -90,46 +100,67 @@ export default function ProductQueriesAnalytics() {
         query = query.gte("created_at", date.toISOString());
       }
 
-
       if (selectedStore !== "all") {
         query = query.eq("loja", selectedStore);
       }
 
       if (selectedDevice !== "all") {
-        query = query.eq("device_id", selectedDevice);
+        query = query.or(`device_id.eq.${selectedDevice},device_serial.eq.${selectedDevice}`);
       }
 
       const { data, error } = await query.order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
+    enabled: !!tenantId || !!companyId
   });
 
   const { data: stores } = useQuery({
-    queryKey: ["filter-stores"],
+    queryKey: ["filter-stores", tenantId, companyId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("product_queries_log")
         .select("loja")
         .not("loja", "is", null);
+
+      if (tenantId) query = query.eq("tenant_id", tenantId);
+      if (companyId) query = query.eq("company_id", companyId);
       
+      const { data, error } = await query;
       if (error) return [];
       const uniqueStores = Array.from(new Set((data as any[]).map(d => d.loja)));
       return uniqueStores.sort() as string[];
-    }
+    },
+    enabled: !!tenantId || !!companyId
   });
 
   const { data: devices } = useQuery({
-    queryKey: ["filter-devices"],
+    queryKey: ["filter-devices", tenantId, companyId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("product_queries_log")
-        .select("device_id, apelido");
+        .select("device_id, apelido, device_serial");
+
+      if (tenantId) query = query.eq("tenant_id", tenantId);
+      if (companyId) query = query.eq("company_id", companyId);
       
+      const { data, error } = await query;
       if (error) return [];
-      const uniqueDevices = Array.from(new Map((data as any[]).map(d => [d.device_id, d.apelido || d.device_id])).entries());
-      return uniqueDevices.map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
-    }
+      
+      const uniqueDevicesMap = new Map();
+      (data as any[]).forEach(d => {
+        const id = d.device_id || d.device_serial;
+        const name = d.apelido || d.device_id || d.device_serial;
+        if (id && !uniqueDevicesMap.has(id)) {
+          uniqueDevicesMap.set(id, name);
+        }
+      });
+
+      return Array.from(uniqueDevicesMap.entries())
+        .map(([id, name]) => ({ id, name }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    },
+    enabled: !!tenantId || !!companyId
   });
 
   // KPI Calculations
