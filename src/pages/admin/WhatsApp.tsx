@@ -485,6 +485,46 @@ export default function WhatsAppManagement() {
           </Card>
         </div>
       )}
+
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nova Instância WhatsApp</DialogTitle>
+            <DialogDescription>
+              Cria uma instância na Evolution API. O nome será usado como identificador (sem espaços).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="inst-name">Nome da instância</Label>
+              <Input
+                id="inst-name"
+                placeholder="ex: empresa_x"
+                value={newInstance.name}
+                onChange={(e) => setNewInstance({ ...newInstance, name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="inst-desc">Descrição (opcional)</Label>
+              <Input
+                id="inst-desc"
+                placeholder="Ex: Suporte técnico"
+                value={newInstance.description}
+                onChange={(e) => setNewInstance({ ...newInstance, description: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateDialog(false)} disabled={creating}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateInstance} disabled={creating}>
+              {creating ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+              Criar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
