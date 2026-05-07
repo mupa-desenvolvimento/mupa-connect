@@ -130,12 +130,12 @@ export default function QueryErrorsReport() {
 
       if (!errorRows || errorRows.length === 0) return [];
 
-      // Step 2: Enrich with real device data
+      // Step 2: Enrichment with device data for additional details (like nickname)
       const uniqueSerials = Array.from(new Set(errorRows.map(e => e.device_serial?.trim())));
       
       const { data: devicesData } = await supabase
         .from("dispositivos")
-        .select("serial, apelido_interno, store_id, num_filial, stores(name)")
+        .select("serial, apelido_interno, num_filial")
         .in("serial", uniqueSerials);
 
       const deviceMap = new Map();
@@ -144,8 +144,7 @@ export default function QueryErrorsReport() {
         if (serial) {
           deviceMap.set(serial, {
             apelido: d.apelido_interno,
-            num_filial: d.num_filial,
-            store_name: (d.stores as any)?.name
+            num_filial: d.num_filial
           });
         }
       });
@@ -156,8 +155,8 @@ export default function QueryErrorsReport() {
         return {
           ...e,
           device_name: enrichment?.apelido || e.device_name,
-          // Prioritize store_name from product_query_errors as requested, fallback to enrichment
-          store_name: e.store_name || enrichment?.store_name,
+          // Use store_name directly from the error record, with fallback
+          store_name: e.store_name || "Loja não identificada",
           num_filial: enrichment?.num_filial
         };
       });
@@ -302,7 +301,7 @@ export default function QueryErrorsReport() {
       `"${item.device_serial}"`,
       `"${item.product_name || 'Produto s/ Nome'}"`,
       `"${item.ean || 'N/A'}"`,
-      `"${item.store_name || 'Loja Central'}"`,
+      `"${item.store_name}"`,
       `"${item.error_type}"`,
       item.error_count,
       `"${format(parseISO(item.last_occurrence), "dd/MM/yyyy HH:mm")}"`,
@@ -328,7 +327,7 @@ export default function QueryErrorsReport() {
       "Serial": item.device_serial,
       "Produto": item.product_name || 'Produto s/ Nome',
       "EAN": item.ean || 'N/A',
-      "Loja": item.store_name || 'Loja Central',
+      "Loja": item.store_name,
       "Erro": item.error_type,
       "Quantidade": item.error_count,
       "Última Ocorrência": format(parseISO(item.last_occurrence), "dd/MM/yyyy HH:mm"),
@@ -675,10 +674,19 @@ export default function QueryErrorsReport() {
                           </TableCell>
                           <TableCell className="py-3">
                             <div className="flex items-center gap-2">
-                              <div className="h-8 w-8 rounded-lg bg-primary/5 flex items-center justify-center border border-primary/10 group-hover:bg-primary/10 transition-colors">
+                              <div className="h-8 w-8 rounded-lg bg-primary/5 flex items-center justify-center border border-primary/10 group-hover:bg-primary/10 transition-colors shrink-0">
                                 <Store className="h-4 w-4 text-primary" />
                               </div>
-                              <span className="text-sm font-semibold text-foreground">{item.store_name || 'Loja Central'}</span>
+                              <div className="flex flex-col">
+                                <span className="text-sm font-bold text-foreground leading-tight">
+                                  {item.store_name}
+                                </span>
+                                {item.num_filial && (
+                                  <Badge variant="secondary" className="w-fit text-[9px] h-3.5 px-1 font-mono uppercase bg-muted/50 text-muted-foreground border-none">
+                                    Filial {item.num_filial}
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
                           </TableCell>
                           <TableCell className="py-3">
@@ -741,7 +749,7 @@ export default function QueryErrorsReport() {
                       <div className="grid grid-cols-2 gap-2">
                         <div className="p-2 rounded-lg bg-muted/40 border border-border/50">
                           <p className="text-[10px] text-muted-foreground uppercase font-semibold">Loja</p>
-                          <p className="text-xs truncate font-medium">{item.store_name || 'Matriz'}</p>
+                          <p className="text-xs truncate font-bold">{item.store_name}</p>
                         </div>
                         <div className="p-2 rounded-lg bg-muted/40 border border-border/50">
                           <p className="text-[10px] text-muted-foreground uppercase font-semibold">Terminal</p>
