@@ -453,9 +453,23 @@ export default function PlaylistEditor() {
     }
   };
 
-  const addItem = (mediaId: string) => {
+  const addItem = async (mediaId: string) => {
     const media = medias?.find(m => m.id === mediaId);
     if (!media) return;
+
+    if (selectedItem?.type === 'campaign') {
+      const { error } = await supabase.from("campaign_contents").insert({
+        campaign_id: selectedItem.campaignId,
+        media_id: mediaId,
+        tenant_id: tenantId,
+        position: (campaignContents?.length || 0) + 1,
+        is_active: true
+      });
+      if (error) toast.error("Erro ao adicionar à campanha");
+      else { toast.success(`Adicionado à campanha ${selectedItem.campaign?.name}`); refetchCampaignContents(); }
+      return;
+    }
+
     const newItem: EditorPlaylistItem = { id: `temp-${Date.now()}`, mediaId: media.id, duration: media.duration || 10, priority: 1, type: media.type === 'video' ? 'video' : 'image', media: media };
     const newItems = [...items, newItem]; setItems(newItems); setSelectedItem(newItem); setHasUnsavedChanges(true); toast.success(`${media.name} adicionado`);
   };
