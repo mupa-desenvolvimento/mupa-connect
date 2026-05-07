@@ -78,6 +78,24 @@ export default function QuickAccessPage() {
     return isHeartbeatRecent ? "online" : "offline";
   };
 
+  const pollQueryLog = async (device: any, ean: string, sentAtIso: string) => {
+    // Tenta buscar a resposta do dispositivo na tabela product_queries_log por até ~12s
+    const maxAttempts = 12;
+    for (let i = 0; i < maxAttempts; i++) {
+      await new Promise((r) => setTimeout(r, 1000));
+      const { data } = await supabase
+        .from("product_queries_log")
+        .select("status_code, descricao_produto, ean, consulted_at, created_at")
+        .eq("ean", ean)
+        .or(`device_id.eq.${device.serial},device_id.eq.${device.id}`)
+        .gte("created_at", sentAtIso)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (data && data.length > 0) return data[0];
+    }
+    return null;
+  };
+
   const sendQuickCommand = async (device: any, command: string, label: string, codbar?: string) => {
     if (!device.serial) {
       toast.error("Dispositivo sem serial.");
@@ -89,6 +107,7 @@ export default function QuickAccessPage() {
 
     try {
       const timestamp = Date.now();
+      const sentAtIso = new Date(timestamp - 2000).toISOString();
       const payload = {
         comando: command,
         codbar: codbar || "",
@@ -115,7 +134,24 @@ export default function QuickAccessPage() {
         payload: payload
       });
 
-      toast.success(`${label} enviado com sucesso (200 OK)!`);
+      // Para consulta de EAN, busca o retorno real do dispositivo em product_queries_log
+      const isEanQuery = command === "consulta_ean" && codbar && !["040816", "050223"].includes(codbar);
+      if (isEanQuery) {
+        toast.loading(`Consultando EAN ${codbar} no dispositivo...`, { id: commandId });
+        const logEntry = await pollQueryLog(device, codbar!, sentAtIso);
+        toast.dismiss(commandId);
+        if (!logEntry) {
+          toast.warning(`Comando enviado, mas sem resposta do dispositivo em 12s.`);
+        } else if (logEntry.status_code === 200) {
+          toast.success(
+            `✅ EAN ${codbar} — 200 OK${logEntry.descricao_produto ? `: ${logEntry.descricao_produto}` : ""}`
+          );
+        } else {
+          toast.error(`❌ EAN ${codbar} — Status ${logEntry.status_code ?? "desconhecido"}`);
+        }
+      } else {
+        toast.success(`${label} enviado com sucesso (200 OK)!`);
+      }
     } catch (err) {
       toast.error(`Falha ao enviar ${label} (Erro no servidor)`);
     } finally {
