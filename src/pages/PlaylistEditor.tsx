@@ -591,23 +591,30 @@ export default function PlaylistEditor() {
       </header>
 
       <div className="flex flex-1 overflow-hidden h-full">
-        <aside className="w-80 border-r border-white/5 bg-[#0c0c0e] flex flex-col z-40 overflow-hidden">
-          <Tabs defaultValue="media" className="flex-1 flex flex-col h-full overflow-hidden">
-            <div className="p-4 shrink-0"><TabsList className="grid w-full grid-cols-2 bg-black/40"><TabsTrigger value="media" className="text-[10px] gap-2">Mídias</TabsTrigger><TabsTrigger value="appearance" className="text-[10px] gap-2">Aparência</TabsTrigger></TabsList></div>
-            <TabsContent value="media" className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-3">
-              {medias?.filter(m => m.name.toLowerCase().includes(mediaSearch.toLowerCase())).map((media) => (
-                <div key={media.id} className="relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer border border-white/10 hover:border-[#085CF0]" onClick={() => addItem(media.id)}>
-                  <img src={media.thumbnail_url || media.file_url} className="w-full h-full object-cover" />
-                  <div className="absolute bottom-1 left-1 right-1 text-[10px] truncate bg-black/60 px-1 rounded">{media.name}</div>
-                </div>
-              ))}
-            </TabsContent>
-            <TabsContent value="appearance" className="p-4 space-y-4">
-              <div className="flex items-center justify-between"><Label className="text-xs">Mostrar Nome</Label><Switch checked={appearanceConfig.show_device_name} onCheckedChange={(v) => { setAppearanceConfig({...appearanceConfig, show_device_name: v}); setHasUnsavedChanges(true); }} /></div>
-              <div className="flex items-center justify-between"><Label className="text-xs">Data e Hora</Label><Switch checked={appearanceConfig.show_datetime} onCheckedChange={(v) => { setAppearanceConfig({...appearanceConfig, show_datetime: v}); setHasUnsavedChanges(true); }} /></div>
-            </TabsContent>
-          </Tabs>
-        </aside>
+        <DndContext 
+          sensors={sensors} 
+          collisionDetection={closestCenter} 
+          onDragEnd={handleDragEnd} 
+          onDragStart={(e) => setActiveId(e.active.id as string)}
+        >
+          <aside className="w-80 border-r border-white/5 bg-[#0c0c0e] flex flex-col z-40 overflow-hidden">
+            <Tabs defaultValue="media" className="flex-1 flex flex-col h-full overflow-hidden">
+              <div className="p-4 shrink-0"><TabsList className="grid w-full grid-cols-2 bg-black/40"><TabsTrigger value="media" className="text-[10px] gap-2">Mídias</TabsTrigger><TabsTrigger value="appearance" className="text-[10px] gap-2">Aparência</TabsTrigger></TabsList></div>
+              <TabsContent value="media" className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-3">
+                {medias?.filter(m => m.name.toLowerCase().includes(mediaSearch.toLowerCase())).map((media) => (
+                  <DraggableMediaItem 
+                    key={media.id} 
+                    media={media} 
+                    onClick={addItem} 
+                  />
+                ))}
+              </TabsContent>
+              <TabsContent value="appearance" className="p-4 space-y-4">
+                <div className="flex items-center justify-between"><Label className="text-xs">Mostrar Nome</Label><Switch checked={appearanceConfig.show_device_name} onCheckedChange={(v) => { setAppearanceConfig({...appearanceConfig, show_device_name: v}); setHasUnsavedChanges(true); }} /></div>
+                <div className="flex items-center justify-between"><Label className="text-xs">Data e Hora</Label><Switch checked={appearanceConfig.show_datetime} onCheckedChange={(v) => { setAppearanceConfig({...appearanceConfig, show_datetime: v}); setHasUnsavedChanges(true); }} /></div>
+              </TabsContent>
+            </Tabs>
+          </aside>
 
         <main className="flex-1 flex flex-col overflow-hidden relative">
           <div className="flex-1 overflow-hidden flex flex-col p-6 gap-6">
