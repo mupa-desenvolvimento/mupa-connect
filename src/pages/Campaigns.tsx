@@ -74,12 +74,12 @@ export default function CampaignsPage() {
 
   const handleEdit = (id: string) => {
     setSelectedCampaignId(id);
-    setIsDialogOpen(true);
+    setView("editor");
   };
 
   const handleCreate = () => {
     setSelectedCampaignId(null);
-    setIsDialogOpen(true);
+    setView("editor");
   };
 
   const handleDelete = async (id: string) => {
