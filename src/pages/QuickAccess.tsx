@@ -243,6 +243,25 @@ export default function QuickAccessPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-4 pt-0 space-y-4">
+                  {lastResponse[device.id] && (
+                    <div className="bg-slate-100 rounded-lg p-3 text-xs flex flex-col gap-1 border border-slate-200 animate-in fade-in slide-in-from-top-1">
+                      <div className="flex justify-between items-center text-muted-foreground">
+                        <span className="flex items-center gap-1 font-semibold uppercase tracking-tighter">
+                          <MessageSquare className="h-3 w-3" />
+                          Último Retorno
+                        </span>
+                        <span>{lastResponse[device.id].time}</span>
+                      </div>
+                      <p className={cn(
+                        "font-mono font-medium",
+                        lastResponse[device.id].status.includes("Erro") || lastResponse[device.id].type ? "text-red-600" : "text-emerald-600"
+                      )}>
+                        {lastResponse[device.id].status}
+                        {lastResponse[device.id].type && ` (${lastResponse[device.id].type})`}
+                      </p>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-2 gap-2 pt-2">
                     <QuickButton
                       icon={ExternalLink}
