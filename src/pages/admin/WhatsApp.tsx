@@ -963,14 +963,13 @@ export default function WhatsAppManagement() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="test-phone">Número de Destino</Label>
+              <Label htmlFor="test-phone">Número de Destino (Máscara ativa)</Label>
               <div className="flex gap-2">
                 <Input
                   id="test-phone"
-                  type="tel"
-                  placeholder="Ex: 5511999999999"
-                  value={testMessage.recipientPhone}
-                  onChange={(e) => setTestMessage({ ...testMessage, recipientPhone: e.target.value })}
+                  ref={testInputRef}
+                  placeholder="+55 (11) 99999-9999"
+                  defaultValue={testMessage.recipientPhone}
                   className="flex-1"
                 />
                 <Select 
