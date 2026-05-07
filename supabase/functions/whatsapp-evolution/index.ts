@@ -123,7 +123,7 @@ serve(async (req) => {
           recipient_phone: phone,
           message,
           status,
-          error: errorMsg,
+          error_message: errorMsg,
         });
         if (errorMsg) return json({ error: errorMsg }, 500);
         return json(data);

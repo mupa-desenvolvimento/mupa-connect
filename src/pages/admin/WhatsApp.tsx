@@ -31,6 +31,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   Table, 
   TableBody, 
@@ -56,8 +64,13 @@ export default function WhatsAppManagement() {
   const [showQrDialog, setShowQrDialog] = useState(false);
   const [connectingInstance, setConnectingInstance] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showAddRecipientDialog, setShowAddRecipientDialog] = useState(false);
+  const [showTestMessageDialog, setShowTestMessageDialog] = useState(false);
   const [newInstance, setNewInstance] = useState({ name: "", description: "" });
+  const [newRecipient, setNewRecipient] = useState({ name: "", phone: "" });
+  const [testMessage, setTestMessage] = useState({ instanceName: "", recipientPhone: "", message: "" });
   const [creating, setCreating] = useState(false);
+  const [sendingTest, setSendingTest] = useState(false);
   const queryClient = useQueryClient();
 
   const callApi = async (action: string, payload: Record<string, unknown> = {}) => {
@@ -133,6 +146,62 @@ export default function WhatsAppManagement() {
       await callApi("deleteInstance", { instanceName });
       toast.success("Instância removida");
       queryClient.invalidateQueries({ queryKey: ["whatsapp-instances"] });
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+  const handleAddRecipient = async () => {
+    if (!newRecipient.name.trim() || !newRecipient.phone.trim()) {
+      return toast.error("Nome e telefone são obrigatórios");
+    }
+    try {
+      setCreating(true);
+      const { error } = await supabase.from("whatsapp_recipients").insert({
+        name: newRecipient.name.trim(),
+        phone: newRecipient.phone.trim(),
+        is_active: true,
+      });
+      if (error) throw error;
+      toast.success("Destinatário cadastrado");
+      setShowAddRecipientDialog(false);
+      setNewRecipient({ name: "", phone: "" });
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-recipients"] });
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao cadastrar destinatário");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleSendTestMessage = async () => {
+    if (!testMessage.instanceName || !testMessage.recipientPhone || !testMessage.message.trim()) {
+      return toast.error("Todos os campos são obrigatórios");
+    }
+    try {
+      setSendingTest(true);
+      await callApi("sendMessage", {
+        instanceName: testMessage.instanceName,
+        phone: testMessage.recipientPhone,
+        message: testMessage.message.trim(),
+      });
+      toast.success("Mensagem de teste enviada!");
+      setShowTestMessageDialog(false);
+      setTestMessage({ ...testMessage, message: "" });
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-logs"] });
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao enviar mensagem");
+    } finally {
+      setSendingTest(false);
+    }
+  };
+
+  const handleDeleteRecipient = async (id: string) => {
+    if (!confirm("Remover este destinatário?")) return;
+    try {
+      const { error } = await supabase.from("whatsapp_recipients").delete().eq("id", id);
+      if (error) throw error;
+      toast.success("Destinatário removido");
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-recipients"] });
     } catch (err: any) {
       toast.error(err.message);
     }
@@ -276,6 +345,12 @@ export default function WhatsAppManagement() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => {
+                            setTestMessage({ ...testMessage, instanceName: instance.instance_key || instance.name });
+                            setShowTestMessageDialog(true);
+                          }}>
+                            <MessageSquare className="h-4 w-4 mr-2" /> Testar Envio
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleGenerateQR(instance.instance_key || instance.name)}>
                             <QrCode className="h-4 w-4 mr-2" /> Reconectar (QR)
                           </DropdownMenuItem>
@@ -310,7 +385,7 @@ export default function WhatsAppManagement() {
                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                    <Input placeholder="Buscar destinatário..." className="pl-10" />
                  </div>
-                 <Button className="gap-2">
+                 <Button className="gap-2" onClick={() => setShowAddRecipientDialog(true)}>
                    <Plus className="h-4 w-4" /> Novo Destinatário
                  </Button>
                </div>
@@ -348,9 +423,27 @@ export default function WhatsAppManagement() {
                            </Badge>
                          </TableCell>
                          <TableCell className="text-right">
-                           <Button variant="ghost" size="icon" className="h-8 w-8">
-                             <MoreVertical className="h-4 w-4" />
-                           </Button>
+                           <DropdownMenu>
+                             <DropdownMenuTrigger asChild>
+                               <Button variant="ghost" size="icon" className="h-8 w-8">
+                                 <MoreVertical className="h-4 w-4" />
+                               </Button>
+                             </DropdownMenuTrigger>
+                             <DropdownMenuContent align="end">
+                               <DropdownMenuItem onClick={() => {
+                                 setTestMessage({ ...testMessage, recipientPhone: recipient.phone });
+                                 setShowTestMessageDialog(true);
+                               }}>
+                                 <MessageSquare className="h-4 w-4 mr-2" /> Testar Envio
+                               </DropdownMenuItem>
+                               <DropdownMenuItem
+                                 className="text-destructive focus:text-destructive"
+                                 onClick={() => handleDeleteRecipient(recipient.id)}
+                               >
+                                 <XCircle className="h-4 w-4 mr-2" /> Remover
+                               </DropdownMenuItem>
+                             </DropdownMenuContent>
+                           </DropdownMenu>
                          </TableCell>
                        </TableRow>
                      ))}
@@ -521,6 +614,125 @@ export default function WhatsAppManagement() {
             <Button onClick={handleCreateInstance} disabled={creating}>
               {creating ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
               Criar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showAddRecipientDialog} onOpenChange={setShowAddRecipientDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Novo Destinatário</DialogTitle>
+            <DialogDescription>
+              Cadastre um número para receber notificações automáticas.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="rec-name">Nome</Label>
+              <Input
+                id="rec-name"
+                placeholder="Ex: João Silva"
+                value={newRecipient.name}
+                onChange={(e) => setNewRecipient({ ...newRecipient, name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="rec-phone">Telefone (com DDI e DDD)</Label>
+              <Input
+                id="rec-phone"
+                placeholder="Ex: 5511999999999"
+                value={newRecipient.phone}
+                onChange={(e) => setNewRecipient({ ...newRecipient, phone: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddRecipientDialog(false)} disabled={creating}>
+              Cancelar
+            </Button>
+            <Button onClick={handleAddRecipient} disabled={creating}>
+              {creating ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+              Cadastrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showTestMessageDialog} onOpenChange={setShowTestMessageDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Testar Envio de Mensagem</DialogTitle>
+            <DialogDescription>
+              Envie uma mensagem de teste para validar a conexão.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Instância de Origem</Label>
+              <Select 
+                value={testMessage.instanceName} 
+                onValueChange={(v) => setTestMessage({ ...testMessage, instanceName: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma instância" />
+                </SelectTrigger>
+                <SelectContent>
+                  {instances?.filter(i => i.status === "connected").map((inst) => (
+                    <SelectItem key={inst.id} value={inst.instance_key || inst.name}>
+                      {inst.name}
+                    </SelectItem>
+                  ))}
+                  {instances?.filter(i => i.status === "connected").length === 0 && (
+                    <div className="p-2 text-xs text-muted-foreground text-center">Nenhuma instância conectada</div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="test-phone">Número de Destino</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="test-phone"
+                  placeholder="Ex: 5511999999999"
+                  value={testMessage.recipientPhone}
+                  onChange={(e) => setTestMessage({ ...testMessage, recipientPhone: e.target.value })}
+                  className="flex-1"
+                />
+                <Select 
+                  onValueChange={(v) => setTestMessage({ ...testMessage, recipientPhone: v })}
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Contatos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {recipients?.map((rec) => (
+                      <SelectItem key={rec.id} value={rec.phone}>
+                        {rec.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="test-msg">Mensagem</Label>
+              <Textarea
+                id="test-msg"
+                placeholder="Digite sua mensagem de teste..."
+                value={testMessage.message}
+                onChange={(e) => setTestMessage({ ...testMessage, message: e.target.value })}
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTestMessageDialog(false)} disabled={sendingTest}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSendTestMessage} disabled={sendingTest}>
+              {sendingTest ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <MessageSquare className="h-4 w-4 mr-2" />}
+              Enviar Teste
             </Button>
           </DialogFooter>
         </DialogContent>
