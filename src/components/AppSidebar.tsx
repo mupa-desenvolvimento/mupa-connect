@@ -15,7 +15,8 @@ import {
   Activity,
   User,
   Building2,
-  MessageSquare
+  MessageSquare,
+  AlertOctagon
 } from "lucide-react";
 
 import {
