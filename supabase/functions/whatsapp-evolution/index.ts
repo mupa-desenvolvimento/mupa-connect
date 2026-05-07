@@ -88,7 +88,28 @@ serve(async (req) => {
     if (!isAdmin) return json({ error: "Forbidden" }, 403);
 
     const body = await req.json().catch(() => ({}));
-    const { action, instanceName, phone, message, companyId, description } = body as any;
+    const { action, instanceName, phone, message, companyId, description, recipients, templateId, groupId, variables } = body as any;
+
+    // Helper: replace {variables} in template text
+    const renderTemplate = (text: string, vars: Record<string, string> = {}) => {
+      return String(text || "").replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? `{${k}}`);
+    };
+
+    // Helper: send a single message via Evolution (v2 with v1 fallback)
+    const sendOne = async (instance: string, normalizedPhone: string, text: string) => {
+      try {
+        return await evo(`/message/sendText/${instance}`, "POST", {
+          number: normalizedPhone,
+          text,
+        });
+      } catch (firstErr: any) {
+        return await evo(`/message/sendText/${instance}`, "POST", {
+          number: normalizedPhone,
+          options: { delay: 1200, presence: "composing", linkPreview: false },
+          textMessage: { text },
+        });
+      }
+    };
 
     switch (action) {
       case "createInstance": {
