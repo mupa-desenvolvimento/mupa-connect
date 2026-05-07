@@ -161,10 +161,12 @@ export default function QueryErrorsReport() {
 
       return errorRows.map(e => {
         const enrichment = deviceMap.get(e.device_serial?.trim());
+        const storeNameFromMap = storeMap.get(e.store_id);
+        
         return {
           ...e,
           device_name: enrichment?.apelido || e.device_name,
-          store_name: enrichment?.store_name || e.store_name,
+          store_name: enrichment?.store_name || storeNameFromMap || e.store_name,
           num_filial: enrichment?.num_filial
         };
       });
