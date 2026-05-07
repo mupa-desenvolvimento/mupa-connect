@@ -375,11 +375,12 @@ export default function QueryErrorsReport() {
   }
 
   return (
-    <div className="space-y-6 pb-20">
-      <PageHeader
-        title="Inteligência de Falhas"
-        description="Análise preventiva de falhas de consulta e erros de integração ERP."
-        actions={
+    <div className="flex flex-col gap-4 h-[calc(100vh-5rem)] overflow-hidden pb-4">
+      <div className="shrink-0">
+        <PageHeader
+          title="Inteligência de Falhas"
+          description="Análise preventiva de falhas de consulta e erros de integração ERP."
+          actions={
           <div className="flex flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <Select value={period} onValueChange={setPeriod}>
