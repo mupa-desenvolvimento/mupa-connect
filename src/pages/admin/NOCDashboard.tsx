@@ -1,104 +1,128 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/use-user-role";
+import { AnimatePresence, motion } from "framer-motion";
+import { 
+  Monitor, 
+  LayoutGrid, 
+  Maximize2, 
+  Minimize2, 
+  Settings2,
+  AlertCircle,
+  Activity,
+  WifiOff,
+  Search,
+  RefreshCw,
+  Store,
+  Warehouse,
+  X,
+  Share2,
+  ExternalLink,
+  Copy,
+  Clock,
+  ChevronRight,
+  ChevronLeft
+} from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import { AlertCircle, TriangleAlert, Monitor, WifiOff, Clock, Activity, List, ShieldCheck } from "lucide-react";
+import { ProductQueriesFeed } from "@/components/admin/monitoring/ProductQueriesFeed";
 
-// New Components
-import { NOCHeader } from "@/components/admin/noc/NOCHeader";
-import { NOCStatsBar } from "@/components/admin/noc/NOCStatsBar";
-import { StoreHealthCard } from "@/components/admin/noc/StoreHealthCard";
-import { EventsFeed } from "@/components/admin/noc/EventsFeed";
-import { InkyInsights } from "@/components/admin/noc/InkyInsights";
-import { NOCFooter } from "@/components/admin/noc/NOCFooter";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { AnimatePresence, motion } from "framer-motion";
-import { Badge } from "@/components/ui/badge";
-import { formatDistanceToNow } from "date-fns";
+type PanelType = "status" | "metrics" | "alerts" | "charts" | "store_view" | "queries_feed";
+type LayoutType = "1" | "2h" | "2v" | "4" | "6";
+
+interface PanelConfig {
+  id: string;
+  type: PanelType;
+  title: string;
+  storeId?: string;
+}
+
+const ROTATION_INTERVAL = 8000;
+const CARD_MIN_WIDTH = 180;
+const CARD_HEIGHT = 120;
+const CARD_GAP = 12;
 
 export default function NOCDashboard() {
-  const { isSuperAdmin, isTecnico, companyId, tenantId } = useUserRole();
+  const { isSuperAdmin, isTecnico, companyId, tenantId, role } = useUserRole();
   const navigate = useNavigate();
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [layout, setLayout] = useState("auto");
+  const [layout, setLayout] = useState<LayoutType>("4");
+  const [panels, setPanels] = useState<PanelConfig[]>([
+    { id: "p1", type: "metrics", title: "Métricas Gerais" },
+    { id: "p2", type: "alerts", title: "Alertas Críticos" },
+    { id: "p3", type: "status", title: "Status Dispositivos" },
+    { id: "p4", type: "store_view", title: "Visão por Loja" }
+  ]);
   const [devices, setDevices] = useState<any[]>([]);
   const [stores, setStores] = useState<any[]>([]);
-  const [queryErrors, setQueryErrors] = useState(0);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [sharing, setSharing] = useState(false);
   const [rotationIndex, setRotationIndex] = useState(0);
+  const ROTATION_INTERVAL = 8000; // 8 segundos para leitura dinâmica
+  const CARD_MIN_WIDTH = 180;
+  const CARD_HEIGHT = 120;
 
-  const ROTATION_INTERVAL = 15000;
-
-  const normalize = (value: any) => String(value || "").replace(/^0+/, "").trim();
-
-  const stats = useMemo(() => {
-    const online = devices.filter(d => getDeviceStatus(d) === "online").length;
-    const offline = devices.filter(d => getDeviceStatus(d) === "offline").length;
-    const unstable = devices.filter(d => getDeviceStatus(d) === "unstable").length;
-    
-    const noPlaylist = devices.filter(d => !d.playlist_id && !d.current_playlist_id).length;
-    const playerStuck = devices.filter(d => 
-      d.player_status === 'stuck' || 
-      (d.last_player_activity_at && (Date.now() - new Date(d.last_player_activity_at).getTime()) > 600000)
-    ).length;
-
-    const processedStores = stores.map(store => {
-      const cleanCode = normalize(store.code);
+  const storeStats = useMemo(() => {
+    return stores.map(store => {
+      const cleanCode = store.code?.replace(/^0+/, '');
       const storeDevices = devices.filter(d => {
-        const deviceCode = normalize(d.num_filial);
+        const deviceCode = d.num_filial?.replace(/^0+/, '');
         return (deviceCode && cleanCode && deviceCode === cleanCode) || 
+               d.num_filial === store.code || 
                d.empresa === store.name;
       });
       
-      const sOnline = storeDevices.filter(d => getDeviceStatus(d) === "online").length;
-      const sOffline = storeDevices.filter(d => getDeviceStatus(d) === "offline").length;
-      const sUnstable = storeDevices.filter(d => getDeviceStatus(d) === "unstable").length;
+      const online = storeDevices.filter(d => getDeviceStatus(d) === "online").length;
+      const offline = storeDevices.filter(d => getDeviceStatus(d) === "offline").length;
+      const unstable = storeDevices.filter(d => getDeviceStatus(d) === "unstable").length;
       
       let status: "online" | "offline" | "unstable" = "online";
-      if (sOffline > 0) status = "offline";
-      else if (sUnstable > 0) status = "unstable";
+      if (offline > 0) status = "offline";
+      else if (unstable > 0) status = "unstable";
       
-      const healthScore = storeDevices.length > 0 ? Math.round((sOnline / storeDevices.length) * 100) : 100;
-      const sla = 99.2;
-
       return {
         ...store,
-        online: sOnline,
-        offline: sOffline,
-        unstable: sUnstable,
-        total: storeDevices.length,
+        deviceCount: storeDevices.length,
+        online,
+        offline,
+        unstable,
         status,
-        healthScore,
-        sla,
         lastActivity: storeDevices.length > 0 ? storeDevices[0].last_heartbeat_at : null
       };
     });
+  }, [stores, devices]);
 
-    const criticalStores = processedStores.filter(s => s.healthScore < 80);
-
-    return {
-      online,
-      offline,
-      unstable,
-      noPlaylist,
-      playerStuck,
-      criticalStoresCount: criticalStores.length,
-      criticalStoresList: criticalStores,
-      queryErrors,
-      processedStores
-    };
-  }, [devices, stores, queryErrors]);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRotationIndex(prev => prev + 1);
+    }, ROTATION_INTERVAL);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     fetchInitialData();
     
     const devicesSubscription = supabase
-      .channel('noc_updates')
+      .channel('noc_devices')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'dispositivos' }, () => {
         fetchDevices();
       })
@@ -106,31 +130,28 @@ export default function NOCDashboard() {
 
     const interval = setInterval(() => {
       fetchDevices();
-      fetchQueryErrors();
-    }, 15000);
-
-    const rotInterval = setInterval(() => {
-      setRotationIndex(prev => prev + 1);
-    }, ROTATION_INTERVAL);
+    }, 10000);
 
     return () => {
       supabase.removeChannel(devicesSubscription);
       clearInterval(interval);
-      clearInterval(rotInterval);
     };
-  }, [companyId, tenantId, isSuperAdmin]);
+  }, []);
 
   async function fetchInitialData() {
     setLoading(true);
-    await Promise.all([fetchDevices(), fetchStores(), fetchQueryErrors()]);
+    await Promise.all([fetchDevices(), fetchStores()]);
     setLoading(false);
   }
 
   async function fetchDevices() {
     let query = supabase.from("dispositivos").select("*");
     
+    // Se não for super admin, filtrar pela empresa
     if (!isSuperAdmin && companyId) {
       query = query.eq("company_id", companyId);
+    } else {
+      console.log("NOC: Loading all devices for SuperAdmin");
     }
 
     const { data } = await query.order('last_heartbeat_at', { ascending: false });
@@ -141,74 +162,19 @@ export default function NOCDashboard() {
   }
 
   async function fetchStores() {
+    // Como stores não tem company_id diretamente, filtramos pelo tenant_id
+    // que é único por empresa no nosso modelo atual
     let query = supabase.from("stores").select("id, name, code, tenant_id");
     
     if (!isSuperAdmin && tenantId) {
       query = query.eq("tenant_id", tenantId);
+    } else {
+      console.log("NOC: Loading all stores for SuperAdmin");
     }
     
     const { data } = await query;
     if (data) setStores(data);
   }
-
-  async function fetchQueryErrors() {
-    try {
-      const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
-      const { count } = await supabase
-        .from("product_queries_log")
-        .select("*", { count: 'exact', head: true })
-        .not("status_code", "eq", "200")
-        .gt("created_at", oneHourAgo);
-      
-      if (count !== null) setQueryErrors(count);
-    } catch (e) {
-      console.error("Error fetching query errors:", e);
-    }
-  }
-
-  function getDeviceStatus(device: any) {
-    if (!device.last_heartbeat_at) return "offline";
-    const now = new Date();
-    const lastHeartbeat = new Date(device.last_heartbeat_at);
-    const diffSeconds = (now.getTime() - lastHeartbeat.getTime()) / 1000;
-    
-    if (diffSeconds > 120) return "offline";
-    if (diffSeconds > 60) return "unstable";
-    return "online";
-  }
-
-  const handleShare = async () => {
-    if (!companyId || !tenantId) {
-      toast.error("Erro ao identificar empresa/tenant.");
-      return;
-    }
-
-    setSharing(true);
-    try {
-      const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-      
-      const { error } = await supabase
-        .from("monitoring_views" as any)
-        .insert({
-          token,
-          company_id: companyId,
-          tenant_id: tenantId,
-          config: { layout, mode: 'noc' },
-          expires_at: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString()
-        });
-
-      if (error) throw error;
-
-      const url = `${window.location.origin}/monitoring/view/${token}`;
-      await navigator.clipboard.writeText(url);
-      toast.success("Link de monitoramento copiado!");
-      window.open(url, '_blank');
-    } catch (err) {
-      toast.error("Falha ao gerar link compartilhado.");
-    } finally {
-      setSharing(false);
-    }
-  };
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -222,258 +188,461 @@ export default function NOCDashboard() {
     }
   };
 
-  if (!isTecnico && !loading) {
-    return (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0a0a0c] text-white">
-        <div className="text-center p-8 border border-white/5 rounded-2xl bg-white/5">
-          <h2 className="text-2xl font-black uppercase tracking-tighter mb-2">Acesso Restrito</h2>
-          <p className="text-white/40 text-sm">Esta área é exclusiva para técnicos e administradores.</p>
-          <button onClick={() => navigate("/")} className="mt-6 px-6 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-xs uppercase tracking-widest">
-            Voltar para Dashboard
-          </button>
-        </div>
-      </div>
-    );
+  const handleShare = async () => {
+    if (!companyId || !tenantId) {
+      toast.error("Erro ao identificar empresa/tenant.");
+      return;
+    }
+
+    setSharing(true);
+    try {
+      const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      
+      const { data, error } = await supabase
+        .from("monitoring_views" as any)
+        .insert({
+          token,
+          company_id: companyId,
+          tenant_id: tenantId,
+          config: {
+            layout,
+            panels
+          },
+          expires_at: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString() // 7 dias
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const url = `${window.location.origin}/monitoring/view/${token}`;
+      await navigator.clipboard.writeText(url);
+      toast.success("Link de monitoramento copiado para a área de transferência! Válido por 7 dias.");
+      
+      // Opcional: abrir em nova aba
+      window.open(url, '_blank');
+    } catch (err) {
+      console.error("Error sharing monitoring:", err);
+      toast.error("Falha ao gerar link compartilhado.");
+    } finally {
+      setSharing(false);
+    }
+  };
+
+  function getDeviceStatus(device: any) {
+    if (!device.last_heartbeat_at) return "offline";
+    const now = new Date();
+    const lastHeartbeat = new Date(device.last_heartbeat_at);
+    const diffSeconds = (now.getTime() - lastHeartbeat.getTime()) / 1000;
+    
+    if (diffSeconds > 120) return "offline";
+    if (diffSeconds > 60) return "unstable";
+    return "online";
   }
 
-  const storesPerPage = layout === "4" ? 4 : layout === "6" ? 6 : layout === "9" ? 9 : 12;
-  const totalPages = Math.ceil(stats.processedStores.length / storesPerPage);
-  const currentPage = rotationIndex % (totalPages || 1);
-  const paginatedStores = stats.processedStores.slice(currentPage * storesPerPage, (currentPage + 1) * storesPerPage);
+  const updatePanel = (id: string, updates: Partial<PanelConfig>) => {
+    setPanels(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+  };
 
-  const gridCols = layout === "4" ? "lg:grid-cols-2" : layout === "6" ? "lg:grid-cols-3" : layout === "9" ? "lg:grid-cols-3" : "lg:grid-cols-3 xl:grid-cols-4";
+  // Render Panel content based on type
+  const renderPanelContent = (panel: PanelConfig) => {
+    switch (panel.type) {
+      case "metrics":
+        const onlineCount = devices.filter(d => getDeviceStatus(d) === "online").length;
+        const unstableCount = devices.filter(d => getDeviceStatus(d) === "unstable").length;
+        const offlineCount = devices.filter(d => getDeviceStatus(d) === "offline").length;
+        return (
+          <div className="grid grid-cols-2 gap-4 h-full p-2">
+            <MetricCard label="Online" value={onlineCount} color="text-success" icon={Activity} />
+            <MetricCard label="Offline" value={offlineCount} color="text-destructive" icon={WifiOff} />
+            <MetricCard label="Instáveis" value={unstableCount} color="text-warning" icon={AlertCircle} />
+            <MetricCard label="Total" value={devices.length} color="text-primary" icon={Monitor} />
+          </div>
+        );
+      case "alerts":
+        const alerts = devices.filter(d => getDeviceStatus(d) !== "online");
+        return (
+          <AutoRotatingGrid 
+            items={alerts} 
+            rotationIndex={rotationIndex}
+            ItemComponent={DeviceCard}
+            getItemStatus={(item) => getDeviceStatus(item)}
+            emptyMessage="Nenhum alerta crítico"
+            accentColor="bg-destructive"
+          />
+        );
+      case "queries_feed":
+        const storeForFeed = stores.find(s => s.id === panel.storeId);
+        return (
+          <ProductQueriesFeed 
+            storeId={panel.storeId} 
+            storeCode={storeForFeed?.code}
+            tenantId={tenantId}
+            isSuperAdmin={isSuperAdmin}
+          />
+        );
+      case "status":
+      case "store_view":
+        const isStoreView = panel.type === "store_view";
+        const hasSelectedStore = !!panel.storeId;
+        
+        let displayItems = [];
+        let ItemComp: any;
+
+        if (isStoreView && !hasSelectedStore) {
+          displayItems = storeStats;
+          ItemComp = StoreCard;
+        } else {
+          let displayDevices = devices;
+          if (hasSelectedStore) {
+            const store = stores.find(s => s.id === panel.storeId);
+            if (store) {
+              const cleanCode = store.code?.replace(/^0+/, '');
+              displayDevices = devices.filter(d => {
+                const deviceCode = d.num_filial?.replace(/^0+/, '');
+                return (deviceCode && cleanCode && deviceCode === cleanCode) || 
+                       d.num_filial === store.code || 
+                       d.empresa === store.name;
+              });
+            }
+          }
+          displayItems = displayDevices;
+          ItemComp = DeviceCard;
+        }
+
+        return (
+          <AutoRotatingGrid 
+            items={displayItems} 
+            rotationIndex={rotationIndex}
+            ItemComponent={ItemComp}
+            getItemStatus={(item) => isStoreView && !hasSelectedStore ? item.status : getDeviceStatus(item)}
+            emptyMessage="Nenhum item encontrado"
+          />
+        );
+      default:
+        return <div className="flex items-center justify-center h-full text-muted-foreground italic">Em desenvolvimento...</div>;
+    }
+  };
+
+  const getGridLayoutClass = () => {
+    switch (layout) {
+      case "1": return "grid-cols-1";
+      case "2h": return "grid-cols-1 grid-rows-2";
+      case "2v": return "grid-cols-2";
+      case "4": return "grid-cols-2 grid-rows-2";
+      case "6": return "grid-cols-3 grid-rows-2";
+      default: return "grid-cols-2 grid-rows-2";
+    }
+  };
+
+  if (!isTecnico && !loading) {
+    return <div className="p-20 text-center">Acesso restrito a técnicos e administradores.</div>;
+  }
+
+  const isNOCRoute = window.location.pathname === "/admin/monitoring";
 
   return (
     <div className={cn(
-      "flex flex-col h-screen w-full bg-[#050507] text-white overflow-hidden selection:bg-primary/30 font-sans",
-      "fixed inset-0 z-[60]"
+      "flex flex-col bg-background text-foreground transition-all duration-500",
+      (isFullscreen || isNOCRoute) ? "fixed inset-0 z-50 p-4 bg-[#09090b]" : "h-full w-full"
     )}>
-      <NOCHeader 
-        lastUpdate={lastUpdate}
-        loading={loading}
-        isFullscreen={isFullscreen}
-        layout={layout}
-        onLayoutChange={setLayout}
-        onFullscreenToggle={toggleFullscreen}
-        onShare={handleShare}
-        onExit={() => navigate("/")}
-        sharing={sharing}
-      />
-
-      <NOCStatsBar stats={{...stats, criticalStores: stats.criticalStoresCount}} />
-
-      <main className="flex-1 flex overflow-hidden">
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <ScrollArea className="flex-1 p-6">
-            <AnimatePresence mode="wait">
-              {layout === 'auto' || layout === '4' || layout === '6' || layout === '9' ? (
-                <motion.div
-                  key="grid-view"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="space-y-8"
-                >
-                  {/* Critical Incidents Section */}
-                  {stats.criticalStoresList.length > 0 && (
-                    <div className="mb-8">
-                      <div className="flex items-center gap-3 mb-4">
-                        <AlertCircle className="h-4 w-4 text-red-500 animate-pulse" />
-                        <h2 className="text-xs font-black uppercase tracking-[0.3em] text-red-500">
-                          Incidentes Críticos Ativos
-                        </h2>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {stats.criticalStoresList.slice(0, 3).map(store => (
-                          <div key={store.id} className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <TriangleAlert className="h-5 w-5 text-red-500" />
-                              <div>
-                                <p className="text-[10px] font-black uppercase text-white/80">{store.name}</p>
-                                <p className="text-[9px] text-red-500 font-bold uppercase">{store.offline} OFF / {store.total} TOTAL</p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-xs font-black text-red-500">{store.healthScore}%</p>
-                              <p className="text-[8px] font-bold text-white/30 uppercase">HEALTH</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="mb-6 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <h2 className="text-xs font-black uppercase tracking-[0.3em] text-white/40">
-                        Visão Operacional de Lojas
-                      </h2>
-                      <div className="h-px w-20 bg-white/5" />
-                      {totalPages > 1 && (
-                        <span className="text-[10px] font-bold text-primary uppercase">
-                          Página {currentPage + 1} de {totalPages}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex gap-1.5">
-                      {Array.from({ length: totalPages }).map((_, i) => (
-                        <div 
-                          key={i} 
-                          className={cn(
-                            "h-1 rounded-full transition-all duration-500",
-                            i === currentPage ? "w-6 bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.5)]" : "w-1.5 bg-white/10"
-                          )}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  <motion.div
-                    key={currentPage}
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 1.02 }}
-                    transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-                    className={cn(
-                      "grid grid-cols-1 md:grid-cols-2 gap-6",
-                      gridCols
-                    )}
-                  >
-                    {paginatedStores.map((store) => (
-                      <StoreHealthCard key={store.id} store={store} />
-                    ))}
-                    
-                    {stats.processedStores.length === 0 && !loading && (
-                      <div className="col-span-full py-20 text-center opacity-20">
-                        <p className="text-sm font-black uppercase tracking-widest">Nenhuma loja configurada</p>
-                      </div>
-                    )}
-                  </motion.div>
-                </motion.div>
-              ) : layout === 'list' ? (
-                <motion.div
-                  key="list-view"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="space-y-4"
-                >
-                  <div className="bg-[#111114] border border-white/5 rounded-xl overflow-hidden">
-                    <table className="w-full text-left text-[11px] font-bold uppercase">
-                      <thead className="bg-white/5 border-b border-white/5">
-                        <tr>
-                          <th className="px-4 py-3 text-white/40">Dispositivo</th>
-                          <th className="px-4 py-3 text-white/40">Loja</th>
-                          <th className="px-4 py-3 text-white/40">Status</th>
-                          <th className="px-4 py-3 text-white/40">Último Heartbeat</th>
-                          <th className="px-4 py-3 text-white/40">Playlist</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-white/5">
-                        {devices.map((device) => {
-                          const status = getDeviceStatus(device);
-                          return (
-                            <tr key={device.id} className="hover:bg-white/[0.02] transition-colors">
-                              <td className="px-4 py-3 text-white">{device.apelido_interno || device.serial}</td>
-                              <td className="px-4 py-3 text-white/60">{device.num_filial || '—'}</td>
-                              <td className="px-4 py-3">
-                                <Badge variant="outline" className={cn(
-                                  "text-[9px] h-5 font-black uppercase",
-                                  status === 'online' ? "text-green-500 border-green-500/20" : "text-red-500 border-red-500/20"
-                                )}>
-                                  {status}
-                                </Badge>
-                              </td>
-                              <td className="px-4 py-3 text-white/40">
-                                {device.last_heartbeat_at ? formatDistanceToNow(new Date(device.last_heartbeat_at), { addSuffix: true, locale: ptBR }) : 'Nunca'}
-                              </td>
-                              <td className="px-4 py-3 text-primary">{device.playlist_id ? 'Sincronizada' : 'Sem Playlist'}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </motion.div>
-              ) : layout === 'executive' ? (
-                <motion.div
-                  key="executive-view"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="grid grid-cols-1 md:grid-cols-2 gap-8"
-                >
-                  <div className="space-y-6">
-                    <div className="bg-[#111114] border border-white/5 rounded-2xl p-8 flex flex-col items-center text-center">
-                      <ShieldCheck className="h-16 w-16 text-primary mb-4" />
-                      <h2 className="text-2xl font-black uppercase text-white mb-2">SLA Operacional Global</h2>
-                      <span className="text-6xl font-black text-primary">99.8%</span>
-                      <p className="text-white/40 text-sm mt-4 uppercase font-bold tracking-widest">Disponibilidade em Tempo Real</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-[#111114] border border-white/5 rounded-2xl p-6">
-                        <span className="text-3xl font-black text-green-500">{stats.online}</span>
-                        <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-1">Dispositivos Ativos</p>
-                      </div>
-                      <div className="bg-[#111114] border border-white/5 rounded-2xl p-6">
-                        <span className="text-3xl font-black text-red-500">{stats.offline}</span>
-                        <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-1">Fora de Operação</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-[#0a0a0c] border border-white/5 rounded-2xl p-6 flex flex-col">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-primary mb-6">Lojas com Baixa Performance</h3>
-                    <div className="flex-1 space-y-4">
-                      {stats.processedStores.filter(s => s.healthScore < 90).sort((a,b) => a.healthScore - b.healthScore).map(store => (
-                        <div key={store.id} className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5">
-                          <div>
-                            <p className="text-sm font-black text-white uppercase">{store.name}</p>
-                            <p className="text-[10px] text-white/30 font-bold uppercase">{store.code}</p>
-                          </div>
-                          <div className="text-right">
-                            <span className={cn("text-xl font-black", store.healthScore > 80 ? "text-yellow-500" : "text-red-500")}>
-                              {store.healthScore}%
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-              ) : layout === 'map' ? (
-                <motion.div
-                  key="map-view"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3"
-                >
-                  {stats.processedStores.map(store => (
-                    <div 
-                      key={store.id} 
-                      onClick={() => navigate(`/admin/monitoring/store/${store.id}`)}
-                      className={cn(
-                        "aspect-square rounded-xl border flex flex-col items-center justify-center p-2 text-center transition-all cursor-pointer hover:scale-105",
-                        store.status === 'online' ? "bg-green-500/10 border-green-500/20 text-green-500" :
-                        store.status === 'unstable' ? "bg-yellow-500/10 border-yellow-500/20 text-yellow-500" :
-                        "bg-red-500/10 border-red-500/20 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)] animate-pulse"
-                      )}
-                    >
-                      <span className="text-[10px] font-black uppercase truncate w-full">{store.name}</span>
-                      <span className="text-[14px] font-black mt-1">{store.healthScore}%</span>
-                    </div>
-                  ))}
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
-          </ScrollArea>
-
-          <InkyInsights devices={devices} stores={stats.processedStores} />
+      {/* Header do NOC */}
+      <div className="flex items-center justify-between mb-4 border-b pb-4 border-border/40">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 grid place-items-center text-primary">
+            <Activity className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight uppercase">NOC <span className="text-primary">Monitor</span></h1>
+            <div className="flex items-center gap-2 text-[10px] text-muted-foreground uppercase font-bold tracking-widest">
+              <RefreshCw className={cn("h-3 w-3", loading && "animate-spin")} />
+              Atualizado: {lastUpdate.toLocaleTimeString()}
+            </div>
+          </div>
         </div>
 
-        <aside className="hidden xl:block w-80 shrink-0 border-l border-white/5 bg-[#08080a]">
-          <EventsFeed tenantId={tenantId} />
-        </aside>
-      </main>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-9 gap-2 text-primary border-primary/20 hover:bg-primary/5"
+            onClick={handleShare}
+            disabled={sharing}
+          >
+            {sharing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
+            <span>Compartilhar</span>
+          </Button>
 
-      <NOCFooter />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9 gap-2">
+                <LayoutGrid className="h-4 w-4" />
+                <span>Layout</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>Escolher Grid</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup value={layout} onValueChange={(v) => setLayout(v as LayoutType)}>
+                <DropdownMenuRadioItem value="1">1 Painel (100%)</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="2h">2 Painéis (Horiz)</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="2v">2 Painéis (Vert)</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="4">4 Painéis (2x2)</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="6">6 Painéis (3x2)</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button 
+            variant={isFullscreen ? "secondary" : "default"} 
+            size="sm" 
+            className="h-9 gap-2"
+            onClick={toggleFullscreen}
+          >
+            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            <span>{isFullscreen ? "Sair Fullscreen" : "Modo Monitor"}</span>
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-9 w-9 p-0"
+            onClick={() => navigate("/")}
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Grid de Painéis */}
+      <div className={cn(
+        "grid flex-1 gap-4 overflow-hidden",
+        getGridLayoutClass()
+      )}>
+        {panels.slice(0, layout === "6" ? 6 : layout === "4" ? 4 : layout === "1" ? 1 : 2).map((panel) => (
+          <Card key={panel.id} className="border-border/60 bg-card/30 flex flex-col overflow-hidden shadow-elegant border-2">
+            <CardHeader className="py-2 px-4 border-b border-border/40 flex flex-row items-center justify-between space-y-0">
+              <CardTitle className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                {panel.type === "metrics" && <Activity className="h-3.5 w-3.5 text-primary" />}
+                {panel.type === "alerts" && <AlertCircle className="h-3.5 w-3.5 text-destructive" />}
+                {panel.type === "status" && <Monitor className="h-3.5 w-3.5 text-green-500" />}
+                {panel.type === "store_view" && <Warehouse className="h-3.5 w-3.5 text-blue-500" />}
+                {panel.type === "queries_feed" && <Search className="h-3.5 w-3.5 text-purple-500" />}
+                {panel.title}
+              </CardTitle>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-6 w-6">
+                    <Settings2 className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>Configurar Painel</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <div className="p-2 space-y-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase opacity-60">Tipo de Dado</label>
+                      <select 
+                        className="w-full h-8 rounded border bg-background text-xs px-2"
+                        value={panel.type}
+                        onChange={(e) => updatePanel(panel.id, { type: e.target.value as PanelType, title: getPanelDefaultTitle(e.target.value as PanelType) })}
+                      >
+                        <option value="metrics">Métricas Gerais</option>
+                        <option value="alerts">Alertas Críticos</option>
+                        <option value="status">Status Dispositivos</option>
+                        <option value="store_view">Visão por Loja</option>
+                        <option value="queries_feed">Consultas em Tempo Real</option>
+                      </select>
+                    </div>
+
+                    {(panel.type === "store_view" || panel.type === "queries_feed") && (
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase opacity-60">Selecionar Loja</label>
+                        <select 
+                          className="w-full h-8 rounded border bg-background text-xs px-2"
+                          value={panel.storeId}
+                          onChange={(e) => {
+                            const store = stores.find(s => s.id === e.target.value);
+                            updatePanel(panel.id, { storeId: e.target.value, title: `Loja: ${store?.name || 'Selecione'}` });
+                          }}
+                        >
+                          <option value="">Selecione uma loja</option>
+                          {stores.map(s => (
+                            <option key={s.id} value={s.id}>{s.name} ({s.code})</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </CardHeader>
+            <CardContent className="flex-1 p-3 overflow-hidden">
+              {renderPanelContent(panel)}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MetricCard({ label, value, color, icon: Icon }: any) {
+  return (
+    <div className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-border/40 bg-background/40">
+      <Icon className={cn("h-8 w-8 mb-2 opacity-80", color)} />
+      <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">{label}</span>
+      <span className={cn("text-3xl font-black mt-1", color)}>{value}</span>
+    </div>
+  );
+}
+
+function StoreCard({ item, status }: any) {
+  const statusColor = status === "online" ? "bg-success shadow-[0_0_12px_hsl(var(--success)/0.4)]" : status === "unstable" ? "bg-warning shadow-[0_0_12px_hsl(var(--warning)/0.4)]" : "bg-destructive shadow-[0_0_12px_hsl(var(--destructive)/0.4)]";
+  const borderColor = status === "online" ? "border-success/20" : status === "unstable" ? "border-warning/20" : "border-destructive/20";
+  const textColor = status === "online" ? "text-success" : status === "unstable" ? "text-warning" : "text-destructive";
+
+  return (
+    <div className={cn(
+      "flex flex-col justify-between p-3 rounded-lg border-2 bg-[#09090b] transition-all hover:scale-[1.02] h-full",
+      borderColor
+    )}>
+      <div className="flex items-start justify-between mb-1">
+        <div className="flex flex-col overflow-hidden">
+          <span className="text-sm font-black uppercase truncate text-white leading-tight">{item.name}</span>
+          <span className="text-[10px] opacity-50 font-bold uppercase tracking-wider">{item.code}</span>
+        </div>
+        <div className={cn("h-3 w-3 rounded-full shrink-0 mt-1 shadow-[0_0_10px_rgba(0,0,0,0.5)]", statusColor)} />
+      </div>
+      
+      <div className="flex items-end justify-between mt-auto">
+        <div className="flex flex-col">
+          <span className="text-[9px] uppercase font-bold opacity-40">Dispositivos</span>
+          <span className="text-xl font-black leading-none">{item.deviceCount}</span>
+        </div>
+        <div className="flex gap-1 text-[8px] font-black">
+          {item.offline > 0 && <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-500">{item.offline} OFF</span>}
+          {item.unstable > 0 && <span className="px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-500">{item.unstable} WARN</span>}
+          {item.online > 0 && <span className="px-1.5 py-0.5 rounded bg-green-500/20 text-green-500">{item.online} ON</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DeviceCard({ item, status }: any) {
+  const statusColor = status === "online" ? "bg-success shadow-[0_0_12px_hsl(var(--success)/0.4)]" : status === "unstable" ? "bg-warning shadow-[0_0_12px_hsl(var(--warning)/0.4)]" : "bg-destructive shadow-[0_0_12px_hsl(var(--destructive)/0.4)]";
+  const borderColor = status === "online" ? "border-success/20" : status === "unstable" ? "border-warning/20" : "border-destructive/20";
+  const textColor = status === "online" ? "text-success" : status === "unstable" ? "text-warning" : "text-destructive";
+
+  return (
+    <div className={cn(
+      "flex flex-col justify-between p-3 rounded-lg border-2 bg-[#09090b] transition-all hover:scale-[1.02] h-full",
+      borderColor
+    )}>
+      <div className="flex items-start justify-between mb-1">
+        <div className="flex flex-col overflow-hidden">
+          <span className="text-sm font-black uppercase truncate text-white leading-tight">{item.apelido_interno || item.serial}</span>
+          <span className="text-[10px] opacity-50 font-bold uppercase tracking-wider">{item.num_filial || 'Sem Filial'}</span>
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          <div className={cn("h-3 w-3 rounded-full shrink-0 shadow-[0_0_10px_rgba(0,0,0,0.5)]", statusColor, status !== 'offline' && "animate-pulse")} />
+          {item.persistence && (
+            <Activity className="h-2.5 w-2.5 text-primary animate-pulse" />
+          )}
+        </div>
+      </div>
+      
+      <div className="flex items-end justify-between mt-auto">
+        <div className="flex flex-col">
+          <span className="text-[9px] uppercase font-bold opacity-40">Visto por último</span>
+          <span className="text-[10px] font-bold truncate">
+            {item.last_heartbeat_at ? formatDistanceToNow(new Date(item.last_heartbeat_at), { addSuffix: true, locale: ptBR }) : 'Nunca'}
+          </span>
+        </div>
+        <Badge variant="outline" className={cn("text-[8px] h-4 px-1 border-0 bg-background/50 uppercase font-black", textColor)}>
+          {status}
+        </Badge>
+      </div>
+    </div>
+  );
+}
+
+function getPanelDefaultTitle(type: PanelType): string {
+  switch (type) {
+    case "metrics": return "Métricas Gerais";
+    case "alerts": return "Alertas Críticos";
+    case "status": return "Status Dispositivos";
+    case "store_view": return "Visão por Loja";
+    case "queries_feed": return "Consultas em Tempo Real";
+    default: return "Painel";
+  }
+}
+
+function AutoRotatingGrid({ items, rotationIndex, ItemComponent, getItemStatus, emptyMessage, accentColor }: any) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const observer = new ResizeObserver((entries) => {
+      const { width, height } = entries[0].contentRect;
+      const cols = Math.floor((width + CARD_GAP) / (CARD_MIN_WIDTH + CARD_GAP));
+      const rows = Math.floor((height + CARD_GAP) / (CARD_HEIGHT + CARD_GAP));
+      const total = Math.max(1, cols * rows);
+      setItemsPerPage(total);
+    });
+
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const totalPages = Math.ceil(items.length / itemsPerPage);
+  const currentPage = rotationIndex % (totalPages || 1);
+  const paginatedItems = items.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
+
+  return (
+    <div ref={containerRef} className="h-full flex flex-col overflow-hidden">
+      <div className="flex-1 overflow-hidden relative">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`grid-${currentPage}-${itemsPerPage}`}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.02 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] grid-auto-rows-[120px] gap-3 p-1 h-full content-start overflow-hidden"
+          >
+            {paginatedItems.map((item: any) => (
+              <ItemComponent 
+                key={item.id} 
+                item={item} 
+                status={getItemStatus(item)} 
+              />
+            ))}
+            {items.length === 0 && (
+              <div className="col-span-full flex items-center justify-center h-40 text-muted-foreground italic">
+                {emptyMessage}
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+      
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-1.5 mt-2 pb-1">
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <div 
+              key={i} 
+              className={cn(
+                "h-1.5 rounded-full transition-all duration-500",
+                i === currentPage ? cn("w-8", accentColor || "bg-primary") : "w-1.5 bg-border/40"
+              )}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
