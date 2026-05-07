@@ -712,27 +712,6 @@ export default function PlaylistEditor() {
   const addMultipleItems = async (mediaIds: string[]) => {
     if (mediaIds.length === 0) return;
     
-    if (selectedItem?.type === 'campaign') {
-      const contentsToInsert = mediaIds.map((mediaId, index) => ({
-        campaign_id: selectedItem.campaignId,
-        media_id: mediaId,
-        tenant_id: tenantId,
-        position: (campaignContents?.length || 0) + index + 1,
-        is_active: true
-      }));
-
-      const { error } = await supabase.from("campaign_contents").insert(contentsToInsert);
-      
-      if (error) {
-        toast.error("Erro ao adicionar itens à campanha");
-      } else {
-        toast.success(`${mediaIds.length} itens adicionados à campanha ${selectedItem.campaign?.name}`);
-        setSelectedLibraryIds([]);
-        refetchCampaignContents();
-      }
-      return;
-    }
-
     // Adding to regular playlist
     const newPlaylistItems: EditorPlaylistItem[] = mediaIds.map(mediaId => {
       const media = medias?.find(m => m.id === mediaId);
