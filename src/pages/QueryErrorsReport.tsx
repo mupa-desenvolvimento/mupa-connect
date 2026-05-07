@@ -130,12 +130,12 @@ export default function QueryErrorsReport() {
 
       if (!errorRows || errorRows.length === 0) return [];
 
-      // Step 2: Enrich with real device data
+      // Step 2: Enrichment with device data for additional details (like nickname)
       const uniqueSerials = Array.from(new Set(errorRows.map(e => e.device_serial?.trim())));
       
       const { data: devicesData } = await supabase
         .from("dispositivos")
-        .select("serial, apelido_interno, store_id, num_filial, stores(name)")
+        .select("serial, apelido_interno, num_filial")
         .in("serial", uniqueSerials);
 
       const deviceMap = new Map();
@@ -144,8 +144,7 @@ export default function QueryErrorsReport() {
         if (serial) {
           deviceMap.set(serial, {
             apelido: d.apelido_interno,
-            num_filial: d.num_filial,
-            store_name: (d.stores as any)?.name
+            num_filial: d.num_filial
           });
         }
       });
@@ -156,8 +155,8 @@ export default function QueryErrorsReport() {
         return {
           ...e,
           device_name: enrichment?.apelido || e.device_name,
-          // Prioritize store_name from product_query_errors as requested, fallback to enrichment
-          store_name: e.store_name || enrichment?.store_name,
+          // Use store_name directly from the error record, with fallback
+          store_name: e.store_name || "Loja não identificada",
           num_filial: enrichment?.num_filial
         };
       });
