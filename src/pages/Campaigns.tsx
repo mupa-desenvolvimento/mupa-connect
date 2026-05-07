@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/use-user-role";
 import { PageHeader } from "@/components/PageHeader";
@@ -19,27 +19,25 @@ import {
   MoreVertical,
   Trash2,
   Edit2,
-  FilterX,
   RefreshCw,
-  Loader2
+  Loader2,
+  Settings2,
+  ArrowLeft
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { CampaignCalendar } from "@/components/campaigns/CampaignCalendar";
 import { CampaignTimeline } from "@/components/campaigns/CampaignTimeline";
-import { CampaignDialog } from "@/components/campaigns/CampaignDialog";
+import { CampaignEditor } from "@/components/campaigns/CampaignEditor";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 export default function CampaignsPage() {
   const { tenantId, companyId, isSuperAdmin, isMarketing } = useUserRole();
   const queryClient = useQueryClient();
-  const [view, setView] = useState<"grid" | "list" | "calendar" | "timeline">("grid");
+  const [view, setView] = useState<"grid" | "list" | "calendar" | "timeline" | "editor">("grid");
   const [searchQuery, setSearchQuery] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
 
   const { data: campaigns, isLoading, refetch } = useQuery({
@@ -77,12 +75,12 @@ export default function CampaignsPage() {
 
   const handleEdit = (id: string) => {
     setSelectedCampaignId(id);
-    setIsDialogOpen(true);
+    setView("editor");
   };
 
   const handleCreate = () => {
     setSelectedCampaignId(null);
-    setIsDialogOpen(true);
+    setView("editor");
   };
 
   const handleDelete = async (id: string) => {
@@ -96,6 +94,31 @@ export default function CampaignsPage() {
       toast.error("Erro ao excluir: " + error.message);
     }
   };
+
+  if (view === "editor") {
+    return (
+      <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
+        <PageHeader
+          title={selectedCampaignId ? "Editar Campanha" : "Nova Campanha"}
+          description="Gerencie os detalhes e o conteúdo da sua campanha em uma visão expandida."
+          actions={
+            <Button variant="ghost" size="sm" onClick={() => setView("grid")} className="h-9">
+              <ArrowLeft className="h-4 w-4 mr-2" /> Voltar para Lista
+            </Button>
+          }
+        />
+        <div className="flex-1 overflow-hidden">
+          <CampaignEditor 
+            campaignId={selectedCampaignId} 
+            onClose={() => {
+              setView("grid");
+              setSelectedCampaignId(null);
+            }} 
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
@@ -253,6 +276,9 @@ export default function CampaignsPage() {
                           <div className="h-8 w-1.5 rounded-full shrink-0" style={{ backgroundColor: c.color || '#9b87f5' }} />
                           <span className="truncate">{c.name}</span>
                         </td>
+                        <td className="px-4 py-3 font-mono">
+                          {format(new Date(c.start_date), "dd/MM")} - {format(new Date(c.end_date), "dd/MM")}
+                        </td>
                         <td className="px-4 py-3 font-mono">{c.start_time.substring(0,5)} - {c.end_time.substring(0,5)}</td>
                         <td className="px-4 py-3"><Badge variant="outline">P{c.priority}</Badge></td>
                         <td className="px-4 py-3"><StatusBadge status={c.is_active ? "online" : "offline"} /></td>
@@ -271,8 +297,6 @@ export default function CampaignsPage() {
           </>
         )}
       </div>
-
-      <CampaignDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} campaignId={selectedCampaignId} />
     </div>
   );
 }
