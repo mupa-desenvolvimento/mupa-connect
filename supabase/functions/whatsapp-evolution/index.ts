@@ -196,6 +196,85 @@ serve(async (req) => {
         if (errorMsg) return json({ error: errorMsg }, 400);
         return json(data);
       }
+      case "sendBulk": {
+        if (!instanceName || !message) return json({ error: "instanceName and message required" }, 400);
+
+        // Resolve recipient phones: from `recipients` (array of phones) and/or `groupId`
+        const phones: string[] = [];
+        if (Array.isArray(recipients)) {
+          for (const p of recipients) {
+            const n = normalizePhone(p);
+            if (n.length >= 8 && n.length <= 15) phones.push(n);
+          }
+        }
+        if (groupId) {
+          const { data: members } = await admin
+            .from("whatsapp_contact_group_members")
+            .select("recipient_id, whatsapp_recipients(phone, is_active)")
+            .eq("group_id", groupId);
+          for (const m of members || []) {
+            const rec: any = (m as any).whatsapp_recipients;
+            if (rec?.is_active) {
+              const n = normalizePhone(rec.phone);
+              if (n.length >= 8 && n.length <= 15 && !phones.includes(n)) phones.push(n);
+            }
+          }
+        }
+
+        if (phones.length === 0) return json({ error: "Nenhum destinatário válido" }, 400);
+
+        // Render template variables (server side too, for safety)
+        const finalText = renderTemplate(message, variables || {});
+
+        // Look up instance id once
+        const { data: inst } = await admin.from("whatsapp_instances")
+          .select("id").eq("instance_key", instanceName).maybeSingle();
+
+        const errors: Array<{ phone: string; error: string }> = [];
+        let success = 0;
+
+        for (const p of phones) {
+          try {
+            await sendOne(instanceName, p, finalText);
+            success++;
+            await admin.from("whatsapp_logs").insert({
+              instance_id: inst?.id || null,
+              recipient_phone: p,
+              message: finalText,
+              status: "sent",
+            });
+            // Small throttle to avoid spam-blocks
+            await new Promise((r) => setTimeout(r, 400));
+          } catch (e: any) {
+            errors.push({ phone: p, error: e.message });
+            await admin.from("whatsapp_logs").insert({
+              instance_id: inst?.id || null,
+              recipient_phone: p,
+              message: finalText,
+              status: "error",
+              error_message: e.message,
+            });
+          }
+        }
+
+        // Persist send history
+        const overallStatus = success === phones.length ? "sent" : success === 0 ? "failed" : "partial";
+        await admin.from("whatsapp_send_history").insert({
+          instance_id: inst?.id || null,
+          template_id: templateId || null,
+          group_id: groupId || null,
+          message: finalText,
+          recipient_phones: phones,
+          total_recipients: phones.length,
+          success_count: success,
+          failure_count: errors.length,
+          status: overallStatus,
+          error_details: errors.length ? errors : null,
+          sent_by: userId,
+        });
+
+        return json({ status: overallStatus, total: phones.length, success, failed: errors.length, errors });
+      }
       default:
         return json({ error: "Invalid action" }, 400);
     }
