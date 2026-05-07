@@ -521,50 +521,74 @@ export default function WhatsAppManagement() {
                      </TableRow>
                    </TableHeader>
                    <TableBody>
-                     {recipients?.map((recipient) => (
-                       <TableRow key={recipient.id}>
-                         <TableCell className="font-medium">{recipient.name}</TableCell>
-                         <TableCell className="font-mono text-xs">{recipient.phone}</TableCell>
-                         <TableCell>{recipient.companies?.name || "Global"}</TableCell>
-                         <TableCell>
-                           <div className="flex flex-wrap gap-1">
-                             {recipient.alert_types?.map((type: string) => (
-                               <Badge key={type} variant="outline" className="text-[10px] py-0 h-4 bg-primary/5 border-primary/20">
-                                 {type}
-                               </Badge>
-                             ))}
-                           </div>
-                         </TableCell>
-                         <TableCell>
-                           <Badge variant={recipient.is_active ? "default" : "secondary"} className={cn("text-[10px]", recipient.is_active && "bg-green-500/10 text-green-600 hover:bg-green-500/20")}>
-                             {recipient.is_active ? "Ativo" : "Inativo"}
-                           </Badge>
-                         </TableCell>
-                         <TableCell className="text-right">
-                           <DropdownMenu>
-                             <DropdownMenuTrigger asChild>
-                               <Button variant="ghost" size="icon" className="h-8 w-8">
-                                 <MoreVertical className="h-4 w-4" />
-                               </Button>
-                             </DropdownMenuTrigger>
-                             <DropdownMenuContent align="end">
-                               <DropdownMenuItem onClick={() => {
-                                 setTestMessage({ ...testMessage, recipientPhone: recipient.phone });
-                                 setShowTestMessageDialog(true);
-                               }}>
-                                 <MessageSquare className="h-4 w-4 mr-2" /> Testar Envio
-                               </DropdownMenuItem>
-                               <DropdownMenuItem
-                                 className="text-destructive focus:text-destructive"
-                                 onClick={() => handleDeleteRecipient(recipient.id)}
-                               >
-                                 <XCircle className="h-4 w-4 mr-2" /> Remover
-                               </DropdownMenuItem>
-                             </DropdownMenuContent>
-                           </DropdownMenu>
-                         </TableCell>
-                       </TableRow>
-                     ))}
+                      {recipients?.map((recipient) => (
+                        <TableRow key={recipient.id}>
+                          <TableCell className="font-medium">{recipient.name}</TableCell>
+                          <TableCell className="font-mono text-xs">{recipient.phone}</TableCell>
+                          <TableCell>{recipient.companies?.name || "Global"}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {recipient.error_notifications && (
+                                <Badge variant="outline" className="text-[10px] py-0 h-4 bg-red-500/5 border-red-200 text-red-600">
+                                  Erros
+                                </Badge>
+                              )}
+                              {recipient.device_status_notifications && (
+                                <Badge variant="outline" className="text-[10px] py-0 h-4 bg-blue-500/5 border-blue-200 text-blue-600">
+                                  Status
+                                </Badge>
+                              )}
+                              {recipient.playlist_notifications && (
+                                <Badge variant="outline" className="text-[10px] py-0 h-4 bg-green-500/5 border-green-200 text-green-600">
+                                  Playlist
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={recipient.is_active ? "default" : "secondary"} className={cn("text-[10px]", recipient.is_active && "bg-green-500/10 text-green-600 hover:bg-green-500/20")}>
+                              {recipient.is_active ? "Ativo" : "Inativo"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => {
+                                  setNewRecipient({
+                                    id: recipient.id,
+                                    name: recipient.name,
+                                    phone: recipient.phone,
+                                    company_id: recipient.company_id || "",
+                                    error_notifications: recipient.error_notifications ?? true,
+                                    device_status_notifications: recipient.device_status_notifications ?? true,
+                                    playlist_notifications: recipient.playlist_notifications ?? true
+                                  });
+                                  setShowAddRecipientDialog(true);
+                                }}>
+                                  <Pencil className="h-4 w-4 mr-2" /> Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => {
+                                  setTestMessage({ ...testMessage, recipientPhone: recipient.phone });
+                                  setShowTestMessageDialog(true);
+                                }}>
+                                  <MessageSquare className="h-4 w-4 mr-2" /> Testar Envio
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => handleDeleteRecipient(recipient.id)}
+                                >
+                                  <XCircle className="h-4 w-4 mr-2" /> Remover
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
                      {(!recipients || recipients.length === 0) && (
                        <TableRow>
                          <TableCell colSpan={6} className="h-24 text-center text-muted-foreground italic">
