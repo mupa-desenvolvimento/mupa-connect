@@ -375,6 +375,7 @@ export function CampaignForm({ initialData, onSubmit, isLoading }: CampaignFormP
           />
         </div>
 
+        <div className="flex justify-end gap-3 pt-6 border-t border-border/20">
           <Button 
             type="submit" 
             className="bg-gradient-primary text-primary-foreground min-w-[120px]"
