@@ -849,9 +849,9 @@ export default function PlaylistEditor() {
                   )
                 ) : null}
               </DragOverlay>
-            </DndContext>
-          </div>
-        </main>
+            </div>
+          </main>
+        </DndContext>
       </div>
     </div>
   );
