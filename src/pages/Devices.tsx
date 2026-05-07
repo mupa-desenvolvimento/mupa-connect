@@ -482,6 +482,7 @@ export default function DevicesPage() {
                   </TableHead>
                   <TableHead className="w-[25%]">Dispositivo</TableHead>
                   <TableHead>Serial</TableHead>
+                  <TableHead className="w-[120px] text-[11px] opacity-75 font-medium hidden md:table-cell">Cadastrado</TableHead>
                   {isSuperAdmin && <TableHead>Empresa</TableHead>}
                   <TableHead>Loja</TableHead>
                   <TableHead>Playlist</TableHead>
