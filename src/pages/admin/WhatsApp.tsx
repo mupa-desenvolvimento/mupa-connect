@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useQueryClient } from "@tanstack/react-query";
@@ -25,9 +25,13 @@ import {
   Clock,
   MoreVertical, 
   ChevronRight,
-  FileText
+  FileText,
+  Building2,
+  Pencil
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { usePhoneMask } from "@/hooks/usePhoneMask";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
