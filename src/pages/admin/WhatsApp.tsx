@@ -85,6 +85,12 @@ export default function WhatsAppManagement() {
     return data;
   };
 
+  const isValidPhone = (phone: string) => {
+    const cleaned = phone.replace(/\D/g, "");
+    // WhatsApp numbers with country code are usually between 10 and 15 digits
+    return /^\d{10,15}$/.test(cleaned);
+  };
+
   const handleGenerateQR = async (instanceName: string) => {
     try {
       setConnectingInstance(instanceName);
@@ -157,11 +163,14 @@ export default function WhatsAppManagement() {
     if (!newRecipient.name.trim() || !newRecipient.phone.trim()) {
       return toast.error("Nome e telefone são obrigatórios");
     }
+    if (!isValidPhone(newRecipient.phone)) {
+      return toast.error("Por favor, insira um telefone válido com DDI e DDD (ex: 5511999999999)");
+    }
     try {
       setCreating(true);
       const { error } = await supabase.from("whatsapp_recipients").insert({
         name: newRecipient.name.trim(),
-        phone: newRecipient.phone.trim(),
+        phone: newRecipient.phone.replace(/\D/g, ""),
         is_active: true,
       });
       if (error) throw error;
@@ -180,11 +189,14 @@ export default function WhatsAppManagement() {
     if (!testMessage.instanceName || !testMessage.recipientPhone || !testMessage.message.trim()) {
       return toast.error("Todos os campos são obrigatórios");
     }
+    if (!isValidPhone(testMessage.recipientPhone)) {
+      return toast.error("Telefone de destino inválido. Use o formato: 5511999999999");
+    }
     try {
       setSendingTest(true);
       await callApi("sendMessage", {
         instanceName: testMessage.instanceName,
-        phone: testMessage.recipientPhone,
+        phone: testMessage.recipientPhone.replace(/\D/g, ""),
         message: testMessage.message.trim(),
       });
       toast.success("Mensagem de teste enviada!");
@@ -760,6 +772,7 @@ export default function WhatsAppManagement() {
               <Label htmlFor="rec-phone">Telefone (com DDI e DDD)</Label>
               <Input
                 id="rec-phone"
+                type="tel"
                 placeholder="Ex: 5511999999999"
                 value={newRecipient.phone}
                 onChange={(e) => setNewRecipient({ ...newRecipient, phone: e.target.value })}
@@ -813,6 +826,7 @@ export default function WhatsAppManagement() {
               <div className="flex gap-2">
                 <Input
                   id="test-phone"
+                  type="tel"
                   placeholder="Ex: 5511999999999"
                   value={testMessage.recipientPhone}
                   onChange={(e) => setTestMessage({ ...testMessage, recipientPhone: e.target.value })}
