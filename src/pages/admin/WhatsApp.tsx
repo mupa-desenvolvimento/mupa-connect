@@ -163,6 +163,9 @@ export default function WhatsAppManagement() {
     if (!newRecipient.name.trim() || !newRecipient.phone.trim()) {
       return toast.error("Nome e telefone são obrigatórios");
     }
+    if (!isValidPhone(newRecipient.phone)) {
+      return toast.error("Por favor, insira um telefone válido com DDI e DDD (ex: 5511999999999)");
+    }
     try {
       setCreating(true);
       const { error } = await supabase.from("whatsapp_recipients").insert({
