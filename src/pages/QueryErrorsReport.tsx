@@ -179,7 +179,7 @@ export default function QueryErrorsReport() {
     return acc;
   }, {});
 
-  const aggregatedList = Object.values(groupedData || []) as any[];
+  const aggregatedList = (Object.values(groupedData || []) as any[]).sort((a, b) => b.error_count - a.error_count);
   const filteredList = aggregatedList.filter(item => 
     item.product_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.ean?.includes(searchTerm) ||
