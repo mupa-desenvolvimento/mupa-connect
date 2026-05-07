@@ -356,7 +356,7 @@ export default function QueryErrorsReport() {
       doc.setFontSize(10);
       doc.setTextColor(100, 100, 100);
       doc.text(`Gerado em: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, 14, 40);
-      
+
       const tableColumn = ["Dispositivo", "Produto", "Erro", "Qtd", "Última Ocorrência"];
       const tableRows = filteredList.map(item => [
         item.device_name || item.device_serial,
