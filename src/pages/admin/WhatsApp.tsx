@@ -252,24 +252,51 @@ export default function WhatsAppManagement() {
                           Gerar QR
                         </Button>
                       ) : (
-
-                        <Button variant="outline" className="w-full gap-2 border-destructive/20 text-destructive hover:bg-destructive/5">
+                        <Button
+                          variant="outline"
+                          className="w-full gap-2 border-destructive/20 text-destructive hover:bg-destructive/5"
+                          onClick={() => handleLogout(instance.instance_key || instance.name)}
+                        >
                           <Power className="h-4 w-4" /> Desconectar
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" className="shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="shrink-0"
+                        onClick={() => handleCheckStatus(instance.instance_key || instance.name)}
+                        title="Atualizar status"
+                      >
                         <RefreshCw className="h-4 w-4" />
                       </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="shrink-0">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleGenerateQR(instance.instance_key || instance.name)}>
+                            <QrCode className="h-4 w-4 mr-2" /> Reconectar (QR)
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => handleDelete(instance.instance_key || instance.name)}
+                          >
+                            <XCircle className="h-4 w-4 mr-2" /> Remover
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </CardContent>
                 </Card>
               ))}
-              
+
               <Card className="border-dashed border-2 flex flex-col items-center justify-center p-8 text-center bg-muted/20">
                 <Smartphone className="h-10 w-10 text-muted-foreground mb-4 opacity-20" />
                 <h3 className="font-medium text-muted-foreground mb-2">Adicionar Novo Número</h3>
                 <p className="text-xs text-muted-foreground mb-4 max-w-[200px]">Conecte um novo WhatsApp via Evolution API.</p>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => setShowCreateDialog(true)}>
                   Começar Configuração
                 </Button>
               </Card>
