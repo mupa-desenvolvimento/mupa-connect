@@ -136,7 +136,7 @@ const SortableItem = ({ item, index, isSelected, onSelect }: any) => {
   });
   
   const media = item.media;
-  const isCampaign = item.type === 'campaign';
+  const isCampaignItem = item.campaignId;
   const campaign = item.campaign;
   
   const style = { 
