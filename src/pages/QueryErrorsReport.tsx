@@ -632,49 +632,52 @@ export default function QueryErrorsReport() {
                     <TableBody>
                       {filteredList.map((item) => (
                         <TableRow key={item.id} className="group hover:bg-muted/30 transition-colors border-border/40">
-                          <TableCell>
+                          <TableCell className="py-3">
                             <div className="flex flex-col">
-                              <span className="font-medium text-sm">{item.device_name || 'Desconhecido'}</span>
+                              <span className="font-medium text-sm text-foreground">{item.device_name || 'Desconhecido'}</span>
                               <code className="text-[10px] text-muted-foreground uppercase font-mono tracking-wider">{item.device_serial}</code>
                             </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="py-3">
                             <div className="flex flex-col">
-                              <span className="font-medium text-sm truncate max-w-[200px]" title={item.product_name}>{item.product_name || 'Produto s/ Nome'}</span>
-                              <span className="text-xs text-muted-foreground">EAN: {item.ean || 'N/A'}</span>
+                              <span className="font-bold text-sm truncate max-w-[200px] text-foreground" title={item.product_name}>{item.product_name || 'Produto s/ Nome'}</span>
+                              <span className="text-[10px] text-muted-foreground uppercase font-mono">EAN: {item.ean || 'N/A'}</span>
                             </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="py-3">
                             <div className="flex items-center gap-2">
-                              <div className="h-7 w-7 rounded-lg bg-primary/5 flex items-center justify-center border border-primary/10">
-                                <Store className="h-3.5 w-3.5 text-primary" />
+                              <div className="h-8 w-8 rounded-lg bg-primary/5 flex items-center justify-center border border-primary/10 group-hover:bg-primary/10 transition-colors">
+                                <Store className="h-4 w-4 text-primary" />
                               </div>
-                              <span className="text-sm font-medium">{item.store_name || 'Loja Central'}</span>
+                              <span className="text-sm font-semibold text-foreground">{item.store_name || 'Loja Central'}</span>
                             </div>
                           </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="font-mono text-[10px] uppercase bg-muted/30 border-border/60">
+                          <TableCell className="py-3">
+                            <Badge variant="outline" className="font-mono text-[10px] uppercase bg-muted/30 border-border/60 text-muted-foreground px-2 py-0">
                               {item.error_type}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-center">
+                          <TableCell className="text-center py-3">
                             <span className={cn(
-                              "inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold border",
+                              "inline-flex items-center justify-center w-9 h-9 rounded-full text-xs font-bold border shadow-sm",
                               getSeverityColor(getSeverity(item.error_count))
                             )}>
                               {item.error_count}
                             </span>
                           </TableCell>
-                          <TableCell>
-                            <span className="text-xs text-muted-foreground">
-                              {format(parseISO(item.last_occurrence), "dd/MM/yy 'às' HH:mm")}
-                            </span>
+                          <TableCell className="py-3">
+                            <div className="flex items-center gap-1.5 text-muted-foreground">
+                              <History className="h-3.5 w-3.5" />
+                              <span className="text-xs font-medium">
+                                {format(parseISO(item.last_occurrence), "dd/MM 'às' HH:mm")}
+                              </span>
+                            </div>
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-right py-3">
                             <Badge className={cn(
-                              "font-semibold",
-                              item.status === 'active' ? "bg-success/10 text-success border-success/20" : "bg-muted text-muted-foreground"
-                            )}>
+                              "font-bold text-[10px] px-2 py-0.5 uppercase tracking-wider",
+                              item.status === 'active' ? "bg-success/10 text-success border-success/20 shadow-[0_0_10px_rgba(34,197,94,0.1)]" : "bg-muted text-muted-foreground border-transparent"
+                            )} variant="outline">
                               {item.status === 'active' ? 'Ativo' : 'Resolvido'}
                             </Badge>
                           </TableCell>
