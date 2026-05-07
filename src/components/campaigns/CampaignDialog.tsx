@@ -160,19 +160,60 @@ export function CampaignDialog({ campaignId, open, onOpenChange }: CampaignDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{campaignId ? "Editar Campanha" : "Nova Campanha"}</DialogTitle>
-          <DialogDescription>
-            Defina os detalhes, período e horários de exibição da campanha.
+      <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden flex flex-col p-0 border-none bg-[#0F0F12]">
+        <DialogHeader className="p-6 pb-0">
+          <DialogTitle className="text-xl font-bold flex items-center gap-2">
+            {campaignId ? "Editar Campanha" : "Nova Campanha"}
+            {currentCampaignId && (
+              <Badge variant="outline" className="text-[10px] uppercase tracking-wider border-primary/30 text-primary">
+                ID: {currentCampaignId.substring(0, 8)}
+              </Badge>
+            )}
+          </DialogTitle>
+          <DialogDescription className="text-white/40">
+            Gerencie as configurações e o conteúdo desta campanha.
           </DialogDescription>
         </DialogHeader>
-        
-        <CampaignForm 
-          initialData={initialData} 
-          onSubmit={onSubmit} 
-          isLoading={isLoading} 
-        />
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden mt-4">
+          <div className="px-6 border-b border-white/5">
+            <TabsList className="bg-white/5 h-10 p-1 mb-2">
+              <TabsTrigger value="details" className="gap-2 text-xs px-4">
+                <Settings2 className="h-3.5 w-3.5" /> Configurações
+              </TabsTrigger>
+              <TabsTrigger 
+                value="content" 
+                className="gap-2 text-xs px-4"
+                disabled={!currentCampaignId}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" /> Conteúdo da Campanha
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-6 pt-2">
+            <TabsContent value="details" className="m-0 focus-visible:ring-0">
+              <CampaignForm 
+                initialData={initialData} 
+                onSubmit={onSubmit} 
+                isLoading={isLoading} 
+              />
+            </TabsContent>
+            
+            <TabsContent value="content" className="m-0 h-full focus-visible:ring-0">
+              {currentCampaignId ? (
+                <CampaignContentManager campaignId={currentCampaignId} />
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
+                  <LayoutGrid className="h-12 w-12 text-white/10" />
+                  <p className="text-sm text-white/40 max-w-xs">
+                    Salve as configurações da campanha primeiro para poder adicionar conteúdo.
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+          </div>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
