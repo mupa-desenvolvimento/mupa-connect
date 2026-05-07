@@ -116,12 +116,20 @@ serve(async (req) => {
         let status = "sent";
         let errorMsg: string | null = null;
         try {
-          data = await evo(`/message/sendText/${instanceName}`, "POST", {
-            number: phone,
-            options: { delay: 1200, presence: "composing" },
-            textMessage: { text: message },
-            text: message,
-          });
+          // Try v2 format first ({ number, text }), then fall back to v1 ({ textMessage: { text } })
+          try {
+            data = await evo(`/message/sendText/${instanceName}`, "POST", {
+              number: phone,
+              text: message,
+            });
+          } catch (firstErr: any) {
+            console.log("sendText v2 failed, trying v1 format:", firstErr.message);
+            data = await evo(`/message/sendText/${instanceName}`, "POST", {
+              number: phone,
+              options: { delay: 1200, presence: "composing", linkPreview: false },
+              textMessage: { text: message },
+            });
+          }
         } catch (e: any) {
           status = "error";
           errorMsg = e.message;
