@@ -509,36 +509,104 @@ export default function PlaylistEditor() {
 
         <main className="flex-1 flex flex-col overflow-hidden relative">
           <div className="flex-1 overflow-hidden flex flex-col p-6 gap-6">
-            <div className="flex-1 relative bg-black/40 rounded-2xl border border-white/5 overflow-hidden shadow-2xl">
+            <div className="flex-1 relative bg-black/40 rounded-2xl border border-white/5 overflow-hidden shadow-2xl flex flex-col">
               {selectedItem ? (
-                <div className="absolute inset-0 flex flex-col">
-                  <div className="flex-1 flex items-center justify-center p-8 bg-black/20">
-                    {selectedItem.media?.type === 'video' ? <Video className="h-16 w-16 text-white/10" /> : <ImageIcon className="h-16 w-16 text-white/10" />}
-                    <img src={selectedItem.media?.thumbnail_url || selectedItem.media?.file_url} className="max-h-full max-w-full rounded shadow-2xl" />
+                <div className="flex-1 flex flex-col min-h-0">
+                  <div className="flex-1 flex items-center justify-center p-8 bg-black/20 overflow-hidden">
+                    {selectedItem.type === 'campaign' ? (
+                      <div className="flex flex-col items-center gap-4 text-center">
+                        <div 
+                          className="w-24 h-24 rounded-3xl flex items-center justify-center border-4"
+                          style={{ 
+                            backgroundColor: `${selectedItem.campaign?.color || '#085CF0'}10`,
+                            borderColor: `${selectedItem.campaign?.color || '#085CF0'}`,
+                            color: selectedItem.campaign?.color || '#085CF0'
+                          }}
+                        >
+                          <Megaphone className="h-10 w-10" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bold text-white">{selectedItem.campaign?.name}</h3>
+                          <p className="text-sm text-white/40 mt-1 uppercase tracking-widest font-mono">
+                            Campanha • Prioridade {selectedItem.priority}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="relative h-full flex items-center justify-center">
+                        {selectedItem.media?.type === 'video' ? <Video className="h-16 w-16 text-white/10 absolute" /> : <ImageIcon className="h-16 w-16 text-white/10 absolute" />}
+                        <img 
+                          src={selectedItem.media?.thumbnail_url || selectedItem.media?.file_url} 
+                          className="max-h-full max-w-full rounded shadow-2xl relative z-10" 
+                        />
+                      </div>
+                    )}
                   </div>
-                  <div className="h-28 bg-card/60 backdrop-blur-md border-t border-white/10 flex items-center justify-between px-6">
+
+                  {selectedItem.type === 'campaign' && (
+                    <div className="h-64 border-t border-white/10 bg-[#0c0c0e]/80 backdrop-blur-md flex flex-col">
+                      <div className="h-10 border-b border-white/5 flex items-center justify-between px-6 shrink-0 bg-black/20">
+                        <div className="flex items-center gap-2">
+                          <Layers className="h-3 w-3 text-white/40" />
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">Conteúdos da Campanha</span>
+                        </div>
+                        <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-2 text-[#085CF0] hover:bg-[#085CF0]/10">
+                          <Plus className="h-3 w-3" /> Adicionar Mídia
+                        </Button>
+                      </div>
+                      <ScrollArea className="flex-1">
+                        <div className="p-4 flex gap-3">
+                          {campaignContents?.map((content: any, idx: number) => (
+                            <div key={content.id} className="relative group shrink-0 w-32">
+                              <div className="aspect-video rounded-lg overflow-hidden border border-white/10 bg-black/40 relative">
+                                <img src={content.media?.thumbnail_url || content.media?.file_url} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
+                                <div className="absolute top-1 left-1 bg-black/60 px-1 rounded text-[8px] font-mono text-white">{idx + 1}</div>
+                                <button className="absolute top-1 right-1 h-5 w-5 rounded bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Trash2 className="h-3 w-3" />
+                                </button>
+                              </div>
+                              <p className="text-[9px] font-bold text-white/60 mt-2 truncate">{content.media?.name}</p>
+                            </div>
+                          ))}
+                          {(!campaignContents || campaignContents.length === 0) && (
+                            <div className="w-full h-32 border-2 border-dashed border-white/5 rounded-xl flex flex-col items-center justify-center text-white/10 gap-2">
+                              <Plus className="h-6 w-6" />
+                              <span className="text-[10px] font-bold uppercase">Nenhum conteúdo</span>
+                            </div>
+                          )}
+                        </div>
+                        <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
+                    </div>
+                  )}
+
+                  <div className="h-28 bg-card/60 backdrop-blur-md border-t border-white/10 flex items-center justify-between px-6 shrink-0">
                     <div className="flex flex-col gap-1.5">
                       <div className="flex items-center gap-2">
                         {selectedItem.isLocked && <Lock className="h-3 w-3 text-amber-500" />}
-                        <span className="text-xs font-bold text-white uppercase tracking-wider">{selectedItem.media?.name}</span>
+                        <span className="text-xs font-bold text-white uppercase tracking-wider">
+                          {selectedItem.type === 'campaign' ? selectedItem.campaign?.name : selectedItem.media?.name}
+                        </span>
                       </div>
                       <div className="flex items-center gap-6">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-3 w-3 text-[#085CF0]" />
-                          <input 
-                            type="number" 
-                            disabled={selectedItem.isLocked}
-                            value={selectedItem.duration} 
-                            onChange={(e) => { 
-                              const d = parseInt(e.target.value); 
-                              setSelectedItem({...selectedItem, duration: d}); 
-                              setItems(items.map(it => it.id === selectedItem.id ? {...it, duration: d} : it)); 
-                              setHasUnsavedChanges(true); 
-                            }} 
-                            className="w-16 bg-black/40 border-white/10 rounded h-8 text-xs px-2 focus:ring-1 focus:ring-[#085CF0] disabled:opacity-50" 
-                          /> 
-                          <span className="text-[10px] text-white/40 font-bold uppercase">segundos</span>
-                        </div>
+                        {selectedItem.type !== 'campaign' && (
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-3 w-3 text-[#085CF0]" />
+                            <input 
+                              type="number" 
+                              disabled={selectedItem.isLocked}
+                              value={selectedItem.duration} 
+                              onChange={(e) => { 
+                                const d = parseInt(e.target.value); 
+                                setSelectedItem({...selectedItem, duration: d}); 
+                                setItems(items.map(it => it.id === selectedItem.id ? {...it, duration: d} : it)); 
+                                setHasUnsavedChanges(true); 
+                              }} 
+                              className="w-16 bg-black/40 border-white/10 rounded h-8 text-xs px-2 focus:ring-1 focus:ring-[#085CF0] disabled:opacity-50 text-white" 
+                            /> 
+                            <span className="text-[10px] text-white/40 font-bold uppercase">segundos</span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-2">
                           <Layers className="h-3 w-3 text-[#085CF0]" />
                           <Select 
@@ -551,7 +619,7 @@ export default function PlaylistEditor() {
                               setHasUnsavedChanges(true);
                             }}
                           >
-                            <SelectTrigger className="w-20 h-8 text-xs bg-black/40 border-white/10 disabled:opacity-50">
+                            <SelectTrigger className="w-20 h-8 text-xs bg-black/40 border-white/10 disabled:opacity-50 text-white">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="bg-[#0c0c0e] border-white/10 text-white">
