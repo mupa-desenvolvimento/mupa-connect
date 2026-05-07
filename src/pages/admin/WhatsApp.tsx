@@ -827,42 +827,105 @@ export default function WhatsAppManagement() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showAddRecipientDialog} onOpenChange={setShowAddRecipientDialog}>
-        <DialogContent>
+      <Dialog open={showAddRecipientDialog} onOpenChange={(open) => {
+        setShowAddRecipientDialog(open);
+        if (!open) setNewRecipient({ 
+          id: "", name: "", phone: "", company_id: "", 
+          error_notifications: true, device_status_notifications: true, playlist_notifications: true 
+        });
+      }}>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Novo Destinatário</DialogTitle>
+            <DialogTitle>{newRecipient.id ? "Editar Destinatário" : "Novo Destinatário"}</DialogTitle>
             <DialogDescription>
-              Cadastre um número para receber notificações automáticas.
+              Configure um número para receber notificações automáticas do sistema.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="rec-name">Nome</Label>
-              <Input
-                id="rec-name"
-                placeholder="Ex: João Silva"
-                value={newRecipient.name}
-                onChange={(e) => setNewRecipient({ ...newRecipient, name: e.target.value })}
-              />
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="rec-name">Nome</Label>
+                <Input
+                  id="rec-name"
+                  placeholder="Ex: João Silva"
+                  value={newRecipient.name}
+                  onChange={(e) => setNewRecipient({ ...newRecipient, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="rec-phone">Telefone (Máscara ativa)</Label>
+                <Input
+                  id="rec-phone"
+                  ref={recipientInputRef}
+                  placeholder="+55 (11) 99999-9999"
+                  value={newRecipient.phone}
+                  onAccept={(v: string) => setNewRecipient({ ...newRecipient, phone: v })}
+                />
+              </div>
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="rec-phone">Telefone (com DDI e DDD)</Label>
-              <Input
-                id="rec-phone"
-                type="tel"
-                placeholder="Ex: 5511999999999"
-                value={newRecipient.phone}
-                onChange={(e) => setNewRecipient({ ...newRecipient, phone: e.target.value })}
-              />
+              <Label htmlFor="rec-company">Empresa (Opcional)</Label>
+              <Select 
+                value={newRecipient.company_id} 
+                onValueChange={(v) => setNewRecipient({ ...newRecipient, company_id: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma empresa (ou deixe em branco para Global)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Global (Todas as empresas)</SelectItem>
+                  {companies?.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-4 pt-2 border-t">
+              <Label className="text-sm font-semibold">Notificações Ativas</Label>
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="text-sm">Erros do Sistema</Label>
+                  <p className="text-[10px] text-muted-foreground italic">Alertas de falhas críticas de hardware ou rede.</p>
+                </div>
+                <Switch 
+                  checked={newRecipient.error_notifications}
+                  onCheckedChange={(v) => setNewRecipient({ ...newRecipient, error_notifications: v })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="text-sm">Status de Dispositivos</Label>
+                  <p className="text-[10px] text-muted-foreground italic">Alertas quando um player fica offline/online.</p>
+                </div>
+                <Switch 
+                  checked={newRecipient.device_status_notifications}
+                  onCheckedChange={(v) => setNewRecipient({ ...newRecipient, device_status_notifications: v })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="text-sm">Playlists e Mídia</Label>
+                  <p className="text-[10px] text-muted-foreground italic">Atualizações de conteúdo e downloads.</p>
+                </div>
+                <Switch 
+                  checked={newRecipient.playlist_notifications}
+                  onCheckedChange={(v) => setNewRecipient({ ...newRecipient, playlist_notifications: v })}
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddRecipientDialog(false)} disabled={creating}>
               Cancelar
             </Button>
-            <Button onClick={handleAddRecipient} disabled={creating}>
-              {creating ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
-              Cadastrar
+            <Button onClick={handleAddRecipient} disabled={creating} className="bg-gradient-primary text-white">
+              {creating ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+              {newRecipient.id ? "Atualizar" : "Salvar"}
             </Button>
           </DialogFooter>
         </DialogContent>
