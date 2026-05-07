@@ -65,13 +65,13 @@ serve(async (req) => {
           token: instanceName,
           qrcode: true,
         });
-        await admin.from("whatsapp_instances").insert({
+        const { error: insErr } = await admin.from("whatsapp_instances").insert({
           name: instanceName,
           instance_key: instanceName,
           company_id: companyId || null,
-          description: description || null,
           status: "connecting",
         });
+        if (insErr) console.error("DB insert error:", insErr);
         return json(data);
       }
       case "getQRCode": {
