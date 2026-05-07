@@ -327,7 +327,7 @@ export default function QueryErrorsReport() {
       "Serial": item.device_serial,
       "Produto": item.product_name || 'Produto s/ Nome',
       "EAN": item.ean || 'N/A',
-      "Loja": item.store_name || 'Loja Central',
+      "Loja": item.store_name,
       "Erro": item.error_type,
       "Quantidade": item.error_count,
       "Última Ocorrência": format(parseISO(item.last_occurrence), "dd/MM/yyyy HH:mm"),
