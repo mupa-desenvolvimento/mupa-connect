@@ -179,7 +179,7 @@ const SortableCampaignItem = ({ item, index, onRemove, onUpdateDuration }: any) 
 };
 
 export function CampaignContentManager({ campaignId }: CampaignContentManagerProps) {
-  const { data: tenantId } = useTenant();
+  const { tenantId } = useUserRole();
   const { data: libraryMedia, isLoading: loadingLibrary } = useMedias(tenantId as string);
   const [campaignItems, setCampaignItems] = useState<CampaignMedia[]>([]);
   const [loading, setLoading] = useState(true);
