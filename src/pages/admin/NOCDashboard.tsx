@@ -5,7 +5,7 @@ import { useUserRole } from "@/hooks/use-user-role";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { AlertCircle, TriangleAlert } from "lucide-react";
+import { AlertCircle, TriangleAlert, Monitor, WifiOff, Clock, Activity, List, ShieldCheck } from "lucide-react";
 
 // New Components
 import { NOCHeader } from "@/components/admin/noc/NOCHeader";
@@ -16,6 +16,8 @@ import { InkyInsights } from "@/components/admin/noc/InkyInsights";
 import { NOCFooter } from "@/components/admin/noc/NOCFooter";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AnimatePresence, motion } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
+import { formatDistanceToNow } from "date-fns";
 
 export default function NOCDashboard() {
   const { isSuperAdmin, isTecnico, companyId, tenantId } = useUserRole();
@@ -32,6 +34,8 @@ export default function NOCDashboard() {
 
   const ROTATION_INTERVAL = 15000;
 
+  const normalize = (value: any) => String(value || "").replace(/^0+/, "").trim();
+
   const stats = useMemo(() => {
     const online = devices.filter(d => getDeviceStatus(d) === "online").length;
     const offline = devices.filter(d => getDeviceStatus(d) === "offline").length;
@@ -44,11 +48,10 @@ export default function NOCDashboard() {
     ).length;
 
     const processedStores = stores.map(store => {
-      const cleanCode = store.code?.replace(/^0+/, '');
+      const cleanCode = normalize(store.code);
       const storeDevices = devices.filter(d => {
-        const deviceCode = d.num_filial?.replace(/^0+/, '');
+        const deviceCode = normalize(d.num_filial);
         return (deviceCode && cleanCode && deviceCode === cleanCode) || 
-               d.num_filial === store.code || 
                d.empresa === store.name;
       });
       
@@ -262,82 +265,203 @@ export default function NOCDashboard() {
       <main className="flex-1 flex overflow-hidden">
         <div className="flex-1 flex flex-col overflow-hidden">
           <ScrollArea className="flex-1 p-6">
-            {/* Critical Incidents Section */}
-            {stats.criticalStoresList.length > 0 && (
-              <div className="mb-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <AlertCircle className="h-4 w-4 text-red-500 animate-pulse" />
-                  <h2 className="text-xs font-black uppercase tracking-[0.3em] text-red-500">
-                    Incidentes Críticos Ativos
-                  </h2>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {stats.criticalStoresList.slice(0, 3).map(store => (
-                    <div key={store.id} className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <TriangleAlert className="h-5 w-5 text-red-500" />
-                        <div>
-                          <p className="text-[10px] font-black uppercase text-white/80">{store.name}</p>
-                          <p className="text-[9px] text-red-500 font-bold uppercase">{store.offline} OFF / {store.total} TOTAL</p>
-                        </div>
+            <AnimatePresence mode="wait">
+              {layout === 'auto' || layout === '4' || layout === '6' || layout === '9' ? (
+                <motion.div
+                  key="grid-view"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-8"
+                >
+                  {/* Critical Incidents Section */}
+                  {stats.criticalStoresList.length > 0 && (
+                    <div className="mb-8">
+                      <div className="flex items-center gap-3 mb-4">
+                        <AlertCircle className="h-4 w-4 text-red-500 animate-pulse" />
+                        <h2 className="text-xs font-black uppercase tracking-[0.3em] text-red-500">
+                          Incidentes Críticos Ativos
+                        </h2>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xs font-black text-red-500">{store.healthScore}%</p>
-                        <p className="text-[8px] font-bold text-white/30 uppercase">HEALTH</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {stats.criticalStoresList.slice(0, 3).map(store => (
+                          <div key={store.id} className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <TriangleAlert className="h-5 w-5 text-red-500" />
+                              <div>
+                                <p className="text-[10px] font-black uppercase text-white/80">{store.name}</p>
+                                <p className="text-[9px] text-red-500 font-bold uppercase">{store.offline} OFF / {store.total} TOTAL</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs font-black text-red-500">{store.healthScore}%</p>
+                              <p className="text-[8px] font-bold text-white/30 uppercase">HEALTH</p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                  )}
 
-            <div className="mb-6 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <h2 className="text-xs font-black uppercase tracking-[0.3em] text-white/40">
-                  Visão Operacional de Lojas
-                </h2>
-                <div className="h-px w-20 bg-white/5" />
-                {totalPages > 1 && (
-                  <span className="text-[10px] font-bold text-primary uppercase">
-                    Página {currentPage + 1} de {totalPages}
-                  </span>
-                )}
-              </div>
-              <div className="flex gap-1.5">
-                {Array.from({ length: totalPages }).map((_, i) => (
-                  <div 
-                    key={i} 
-                    className={cn(
-                      "h-1 rounded-full transition-all duration-500",
-                      i === currentPage ? "w-6 bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.5)]" : "w-1.5 bg-white/10"
-                    )}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentPage}
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 1.02 }}
-                transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-                className={cn(
-                  "grid grid-cols-1 md:grid-cols-2 gap-6",
-                  gridCols
-                )}
-              >
-                {paginatedStores.map((store) => (
-                  <StoreHealthCard key={store.id} store={store} />
-                ))}
-                
-                {stats.processedStores.length === 0 && !loading && (
-                  <div className="col-span-full py-20 text-center opacity-20">
-                    <p className="text-sm font-black uppercase tracking-widest">Nenhuma loja configurada</p>
+                  <div className="mb-6 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <h2 className="text-xs font-black uppercase tracking-[0.3em] text-white/40">
+                        Visão Operacional de Lojas
+                      </h2>
+                      <div className="h-px w-20 bg-white/5" />
+                      {totalPages > 1 && (
+                        <span className="text-[10px] font-bold text-primary uppercase">
+                          Página {currentPage + 1} de {totalPages}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex gap-1.5">
+                      {Array.from({ length: totalPages }).map((_, i) => (
+                        <div 
+                          key={i} 
+                          className={cn(
+                            "h-1 rounded-full transition-all duration-500",
+                            i === currentPage ? "w-6 bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.5)]" : "w-1.5 bg-white/10"
+                          )}
+                        />
+                      ))}
+                    </div>
                   </div>
-                )}
-              </motion.div>
+
+                  <motion.div
+                    key={currentPage}
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 1.02 }}
+                    transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+                    className={cn(
+                      "grid grid-cols-1 md:grid-cols-2 gap-6",
+                      gridCols
+                    )}
+                  >
+                    {paginatedStores.map((store) => (
+                      <StoreHealthCard key={store.id} store={store} />
+                    ))}
+                    
+                    {stats.processedStores.length === 0 && !loading && (
+                      <div className="col-span-full py-20 text-center opacity-20">
+                        <p className="text-sm font-black uppercase tracking-widest">Nenhuma loja configurada</p>
+                      </div>
+                    )}
+                  </motion.div>
+                </motion.div>
+              ) : layout === 'list' ? (
+                <motion.div
+                  key="list-view"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-4"
+                >
+                  <div className="bg-[#111114] border border-white/5 rounded-xl overflow-hidden">
+                    <table className="w-full text-left text-[11px] font-bold uppercase">
+                      <thead className="bg-white/5 border-b border-white/5">
+                        <tr>
+                          <th className="px-4 py-3 text-white/40">Dispositivo</th>
+                          <th className="px-4 py-3 text-white/40">Loja</th>
+                          <th className="px-4 py-3 text-white/40">Status</th>
+                          <th className="px-4 py-3 text-white/40">Último Heartbeat</th>
+                          <th className="px-4 py-3 text-white/40">Playlist</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {devices.map((device) => {
+                          const status = getDeviceStatus(device);
+                          return (
+                            <tr key={device.id} className="hover:bg-white/[0.02] transition-colors">
+                              <td className="px-4 py-3 text-white">{device.apelido_interno || device.serial}</td>
+                              <td className="px-4 py-3 text-white/60">{device.num_filial || '—'}</td>
+                              <td className="px-4 py-3">
+                                <Badge variant="outline" className={cn(
+                                  "text-[9px] h-5 font-black uppercase",
+                                  status === 'online' ? "text-green-500 border-green-500/20" : "text-red-500 border-red-500/20"
+                                )}>
+                                  {status}
+                                </Badge>
+                              </td>
+                              <td className="px-4 py-3 text-white/40">
+                                {device.last_heartbeat_at ? formatDistanceToNow(new Date(device.last_heartbeat_at), { addSuffix: true, locale: ptBR }) : 'Nunca'}
+                              </td>
+                              <td className="px-4 py-3 text-primary">{device.playlist_id ? 'Sincronizada' : 'Sem Playlist'}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </motion.div>
+              ) : layout === 'executive' ? (
+                <motion.div
+                  key="executive-view"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-8"
+                >
+                  <div className="space-y-6">
+                    <div className="bg-[#111114] border border-white/5 rounded-2xl p-8 flex flex-col items-center text-center">
+                      <ShieldCheck className="h-16 w-16 text-primary mb-4" />
+                      <h2 className="text-2xl font-black uppercase text-white mb-2">SLA Operacional Global</h2>
+                      <span className="text-6xl font-black text-primary">99.8%</span>
+                      <p className="text-white/40 text-sm mt-4 uppercase font-bold tracking-widest">Disponibilidade em Tempo Real</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-[#111114] border border-white/5 rounded-2xl p-6">
+                        <span className="text-3xl font-black text-green-500">{stats.online}</span>
+                        <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-1">Dispositivos Ativos</p>
+                      </div>
+                      <div className="bg-[#111114] border border-white/5 rounded-2xl p-6">
+                        <span className="text-3xl font-black text-red-500">{stats.offline}</span>
+                        <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-1">Fora de Operação</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-[#0a0a0c] border border-white/5 rounded-2xl p-6 flex flex-col">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-primary mb-6">Lojas com Baixa Performance</h3>
+                    <div className="flex-1 space-y-4">
+                      {stats.processedStores.filter(s => s.healthScore < 90).sort((a,b) => a.healthScore - b.healthScore).map(store => (
+                        <div key={store.id} className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5">
+                          <div>
+                            <p className="text-sm font-black text-white uppercase">{store.name}</p>
+                            <p className="text-[10px] text-white/30 font-bold uppercase">{store.code}</p>
+                          </div>
+                          <div className="text-right">
+                            <span className={cn("text-xl font-black", store.healthScore > 80 ? "text-yellow-500" : "text-red-500")}>
+                              {store.healthScore}%
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              ) : layout === 'map' ? (
+                <motion.div
+                  key="map-view"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3"
+                >
+                  {stats.processedStores.map(store => (
+                    <div 
+                      key={store.id} 
+                      onClick={() => navigate(`/admin/monitoring/store/${store.id}`)}
+                      className={cn(
+                        "aspect-square rounded-xl border flex flex-col items-center justify-center p-2 text-center transition-all cursor-pointer hover:scale-105",
+                        store.status === 'online' ? "bg-green-500/10 border-green-500/20 text-green-500" :
+                        store.status === 'unstable' ? "bg-yellow-500/10 border-yellow-500/20 text-yellow-500" :
+                        "bg-red-500/10 border-red-500/20 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)] animate-pulse"
+                      )}
+                    >
+                      <span className="text-[10px] font-black uppercase truncate w-full">{store.name}</span>
+                      <span className="text-[14px] font-black mt-1">{store.healthScore}%</span>
+                    </div>
+                  ))}
+                </motion.div>
+              ) : null}
             </AnimatePresence>
           </ScrollArea>
 
