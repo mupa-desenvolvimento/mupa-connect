@@ -948,24 +948,31 @@ export default function PlaylistEditor() {
             </div>
           </div>
 
-              <DragOverlay>
-                {activeId ? (
-                  activeId.toString().startsWith('library-') ? (
+            <DragOverlay>
+              {activeId ? (
+                activeId.toString().startsWith('library-') ? (
+                  <div className="relative">
                     <div className="w-32 aspect-square rounded-lg overflow-hidden border-2 border-[#085CF0] bg-black shadow-2xl scale-110 opacity-80">
                       <img 
                         src={medias?.find(m => `library-${m.id}` === activeId)?.thumbnail_url || medias?.find(m => `library-${m.id}` === activeId)?.file_url} 
                         className="w-full h-full object-cover" 
                       />
                     </div>
-                  ) : (
-                    <div className="h-24 rounded-xl border-2 border-[#085CF0] bg-black/40 shadow-2xl flex items-center px-4 overflow-hidden" style={{ width: Math.max(100, (items.find(it => it.id === activeId)?.duration || 10) * PIXELS_PER_SECOND) }}>
-                      <p className="text-[10px] font-bold text-white truncate">
-                        {items.find(it => it.id === activeId)?.type === 'campaign' ? items.find(it => it.id === activeId)?.campaign?.name : items.find(it => it.id === activeId)?.media?.name}
-                      </p>
-                    </div>
-                  )
-                ) : null}
-              </DragOverlay>
+                    {selectedLibraryIds.length > 1 && selectedLibraryIds.includes(activeId.toString().replace('library-', '')) && (
+                      <div className="absolute -top-3 -right-3 h-8 w-8 rounded-full bg-[#085CF0] text-white flex items-center justify-center font-bold text-sm shadow-xl border-2 border-white animate-in zoom-in">
+                        {selectedLibraryIds.length}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="h-24 rounded-xl border-2 border-[#085CF0] bg-black/40 shadow-2xl flex items-center px-4 overflow-hidden" style={{ width: Math.max(100, (items.find(it => it.id === activeId)?.duration || 10) * PIXELS_PER_SECOND) }}>
+                    <p className="text-[10px] font-bold text-white truncate">
+                      {items.find(it => it.id === activeId)?.type === 'campaign' ? items.find(it => it.id === activeId)?.campaign?.name : items.find(it => it.id === activeId)?.media?.name}
+                    </p>
+                  </div>
+                )
+              ) : null}
+            </DragOverlay>
             </div>
           </main>
         </DndContext>
