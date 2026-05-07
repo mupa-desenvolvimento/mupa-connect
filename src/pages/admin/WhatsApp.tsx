@@ -55,20 +55,28 @@ export default function WhatsAppManagement() {
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [showQrDialog, setShowQrDialog] = useState(false);
   const [connectingInstance, setConnectingInstance] = useState<string | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [newInstance, setNewInstance] = useState({ name: "", description: "" });
+  const [creating, setCreating] = useState(false);
+  const queryClient = useQueryClient();
+
+  const callApi = async (action: string, payload: Record<string, unknown> = {}) => {
+    const { data, error } = await supabase.functions.invoke("whatsapp-evolution", {
+      body: { action, ...payload },
+    });
+    if (error) throw new Error(error.message);
+    if (data?.error) throw new Error(data.error);
+    return data;
+  };
 
   const handleGenerateQR = async (instanceName: string) => {
     try {
       setConnectingInstance(instanceName);
       toast.info("Gerando QR Code...");
-      
-      const { data, error } = await supabase.functions.invoke('whatsapp-evolution', {
-        body: { action: 'getQRCode', instanceName }
-      });
-
-      if (error) throw error;
-      
-      if (data?.base64) {
-        setQrCodeUrl(data.base64);
+      const data = await callApi("getQRCode", { instanceName });
+      const base64 = data?.base64;
+      if (base64) {
+        setQrCodeUrl(base64.startsWith("data:") ? base64 : `data:image/png;base64,${base64}`);
         setShowQrDialog(true);
       } else {
         toast.error("Não foi possível obter o QR Code");
@@ -77,6 +85,56 @@ export default function WhatsAppManagement() {
       toast.error(err.message || "Erro ao conectar");
     } finally {
       setConnectingInstance(null);
+    }
+  };
+
+  const handleCreateInstance = async () => {
+    if (!newInstance.name.trim()) return toast.error("Nome obrigatório");
+    try {
+      setCreating(true);
+      await callApi("createInstance", {
+        instanceName: newInstance.name.trim().toLowerCase().replace(/\s+/g, "_"),
+        description: newInstance.description,
+      });
+      toast.success("Instância criada");
+      setShowCreateDialog(false);
+      setNewInstance({ name: "", description: "" });
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-instances"] });
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao criar instância");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleCheckStatus = async (instanceName: string) => {
+    try {
+      const data = await callApi("connectionState", { instanceName });
+      toast.success(`Status: ${data?.state || "desconhecido"}`);
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-instances"] });
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleLogout = async (instanceName: string) => {
+    try {
+      await callApi("logout", { instanceName });
+      toast.success("Desconectado");
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-instances"] });
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleDelete = async (instanceName: string) => {
+    if (!confirm(`Remover instância ${instanceName}?`)) return;
+    try {
+      await callApi("deleteInstance", { instanceName });
+      toast.success("Instância removida");
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-instances"] });
+    } catch (err: any) {
+      toast.error(err.message);
     }
   };
 
