@@ -328,22 +328,42 @@ export default function PlaylistEditor() {
       setPlaylistName(playlistData.name);
       setIsDefault(playlistData.is_company_default || false);
       setAppearanceConfig(normalizeAppearanceConfig(playlistData.appearance_config));
-      if (playlistData.playlist_items && playlistData.playlist_items.length > 0) {
-        const mappedItems = playlistData.playlist_items.map((it: any) => ({ 
-          id: it.id, 
-          dbId: it.id, 
-          mediaId: it.media_id, 
-          duration: it.duracao, 
-          priority: it.prioridade || 1, 
-          type: it.tipo, 
-          isLocked: it.is_locked || false,
-          media: medias?.find(m => m.id === it.media_id) 
-        }));
-        setItems(mappedItems);
-        if (!selectedItem) setSelectedItem(mappedItems[0]);
-      } else { setItems([]); }
-    } else if (id === 'new') { setPlaylistName("Nova Playlist"); setItems([]); setSelectedItem(null); }
-  }, [playlistData, medias, id]);
+      
+      const mappedItems: EditorPlaylistItem[] = (playlistData.playlist_items || []).map((it: any) => ({ 
+        id: it.id, 
+        dbId: it.id, 
+        mediaId: it.media_id, 
+        duration: it.duracao, 
+        priority: it.prioridade || 1, 
+        type: it.tipo as any, 
+        isLocked: it.is_locked || false,
+        media: medias?.find(m => m.id === it.media_id),
+        position: it.position || it.ordem || 0
+      }));
+
+      const mappedCampaigns: EditorPlaylistItem[] = (campaignLinks || []).map((cl: any) => ({
+        id: `campaign-${cl.id}`,
+        dbId: cl.id,
+        duration: 0, // Campaigns don't have fixed duration in timeline block sense, but we can set 5s for visual
+        priority: cl.priority || 1,
+        type: 'campaign' as any,
+        campaign: cl.campaigns,
+        campaignId: cl.campaigns.id,
+        position: cl.position || 0
+      }));
+
+      const combinedItems = [...mappedItems, ...mappedCampaigns].sort((a, b) => (a as any).position - (b as any).position);
+      setItems(combinedItems);
+      
+      if (!selectedItem && combinedItems.length > 0) {
+        setSelectedItem(combinedItems[0]);
+      }
+    } else if (id === 'new') { 
+      setPlaylistName("Nova Playlist"); 
+      setItems([]); 
+      setSelectedItem(null); 
+    }
+  }, [playlistData, medias, campaignLinks, id]);
 
   const savePlaylist = async (updatedItems: EditorPlaylistItem[], updatedName: string) => {
     if (isSaving || !tenantId || !updatedName || updatedName.trim() === "" || updatedName === "...") { 
