@@ -118,7 +118,8 @@ const DEFAULT_APPEARANCE_CONFIG = {
   transition_type: "fade",
   transition_duration: 500,
   footer: { enabled: false, text: "Consulte o preço aqui", background_color: "#000000AA", text_color: "#FFFFFF", height: 60 },
-  logo: { enabled: false, url: "", position: "top-left", size: 80, opacity: 1 }
+  logo: { enabled: false, url: "", position: "top-left", size: 80, opacity: 1 },
+  custom_preview_url: "https://qtbkvshbmqlszncxlcuc.supabase.co/storage/v1/object/public/dsl-uploads/kqrRuPz304ckV2bn5HmQpveeQQo1/b19f4132-ca7d-4c68-8eec-d7645111e6f0.png"
 };
 
 const normalizeAppearanceConfig = (config?: any) => ({
@@ -128,7 +129,7 @@ const normalizeAppearanceConfig = (config?: any) => ({
   logo: { ...DEFAULT_APPEARANCE_CONFIG.logo, ...(config?.logo && typeof config.logo === "object" ? config.logo : {}) }
 });
 
-const SortableItem = ({ item, index, isSelected, onSelect, timelineMode = false }: any) => {
+const SortableItem = ({ item, index, isSelected, onSelect }: any) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
     id: item.id,
     disabled: item.isLocked 
@@ -143,19 +144,6 @@ const SortableItem = ({ item, index, isSelected, onSelect, timelineMode = false 
     transition, 
     zIndex: isDragging ? 50 : 1, 
     opacity: isDragging ? 0.6 : 1,
-    width: Math.max(100, item.duration * PIXELS_PER_SECOND)
-  };
-
-  const getBorderColor = () => {
-    if (isSelected) return 'border-[#085CF0]';
-    if (isCampaign) return `border-[${campaign?.color || '#085CF0'}]/30`;
-    return 'border-white/10';
-  };
-
-  const getBgColor = () => {
-    if (isSelected) return 'bg-[#085CF0]/10';
-    if (isCampaign) return `bg-[${campaign?.color || '#085CF0'}]/5`;
-    return 'bg-white/5';
   };
 
   return (
@@ -164,92 +152,93 @@ const SortableItem = ({ item, index, isSelected, onSelect, timelineMode = false 
       style={style} 
       onClick={() => onSelect(item)}
       className={cn(
-        "relative shrink-0 h-24 rounded-xl border transition-all cursor-pointer group overflow-hidden",
-        getBorderColor(),
-        getBgColor(),
-        isSelected && "ring-2 ring-[#085CF0]/20 shadow-lg",
+        "relative shrink-0 w-[180px] h-[240px] rounded-2xl border transition-all cursor-pointer group overflow-hidden flex flex-col bg-[#1A1A1E]",
+        isSelected ? "border-[#085CF0] ring-2 ring-[#085CF0]/30 shadow-[0_0_20px_rgba(8,92,240,0.2)]" : "border-white/5 hover:border-white/20",
         item.isLocked && "opacity-80"
       )}
     >
-      <div className="absolute inset-0">
+      {/* Thumbnail Area */}
+      <div className="relative h-[160px] w-full overflow-hidden bg-black/40">
         {!isCampaign ? (
-          <>
-            <img 
-              src={media?.thumbnail_url || media?.file_url} 
-              alt={media?.name} 
-              className="w-full h-full object-cover opacity-30 group-hover:opacity-50 transition-opacity" 
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
-          </>
-        ) : (
-          <div 
-            className="absolute inset-0 opacity-10"
-            style={{ backgroundColor: campaign?.color || '#085CF0' }}
+          <img 
+            src={media?.thumbnail_url || media?.file_url} 
+            alt={media?.name} 
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
           />
-        )}
-      </div>
-      
-      <div className="absolute top-2 left-2 flex gap-1.5 z-10">
-        <span className="text-[10px] font-mono font-bold text-white/90 px-1.5 py-0.5 rounded bg-black/60 border border-white/10">
-          {index + 1}
-        </span>
-        {item.isLocked && (
-          <div className="bg-amber-500/20 text-amber-500 border border-amber-500/30 rounded px-1.5 py-0.5 flex items-center">
-            <Lock className="h-2.5 w-2.5" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
+            <div 
+              className="absolute inset-0 opacity-20"
+              style={{ backgroundColor: campaign?.color || '#085CF0' }}
+            />
+            <Megaphone className="h-12 w-12 relative z-10" style={{ color: campaign?.color || '#085CF0' }} />
           </div>
         )}
-        {isCampaign && (
-          <div 
-            className="rounded px-1.5 py-0.5 flex items-center gap-1 border"
-            style={{ 
-              backgroundColor: `${campaign?.color || '#085CF0'}20`,
-              borderColor: `${campaign?.color || '#085CF0'}40`,
-              color: campaign?.color || '#085CF0'
-            }}
-          >
-            <Megaphone className="h-2.5 w-2.5" />
-            <span className="text-[9px] font-bold uppercase tracking-tighter">Campanha</span>
-          </div>
-        )}
-      </div>
-
-      <div className="absolute top-2 right-2 z-10">
-        <span className="text-[10px] font-bold text-white/90 px-1.5 py-0.5 rounded bg-black/60 border border-white/10 flex items-center gap-1">
-          <Clock className="h-2.5 w-2.5 text-[#085CF0]" /> {item.duration}s
-        </span>
-      </div>
-
-      {!item.isLocked && (
-        <div 
-          {...attributes} 
-          {...listeners} 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white/0 group-hover:text-white group-hover:bg-[#085CF0]/80 transition-all cursor-grab active:cursor-grabbing z-20"
-        >
-          <GripVertical className="h-4 w-4" />
+        
+        {/* Badges/Overlays */}
+        <div className="absolute top-2 left-2 flex gap-1.5 z-10">
+          <span className="text-[10px] font-mono font-bold text-white/90 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-md border border-white/10">
+            {index + 1}
+          </span>
+          {item.isLocked && (
+            <div className="bg-amber-500/20 text-amber-500 border border-amber-500/30 rounded px-1.5 py-0.5 flex items-center">
+              <Lock className="h-3 w-3" />
+            </div>
+          )}
         </div>
-      )}
 
-      <div className="absolute bottom-2 left-2 right-2 z-10">
-        <p className="text-[10px] font-bold text-white truncate drop-shadow-md">
+        <div className="absolute top-2 right-2 z-10">
+          <span className="text-[10px] font-bold text-white/90 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-1">
+            <Clock className="h-3 w-3 text-[#085CF0]" /> {item.duration}s
+          </span>
+        </div>
+
+        {/* Drag Handle */}
+        {!item.isLocked && (
+          <div 
+            {...attributes} 
+            {...listeners} 
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-3 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-all cursor-grab active:cursor-grabbing z-20 hover:bg-[#085CF0]"
+          >
+            <GripVertical className="h-5 w-5" />
+          </div>
+        )}
+      </div>
+
+      {/* Content Info */}
+      <div className="flex-1 p-3 flex flex-col justify-between relative bg-gradient-to-b from-[#1A1A1E] to-[#141417]">
+        <p className="text-xs font-bold text-white/90 line-clamp-2 leading-tight">
           {isCampaign ? campaign?.name : (media?.name || 'Sem nome')}
         </p>
-        <div className="flex items-center gap-2 mt-1">
+        
+        <div className="flex items-center justify-between mt-auto pt-2">
           {!isCampaign ? (
-            <Badge variant="outline" className="text-[8px] h-3.5 px-1 py-0 border-white/10 bg-black/40 text-white/40 uppercase">
-              {item.type}
-            </Badge>
+            <div className="flex items-center gap-1.5">
+              {media?.type === 'video' ? <Video className="h-3 w-3 text-white/40" /> : <ImageIcon className="h-3 w-3 text-white/40" />}
+              <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest">{item.type}</span>
+            </div>
           ) : (
-            <span className="text-[8px] font-bold text-white/40 uppercase tracking-widest">
-              Prioridade {item.priority}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <Megaphone className="h-3 w-3" style={{ color: campaign?.color || '#085CF0' }} />
+              <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: campaign?.color || '#085CF0' }}>Campanha</span>
+            </div>
           )}
-          {item.priority > 1 && !isCampaign && (
-            <Badge variant="outline" className="text-[8px] h-3.5 px-1 py-0 border-blue-500/30 bg-blue-500/10 text-blue-400 font-bold">
+          {item.priority > 1 && (
+            <Badge variant="outline" className="text-[9px] h-4 px-1.5 py-0 border-[#085CF0]/30 bg-[#085CF0]/10 text-[#085CF0] font-bold">
               P{item.priority}
             </Badge>
           )}
         </div>
       </div>
+
+      {/* Bottom Color Bar (Campaign Indicator) */}
+      <div 
+        className="h-1.5 w-full mt-auto"
+        style={{ 
+          backgroundColor: isCampaign ? (campaign?.color || '#085CF0') : 'transparent',
+          boxShadow: isCampaign ? `0 -4px 12px ${(campaign?.color || '#085CF0')}40` : 'none'
+        }}
+      />
     </div>
   );
 };
@@ -316,7 +305,52 @@ const DraggableMediaItem = ({ media, onClick, isSelected, onToggleSelect }: any)
   );
 };
 
-const CampaignDropZone = ({ children, isActive }: any) => {
+const DraggableCampaignItem = ({ campaign, onClick }: any) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `library-campaign-${campaign.id}`,
+    data: {
+      type: 'library-campaign',
+      campaignId: campaign.id,
+      campaign: campaign
+    }
+  });
+
+  const style = transform ? {
+    transform: CSS.Translate.toString(transform),
+  } : undefined;
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style}
+      className={cn(
+        "relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer border transition-all group border-white/10 hover:border-[#085CF0]",
+        isDragging && "opacity-50 ring-2 ring-[#085CF0] z-50"
+      )}
+      onClick={() => onClick(campaign.id)}
+    >
+      <div className="w-full h-full flex items-center justify-center relative overflow-hidden bg-black/40">
+        <div 
+          className="absolute inset-0 opacity-10"
+          style={{ backgroundColor: campaign.color || '#085CF0' }}
+        />
+        <Megaphone className="h-8 w-8 relative z-10" style={{ color: campaign.color || '#085CF0' }} />
+      </div>
+      
+      <div 
+        {...listeners} 
+        {...attributes}
+        className="absolute inset-0 z-10"
+      />
+
+      <div className="absolute bottom-1 left-1 right-1 text-[10px] truncate bg-black/60 px-1 rounded font-bold text-white/90 z-20">
+        {campaign.name}
+      </div>
+    </div>
+  );
+};
+
+const CampaignDropZone = ({ children }: any) => {
   const { setNodeRef, isOver } = useDroppable({
     id: 'campaign-drop-zone',
     data: {
@@ -328,7 +362,7 @@ const CampaignDropZone = ({ children, isActive }: any) => {
     <div 
       ref={setNodeRef} 
       className={cn(
-        "flex-1 flex flex-col transition-all duration-200",
+        "flex-1 flex flex-col transition-all duration-200 relative",
         isOver && "bg-[#085CF0]/10 ring-2 ring-[#085CF0]/30 ring-inset rounded-xl"
       )}
     >
@@ -337,6 +371,34 @@ const CampaignDropZone = ({ children, isActive }: any) => {
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
           <div className="bg-[#085CF0] text-white px-4 py-2 rounded-full font-bold text-xs flex items-center gap-2 shadow-xl animate-bounce">
             <Plus className="h-4 w-4" /> Solte para adicionar à campanha
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const TimelineDropZone = ({ children }: any) => {
+  const { setNodeRef, isOver } = useDroppable({
+    id: 'playlist-timeline-drop-zone',
+    data: {
+      accepts: ['library-campaign']
+    }
+  });
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      className={cn(
+        "h-full relative px-8 flex items-center min-w-full",
+        isOver && "bg-[#085CF0]/5 ring-2 ring-[#085CF0]/20 ring-inset"
+      )}
+    >
+      {children}
+      {isOver && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
+          <div className="bg-[#085CF0] text-white px-4 py-2 rounded-full font-bold text-xs flex items-center gap-2 shadow-xl animate-bounce">
+            <Plus className="h-4 w-4" /> Adicionar Campanha à Playlist
           </div>
         </div>
       )}
@@ -372,6 +434,17 @@ export default function PlaylistEditor() {
   const playheadIntervalRef = useRef<number | null>(null);
 
   const totalDuration = useMemo(() => items.reduce((acc, it) => acc + it.duration, 0), [items]);
+
+  const { data: allCampaigns } = useQuery({
+    queryKey: ["all-campaigns", tenantId],
+    queryFn: async () => {
+      if (!tenantId) return [];
+      const { data, error } = await supabase.from("campaigns").select("*").eq("tenant_id", tenantId).eq("is_active", true);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!tenantId
+  });
 
   const { data: campaignLinks } = useQuery({
     queryKey: ["playlist-campaigns", id],
@@ -542,16 +615,21 @@ export default function PlaylistEditor() {
     
     if (!over) return;
 
-    // Handle library to campaign drop
+    // Handle library to campaign content drop
     if (over.id === 'campaign-drop-zone' && active.data.current?.type === 'library-media') {
       const mediaId = active.data.current.mediaId;
-      
-      // If the dragged item is part of the selection, add all selected
       if (selectedLibraryIds.includes(mediaId)) {
         addMultipleItems(selectedLibraryIds);
       } else {
         addItem(mediaId);
       }
+      return;
+    }
+
+    // Handle library campaign to playlist timeline drop
+    if (over.id === 'playlist-timeline-drop-zone' && active.data.current?.type === 'library-campaign') {
+      const campaign = active.data.current.campaign;
+      addCampaignToPlaylist(campaign);
       return;
     }
 
@@ -567,6 +645,37 @@ export default function PlaylistEditor() {
           setHasUnsavedChanges(true);
         }
       }
+    }
+  };
+
+  const addCampaignToPlaylist = async (campaign: any) => {
+    if (id === 'new') {
+      toast.error("Salve a playlist antes de adicionar campanhas.");
+      return;
+    }
+
+    // First check if campaign is already in playlist
+    if (campaigns.some((c: any) => c.id === campaign.id)) {
+      toast.error("Esta campanha já faz parte desta playlist.");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.from("playlist_campaigns").insert({
+        playlist_id: id as any,
+        campaign_id: campaign.id,
+        tenant_id: tenantId,
+        priority: 1,
+        is_active: true,
+        position: items.length
+      }).select().single();
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["playlist-campaigns", id] });
+      toast.success(`Campanha ${campaign.name} adicionada à playlist`);
+    } catch (err: any) {
+      toast.error(`Erro ao adicionar campanha: ${err.message}`);
     }
   };
 
@@ -673,67 +782,101 @@ export default function PlaylistEditor() {
           <aside className="w-80 border-r border-white/5 bg-[#0c0c0e] flex flex-col z-40 overflow-hidden">
             <Tabs defaultValue="media" className="flex-1 flex flex-col h-full overflow-hidden">
               <div className="p-4 space-y-4 shrink-0">
-                <TabsList className="grid w-full grid-cols-2 bg-black/40"><TabsTrigger value="media" className="text-[10px] gap-2">Mídias</TabsTrigger><TabsTrigger value="appearance" className="text-[10px] gap-2">Aparência</TabsTrigger></TabsList>
-                <div className="flex items-center gap-2">
-                  <div className="relative flex-1">
+                <TabsList className="grid w-full grid-cols-3 bg-black/40">
+                  <TabsTrigger value="media" className="text-[10px] gap-2">Mídias</TabsTrigger>
+                  <TabsTrigger value="campaigns" className="text-[10px] gap-2">Campanhas</TabsTrigger>
+                  <TabsTrigger value="appearance" className="text-[10px] gap-2">Aparência</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="media" className="m-0">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/40" />
+                        <input 
+                          placeholder="Buscar mídias..." 
+                          className="w-full h-8 pl-8 text-[10px] bg-black/40 border border-white/5 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-[#085CF0]" 
+                          value={mediaSearch}
+                          onChange={(e) => setMediaSearch(e.target.value)}
+                        />
+                      </div>
+                      {selectedLibraryIds.length > 0 && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 px-2 text-[10px] text-red-500 hover:bg-red-500/10"
+                          onClick={() => setSelectedLibraryIds([])}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                    {selectedLibraryIds.length > 0 && (
+                      <div className="bg-[#085CF0]/10 border border-[#085CF0]/30 rounded-lg p-2 flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-[#085CF0]">
+                          {selectedLibraryIds.length} selecionados
+                        </span>
+                        <Button 
+                          size="sm" 
+                          className="h-6 px-2 text-[9px] bg-[#085CF0] hover:bg-[#085CF0]/80"
+                          onClick={() => addMultipleItems(selectedLibraryIds)}
+                        >
+                          Adicionar
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="campaigns" className="m-0">
+                  <div className="relative">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/40" />
-                    <Input 
-                      placeholder="Buscar mídias..." 
-                      className="h-8 pl-8 text-[10px] bg-black/40 border-white/5" 
-                      value={mediaSearch}
-                      onChange={(e) => setMediaSearch(e.target.value)}
+                    <input 
+                      placeholder="Buscar campanhas..." 
+                      className="w-full h-8 pl-8 text-[10px] bg-black/40 border border-white/5 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-[#085CF0]" 
                     />
                   </div>
-                  {selectedLibraryIds.length > 0 && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-8 px-2 text-[10px] text-red-500 hover:bg-red-500/10"
-                      onClick={() => setSelectedLibraryIds([])}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
-                {selectedLibraryIds.length > 0 && (
-                  <div className="bg-[#085CF0]/10 border border-[#085CF0]/30 rounded-lg p-2 flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-[#085CF0]">
-                      {selectedLibraryIds.length} selecionados
-                    </span>
-                    <Button 
-                      size="sm" 
-                      className="h-6 px-2 text-[9px] bg-[#085CF0] hover:bg-[#085CF0]/80"
-                      onClick={() => addMultipleItems(selectedLibraryIds)}
-                    >
-                      Adicionar {selectedLibraryIds.length}
-                    </Button>
-                  </div>
-                )}
+                </TabsContent>
               </div>
-              <TabsContent value="media" className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-3">
-                {medias?.filter(m => m.name.toLowerCase().includes(mediaSearch.toLowerCase())).map((media) => (
-                  <DraggableMediaItem 
-                    key={media.id} 
-                    media={media} 
-                    onClick={addItem} 
-                    isSelected={selectedLibraryIds.includes(media.id)}
-                    onToggleSelect={(id: string) => {
-                      setSelectedLibraryIds(prev => 
-                        prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-                      );
-                    }}
-                  />
-                ))}
-              </TabsContent>
-              <TabsContent value="appearance" className="p-4 space-y-4">
-                <div className="flex items-center justify-between"><Label className="text-xs">Mostrar Nome</Label><Switch checked={appearanceConfig.show_device_name} onCheckedChange={(v) => { setAppearanceConfig({...appearanceConfig, show_device_name: v}); setHasUnsavedChanges(true); }} /></div>
-                <div className="flex items-center justify-between"><Label className="text-xs">Data e Hora</Label><Switch checked={appearanceConfig.show_datetime} onCheckedChange={(v) => { setAppearanceConfig({...appearanceConfig, show_datetime: v}); setHasUnsavedChanges(true); }} /></div>
-              </TabsContent>
+
+              <div className="flex-1 overflow-hidden relative">
+                <TabsContent value="media" className="h-full m-0 p-4 overflow-y-auto grid grid-cols-2 gap-3 pb-20">
+                  {medias?.filter(m => m.name.toLowerCase().includes(mediaSearch.toLowerCase())).map((media) => (
+                    <DraggableMediaItem 
+                      key={media.id} 
+                      media={media} 
+                      onClick={addItem} 
+                      isSelected={selectedLibraryIds.includes(media.id)}
+                      onToggleSelect={(id: string) => {
+                        setSelectedLibraryIds(prev => 
+                          prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+                        );
+                      }}
+                    />
+                  ))}
+                </TabsContent>
+
+                <TabsContent value="campaigns" className="h-full m-0 p-4 overflow-y-auto grid grid-cols-2 gap-3 pb-20">
+                  {allCampaigns?.map((campaign) => (
+                    <DraggableCampaignItem 
+                      key={campaign.id} 
+                      campaign={campaign} 
+                      onClick={addCampaignToPlaylist} 
+                    />
+                  ))}
+                </TabsContent>
+
+                <TabsContent value="appearance" className="h-full m-0 p-4 space-y-4">
+                  <div className="flex items-center justify-between"><Label className="text-xs">Mostrar Nome</Label><Switch checked={appearanceConfig.show_device_name} onCheckedChange={(v) => { setAppearanceConfig({...appearanceConfig, show_device_name: v}); setHasUnsavedChanges(true); }} /></div>
+                  <div className="flex items-center justify-between"><Label className="text-xs">Data e Hora</Label><Switch checked={appearanceConfig.show_datetime} onCheckedChange={(v) => { setAppearanceConfig({...appearanceConfig, show_datetime: v}); setHasUnsavedChanges(true); }} /></div>
+                </TabsContent>
+              </div>
             </Tabs>
           </aside>
 
         <main className="flex-1 flex flex-col overflow-hidden relative">
-          <div className="flex-1 overflow-hidden flex flex-col p-6 gap-6">
+          <div className="flex-1 overflow-hidden flex flex-row p-6 gap-6">
+            {/* Preview Section */}
             <div className="flex-1 relative bg-black/40 rounded-2xl border border-white/5 overflow-hidden shadow-2xl flex flex-col">
               {selectedItem ? (
                 <div className="flex-1 flex flex-col min-h-0">
@@ -741,240 +884,311 @@ export default function PlaylistEditor() {
                     {selectedItem.type === 'campaign' ? (
                       <div className="flex flex-col items-center gap-4 text-center">
                         <div 
-                          className="w-24 h-24 rounded-3xl flex items-center justify-center border-4"
+                          className="w-32 h-32 rounded-[2rem] flex items-center justify-center border-4 shadow-[0_0_30px_rgba(var(--campaign-color-rgb),0.2)]"
                           style={{ 
                             backgroundColor: `${selectedItem.campaign?.color || '#085CF0'}10`,
                             borderColor: `${selectedItem.campaign?.color || '#085CF0'}`,
-                            color: selectedItem.campaign?.color || '#085CF0'
-                          }}
+                            color: selectedItem.campaign?.color || '#085CF0',
+                          } as any}
                         >
-                          <Megaphone className="h-10 w-10" />
+                          <Megaphone className="h-14 w-14" />
                         </div>
                         <div>
-                          <h3 className="text-xl font-bold text-white">{selectedItem.campaign?.name}</h3>
-                          <p className="text-sm text-white/40 mt-1 uppercase tracking-widest font-mono">
-                            Campanha • Prioridade {selectedItem.priority}
-                          </p>
+                          <h3 className="text-2xl font-bold text-white tracking-tight">{selectedItem.campaign?.name}</h3>
+                          <div className="flex items-center justify-center gap-3 mt-2">
+                            <Badge variant="outline" className="text-[10px] border-white/10 bg-white/5 uppercase tracking-widest px-3">
+                              Campanha
+                            </Badge>
+                            <Badge variant="outline" className="text-[10px] border-[#085CF0]/30 bg-[#085CF0]/10 text-[#085CF0] uppercase tracking-widest px-3">
+                              Prioridade {selectedItem.priority}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
                     ) : (
-                      <div className="relative h-full flex items-center justify-center">
-                        {selectedItem.media?.type === 'video' ? <Video className="h-16 w-16 text-white/10 absolute" /> : <ImageIcon className="h-16 w-16 text-white/10 absolute" />}
-                        <img 
-                          src={selectedItem.media?.thumbnail_url || selectedItem.media?.file_url} 
-                          className="max-h-full max-w-full rounded shadow-2xl relative z-10" 
-                        />
+                      <div className="relative h-full w-full flex items-center justify-center">
+                        <div className="absolute inset-0 flex items-center justify-center opacity-[0.03]">
+                          {selectedItem.media?.type === 'video' ? <Video className="h-64 w-64 text-white" /> : <ImageIcon className="h-64 w-64 text-white" />}
+                        </div>
+                        <div className="relative z-10 max-h-full max-w-full aspect-video rounded-xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/5 bg-black">
+                           <img 
+                            src={selectedItem.media?.thumbnail_url || selectedItem.media?.file_url} 
+                            className="w-full h-full object-contain" 
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
 
                   {selectedItem.type === 'campaign' && (
-                    <div className="h-64 border-t border-white/10 bg-[#0c0c0e]/80 backdrop-blur-md flex flex-col">
-                      <div className="h-10 border-b border-white/5 flex items-center justify-between px-6 shrink-0 bg-black/20">
-                        <div className="flex items-center gap-2">
-                          <Layers className="h-3 w-3 text-white/40" />
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">Conteúdos da Campanha</span>
+                    <div className="h-[300px] border-t border-white/10 bg-[#0c0c0e]/80 backdrop-blur-md flex flex-col">
+                      <div className="h-12 border-b border-white/5 flex items-center justify-between px-6 shrink-0 bg-black/20">
+                        <div className="flex items-center gap-3">
+                          <Layers className="h-4 w-4 text-[#085CF0]" />
+                          <span className="text-xs font-bold uppercase tracking-[0.2em] text-white/80">Conteúdos da Campanha</span>
+                          <Badge variant="secondary" className="h-5 px-2 text-[10px] bg-white/10">{campaignContents?.length || 0}</Badge>
                         </div>
-                        <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-2 text-[#085CF0] hover:bg-[#085CF0]/10">
-                          <Plus className="h-3 w-3" /> Adicionar Mídia
-                        </Button>
                       </div>
                       <CampaignDropZone>
                         <ScrollArea className="flex-1">
-                        <div className="p-4 flex gap-3">
-                          {campaignContents?.map((content: any, idx: number) => (
-                            <div key={content.id} className="relative group shrink-0 w-32">
-                              <div className="aspect-video rounded-lg overflow-hidden border border-white/10 bg-black/40 relative">
-                                <img src={content.media?.thumbnail_url || content.media?.file_url} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
-                                <div className="absolute top-1 left-1 bg-black/60 px-1 rounded text-[8px] font-mono text-white">{idx + 1}</div>
-                                <button 
-                                  onClick={async (e) => {
-                                    e.stopPropagation();
-                                    const { error } = await supabase.from("campaign_contents").delete().eq("id", content.id);
-                                    if (error) toast.error("Erro ao remover");
-                                    else { toast.success("Removido"); refetchCampaignContents(); }
-                                  }}
-                                  className="absolute top-1 right-1 h-5 w-5 rounded bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </button>
+                          <div className="p-6 flex gap-4">
+                            {campaignContents?.map((content: any, idx: number) => (
+                              <div key={content.id} className="relative group shrink-0 w-40 animate-in fade-in slide-in-from-right-4 duration-300">
+                                <div className="aspect-video rounded-xl overflow-hidden border border-white/5 bg-black/40 relative shadow-lg group-hover:border-[#085CF0]/50 transition-all">
+                                  <img src={content.media?.thumbnail_url || content.media?.file_url} className="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
+                                  <div className="absolute top-2 left-2 bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold text-white border border-white/10">{idx + 1}</div>
+                                  <button 
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      const { error } = await supabase.from("campaign_contents").delete().eq("id", content.id);
+                                      if (error) toast.error("Erro ao remover");
+                                      else { toast.success("Removido"); refetchCampaignContents(); }
+                                    }}
+                                    className="absolute top-2 right-2 h-7 w-7 rounded-xl bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-xl hover:scale-110 active:scale-95"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
+                                <p className="text-[10px] font-bold text-white/60 mt-3 truncate px-1 group-hover:text-white transition-colors">{content.media?.name}</p>
                               </div>
-                              <p className="text-[9px] font-bold text-white/60 mt-2 truncate">{content.media?.name}</p>
-                            </div>
-                          ))}
-                          {(!campaignContents || campaignContents.length === 0) && (
-                            <div className="w-full h-32 border-2 border-dashed border-white/5 rounded-xl flex flex-col items-center justify-center text-white/10 gap-2">
-                              <Plus className="h-6 w-6" />
-                              <span className="text-[10px] font-bold uppercase">Nenhum conteúdo</span>
-                            </div>
-                          )}
-                        </div>
-                        <ScrollBar orientation="horizontal" />
-                      </ScrollArea>
-                    </CampaignDropZone>
-                  </div>
-                  )}
-
-                  <div className="h-28 bg-card/60 backdrop-blur-md border-t border-white/10 flex items-center justify-between px-6 shrink-0">
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex items-center gap-2">
-                        {selectedItem.isLocked && <Lock className="h-3 w-3 text-amber-500" />}
-                        <span className="text-xs font-bold text-white uppercase tracking-wider">
-                          {selectedItem.type === 'campaign' ? selectedItem.campaign?.name : selectedItem.media?.name}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-6">
-                        {selectedItem.type !== 'campaign' && (
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-3 w-3 text-[#085CF0]" />
-                            <input 
-                              type="number" 
-                              disabled={selectedItem.isLocked}
-                              value={selectedItem.duration} 
-                              onChange={(e) => { 
-                                const d = parseInt(e.target.value); 
-                                setSelectedItem({...selectedItem, duration: d}); 
-                                setItems(items.map(it => it.id === selectedItem.id ? {...it, duration: d} : it)); 
-                                setHasUnsavedChanges(true); 
-                              }} 
-                              className="w-16 bg-black/40 border-white/10 rounded h-8 text-xs px-2 focus:ring-1 focus:ring-[#085CF0] disabled:opacity-50 text-white" 
-                            /> 
-                            <span className="text-[10px] text-white/40 font-bold uppercase">segundos</span>
+                            ))}
+                            {(!campaignContents || campaignContents.length === 0) && (
+                              <div className="w-full h-40 border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center text-white/10 gap-3 hover:border-white/10 transition-colors">
+                                <div className="p-3 rounded-full bg-white/[0.02]">
+                                  <Plus className="h-8 w-8" />
+                                </div>
+                                <span className="text-xs font-bold uppercase tracking-widest">Arraste mídias aqui</span>
+                              </div>
+                            )}
                           </div>
-                        )}
-                        <div className="flex items-center gap-2">
-                          <Layers className="h-3 w-3 text-[#085CF0]" />
-                          <Select 
-                            disabled={selectedItem.isLocked}
-                            value={selectedItem.priority.toString()} 
-                            onValueChange={(v) => {
-                              const p = parseInt(v);
-                              setSelectedItem({...selectedItem, priority: p});
-                              setItems(items.map(it => it.id === selectedItem.id ? {...it, priority: p} : it));
-                              setHasUnsavedChanges(true);
-                            }}
-                          >
-                            <SelectTrigger className="w-20 h-8 text-xs bg-black/40 border-white/10 disabled:opacity-50 text-white">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-[#0c0c0e] border-white/10 text-white">
-                              {[1,2,3,4,5,6,7,8,9,10].map(p => (
-                                <SelectItem key={p} value={p.toString()}>P{p}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <span className="text-[10px] text-white/40 font-bold uppercase">prioridade</span>
-                        </div>
-                      </div>
+                          <ScrollBar orientation="horizontal" />
+                        </ScrollArea>
+                      </CampaignDropZone>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className={cn(
-                          "h-9 px-4 gap-2 text-xs border-white/10",
-                          selectedItem.isLocked ? "bg-amber-500/10 text-amber-500 hover:bg-amber-500/20" : "bg-white/5 text-white/60 hover:text-white"
-                        )}
-                        onClick={() => {
-                          const newLocked = !selectedItem.isLocked;
-                          setSelectedItem({...selectedItem, isLocked: newLocked});
-                          setItems(items.map(it => it.id === selectedItem.id ? {...it, isLocked: newLocked} : it));
-                          setHasUnsavedChanges(true);
-                          toast.success(newLocked ? "Conteúdo bloqueado" : "Conteúdo desbloqueado");
-                        }}
-                      >
-                        {selectedItem.isLocked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
-                        {selectedItem.isLocked ? "Desbloquear" : "Bloquear"}
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        disabled={selectedItem.isLocked}
-                        className="h-9 px-4 text-red-500 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-50" 
-                        onClick={() => removeItem(selectedItem.id)}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" /> Remover
-                      </Button>
-                    </div>
-                  </div>
+                  )}
                 </div>
               ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-white/10"><Layers className="h-24 w-24 mb-4" /><p className="text-sm font-bold uppercase tracking-widest">Playlist Vazia</p></div>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-white/5">
+                  <Monitor className="h-32 w-32 mb-6" />
+                  <p className="text-sm font-bold uppercase tracking-[0.3em]">Selecione um item</p>
+                </div>
               )}
             </div>
 
-            <div className="h-44 bg-[#0c0c0e] border border-white/5 rounded-2xl flex flex-col overflow-hidden shadow-inner shrink-0">
-              <div className="h-10 border-b border-white/5 flex items-center justify-between px-4 bg-black/20 shrink-0">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-[#085CF0] animate-pulse" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">Timeline Principal</span>
+            {/* Sidebar Controls */}
+            {selectedItem && (
+              <div className="w-80 bg-[#0c0c0e] border border-white/5 rounded-2xl flex flex-col overflow-hidden shadow-2xl animate-in slide-in-from-right-8 duration-500">
+                <div className="p-6 border-b border-white/5 bg-black/20">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-[10px] font-bold text-[#085CF0] uppercase tracking-[0.2em]">Propriedades</span>
+                    {selectedItem.isLocked && <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[9px] uppercase font-bold">Bloqueado</Badge>}
                   </div>
-                  <Separator orientation="vertical" className="h-4 bg-white/5" />
-                  <div className="flex items-center gap-3 text-[10px] text-white/40 font-mono">
+                  <h4 className="text-lg font-bold text-white leading-tight">
+                    {selectedItem.type === 'campaign' ? selectedItem.campaign?.name : selectedItem.media?.name}
+                  </h4>
+                </div>
+                
+                <ScrollArea className="flex-1">
+                  <div className="p-6 space-y-8">
+                    {/* Settings Group */}
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Configurações</Label>
+                        <div className="space-y-4 pt-2">
+                          {selectedItem.type !== 'campaign' && (
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-white/80">Duração</span>
+                                <span className="text-xs font-mono text-[#085CF0]">{selectedItem.duration}s</span>
+                              </div>
+                              <Slider 
+                                disabled={selectedItem.isLocked}
+                                value={[selectedItem.duration]} 
+                                min={1} 
+                                max={600} 
+                                step={1}
+                                onValueChange={([val]) => {
+                                  setSelectedItem({...selectedItem, duration: val});
+                                  setItems(items.map(it => it.id === selectedItem.id ? {...it, duration: val} : it));
+                                  setHasUnsavedChanges(true);
+                                }}
+                                className="py-2"
+                              />
+                            </div>
+                          )}
+                          
+                          <div className="space-y-2">
+                            <span className="text-xs font-medium text-white/80">Prioridade</span>
+                            <Select 
+                              disabled={selectedItem.isLocked}
+                              value={selectedItem.priority.toString()} 
+                              onValueChange={(v) => {
+                                const p = parseInt(v);
+                                setSelectedItem({...selectedItem, priority: p});
+                                setItems(items.map(it => it.id === selectedItem.id ? {...it, priority: p} : it));
+                                setHasUnsavedChanges(true);
+                              }}
+                            >
+                              <SelectTrigger className="w-full bg-black/40 border-white/10 text-sm h-10">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-[#0c0c0e] border-white/10 text-white">
+                                {[1,2,3,4,5,6,7,8,9,10].map(p => (
+                                  <SelectItem key={p} value={p.toString()}>Prioridade {p}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator className="bg-white/5" />
+
+                    {/* Actions Group */}
+                    <div className="space-y-4">
+                      <Label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Ações Rápidas</Label>
+                      <div className="grid grid-cols-1 gap-2">
+                        <Button 
+                          variant="outline" 
+                          className={cn(
+                            "w-full h-11 justify-start gap-3 border-white/5 font-bold text-xs uppercase tracking-widest",
+                            selectedItem.isLocked ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "bg-white/5 text-white/60"
+                          )}
+                          onClick={() => {
+                            const newLocked = !selectedItem.isLocked;
+                            setSelectedItem({...selectedItem, isLocked: newLocked});
+                            setItems(items.map(it => it.id === selectedItem.id ? {...it, isLocked: newLocked} : it));
+                            setHasUnsavedChanges(true);
+                            toast.success(newLocked ? "Conteúdo bloqueado" : "Conteúdo desbloqueado");
+                          }}
+                        >
+                          {selectedItem.isLocked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                          {selectedItem.isLocked ? "Desbloquear" : "Bloquear"}
+                        </Button>
+                        
+                        <Button 
+                          variant="ghost" 
+                          disabled={selectedItem.isLocked}
+                          className="w-full h-11 justify-start gap-3 text-red-500 hover:text-red-400 hover:bg-red-500/10 font-bold text-xs uppercase tracking-widest disabled:opacity-30" 
+                          onClick={() => removeItem(selectedItem.id)}
+                        >
+                          <Trash2 className="h-4 w-4" /> Remover
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
+          </div>
+
+            {/* Timeline Area */}
+            <div className="h-72 bg-[#0c0c0e] border-t border-white/5 flex flex-col overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.3)] shrink-0">
+              <div className="h-12 border-b border-white/5 flex items-center justify-between px-6 bg-black/20 shrink-0">
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-3">
+                    <div className="h-2 w-2 rounded-full bg-[#085CF0] shadow-[0_0_8px_rgba(8,92,240,0.8)] animate-pulse" />
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/80">Timeline do Editor</span>
+                  </div>
+                  <Separator orientation="vertical" className="h-4 bg-white/10" />
+                  <div className="flex items-center gap-3 text-[10px] text-white/60 font-mono">
                     <span className="text-[#085CF0] font-bold">{currentTime.toFixed(1)}s</span>
                     <span className="opacity-20">/</span>
                     <span>{totalDuration?.toFixed(1) || '0.0'}s</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-7 w-7 text-white/60 hover:text-[#085CF0] hover:bg-[#085CF0]/10" 
-                    onClick={() => setIsPlaying(!isPlaying)}
+                <div className="flex items-center gap-4">
+                   <div className="flex items-center gap-1 bg-black/40 rounded-lg p-1">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-white/60 hover:text-[#085CF0] hover:bg-white/5" 
+                      onClick={() => setIsPlaying(!isPlaying)}
+                    >
+                      {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 fill-current" />}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              
+              <ScrollArea className="flex-1">
+                <TimelineDropZone>
+                  <div 
+                    className="h-full flex items-center" 
+                    ref={timelineScrollRef} 
+                    onClick={handleTimelineClick}
                   >
-                    {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 fill-current" />}
-                  </Button>
-                </div>
-              </div>
-              <div className="flex-1 overflow-x-auto relative scrollbar-thin scrollbar-thumb-white/10" ref={timelineScrollRef} onClick={handleTimelineClick}>
-                <div className="h-full relative px-6 flex items-center" style={{ width: Math.max(800, (totalDuration || 0) * PIXELS_PER_SECOND + 100) }}>
-                  <div className="absolute top-0 bottom-0 w-0.5 bg-[#085CF0] z-30 pointer-events-none" style={{ left: ((currentTime || 0) * PIXELS_PER_SECOND) + 24 }} />
-                  <div className="flex gap-2">
-                    <SortableContext items={items.map(it => it.id)} strategy={horizontalListSortingStrategy}>
-                      {items.map((item, index) => (
-                        <div key={item.id} className="dnd-item">
-                          <SortableItem 
-                            item={item} 
-                            index={index} 
-                            isSelected={selectedItem?.id === item.id} 
-                            onSelect={setSelectedItem} 
-                          />
-                        </div>
-                      ))}
-                    </SortableContext>
-                </div>
-              </div>
+                    {/* Playhead */}
+                    <div 
+                      className="absolute top-0 bottom-0 w-[2px] bg-[#085CF0] z-30 pointer-events-none shadow-[0_0_15px_rgba(8,92,240,0.5)] transition-all duration-100 ease-linear" 
+                      style={{ left: ((currentTime || 0) * PIXELS_PER_SECOND) + 32 }} 
+                    />
+                    
+                    <div className="flex gap-4 items-center">
+                      <SortableContext items={items.map(it => it.id)} strategy={horizontalListSortingStrategy}>
+                        {items.map((item, index) => (
+                          <div key={item.id} className="dnd-item animate-in zoom-in-95 fade-in duration-300">
+                            <SortableItem 
+                              item={item} 
+                              index={index} 
+                              isSelected={selectedItem?.id === item.id} 
+                              onSelect={setSelectedItem} 
+                            />
+                          </div>
+                        ))}
+                      </SortableContext>
+                      
+                      {/* Add Item Placeholder */}
+                      <div className="w-[180px] h-[240px] border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center text-white/5 gap-3 hover:border-white/10 hover:text-white/10 transition-all">
+                         <Plus className="h-10 w-10" />
+                         <span className="text-[10px] font-bold uppercase tracking-widest">Adicionar Item</span>
+                      </div>
+                    </div>
+                  </div>
+                </TimelineDropZone>
+                <ScrollBar orientation="horizontal" className="bg-transparent" />
+              </ScrollArea>
             </div>
-          </div>
+          </main>
 
-            <DragOverlay>
-              {activeId ? (
-                activeId.toString().startsWith('library-') ? (
-                  <div className="relative">
-                    <div className="w-32 aspect-square rounded-lg overflow-hidden border-2 border-[#085CF0] bg-black shadow-2xl scale-110 opacity-80">
+          <DragOverlay dropAnimation={null}>
+            {activeId ? (
+              activeId.toString().startsWith('library-') ? (
+                <div className="relative">
+                  <div className="w-32 aspect-square rounded-2xl overflow-hidden border-2 border-[#085CF0] bg-black shadow-2xl scale-110 opacity-90 rotate-3">
+                    <img 
+                      src={medias?.find(m => `library-${m.id}` === activeId)?.thumbnail_url || medias?.find(m => `library-${m.id}` === activeId)?.file_url} 
+                      className="w-full h-full object-cover" 
+                    />
+                  </div>
+                  {selectedLibraryIds.length > 1 && selectedLibraryIds.includes(activeId.toString().replace('library-', '')) && (
+                    <div className="absolute -top-3 -right-3 h-8 w-8 rounded-full bg-[#085CF0] text-white flex items-center justify-center font-bold text-sm shadow-xl border-2 border-white animate-in zoom-in">
+                      {selectedLibraryIds.length}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="w-[180px] h-[240px] rounded-2xl border-2 border-[#085CF0] bg-[#1A1A1E] shadow-2xl flex flex-col overflow-hidden scale-105 rotate-2 opacity-90">
+                  <div className="h-32 bg-black/40 flex items-center justify-center">
+                    {items.find(it => it.id === activeId)?.type === 'campaign' ? (
+                      <Megaphone className="h-12 w-12 text-[#085CF0]" />
+                    ) : (
                       <img 
-                        src={medias?.find(m => `library-${m.id}` === activeId)?.thumbnail_url || medias?.find(m => `library-${m.id}` === activeId)?.file_url} 
+                        src={items.find(it => it.id === activeId)?.media?.thumbnail_url || items.find(it => it.id === activeId)?.media?.file_url} 
                         className="w-full h-full object-cover" 
                       />
-                    </div>
-                    {selectedLibraryIds.length > 1 && selectedLibraryIds.includes(activeId.toString().replace('library-', '')) && (
-                      <div className="absolute -top-3 -right-3 h-8 w-8 rounded-full bg-[#085CF0] text-white flex items-center justify-center font-bold text-sm shadow-xl border-2 border-white animate-in zoom-in">
-                        {selectedLibraryIds.length}
-                      </div>
                     )}
                   </div>
-                ) : (
-                  <div className="h-24 rounded-xl border-2 border-[#085CF0] bg-black/40 shadow-2xl flex items-center px-4 overflow-hidden" style={{ width: Math.max(100, (items.find(it => it.id === activeId)?.duration || 10) * PIXELS_PER_SECOND) }}>
+                  <div className="p-3">
                     <p className="text-[10px] font-bold text-white truncate">
                       {items.find(it => it.id === activeId)?.type === 'campaign' ? items.find(it => it.id === activeId)?.campaign?.name : items.find(it => it.id === activeId)?.media?.name}
                     </p>
                   </div>
-                )
-              ) : null}
-            </DragOverlay>
-            </div>
-          </main>
+                </div>
+              )
+            ) : null}
+          </DragOverlay>
         </DndContext>
       </div>
     </div>
