@@ -3,6 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 import { 
   BarChart, 
   Bar, 
@@ -31,7 +34,10 @@ import {
   CircleAlert,
   Inbox,
   LayoutGrid,
-  List
+  List,
+  Download,
+  FileSpreadsheet,
+  File
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format, subDays, startOfDay, endOfDay, parseISO } from "date-fns";
@@ -61,6 +67,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const COLORS = ["#ef4444", "#f59e0b", "#3b82f6", "#8b5cf6", "#ec4899", "#10b981"];
 
@@ -148,6 +160,78 @@ export default function QueryErrorsReport() {
     }
   };
 
+  const handleExportCSV = () => {
+    const headers = ["Dispositivo", "Serial", "Produto", "EAN", "Loja", "Erro", "Quantidade", "Última Ocorrência", "Status"];
+    const csvData = filteredList.map(item => [
+      `"${item.device_name || 'Desconhecido'}"`,
+      `"${item.device_serial}"`,
+      `"${item.product_name || 'Produto s/ Nome'}"`,
+      `"${item.ean || 'N/A'}"`,
+      `"${item.store_name || 'Loja Central'}"`,
+      `"${item.error_type}"`,
+      item.error_count,
+      `"${format(parseISO(item.last_occurrence), "dd/MM/yyyy HH:mm")}"`,
+      `"${item.status === 'active' ? 'Ativo' : 'Resolvido'}"`
+    ]);
+
+    const csvContent = [headers, ...csvData].map(e => e.join(",")).join("\n");
+    const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `relatorio-erros-${format(new Date(), "yyyy-MM-dd")}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast({ title: "Sucesso", description: "Relatório CSV exportado com sucesso." });
+  };
+
+  const handleExportExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(filteredList.map(item => ({
+      "Dispositivo": item.device_name || 'Desconhecido',
+      "Serial": item.device_serial,
+      "Produto": item.product_name || 'Produto s/ Nome',
+      "EAN": item.ean || 'N/A',
+      "Loja": item.store_name || 'Loja Central',
+      "Erro": item.error_type,
+      "Quantidade": item.error_count,
+      "Última Ocorrência": format(parseISO(item.last_occurrence), "dd/MM/yyyy HH:mm"),
+      "Status": item.status === 'active' ? 'Ativo' : 'Resolvido'
+    })));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Erros de Consulta");
+    XLSX.writeFile(workbook, `relatorio-erros-${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+    toast({ title: "Sucesso", description: "Relatório Excel exportado com sucesso." });
+  };
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Relatório de Erros de Consulta de Produtos", 14, 15);
+    doc.setFontSize(10);
+    doc.text(`Gerado em: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, 14, 22);
+    
+    const tableColumn = ["Dispositivo", "Produto", "Erro", "Qtd", "Última Ocorrência"];
+    const tableRows = filteredList.map(item => [
+      item.device_name || item.device_serial,
+      item.product_name || item.ean,
+      item.error_type,
+      item.error_count,
+      format(parseISO(item.last_occurrence), "dd/MM/yy HH:mm")
+    ]);
+
+    (doc as any).autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 25,
+      styles: { fontSize: 8 },
+      headStyles: { fillStyle: 'f', fillColor: [59, 130, 246] }
+    });
+    
+    doc.save(`relatorio-erros-${format(new Date(), "yyyy-MM-dd")}.pdf`);
+    toast({ title: "Sucesso", description: "Relatório PDF exportado com sucesso." });
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -201,10 +285,28 @@ export default function QueryErrorsReport() {
               <RefreshCw className="h-4 w-4" />
             </Button>
             
-            <Button className="bg-gradient-primary shadow-glow h-9 gap-2">
-              <FileText className="h-4 w-4" />
-              Exportar
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="bg-gradient-primary shadow-glow h-9 gap-2">
+                  <Download className="h-4 w-4" />
+                  Exportar
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={handleExportCSV} className="gap-2 cursor-pointer">
+                  <FileText className="h-4 w-4 text-blue-500" />
+                  Exportar para CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportExcel} className="gap-2 cursor-pointer">
+                  <FileSpreadsheet className="h-4 w-4 text-green-500" />
+                  Exportar para Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportPDF} className="gap-2 cursor-pointer">
+                  <File className="h-4 w-4 text-red-500" />
+                  Exportar para PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         }
       />
