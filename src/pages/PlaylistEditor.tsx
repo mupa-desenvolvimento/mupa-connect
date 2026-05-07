@@ -118,7 +118,8 @@ const DEFAULT_APPEARANCE_CONFIG = {
   transition_type: "fade",
   transition_duration: 500,
   footer: { enabled: false, text: "Consulte o preço aqui", background_color: "#000000AA", text_color: "#FFFFFF", height: 60 },
-  logo: { enabled: false, url: "", position: "top-left", size: 80, opacity: 1 }
+  logo: { enabled: false, url: "", position: "top-left", size: 80, opacity: 1 },
+  custom_preview_url: "https://qtbkvshbmqlszncxlcuc.supabase.co/storage/v1/object/public/dsl-uploads/kqrRuPz304ckV2bn5HmQpveeQQo1/b19f4132-ca7d-4c68-8eec-d7645111e6f0.png"
 };
 
 const normalizeAppearanceConfig = (config?: any) => ({
