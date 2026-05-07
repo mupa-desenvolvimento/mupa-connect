@@ -254,7 +254,7 @@ const SortableItem = ({ item, index, isSelected, onSelect, timelineMode = false 
   );
 };
 
-const DraggableMediaItem = ({ media, onClick }: any) => {
+const DraggableMediaItem = ({ media, onClick, isSelected, onToggleSelect }: any) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `library-${media.id}`,
     data: {
@@ -272,24 +272,46 @@ const DraggableMediaItem = ({ media, onClick }: any) => {
     <div 
       ref={setNodeRef} 
       style={style}
-      {...listeners} 
-      {...attributes}
       className={cn(
-        "relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer border border-white/10 hover:border-[#085CF0] group transition-all",
+        "relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer border transition-all group",
+        isSelected ? "border-[#085CF0] ring-2 ring-[#085CF0]/20" : "border-white/10 hover:border-[#085CF0]",
         isDragging && "opacity-50 ring-2 ring-[#085CF0] z-50"
       )}
-      onClick={() => onClick(media.id)}
+      onClick={(e) => {
+        if (e.shiftKey || e.ctrlKey || e.metaKey) {
+          onToggleSelect(media.id);
+        } else {
+          onClick(media.id);
+        }
+      }}
     >
       <img src={media.thumbnail_url || media.file_url} className="w-full h-full object-cover" />
       <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
-      <div className="absolute bottom-1 left-1 right-1 text-[10px] truncate bg-black/60 px-1 rounded font-bold text-white/90">
+      
+      <div 
+        {...listeners} 
+        {...attributes}
+        className="absolute inset-0 z-10"
+      />
+
+      <div className="absolute top-1 right-1 z-20">
+        <div 
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleSelect(media.id);
+          }}
+          className={cn(
+            "h-4 w-4 rounded border flex items-center justify-center transition-colors",
+            isSelected ? "bg-[#085CF0] border-[#085CF0]" : "bg-black/40 border-white/20 hover:border-white/40"
+          )}
+        >
+          {isSelected && <CheckCircle2 className="h-3 w-3 text-white" />}
+        </div>
+      </div>
+
+      <div className="absolute bottom-1 left-1 right-1 text-[10px] truncate bg-black/60 px-1 rounded font-bold text-white/90 z-20">
         {media.name}
       </div>
-      {isDragging && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#085CF0]/20">
-          <Plus className="h-6 w-6 text-white" />
-        </div>
-      )}
     </div>
   );
 };
@@ -341,6 +363,7 @@ export default function PlaylistEditor() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [debugData, setDebugData] = useState<any>(null);
   const [showDebug, setShowDebug] = useState(false);
+  const [selectedLibraryIds, setSelectedLibraryIds] = useState<string[]>([]);
   const [mediaSearch, setMediaSearch] = useState("");
   const [appearanceConfig, setAppearanceConfig] = useState<any>(DEFAULT_APPEARANCE_CONFIG);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -522,7 +545,13 @@ export default function PlaylistEditor() {
     // Handle library to campaign drop
     if (over.id === 'campaign-drop-zone' && active.data.current?.type === 'library-media') {
       const mediaId = active.data.current.mediaId;
-      addItem(mediaId);
+      
+      // If the dragged item is part of the selection, add all selected
+      if (selectedLibraryIds.includes(mediaId)) {
+        addMultipleItems(selectedLibraryIds);
+      } else {
+        addItem(mediaId);
+      }
       return;
     }
 
@@ -562,6 +591,50 @@ export default function PlaylistEditor() {
     const newItems = [...items, newItem]; setItems(newItems); setSelectedItem(newItem); setHasUnsavedChanges(true); toast.success(`${media.name} adicionado`);
   };
 
+  const addMultipleItems = async (mediaIds: string[]) => {
+    if (mediaIds.length === 0) return;
+    
+    if (selectedItem?.type === 'campaign') {
+      const contentsToInsert = mediaIds.map((mediaId, index) => ({
+        campaign_id: selectedItem.campaignId,
+        media_id: mediaId,
+        tenant_id: tenantId,
+        position: (campaignContents?.length || 0) + index + 1,
+        is_active: true
+      }));
+
+      const { error } = await supabase.from("campaign_contents").insert(contentsToInsert);
+      
+      if (error) {
+        toast.error("Erro ao adicionar itens à campanha");
+      } else {
+        toast.success(`${mediaIds.length} itens adicionados à campanha ${selectedItem.campaign?.name}`);
+        setSelectedLibraryIds([]);
+        refetchCampaignContents();
+      }
+      return;
+    }
+
+    // Adding to regular playlist
+    const newPlaylistItems: EditorPlaylistItem[] = mediaIds.map(mediaId => {
+      const media = medias?.find(m => m.id === mediaId);
+      return {
+        id: `temp-${Date.now()}-${Math.random()}`,
+        mediaId: mediaId,
+        duration: media?.duration || 10,
+        priority: 1,
+        type: media?.type === 'video' ? 'video' : 'image',
+        media: media
+      };
+    });
+
+    const newItems = [...items, ...newPlaylistItems];
+    setItems(newItems);
+    setSelectedLibraryIds([]);
+    setHasUnsavedChanges(true);
+    toast.success(`${mediaIds.length} itens adicionados`);
+  };
+
   const removeItem = (idToRemove: string) => {
     const newItems = items.filter(item => item.id !== idToRemove); setItems(newItems);
     if (selectedItem?.id === idToRemove) setSelectedItem(newItems.length > 0 ? newItems[0] : null);
@@ -599,13 +672,56 @@ export default function PlaylistEditor() {
         >
           <aside className="w-80 border-r border-white/5 bg-[#0c0c0e] flex flex-col z-40 overflow-hidden">
             <Tabs defaultValue="media" className="flex-1 flex flex-col h-full overflow-hidden">
-              <div className="p-4 shrink-0"><TabsList className="grid w-full grid-cols-2 bg-black/40"><TabsTrigger value="media" className="text-[10px] gap-2">Mídias</TabsTrigger><TabsTrigger value="appearance" className="text-[10px] gap-2">Aparência</TabsTrigger></TabsList></div>
+              <div className="p-4 space-y-4 shrink-0">
+                <TabsList className="grid w-full grid-cols-2 bg-black/40"><TabsTrigger value="media" className="text-[10px] gap-2">Mídias</TabsTrigger><TabsTrigger value="appearance" className="text-[10px] gap-2">Aparência</TabsTrigger></TabsList>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/40" />
+                    <Input 
+                      placeholder="Buscar mídias..." 
+                      className="h-8 pl-8 text-[10px] bg-black/40 border-white/5" 
+                      value={mediaSearch}
+                      onChange={(e) => setMediaSearch(e.target.value)}
+                    />
+                  </div>
+                  {selectedLibraryIds.length > 0 && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 px-2 text-[10px] text-red-500 hover:bg-red-500/10"
+                      onClick={() => setSelectedLibraryIds([])}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+                {selectedLibraryIds.length > 0 && (
+                  <div className="bg-[#085CF0]/10 border border-[#085CF0]/30 rounded-lg p-2 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-[#085CF0]">
+                      {selectedLibraryIds.length} selecionados
+                    </span>
+                    <Button 
+                      size="sm" 
+                      className="h-6 px-2 text-[9px] bg-[#085CF0] hover:bg-[#085CF0]/80"
+                      onClick={() => addMultipleItems(selectedLibraryIds)}
+                    >
+                      Adicionar {selectedLibraryIds.length}
+                    </Button>
+                  </div>
+                )}
+              </div>
               <TabsContent value="media" className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-3">
                 {medias?.filter(m => m.name.toLowerCase().includes(mediaSearch.toLowerCase())).map((media) => (
                   <DraggableMediaItem 
                     key={media.id} 
                     media={media} 
                     onClick={addItem} 
+                    isSelected={selectedLibraryIds.includes(media.id)}
+                    onToggleSelect={(id: string) => {
+                      setSelectedLibraryIds(prev => 
+                        prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+                      );
+                    }}
                   />
                 ))}
               </TabsContent>
@@ -832,24 +948,31 @@ export default function PlaylistEditor() {
             </div>
           </div>
 
-              <DragOverlay>
-                {activeId ? (
-                  activeId.toString().startsWith('library-') ? (
+            <DragOverlay>
+              {activeId ? (
+                activeId.toString().startsWith('library-') ? (
+                  <div className="relative">
                     <div className="w-32 aspect-square rounded-lg overflow-hidden border-2 border-[#085CF0] bg-black shadow-2xl scale-110 opacity-80">
                       <img 
                         src={medias?.find(m => `library-${m.id}` === activeId)?.thumbnail_url || medias?.find(m => `library-${m.id}` === activeId)?.file_url} 
                         className="w-full h-full object-cover" 
                       />
                     </div>
-                  ) : (
-                    <div className="h-24 rounded-xl border-2 border-[#085CF0] bg-black/40 shadow-2xl flex items-center px-4 overflow-hidden" style={{ width: Math.max(100, (items.find(it => it.id === activeId)?.duration || 10) * PIXELS_PER_SECOND) }}>
-                      <p className="text-[10px] font-bold text-white truncate">
-                        {items.find(it => it.id === activeId)?.type === 'campaign' ? items.find(it => it.id === activeId)?.campaign?.name : items.find(it => it.id === activeId)?.media?.name}
-                      </p>
-                    </div>
-                  )
-                ) : null}
-              </DragOverlay>
+                    {selectedLibraryIds.length > 1 && selectedLibraryIds.includes(activeId.toString().replace('library-', '')) && (
+                      <div className="absolute -top-3 -right-3 h-8 w-8 rounded-full bg-[#085CF0] text-white flex items-center justify-center font-bold text-sm shadow-xl border-2 border-white animate-in zoom-in">
+                        {selectedLibraryIds.length}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="h-24 rounded-xl border-2 border-[#085CF0] bg-black/40 shadow-2xl flex items-center px-4 overflow-hidden" style={{ width: Math.max(100, (items.find(it => it.id === activeId)?.duration || 10) * PIXELS_PER_SECOND) }}>
+                    <p className="text-[10px] font-bold text-white truncate">
+                      {items.find(it => it.id === activeId)?.type === 'campaign' ? items.find(it => it.id === activeId)?.campaign?.name : items.find(it => it.id === activeId)?.media?.name}
+                    </p>
+                  </div>
+                )
+              ) : null}
+            </DragOverlay>
             </div>
           </main>
         </DndContext>
