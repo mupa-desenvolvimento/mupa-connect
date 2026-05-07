@@ -77,7 +77,6 @@ export default function WhatsAppManagement() {
     }
   };
 
-  const [activeTab, setActiveTab] = useState("instances");
 
   const { data: instances, isLoading: loadingInstances } = useQuery({
     queryKey: ["whatsapp-instances"],
