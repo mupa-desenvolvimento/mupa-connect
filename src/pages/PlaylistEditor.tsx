@@ -814,25 +814,42 @@ export default function PlaylistEditor() {
               <div className="flex-1 overflow-x-auto relative scrollbar-thin scrollbar-thumb-white/10" ref={timelineScrollRef} onClick={handleTimelineClick}>
                 <div className="h-full relative px-6 flex items-center" style={{ width: Math.max(800, (totalDuration || 0) * PIXELS_PER_SECOND + 100) }}>
                   <div className="absolute top-0 bottom-0 w-0.5 bg-[#085CF0] z-30 pointer-events-none" style={{ left: ((currentTime || 0) * PIXELS_PER_SECOND) + 24 }} />
-                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} onDragStart={(e) => setActiveId(e.active.id as string)} modifiers={[restrictToHorizontalAxis]}>
-                    <div className="flex gap-2">
-                      <SortableContext items={items.map(it => it.id)} strategy={horizontalListSortingStrategy}>
-                        {items.map((item, index) => (
-                          <div key={item.id} className="dnd-item">
-                            <SortableItem 
-                              item={item} 
-                              index={index} 
-                              isSelected={selectedItem?.id === item.id} 
-                              onSelect={setSelectedItem} 
-                            />
-                          </div>
-                        ))}
-                      </SortableContext>
-                    </div>
-                  </DndContext>
+                  <div className="flex gap-2">
+                    <SortableContext items={items.map(it => it.id)} strategy={horizontalListSortingStrategy}>
+                      {items.map((item, index) => (
+                        <div key={item.id} className="dnd-item">
+                          <SortableItem 
+                            item={item} 
+                            index={index} 
+                            isSelected={selectedItem?.id === item.id} 
+                            onSelect={setSelectedItem} 
+                          />
+                        </div>
+                      ))}
+                    </SortableContext>
+                  </div>
                 </div>
               </div>
-            </div>
+
+              <DragOverlay>
+                {activeId ? (
+                  activeId.toString().startsWith('library-') ? (
+                    <div className="w-32 aspect-square rounded-lg overflow-hidden border-2 border-[#085CF0] bg-black shadow-2xl scale-110 opacity-80">
+                      <img 
+                        src={medias?.find(m => `library-${m.id}` === activeId)?.thumbnail_url || medias?.find(m => `library-${m.id}` === activeId)?.file_url} 
+                        className="w-full h-full object-cover" 
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-24 rounded-xl border-2 border-[#085CF0] bg-black/40 shadow-2xl flex items-center px-4 overflow-hidden" style={{ width: Math.max(100, (items.find(it => it.id === activeId)?.duration || 10) * PIXELS_PER_SECOND) }}>
+                      <p className="text-[10px] font-bold text-white truncate">
+                        {items.find(it => it.id === activeId)?.type === 'campaign' ? items.find(it => it.id === activeId)?.campaign?.name : items.find(it => it.id === activeId)?.media?.name}
+                      </p>
+                    </div>
+                  )
+                ) : null}
+              </DragOverlay>
+            </DndContext>
           </div>
         </main>
       </div>
