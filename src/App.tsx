@@ -152,7 +152,7 @@ const App = () => {
                     <WhatsAppManagement />
                   </ProtectedRoute>
                 } />
-import QueryErrorsReport from "./pages/QueryErrorsReport";
+
 
                 {/* COMPANY ADMIN ONLY */}
                 <Route path="/usuarios" element={
