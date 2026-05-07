@@ -337,6 +337,12 @@ export default function WhatsAppManagement() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => {
+                            setTestMessage({ ...testMessage, instanceName: instance.instance_key || instance.name });
+                            setShowTestMessageDialog(true);
+                          }}>
+                            <MessageSquare className="h-4 w-4 mr-2" /> Testar Envio
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleGenerateQR(instance.instance_key || instance.name)}>
                             <QrCode className="h-4 w-4 mr-2" /> Reconectar (QR)
                           </DropdownMenuItem>
@@ -371,7 +377,7 @@ export default function WhatsAppManagement() {
                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                    <Input placeholder="Buscar destinatário..." className="pl-10" />
                  </div>
-                 <Button className="gap-2">
+                 <Button className="gap-2" onClick={() => setShowAddRecipientDialog(true)}>
                    <Plus className="h-4 w-4" /> Novo Destinatário
                  </Button>
                </div>
@@ -409,9 +415,27 @@ export default function WhatsAppManagement() {
                            </Badge>
                          </TableCell>
                          <TableCell className="text-right">
-                           <Button variant="ghost" size="icon" className="h-8 w-8">
-                             <MoreVertical className="h-4 w-4" />
-                           </Button>
+                           <DropdownMenu>
+                             <DropdownMenuTrigger asChild>
+                               <Button variant="ghost" size="icon" className="h-8 w-8">
+                                 <MoreVertical className="h-4 w-4" />
+                               </Button>
+                             </DropdownMenuTrigger>
+                             <DropdownMenuContent align="end">
+                               <DropdownMenuItem onClick={() => {
+                                 setTestMessage({ ...testMessage, recipientPhone: recipient.phone });
+                                 setShowTestMessageDialog(true);
+                               }}>
+                                 <MessageSquare className="h-4 w-4 mr-2" /> Testar Envio
+                               </DropdownMenuItem>
+                               <DropdownMenuItem
+                                 className="text-destructive focus:text-destructive"
+                                 onClick={() => handleDeleteRecipient(recipient.id)}
+                               >
+                                 <XCircle className="h-4 w-4 mr-2" /> Remover
+                               </DropdownMenuItem>
+                             </DropdownMenuContent>
+                           </DropdownMenu>
                          </TableCell>
                        </TableRow>
                      ))}
