@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
@@ -17,7 +17,9 @@ import {
   Legend,
   Cell,
   PieChart,
-  Pie
+  Pie,
+  LineChart,
+  Line
 } from "recharts";
 import { 
   AlertTriangle, 
@@ -37,7 +39,14 @@ import {
   List,
   Download,
   FileSpreadsheet,
-  File
+  File,
+  Sparkles,
+  Brain,
+  Zap,
+  ChevronRight,
+  Loader2,
+  TrendingUp,
+  History
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format, subDays, startOfDay, endOfDay, parseISO } from "date-fns";
@@ -73,6 +82,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const COLORS = ["#ef4444", "#f59e0b", "#3b82f6", "#8b5cf6", "#ec4899", "#10b981"];
 
@@ -84,6 +102,9 @@ export default function QueryErrorsReport() {
   const [selectedErrorType, setSelectedErrorType] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
+  const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
 
   const { data: errors, isLoading, refetch } = useQuery({
     queryKey: ["product-query-errors", period, selectedStore, selectedDevice, selectedErrorType, dateRange],
@@ -113,6 +134,34 @@ export default function QueryErrorsReport() {
     },
   });
 
+  const { data: stores } = useQuery({
+    queryKey: ["filter-stores-errors"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_query_errors")
+        .select("store_id, store_name")
+        .not("store_id", "is", null);
+      
+      if (error) return [];
+      const uniqueStores = Array.from(new Map((data as any[]).map(d => [d.store_id, d.store_name || d.store_id])).entries());
+      return uniqueStores.map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+    }
+  });
+
+  const { data: devices } = useQuery({
+    queryKey: ["filter-devices-errors"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_query_errors")
+        .select("device_serial, device_name")
+        .not("device_serial", "is", null);
+      
+      if (error) return [];
+      const uniqueDevices = Array.from(new Map((data as any[]).map(d => [d.device_serial, d.device_name || d.device_serial])).entries());
+      return uniqueDevices.map(([serial, name]) => ({ serial, name })).sort((a, b) => a.name.localeCompare(b.name));
+    }
+  });
+
   // Aggregations
   const groupedData = errors?.reduce((acc: any, curr) => {
     const key = `${curr.device_serial}-${curr.ean}-${curr.error_type}`;
@@ -130,7 +179,7 @@ export default function QueryErrorsReport() {
     return acc;
   }, {});
 
-  const aggregatedList = Object.values(groupedData || []) as any[];
+  const aggregatedList = (Object.values(groupedData || []) as any[]).sort((a, b) => b.error_count - a.error_count);
   const filteredList = aggregatedList.filter(item => 
     item.product_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.ean?.includes(searchTerm) ||
@@ -142,6 +191,62 @@ export default function QueryErrorsReport() {
     affectedProducts: new Set(errors?.map(e => e.ean)).size,
     criticalStores: new Set(errors?.filter(e => aggregatedList.find(a => a.store_id === e.store_id && a.error_count > 50)).map(e => e.store_id)).size,
     affectedDevices: new Set(errors?.map(e => e.device_serial)).size
+  };
+
+  // Rankings
+  const topProducts = [...aggregatedList]
+    .sort((a, b) => b.error_count - a.error_count)
+    .slice(0, 5);
+
+  const storesRanking = aggregatedList.reduce((acc: any, curr) => {
+    const key = curr.store_id || 'central';
+    if (!acc[key]) acc[key] = { name: curr.store_name || 'Loja Central', count: 0 };
+    acc[key].count += curr.error_count;
+    return acc;
+  }, {});
+
+  const topStores = Object.values(storesRanking)
+    .sort((a: any, b: any) => b.count - a.count)
+    .slice(0, 5) as any[];
+
+  const devicesRanking = aggregatedList.reduce((acc: any, curr) => {
+    const key = curr.device_serial;
+    if (!acc[key]) acc[key] = { name: curr.device_name || curr.device_serial, count: 0 };
+    acc[key].count += curr.error_count;
+    return acc;
+  }, {});
+
+  const topDevices = Object.values(devicesRanking)
+    .sort((a: any, b: any) => b.count - a.count)
+    .slice(0, 5) as any[];
+
+  const handleAnalyzeWithAI = async () => {
+    if (aggregatedList.length === 0) {
+      toast({ title: "Aviso", description: "Não há dados suficientes para análise." });
+      return;
+    }
+
+    setIsAiPanelOpen(true);
+    setIsAnalyzing(true);
+    setAiAnalysis(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-errors', {
+        body: { errors: aggregatedList }
+      });
+
+      if (error) throw error;
+      setAiAnalysis(data.analysis);
+    } catch (error) {
+      console.error('Error analyzing with AI:', error);
+      toast({
+        title: "Erro na Análise",
+        description: "Não foi possível completar a análise com IA no momento.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const getSeverity = (count: number) => {
@@ -247,8 +352,8 @@ export default function QueryErrorsReport() {
   return (
     <div className="space-y-6 pb-20">
       <PageHeader
-        title="Consultas com Erro"
-        description="Monitore falhas de integração e produtos não encontrados preventivamente."
+        title="Inteligência de Falhas"
+        description="Análise preventiva de falhas de consulta e erros de integração ERP."
         actions={
           <div className="flex flex-wrap gap-2">
             <div className="flex items-center gap-2">
@@ -281,10 +386,45 @@ export default function QueryErrorsReport() {
               )}
             </div>
 
+            <Select value={selectedStore} onValueChange={setSelectedStore}>
+              <SelectTrigger className="w-[140px] h-9">
+                <Store className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="Loja" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas Lojas</SelectItem>
+                {stores?.map(store => (
+                  <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={selectedDevice} onValueChange={setSelectedDevice}>
+              <SelectTrigger className="w-[160px] h-9">
+                <Monitor className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="Dispositivo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos Dispositivos</SelectItem>
+                {devices?.map(dev => (
+                  <SelectItem key={dev.serial} value={dev.serial}>{dev.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => refetch()}>
               <RefreshCw className="h-4 w-4" />
             </Button>
             
+            <Button 
+              variant="outline" 
+              className="h-9 gap-2 border-primary/30 hover:bg-primary/5 text-primary"
+              onClick={handleAnalyzeWithAI}
+            >
+              <Sparkles className="h-4 w-4" />
+              Analisar com IA
+            </Button>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button className="bg-gradient-primary shadow-glow h-9 gap-2">
@@ -311,13 +451,73 @@ export default function QueryErrorsReport() {
         }
       />
 
+      <Sheet open={isAiPanelOpen} onOpenChange={setIsAiPanelOpen}>
+        <SheetContent className="w-full sm:max-w-xl md:max-w-2xl overflow-hidden flex flex-col p-0">
+          <SheetHeader className="p-6 border-b bg-muted/20">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 grid place-items-center text-primary">
+                <Brain className="h-6 w-6" />
+              </div>
+              <div>
+                <SheetTitle className="text-xl font-display font-bold">Inky AI Analytics</SheetTitle>
+                <SheetDescription>
+                  Análise inteligente de padrões e prevenção de falhas operacionais.
+                </SheetDescription>
+              </div>
+            </div>
+          </SheetHeader>
+          
+          <ScrollArea className="flex-1 p-6">
+            {isAnalyzing ? (
+              <div className="h-full flex flex-col items-center justify-center space-y-4 pt-20">
+                <div className="relative">
+                  <Loader2 className="h-12 w-12 text-primary animate-spin" />
+                  <Sparkles className="h-5 w-5 text-accent absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+                </div>
+                <div className="text-center space-y-2">
+                  <h3 className="text-lg font-semibold">Analisando dados...</h3>
+                  <p className="text-sm text-muted-foreground max-w-xs">
+                    Nossa IA está interpretando milhares de registros para encontrar padrões e causas raiz.
+                  </p>
+                </div>
+                
+                <div className="w-full max-w-md space-y-3 pt-8">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="flex gap-3">
+                      <Skeleton className="h-4 w-4 rounded-full" />
+                      <Skeleton className="h-4 flex-1 rounded-lg" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : aiAnalysis ? (
+              <div className="prose prose-sm dark:prose-invert max-w-none pb-10">
+                <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 mb-6 flex items-start gap-3">
+                  <Zap className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <p className="text-sm text-primary m-0">
+                    Esta análise baseia-se nos logs mais recentes e padrões de comportamento do ERP e dispositivos.
+                  </p>
+                </div>
+                <div dangerouslySetInnerHTML={{ __html: aiAnalysis.replace(/\n/g, '<br/>') }} />
+              </div>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-center p-8">
+                <CircleAlert className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
+                <p className="text-muted-foreground">Ocorreu um problema ao processar a análise. Tente novamente.</p>
+                <Button variant="outline" className="mt-4" onClick={handleAnalyzeWithAI}>Tentar Novamente</Button>
+              </div>
+            )}
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
+
       {/* KPI Section */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Consultas com Erro", value: kpis.totalErrors, icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10" },
+          { label: "Total Erros", value: kpis.totalErrors, icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10" },
           { label: "Produtos Afetados", value: kpis.affectedProducts, icon: Package, color: "text-warning", bg: "bg-warning/10" },
           { label: "Lojas Críticas", value: kpis.criticalStores, icon: Store, color: "text-primary", bg: "bg-primary/10" },
-          { label: "Dispositivos Instáveis", value: kpis.affectedDevices, icon: Monitor, color: "text-accent", bg: "bg-accent/10" },
+          { label: "Dispositivos Críticos", value: kpis.affectedDevices, icon: Monitor, color: "text-accent", bg: "bg-accent/10" },
         ].map((kpi, i) => (
           <Card key={i} className="border-border/40 overflow-hidden relative group transition-all hover:shadow-lg hover:border-primary/20">
             <div className={cn("absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 rounded-full blur-2xl opacity-10", kpi.bg)} />
@@ -496,35 +696,102 @@ export default function QueryErrorsReport() {
         )}
       </div>
 
-      {/* Future Enhancements Teaser */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-border/40">
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border/40">
-          <div className="h-10 w-10 rounded-lg bg-accent/10 text-accent grid place-items-center">
-            <ArrowUpRight className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground">RANKING SEMANAL</p>
-            <p className="text-xs text-muted-foreground">Em breve</p>
-          </div>
+      {/* Rankings Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-6">
+        {/* Top Produtos */}
+        <Card className="border-border/60">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Package className="h-4 w-4 text-warning" />
+              Top Produtos com Falha
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {topProducts.map((item, idx) => (
+              <div key={idx} className="space-y-1.5">
+                <div className="flex justify-between text-xs">
+                  <span className="font-medium truncate max-w-[180px]" title={item.product_name}>{item.product_name || 'Desconhecido'}</span>
+                  <span className="text-muted-foreground font-semibold">{item.error_count} falhas</span>
+                </div>
+                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-warning transition-all" 
+                    style={{ width: `${Math.min((item.error_count / (topProducts[0]?.error_count || 1)) * 100, 100)}%` }} 
+                  />
+                </div>
+              </div>
+            ))}
+            {topProducts.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sem dados no período</p>}
+          </CardContent>
+        </Card>
+
+        {/* Top Lojas */}
+        <Card className="border-border/60">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Store className="h-4 w-4 text-primary" />
+              Top Lojas Críticas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {topStores.map((item, idx) => (
+              <div key={idx} className="space-y-1.5">
+                <div className="flex justify-between text-xs">
+                  <span className="font-medium truncate max-w-[180px]">{item.name}</span>
+                  <span className="text-muted-foreground font-semibold">{item.count} falhas</span>
+                </div>
+                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-primary transition-all" 
+                    style={{ width: `${Math.min((item.count / (topStores[0]?.count || 1)) * 100, 100)}%` }} 
+                  />
+                </div>
+              </div>
+            ))}
+            {topStores.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sem dados no período</p>}
+          </CardContent>
+        </Card>
+
+        {/* Top Dispositivos */}
+        <Card className="border-border/60">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Monitor className="h-4 w-4 text-accent" />
+              Top Dispositivos
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {topDevices.map((item, idx) => (
+              <div key={idx} className="space-y-1.5">
+                <div className="flex justify-between text-xs">
+                  <span className="font-medium truncate max-w-[180px]">{item.name}</span>
+                  <span className="text-muted-foreground font-semibold">{item.count} falhas</span>
+                </div>
+                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-accent transition-all" 
+                    style={{ width: `${Math.min((item.count / (topDevices[0]?.count || 1)) * 100, 100)}%` }} 
+                  />
+                </div>
+              </div>
+            ))}
+            {topDevices.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sem dados no período</p>}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Health Indicator Footer */}
+      <div className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border/40 mt-6">
+        <div className="h-10 w-10 rounded-full bg-success/10 text-success grid place-items-center">
+          <History className="h-5 w-5" />
         </div>
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border/40">
-          <div className="h-10 w-10 rounded-lg bg-success/10 text-success grid place-items-center">
-            <ArrowDownRight className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground">AUTOMAÇÃO WHATSAPP</p>
-            <p className="text-xs text-muted-foreground">Em breve</p>
-          </div>
+        <div className="flex-1">
+          <p className="text-sm font-semibold">Monitoramento de Saúde Operacional</p>
+          <p className="text-xs text-muted-foreground">O sistema monitora 24/7 falhas de integração para garantir a melhor experiência no PDV.</p>
         </div>
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border/40">
-          <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary grid place-items-center">
-            <ArrowUpRight className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground">IA PREDITIVA</p>
-            <p className="text-xs text-muted-foreground">Em desenvolvimento</p>
-          </div>
-        </div>
+        <Badge variant="outline" className="bg-success/5 text-success border-success/20">
+          Sistema Operacional
+        </Badge>
       </div>
     </div>
   );
