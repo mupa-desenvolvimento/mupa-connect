@@ -83,10 +83,12 @@ export default function ProductQueriesAnalytics() {
 
       // Multi-tenant filters
       if (tenantId) {
-        query = query.eq("tenant_id" as any, tenantId);
+        // @ts-ignore
+        query = query.eq("tenant_id", tenantId);
       }
       if (companyId) {
-        query = query.eq("company_id" as any, companyId);
+        // @ts-ignore
+        query = query.eq("company_id", companyId);
       }
 
       if (period === "custom" && dateRange?.from) {
@@ -123,8 +125,14 @@ export default function ProductQueriesAnalytics() {
         .select("loja")
         .not("loja", "is", null);
 
-      if (tenantId) query = query.eq("tenant_id" as any, tenantId);
-      if (companyId) query = query.eq("company_id" as any, companyId);
+      if (tenantId) {
+        // @ts-ignore
+        query = query.eq("tenant_id", tenantId);
+      }
+      if (companyId) {
+        // @ts-ignore
+        query = query.eq("company_id", companyId);
+      }
       
       const { data, error } = await query;
       if (error) return [];
