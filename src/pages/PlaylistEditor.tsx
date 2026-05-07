@@ -208,11 +208,11 @@ const SortableItem = ({ item, index, isSelected, onSelect }: any) => {
       {/* Content Info */}
       <div className="flex-1 p-3 flex flex-col justify-between relative bg-gradient-to-b from-[#1A1A1E] to-[#141417]">
         <p className="text-xs font-bold text-white/90 line-clamp-2 leading-tight">
-          {isCampaign ? campaign?.name : (media?.name || 'Sem nome')}
+          {isCampaignItem ? campaign?.name : (media?.name || 'Sem nome')}
         </p>
         
         <div className="flex items-center justify-between mt-auto pt-2">
-          {!isCampaign ? (
+          {!isCampaignItem ? (
             <div className="flex items-center gap-1.5">
               {media?.type === 'video' ? <Video className="h-3 w-3 text-white/40" /> : <ImageIcon className="h-3 w-3 text-white/40" />}
               <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest">{item.type}</span>
@@ -235,8 +235,8 @@ const SortableItem = ({ item, index, isSelected, onSelect }: any) => {
       <div 
         className="h-1.5 w-full mt-auto"
         style={{ 
-          backgroundColor: isCampaign ? (campaign?.color || '#085CF0') : 'transparent',
-          boxShadow: isCampaign ? `0 -4px 12px ${(campaign?.color || '#085CF0')}40` : 'none'
+          backgroundColor: isCampaignItem ? (campaign?.color || '#085CF0') : 'transparent',
+          boxShadow: isCampaignItem ? `0 -4px 12px ${(campaign?.color || '#085CF0')}40` : 'none'
         }}
       />
     </div>
