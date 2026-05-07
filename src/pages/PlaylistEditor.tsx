@@ -88,6 +88,9 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { handlePlaylistError } from "@/utils/error-handlers";
 import { PlaylistErrorBanner } from "@/components/PlaylistErrorBanner";
+import { StatusBadge } from "@/components/StatusBadge";
+import { CampaignEditor } from "@/components/campaigns/CampaignEditor";
+import { CampaignContentManager } from "@/components/campaigns/CampaignContentManager";
 import { format } from "date-fns";
 
 const PIXELS_PER_SECOND = 12;
@@ -305,7 +308,7 @@ const DraggableMediaItem = ({ media, onClick, isSelected, onToggleSelect }: any)
   );
 };
 
-const DraggableCampaignItem = ({ campaign, onClick }: any) => {
+const DraggableCampaignItem = ({ campaign, onClick, onEdit, onExpand }: any) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `library-campaign-${campaign.id}`,
     data: {
@@ -319,33 +322,88 @@ const DraggableCampaignItem = ({ campaign, onClick }: any) => {
     transform: CSS.Translate.toString(transform),
   } : undefined;
 
+  const now = new Date();
+  const start = campaign.start_date ? new Date(campaign.start_date) : null;
+  const end = campaign.end_date ? new Date(campaign.end_date) : null;
+  
+  let status: "active" | "scheduled" | "ended" | "offline" = "offline";
+  if (!campaign.is_active) status = "offline";
+  else if (start && now < start) status = "scheduled";
+  else if (end && now > end) status = "ended";
+  else status = "active";
+
   return (
     <div 
       ref={setNodeRef} 
       style={style}
       className={cn(
-        "relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer border transition-all group border-white/10 hover:border-[#085CF0]",
-        isDragging && "opacity-50 ring-2 ring-[#085CF0] z-50"
+        "relative rounded-xl overflow-hidden bg-[#1A1A1E] border transition-all group flex flex-col",
+        isDragging ? "opacity-50 ring-2 ring-[#085CF0] z-50" : "border-white/5 hover:border-[#085CF0]/50 shadow-sm"
       )}
-      onClick={() => onClick(campaign.id)}
     >
-      <div className="w-full h-full flex items-center justify-center relative overflow-hidden bg-black/40">
-        <div 
-          className="absolute inset-0 opacity-10"
-          style={{ backgroundColor: campaign.color || '#085CF0' }}
-        />
-        <Megaphone className="h-8 w-8 relative z-10" style={{ color: campaign.color || '#085CF0' }} />
-      </div>
+      <div className="h-1 w-full shrink-0" style={{ backgroundColor: campaign.color || '#085CF0' }} />
       
+      <div className="p-3 flex flex-col gap-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <h4 className="text-[11px] font-bold text-white truncate group-hover:text-[#085CF0] transition-colors" title={campaign.name}>
+              {campaign.name}
+            </h4>
+            <div className="flex items-center gap-1.5 mt-1">
+              <div className="scale-75 origin-left">
+                <StatusBadge status={status} />
+              </div>
+              <Badge variant="outline" className="text-[8px] h-3.5 px-1 bg-white/5 border-none text-white/40">
+                P{campaign.priority || 0}
+              </Badge>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6 text-white/40 hover:text-white hover:bg-white/10"
+              onClick={(e) => { e.stopPropagation(); onEdit(campaign.id); }}
+            >
+              <Edit className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1.5 bg-black/20 p-2 rounded-lg border border-white/5">
+          <div className="flex items-center gap-2 text-[9px] text-white/40">
+            <Calendar className="h-3 w-3 text-[#085CF0]/70" />
+            <span>{start ? format(start, "dd MMM") : '--'} até {end ? format(end, "dd MMM") : '--'}</span>
+          </div>
+          <div className="flex items-center gap-2 text-[9px] text-white/40">
+            <Layers className="h-3 w-3 text-[#085CF0]/70" />
+            <span>{campaign.content_count || 0} conteúdos</span>
+          </div>
+        </div>
+
+        <div className="flex gap-2 mt-1">
+          <Button 
+            className="flex-1 h-7 text-[10px] font-bold bg-[#085CF0] hover:bg-[#085CF0]/80 gap-1.5"
+            onClick={() => onClick(campaign)}
+          >
+            <Plus className="h-3 w-3" /> Adicionar
+          </Button>
+          <Button 
+            variant="outline"
+            className="h-7 w-7 p-0 border-white/10 hover:bg-white/5"
+            onClick={() => onExpand(campaign.id)}
+          >
+            <Eye className="h-3 w-3 text-white/40" />
+          </Button>
+        </div>
+      </div>
+
       <div 
         {...listeners} 
         {...attributes}
-        className="absolute inset-0 z-10"
+        className="absolute top-0 right-0 left-0 h-8 cursor-grab active:cursor-grabbing z-10"
       />
-
-      <div className="absolute bottom-1 left-1 right-1 text-[10px] truncate bg-black/60 px-1 rounded font-bold text-white/90 z-20">
-        {campaign.name}
-      </div>
     </div>
   );
 };
@@ -435,20 +493,42 @@ export default function PlaylistEditor() {
 
   const totalDuration = useMemo(() => items.reduce((acc, it) => acc + it.duration, 0), [items]);
 
-  const { data: allCampaigns } = useQuery({
+  const { data: allCampaigns, refetch: refetchCampaigns } = useQuery({
     queryKey: ["all-campaigns", contextId],
     queryFn: async () => {
       if (!contextId) return [];
-      const { data, error } = await supabase
+      
+      const { data: campaigns, error } = await supabase
         .from("campaigns")
-        .select("*")
+        .select(`
+          *,
+          content_count:campaign_contents(count)
+        `)
         .or(`company_id.eq.${contextId},tenant_id.eq.${contextId}`)
-        .eq("is_active", true);
+        .eq("is_active", true)
+        .order("priority", { ascending: false });
+
       if (error) throw error;
-      return data;
+      
+      return campaigns.map(c => ({
+        ...c,
+        content_count: c.content_count?.[0]?.count || 0
+      }));
     },
     enabled: !!contextId
   });
+
+  const [searchCampaignQuery, setSearchCampaignQuery] = useState("");
+  const [editingCampaignId, setEditingCampaignId] = useState<string | null>(null);
+  const [expandedCampaignId, setExpandedCampaignId] = useState<string | null>(null);
+
+  const filteredLibraryCampaigns = useMemo(() => {
+    if (!allCampaigns) return [];
+    return allCampaigns.filter(c => 
+      c.name.toLowerCase().includes(searchCampaignQuery.toLowerCase()) ||
+      (c.description?.toLowerCase().includes(searchCampaignQuery.toLowerCase()))
+    );
+  }, [allCampaigns, searchCampaignQuery]);
 
   const { data: campaignLinks } = useQuery({
     queryKey: ["playlist-campaigns", id],
@@ -844,14 +924,48 @@ export default function PlaylistEditor() {
                   ))}
                 </TabsContent>
 
-                <TabsContent value="campaigns" className="h-full m-0 p-4 overflow-y-auto grid grid-cols-2 gap-3 pb-20">
-                  {allCampaigns?.map((campaign) => (
-                    <DraggableCampaignItem 
-                      key={campaign.id} 
-                      campaign={campaign} 
-                      onClick={addCampaignToPlaylist} 
-                    />
-                  ))}
+                <TabsContent value="campaigns" className="h-full m-0 p-4 overflow-y-auto flex flex-col gap-3 pb-20">
+                  <div className="flex flex-col gap-3">
+                    {filteredLibraryCampaigns?.map((campaign) => (
+                      <React.Fragment key={campaign.id}>
+                        <DraggableCampaignItem 
+                          campaign={campaign} 
+                          onClick={addCampaignToPlaylist} 
+                          onEdit={setEditingCampaignId}
+                          onExpand={(cid: string) => setExpandedCampaignId(expandedCampaignId === cid ? null : cid)}
+                        />
+                        <AnimatePresence>
+                          {expandedCampaignId === campaign.id && (
+                            <motion.div 
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden bg-black/40 rounded-xl border border-white/5"
+                            >
+                              <div className="p-3">
+                                <CampaignContentManager campaignId={campaign.id} />
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </React.Fragment>
+                    ))}
+
+                    {filteredLibraryCampaigns?.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
+                        <Layers className="h-10 w-10 text-white/5" />
+                        <p className="text-xs text-white/40">Nenhuma campanha encontrada</p>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-8 text-[10px] border-white/10"
+                          onClick={() => setEditingCampaignId("new")}
+                        >
+                          Criar Campanha
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="appearance" className="h-full m-0 p-4 space-y-4">
@@ -1033,9 +1147,34 @@ export default function PlaylistEditor() {
               </div>
             )}
           </div>
+          
+          {editingCampaignId && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+              <div className="w-full max-w-5xl h-[90vh] shadow-2xl relative">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute -top-12 right-0 text-white/60 hover:text-white"
+                  onClick={() => {
+                    setEditingCampaignId(null);
+                    refetchCampaigns();
+                  }}
+                >
+                  <X className="h-6 w-6" />
+                </Button>
+                <CampaignEditor 
+                  campaignId={editingCampaignId === "new" ? null : editingCampaignId} 
+                  onClose={() => {
+                    setEditingCampaignId(null);
+                    refetchCampaigns();
+                  }} 
+                />
+              </div>
+            </div>
+          )}
+        </main>
 
-            {/* Timeline Area */}
-            <div className="h-72 bg-[#0c0c0e] border-t border-white/5 flex flex-col overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.3)] shrink-0">
+        <div className="h-72 bg-[#0c0c0e] border-t border-white/5 flex flex-col overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.3)] shrink-0">
               <div className="h-12 border-b border-white/5 flex items-center justify-between px-6 bg-black/20 shrink-0">
                 <div className="flex items-center gap-6">
                   <div className="flex items-center gap-3">
