@@ -342,8 +342,6 @@ export default function QueryErrorsReport() {
     try {
       const doc = new jsPDF();
       
-      const logoUrl = '/logo.svg';
-      
       doc.setFont("helvetica", "bold");
       doc.setFontSize(22);
       doc.setTextColor(59, 130, 246);
