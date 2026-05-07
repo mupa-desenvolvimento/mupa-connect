@@ -249,9 +249,10 @@ export default function CampaignsPage() {
                   <tbody className="divide-y">
                     {filteredCampaigns.map(c => (
                       <tr key={c.id} className="hover:bg-muted/10">
-                        <td className="px-4 py-3 font-bold flex items-center gap-2">
-
-                        <td className="px-4 py-3 font-mono">{format(new Date(c.start_date), "dd/MM")} - {format(new Date(c.end_date), "dd/MM")}</td>
+                        <td className="px-4 py-3 font-bold flex items-center gap-2 text-foreground">
+                          <div className="h-8 w-1.5 rounded-full shrink-0" style={{ backgroundColor: c.color || '#9b87f5' }} />
+                          <span className="truncate">{c.name}</span>
+                        </td>
                         <td className="px-4 py-3 font-mono">{c.start_time.substring(0,5)} - {c.end_time.substring(0,5)}</td>
                         <td className="px-4 py-3"><Badge variant="outline">P{c.priority}</Badge></td>
                         <td className="px-4 py-3"><StatusBadge status={c.is_active ? "online" : "offline"} /></td>
