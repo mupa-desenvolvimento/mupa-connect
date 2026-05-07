@@ -1148,7 +1148,6 @@ export default function PlaylistEditor() {
             )}
           </div>
           
-          {/* Campaign Dialog Overlay */}
           {editingCampaignId && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
               <div className="w-full max-w-5xl h-[90vh] shadow-2xl relative">
