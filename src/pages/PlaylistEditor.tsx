@@ -493,20 +493,42 @@ export default function PlaylistEditor() {
 
   const totalDuration = useMemo(() => items.reduce((acc, it) => acc + it.duration, 0), [items]);
 
-  const { data: allCampaigns } = useQuery({
+  const { data: allCampaigns, refetch: refetchCampaigns } = useQuery({
     queryKey: ["all-campaigns", contextId],
     queryFn: async () => {
       if (!contextId) return [];
-      const { data, error } = await supabase
+      
+      const { data: campaigns, error } = await supabase
         .from("campaigns")
-        .select("*")
+        .select(`
+          *,
+          content_count:campaign_contents(count)
+        `)
         .or(`company_id.eq.${contextId},tenant_id.eq.${contextId}`)
-        .eq("is_active", true);
+        .eq("is_active", true)
+        .order("priority", { ascending: false });
+
       if (error) throw error;
-      return data;
+      
+      return campaigns.map(c => ({
+        ...c,
+        content_count: c.content_count?.[0]?.count || 0
+      }));
     },
     enabled: !!contextId
   });
+
+  const [searchCampaignQuery, setSearchCampaignQuery] = useState("");
+  const [editingCampaignId, setEditingCampaignId] = useState<string | null>(null);
+  const [expandedCampaignId, setExpandedCampaignId] = useState<string | null>(null);
+
+  const filteredLibraryCampaigns = useMemo(() => {
+    if (!allCampaigns) return [];
+    return allCampaigns.filter(c => 
+      c.name.toLowerCase().includes(searchCampaignQuery.toLowerCase()) ||
+      (c.description?.toLowerCase().includes(searchCampaignQuery.toLowerCase()))
+    );
+  }, [allCampaigns, searchCampaignQuery]);
 
   const { data: campaignLinks } = useQuery({
     queryKey: ["playlist-campaigns", id],
