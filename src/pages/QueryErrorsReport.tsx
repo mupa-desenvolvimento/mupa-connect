@@ -132,11 +132,20 @@ export default function QueryErrorsReport() {
 
       // Step 2: Enrich with real store and device data
       const uniqueSerials = Array.from(new Set(errorRows.map(e => e.device_serial?.trim())));
+      const uniqueStoreIds = Array.from(new Set(errorRows.map(e => e.store_id).filter(Boolean)));
       
       const { data: devicesData } = await supabase
         .from("dispositivos")
         .select("serial, apelido_interno, store_id, num_filial, stores(name)")
         .in("serial", uniqueSerials);
+
+      const { data: storesData } = await supabase
+        .from("stores")
+        .select("id, name")
+        .in("id", uniqueStoreIds);
+
+      const storeMap = new Map();
+      storesData?.forEach(s => storeMap.set(s.id, s.name));
 
       const deviceMap = new Map();
       devicesData?.forEach(d => {
@@ -145,17 +154,19 @@ export default function QueryErrorsReport() {
           deviceMap.set(serial, {
             apelido: d.apelido_interno,
             num_filial: d.num_filial,
-            store_name: (d.stores as any)?.name || (d.num_filial ? `Loja ${d.num_filial}` : null)
+            store_name: (d.stores as any)?.name || storeMap.get(d.store_id) || (d.num_filial ? `Loja ${d.num_filial}` : null)
           });
         }
       });
 
       return errorRows.map(e => {
         const enrichment = deviceMap.get(e.device_serial?.trim());
+        const storeNameFromMap = storeMap.get(e.store_id);
+        
         return {
           ...e,
           device_name: enrichment?.apelido || e.device_name,
-          store_name: enrichment?.store_name || e.store_name,
+          store_name: enrichment?.store_name || storeNameFromMap || e.store_name,
           num_filial: enrichment?.num_filial
         };
       });
@@ -166,13 +177,12 @@ export default function QueryErrorsReport() {
     queryKey: ["filter-stores-errors"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("product_query_errors")
-        .select("store_id, store_name")
-        .not("store_id", "is", null);
+        .from("stores")
+        .select("id, name")
+        .order("name");
       
       if (error) return [];
-      const uniqueStores = Array.from(new Map((data as any[]).map(d => [d.store_id, d.store_name || d.store_id])).entries());
-      return uniqueStores.map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+      return data.map(d => ({ id: d.id, name: d.name }));
     }
   });
 
