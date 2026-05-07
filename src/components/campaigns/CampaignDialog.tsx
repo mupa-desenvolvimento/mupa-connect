@@ -27,12 +27,18 @@ export function CampaignDialog({ campaignId, open, onOpenChange }: CampaignDialo
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const [initialData, setInitialData] = useState<Partial<CampaignFormValues> | undefined>();
+  const [activeTab, setActiveTab] = useState<string>("details");
+  const [currentCampaignId, setCurrentCampaignId] = useState<string | null>(campaignId || null);
 
   useEffect(() => {
-    if (open && campaignId) {
-      fetchCampaign(campaignId);
-    } else if (open && !campaignId) {
-      setInitialData(undefined);
+    if (open) {
+      setActiveTab("details");
+      setCurrentCampaignId(campaignId || null);
+      if (campaignId) {
+        fetchCampaign(campaignId);
+      } else {
+        setInitialData(undefined);
+      }
     }
   }, [open, campaignId]);
 
