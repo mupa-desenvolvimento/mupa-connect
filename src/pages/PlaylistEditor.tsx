@@ -293,32 +293,41 @@ export default function PlaylistEditor() {
 
   const campaigns = useMemo(() => campaignLinks?.map((cl: any) => ({ ...cl.campaigns, linkId: cl.id, priority: cl.priority })) || [], [campaignLinks]);
 
+  const { data: campaignContents, refetch: refetchCampaignContents } = useQuery({
+    queryKey: ["campaign-contents", selectedItem?.campaignId],
+    queryFn: async () => {
+      if (!selectedItem?.campaignId) return [];
+      const { data, error } = await supabase
+        .from("campaign_contents")
+        .select(`*, media:media_items (*)`)
+        .eq("campaign_id", selectedItem.campaignId)
+        .eq("is_active", true)
+        .order("position", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedItem?.campaignId && selectedItem.type === 'campaign'
+  });
+
   useEffect(() => {
     if (!isPlaying) return;
     let startTime = Date.now() - (currentTime * 1000);
     const updatePlayhead = () => {
       const now = Date.now();
       const elapsed = (now - startTime) / 1000;
-      if (elapsed >= totalDuration) { setCurrentTime(0); startTime = Date.now(); } else { setCurrentTime(elapsed); }
+      if (elapsed >= (totalDuration || 5)) { setCurrentTime(0); startTime = Date.now(); } else { setCurrentTime(elapsed); }
       playheadIntervalRef.current = requestAnimationFrame(updatePlayhead);
     };
     playheadIntervalRef.current = requestAnimationFrame(updatePlayhead);
     return () => { if (playheadIntervalRef.current) cancelAnimationFrame(playheadIntervalRef.current); };
   }, [isPlaying, totalDuration]);
 
-  useEffect(() => {
-    let accumulatedTime = 0;
-    for (const item of items) {
-      accumulatedTime += item.duration;
-      if (currentTime <= accumulatedTime) { setSelectedItem(item); break; }
-    }
-  }, [currentTime, items]);
-
   const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest('.dnd-item')) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left + (timelineScrollRef.current?.scrollLeft || 0);
     const time = x / PIXELS_PER_SECOND;
-    setCurrentTime(Math.min(Math.max(0, time), totalDuration));
+    setCurrentTime(Math.min(Math.max(0, time), totalDuration || 5));
   };
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
