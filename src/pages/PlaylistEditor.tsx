@@ -9,7 +9,8 @@ import {
   useSensor,
   useSensors,
   DragOverlay,
-  defaultDropAnimationSideEffects
+  defaultDropAnimationSideEffects,
+  useDraggable
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -119,6 +120,29 @@ const DEFAULT_APPEARANCE_CONFIG = {
     size: 80,
     opacity: 1
   }
+};
+
+// --- Draggable Campaign Component ---
+const DraggableCampaign = ({ campaign, children }: { campaign: any; children: React.ReactNode }) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `campaign-${campaign.id}`,
+    data: {
+      type: 'campaign',
+      campaign: campaign
+    }
+  });
+
+  const style = transform ? {
+    transform: CSS.Translate.toString(transform),
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : 1
+  } : {};
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      {children}
+    </div>
+  );
 };
 
 const normalizeAppearanceConfig = (config?: any) => ({
@@ -582,6 +606,39 @@ export default function PlaylistEditor() {
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
     setActiveId(null);
+    
+    const activeData = active.data.current;
+    
+    // Check if we're dragging a campaign
+    if (activeData?.type === 'campaign') {
+      const campaign = activeData.campaign;
+      const campaignItems = campaign.campaign_contents || [];
+      
+      if (campaignItems.length > 0) {
+        const newItems: EditorPlaylistItem[] = [...items];
+        
+        campaignItems.forEach((item: any) => {
+          if (item.media) {
+            const newItem: EditorPlaylistItem = {
+              id: `temp-${Date.now()}-${Math.random()}`,
+              mediaId: item.media.id,
+              duration: item.duration_override || item.media.duration || 10,
+              priority: 1,
+              type: item.media.type === 'video' ? 'video' : 'image',
+              media: item.media
+            };
+            newItems.push(newItem);
+          }
+        });
+        
+        setItems(newItems);
+        triggerAutoSave(newItems, playlistName);
+        toast.success(`${campaignItems.length} item(ns) da campanha "${campaign.name}" adicionado(s)!`);
+      }
+      return;
+    }
+    
+    // Original logic for sorting playlist items
     if (over && active.id !== over.id) {
       const oldIndex = items.findIndex((i) => i.id === active.id);
       const newIndex = items.findIndex((i) => i.id === over.id);
@@ -1142,57 +1199,59 @@ export default function PlaylistEditor() {
                     campaigns.map((campaign: any) => {
                       const campaignItems = campaign.campaign_contents || [];
                       return (
-                        <div key={campaign.id} className="space-y-3">
-                          <div className="flex items-center gap-2">
-                            <div 
-                              className="h-3 w-3 rounded-full"
-                              style={{ backgroundColor: campaign.color || '#9b87f5' }}
-                            />
-                            <h4 className="text-sm font-semibold text-white">
-                              {campaign.name}
-                            </h4>
-                            <Badge variant="outline" className="text-[10px] border-white/10">
-                              P{campaign.priority}
-                            </Badge>
-                          </div>
-                          
-                          {campaignItems.length > 0 ? (
-                            <div className="grid grid-cols-2 gap-2">
-                              {campaignItems.map((item: any) => (
-                                <motion.div
-                                  key={item.id}
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
-                                  className="relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer group border border-white/10 hover:border-[#085CF0]/50 transition-colors"
-                                  onClick={() => {
-                                    if (item.media) {
-                                      addItem(item.media.id);
-                                    }
-                                  }}
-                                >
-                                  <img 
-                                    src={item.media?.thumbnail_url || item.media?.file_url} 
-                                    alt={item.media?.name} 
-                                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100" 
-                                  />
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100" />
-                                  <div className="absolute bottom-1.5 left-1.5 right-1.5 opacity-0 group-hover:opacity-100 flex justify-between items-center">
-                                    <span className="text-[10px] text-white font-medium truncate">
-                                      {item.media?.name}
-                                    </span>
-                                    <Plus className="h-3 w-3 text-[#3b82f6] shrink-0" />
-                                  </div>
-                                </motion.div>
-                              ))}
+                        <DraggableCampaign key={campaign.id} campaign={campaign}>
+                          <div className="space-y-3 cursor-grab active:cursor-grabbing">
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="h-3 w-3 rounded-full"
+                                style={{ backgroundColor: campaign.color || '#9b87f5' }}
+                              />
+                              <h4 className="text-sm font-semibold text-white">
+                                {campaign.name}
+                              </h4>
+                              <Badge variant="outline" className="text-[10px] border-white/10">
+                                P{campaign.priority}
+                              </Badge>
                             </div>
-                          ) : (
-                            <p className="text-[10px] text-white/30 px-2">
-                              Nenhum item nesta campanha
-                            </p>
-                          )}
-                          
-                          <Separator className="bg-white/5" />
-                        </div>
+                            
+                            {campaignItems.length > 0 ? (
+                              <div className="grid grid-cols-2 gap-2">
+                                {campaignItems.map((item: any) => (
+                                  <motion.div
+                                    key={item.id}
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    className="relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer group border border-white/10 hover:border-[#085CF0]/50 transition-colors"
+                                    onClick={() => {
+                                      if (item.media) {
+                                        addItem(item.media.id);
+                                      }
+                                    }}
+                                  >
+                                    <img 
+                                      src={item.media?.thumbnail_url || item.media?.file_url} 
+                                      alt={item.media?.name} 
+                                      className="w-full h-full object-cover opacity-80 group-hover:opacity-100" 
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100" />
+                                    <div className="absolute bottom-1.5 left-1.5 right-1.5 opacity-0 group-hover:opacity-100 flex justify-between items-center">
+                                      <span className="text-[10px] text-white font-medium truncate">
+                                        {item.media?.name}
+                                      </span>
+                                      <Plus className="h-3 w-3 text-[#3b82f6] shrink-0" />
+                                    </div>
+                                  </motion.div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-[10px] text-white/30 px-2">
+                                Nenhum item nesta campanha
+                              </p>
+                            )}
+                            
+                            <Separator className="bg-white/5" />
+                          </div>
+                        </DraggableCampaign>
                       );
                     })
                   )}
