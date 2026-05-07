@@ -239,17 +239,19 @@ export default function WhatsAppManagement() {
   };
 
   const handleSendTestMessage = async () => {
-    if (!testMessage.instanceName || !testMessage.recipientPhone || !testMessage.message.trim()) {
+    const inputPhone = testInputRef.current?.value || testMessage.recipientPhone;
+    if (!testMessage.instanceName || !inputPhone || !testMessage.message.trim()) {
       return toast.error("Todos os campos são obrigatórios");
     }
-    if (!isValidPhone(testMessage.recipientPhone)) {
-      return toast.error("Telefone de destino inválido. Use o formato: 5511999999999");
+    const cleanedPhone = inputPhone.replace(/\D/g, "");
+    if (!isValidPhone(cleanedPhone)) {
+      return toast.error("Telefone de destino inválido. Por favor, confira o número.");
     }
     try {
       setSendingTest(true);
       await callApi("sendMessage", {
         instanceName: testMessage.instanceName,
-        phone: testMessage.recipientPhone.replace(/\D/g, ""),
+        phone: cleanedPhone,
         message: testMessage.message.trim(),
       });
       toast.success("Mensagem de teste enviada!");
