@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,8 @@ import {
   Loader2, 
   CheckCircle2, 
   AlertTriangle,
-  ExternalLink 
+  ExternalLink,
+  MessageSquare
 } from "lucide-react";
 import { toast } from "sonner";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -27,6 +28,7 @@ export default function QuickAccessPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sendingCommand, setSendingCommand] = useState<string | null>(null);
+  const [lastResponse, setLastResponse] = useState<Record<string, { status: string; type?: string; time: string }>>({});
 
   useEffect(() => {
     async function fetchData() {
