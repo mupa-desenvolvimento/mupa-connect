@@ -352,8 +352,8 @@ export default function QueryErrorsReport() {
   return (
     <div className="space-y-6 pb-20">
       <PageHeader
-        title="Consultas com Erro"
-        description="Monitore falhas de integração e produtos não encontrados preventivamente."
+        title="Inteligência de Falhas"
+        description="Análise preventiva de falhas de consulta e erros de integração ERP."
         actions={
           <div className="flex flex-wrap gap-2">
             <div className="flex items-center gap-2">
