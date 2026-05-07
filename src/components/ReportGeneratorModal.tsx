@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileText, Download, Loader2, BarChart3, Package, Monitor, Info, Store, Tag } from "lucide-react";
+import { FileText, Download, Loader2, BarChart3, Package, Monitor, Info, Store, Tag, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import jsPDF from "jspdf";
@@ -36,7 +36,7 @@ interface ReportGeneratorModalProps {
 
 
 export function ReportGeneratorModal({ isOpen, onClose, logs, filters }: ReportGeneratorModalProps) {
-  const [reportType, setReportType] = useState<"general" | "products" | "devices" | "stores" | "tags">("general");
+  const [reportType, setReportType] = useState<"general" | "products" | "devices" | "stores" | "tags" | "executive">("general");
   const [formatType, setFormatType] = useState<"pdf" | "csv">("pdf");
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -194,6 +194,73 @@ export function ReportGeneratorModal({ isOpen, onClose, logs, filters }: ReportG
           doc.save(`relatorio-etiquetas-${timestamp}.pdf`);
         }
       } 
+      else if (reportType === "executive") {
+        // Relatório Executivo Premium IA
+        const doc = new jsPDF();
+        const total = logs.length;
+        const errors = logs.filter(l => l.status_code !== 200).length;
+        const errorRate = (errors / total) * 100;
+
+        // Branding
+        doc.setFillColor(31, 41, 55);
+        doc.rect(0, 0, 210, 40, 'F');
+        
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.text("Relatório Executivo Operacional", 14, 25);
+        
+        doc.setFontSize(10);
+        doc.text(`Gerado por Inky AI em ${format(new Date(), "dd/MM/yyyy HH:mm")}`, 14, 33);
+
+        doc.setTextColor(31, 41, 55);
+        doc.setFontSize(14);
+        doc.text("Resumo da Operação", 14, 55);
+        
+        doc.setFontSize(10);
+        doc.text([
+          `Volume total de consultas processadas: ${total}`,
+          `Índice de sucesso operacional: ${(100 - errorRate).toFixed(1)}%`,
+          `Taxa de erro detectada: ${errorRate.toFixed(1)}%`,
+          `Período de análise: ${periodLabel}`
+        ], 14, 65);
+
+        // Insights IA Section
+        doc.setFillColor(243, 244, 246);
+        doc.rect(14, 90, 182, 40, 'F');
+        doc.setTextColor(79, 70, 229);
+        doc.setFontSize(12);
+        doc.text("Insights Estratégicos (Inky AI)", 20, 100);
+        
+        doc.setTextColor(55, 65, 81);
+        doc.setFontSize(9);
+        const insightText = errorRate > 10 
+          ? "Atenção: Identificamos uma taxa de erro acima do padrão operacional esperado. Recomenda-se auditoria nos dispositivos das lojas com maior incidência de falhas."
+          : "Operação Saudável: Os indicadores mostram estabilidade nos processos de consulta. O volume está distribuído conforme o esperado para o período.";
+        
+        doc.text(doc.splitTextToSize(insightText, 170), 20, 110);
+
+        // Ranking Table
+        const productCounts = logs.reduce((acc: any, log) => {
+          const key = log.ean || "N/A";
+          if (!acc[key]) acc[key] = { ean: key, desc: log.descricao_produto || "Sem descrição", count: 0 };
+          acc[key].count++;
+          return acc;
+        }, {});
+        const topProducts = Object.values(productCounts).sort((a: any, b: any) => b.count - a.count).slice(0, 5);
+
+        autoTable(doc, {
+          startY: 140,
+          head: [["Ranking", "Produto (EAN)", "Descrição", "Consultas"]],
+          body: topProducts.map((p: any, i) => [i + 1, p.ean, p.desc, p.count]),
+          headStyles: { fillColor: [79, 70, 229] }
+        });
+
+        doc.setFontSize(8);
+        doc.setTextColor(156, 163, 175);
+        doc.text("Mupa Digital - Inteligência Operacional em Tempo Real", 105, 285, { align: "center" });
+
+        doc.save(`relatorio-executivo-ia-${timestamp}.pdf`);
+      }
       else {
         // Geral
         const total = logs.length;
@@ -332,6 +399,21 @@ export function ReportGeneratorModal({ isOpen, onClose, logs, filters }: ReportG
                 <div>
                   <p className="text-sm font-medium">Ranking de Etiquetas</p>
                   <p className="text-xs text-muted-foreground">Itens físicos mais consultados</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setReportType("executive")}
+                className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-colors ${
+                  reportType === "executive" ? "bg-primary/5 border-primary shadow-sm" : "hover:bg-muted"
+                }`}
+              >
+                <div className={`p-2 rounded-md ${reportType === "executive" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                  <Sparkles className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Relatório Executivo Premium (IA)</p>
+                  <p className="text-xs text-muted-foreground">Insights, resumo executivo e branding Mupa</p>
                 </div>
               </button>
             </div>

@@ -2954,6 +2954,60 @@ export type Database = {
           },
         ]
       }
+      inky_insights: {
+        Row: {
+          analysis_type: string
+          company_id: string | null
+          created_at: string
+          executive_summary: string | null
+          filters_used: Json | null
+          id: string
+          insight_data: Json
+          period_end: string | null
+          period_start: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          analysis_type: string
+          company_id?: string | null
+          created_at?: string
+          executive_summary?: string | null
+          filters_used?: Json | null
+          id?: string
+          insight_data: Json
+          period_end?: string | null
+          period_start?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          analysis_type?: string
+          company_id?: string | null
+          created_at?: string
+          executive_summary?: string | null
+          filters_used?: Json | null
+          id?: string
+          insight_data?: Json
+          period_end?: string | null
+          period_start?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inky_insights_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inky_insights_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       instagram_posts: {
         Row: {
           caption: string | null
