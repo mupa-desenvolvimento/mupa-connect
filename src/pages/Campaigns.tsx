@@ -97,7 +97,11 @@ export default function CampaignsPage() {
         description="Gerencie campanhas temporárias, ofertas e conteúdos sazonais com precisão visual."
         actions={
           isMarketing && (
-            <Button className="bg-gradient-primary text-primary-foreground shadow-glow h-9" size="sm">
+            <Button 
+              className="bg-gradient-primary text-primary-foreground shadow-glow h-9" 
+              size="sm"
+              onClick={handleCreate}
+            >
               <Plus className="h-4 w-4 mr-2" /> Nova campanha
             </Button>
           )
