@@ -892,7 +892,7 @@ export default function PlaylistEditor() {
               {selectedItem ? (
                 <div className="flex-1 flex flex-col min-h-0">
                   <div className="flex-1 flex items-center justify-center p-8 bg-black/20 overflow-hidden">
-                    {selectedItem.type === 'campaign' ? (
+                    {selectedItem.campaignId ? (
                       <div className="flex flex-col items-center gap-4 text-center">
                         <div 
                           className="w-32 h-32 rounded-[2rem] flex items-center justify-center border-4 shadow-[0_0_30px_rgba(var(--campaign-color-rgb),0.2)]"
@@ -908,11 +908,14 @@ export default function PlaylistEditor() {
                           <h3 className="text-2xl font-bold text-white tracking-tight">{selectedItem.campaign?.name}</h3>
                           <div className="flex items-center justify-center gap-3 mt-2">
                             <Badge variant="outline" className="text-[10px] border-white/10 bg-white/5 uppercase tracking-widest px-3">
-                              Campanha
+                              Parte da Campanha
                             </Badge>
-                            <Badge variant="outline" className="text-[10px] border-[#085CF0]/30 bg-[#085CF0]/10 text-[#085CF0] uppercase tracking-widest px-3">
-                              Prioridade {selectedItem.priority}
-                            </Badge>
+                            <div className="relative h-12 w-24 rounded-lg overflow-hidden border border-white/10 bg-black">
+                               <img 
+                                src={selectedItem.media?.thumbnail_url || selectedItem.media?.file_url} 
+                                className="w-full h-full object-contain" 
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>
