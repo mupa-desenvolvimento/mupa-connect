@@ -343,28 +343,19 @@ export default function QueryErrorsReport() {
       const doc = new jsPDF();
       
       const logoUrl = '/logo.svg';
-      const img = new Image();
-      img.src = logoUrl;
-      
-      // Tentativa de adicionar a logo (apenas se carregar corretamente)
-      try {
-        doc.addImage(logoUrl, 'SVG', 14, 10, 40, 10);
-      } catch (e) {
-        // Fallback para texto se falhar
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(18);
-        doc.setTextColor(59, 130, 246);
-        doc.text("MUPA MÍDIAS", 14, 20);
-      }
       
       doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.setTextColor(59, 130, 246);
+      doc.text("MUPA", 14, 22);
+      
       doc.setFontSize(14);
       doc.setTextColor(0, 0, 0);
       doc.text("Relatório de Erros de Consulta de Produtos", 14, 32);
       
       doc.setFontSize(10);
       doc.setTextColor(100, 100, 100);
-      doc.text(`Gerado em: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, 14, 38);
+      doc.text(`Gerado em: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, 14, 40);
       
       const tableColumn = ["Dispositivo", "Produto", "Erro", "Qtd", "Última Ocorrência"];
       const tableRows = filteredList.map(item => [
