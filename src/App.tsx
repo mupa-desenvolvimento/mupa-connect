@@ -37,6 +37,7 @@ import TradeMarketingDashboard from "./pages/TradeMarketing";
 import FaceTrackDemo from "./pages/FaceTrackDemo";
 import CompanyManagement from "./pages/admin/CompanyManagement";
 import WhatsAppManagement from "./pages/admin/WhatsApp";
+import QueryErrorsReport from "./pages/QueryErrorsReport";
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -228,6 +229,8 @@ const App = () => {
                 } />
 
                 <Route path="/admin/analytics/consultas" element={<ProductQueriesAnalytics />} />
+                <Route path="/admin/analytics/erros" element={<QueryErrorsReport />} />
+
                 <Route path="/admin/monitoring" element={
                   <ProtectedRoute requireTecnico>
                     <NOCDashboard />

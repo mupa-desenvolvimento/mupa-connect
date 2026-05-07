@@ -4845,6 +4845,57 @@ export type Database = {
         }
         Relationships: []
       }
+      product_query_errors: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          device_name: string | null
+          device_serial: string
+          ean: string | null
+          error_message: string | null
+          error_type: string
+          id: string
+          product_code: string | null
+          product_name: string | null
+          status: string | null
+          store_id: string | null
+          store_name: string | null
+          tenant_id: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          device_name?: string | null
+          device_serial: string
+          ean?: string | null
+          error_message?: string | null
+          error_type: string
+          id?: string
+          product_code?: string | null
+          product_name?: string | null
+          status?: string | null
+          store_id?: string | null
+          store_name?: string | null
+          tenant_id: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          device_name?: string | null
+          device_serial?: string
+          ean?: string | null
+          error_message?: string | null
+          error_type?: string
+          id?: string
+          product_code?: string | null
+          product_name?: string | null
+          status?: string | null
+          store_id?: string | null
+          store_name?: string | null
+          tenant_id?: string
+        }
+        Relationships: []
+      }
       product_recommendations: {
         Row: {
           category: string | null
