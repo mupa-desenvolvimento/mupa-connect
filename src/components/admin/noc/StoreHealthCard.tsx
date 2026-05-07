@@ -1,9 +1,11 @@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Activity, Monitor, WifiOff, AlertTriangle, Clock } from "lucide-react";
+import { Activity, Monitor, WifiOff, AlertTriangle, Clock, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface StoreHealthCardProps {
   store: {
@@ -22,6 +24,7 @@ interface StoreHealthCardProps {
 }
 
 export function StoreHealthCard({ store }: StoreHealthCardProps) {
+  const navigate = useNavigate();
   const isCritical = store.offline > 0 || store.healthScore < 80;
 
   return (
@@ -101,6 +104,16 @@ export function StoreHealthCard({ store }: StoreHealthCardProps) {
           <div className="w-px h-6 bg-white/5" />
           <DeviceMiniStat icon={AlertTriangle} count={store.unstable} label="INST" color="text-yellow-500" />
         </div>
+
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="w-full h-8 mt-2 border-white/5 bg-white/5 hover:bg-primary hover:text-primary-foreground group/btn transition-all duration-300"
+          onClick={() => navigate(`/admin/monitoring/store/${store.id}`)}
+        >
+          <ExternalLink className="h-3 w-3 mr-2 group-hover/btn:scale-110 transition-transform" />
+          <span className="text-[10px] font-black uppercase tracking-widest">Monitorar Loja</span>
+        </Button>
       </div>
 
       {/* Footer */}
