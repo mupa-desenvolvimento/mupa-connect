@@ -342,19 +342,25 @@ export default function QueryErrorsReport() {
     try {
       const doc = new jsPDF();
       
-      // Adicionar Logo se disponível
+      const logoUrl = '/logo.svg';
       const img = new Image();
-      img.src = '/logo.svg';
+      img.src = logoUrl;
+      
+      // Tentativa de adicionar a logo (apenas se carregar corretamente)
+      try {
+        doc.addImage(logoUrl, 'SVG', 14, 10, 40, 10);
+      } catch (e) {
+        // Fallback para texto se falhar
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(18);
+        doc.setTextColor(59, 130, 246);
+        doc.text("MUPA MÍDIAS", 14, 20);
+      }
       
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(18);
-      doc.setTextColor(59, 130, 246); // Primary Color
-      doc.text("MUPA MÍDIAS", 14, 20);
-      
-      doc.setFont("helvetica", "normal");
       doc.setFontSize(14);
       doc.setTextColor(0, 0, 0);
-      doc.text("Relatório de Erros de Consulta de Produtos", 14, 30);
+      doc.text("Relatório de Erros de Consulta de Produtos", 14, 32);
       
       doc.setFontSize(10);
       doc.setTextColor(100, 100, 100);
