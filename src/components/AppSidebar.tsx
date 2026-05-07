@@ -14,8 +14,10 @@ import {
   Users,
   Activity,
   User,
-  Building2
+  Building2,
+  MessageSquare
 } from "lucide-react";
+
 import {
   Sidebar,
   SidebarContent,
