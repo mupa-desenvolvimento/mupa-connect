@@ -350,7 +350,9 @@ const DraggableCampaignItem = ({ campaign, onClick, onEdit, onExpand }: any) => 
               {campaign.name}
             </h4>
             <div className="flex items-center gap-1.5 mt-1">
-              <StatusBadge status={status} className="scale-75 origin-left" />
+              <div className="scale-75 origin-left">
+                <StatusBadge status={status} />
+              </div>
               <Badge variant="outline" className="text-[8px] h-3.5 px-1 bg-white/5 border-none text-white/40">
                 P{campaign.priority || 0}
               </Badge>
