@@ -721,8 +721,11 @@ export default function ProductQueriesAnalytics() {
                     </TableCell>
                     <TableCell className="text-center">
                       <Badge 
-                        variant={log.status_code === 200 ? "success" : "destructive"}
-                        className="text-[10px] h-5 px-1.5"
+                        variant={log.status_code === 200 ? "default" : "destructive"}
+                        className={cn(
+                          "text-[10px] h-5 px-1.5",
+                          log.status_code === 200 && "bg-success hover:bg-success/80 text-success-foreground"
+                        )}
                       >
                         {log.status_code}
                       </Badge>
