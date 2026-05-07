@@ -3,6 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 import { 
   BarChart, 
   Bar, 
@@ -31,7 +34,10 @@ import {
   CircleAlert,
   Inbox,
   LayoutGrid,
-  List
+  List,
+  Download,
+  FileSpreadsheet,
+  FileJson
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format, subDays, startOfDay, endOfDay, parseISO } from "date-fns";
@@ -61,6 +67,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const COLORS = ["#ef4444", "#f59e0b", "#3b82f6", "#8b5cf6", "#ec4899", "#10b981"];
 
@@ -201,10 +213,28 @@ export default function QueryErrorsReport() {
               <RefreshCw className="h-4 w-4" />
             </Button>
             
-            <Button className="bg-gradient-primary shadow-glow h-9 gap-2">
-              <FileText className="h-4 w-4" />
-              Exportar
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="bg-gradient-primary shadow-glow h-9 gap-2">
+                  <Download className="h-4 w-4" />
+                  Exportar
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={handleExportCSV} className="gap-2 cursor-pointer">
+                  <FileText className="h-4 w-4 text-blue-500" />
+                  Exportar para CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportExcel} className="gap-2 cursor-pointer">
+                  <FileSpreadsheet className="h-4 w-4 text-green-500" />
+                  Exportar para Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportPDF} className="gap-2 cursor-pointer">
+                  <FileJson className="h-4 w-4 text-red-500" />
+                  Exportar para PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         }
       />
