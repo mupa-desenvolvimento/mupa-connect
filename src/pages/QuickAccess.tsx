@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,7 @@ import {
   Loader2, 
   CheckCircle2, 
   AlertTriangle,
-  ExternalLink,
-  MessageSquare
+  ExternalLink 
 } from "lucide-react";
 import { toast } from "sonner";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -28,7 +27,6 @@ export default function QuickAccessPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sendingCommand, setSendingCommand] = useState<string | null>(null);
-  const [lastResponse, setLastResponse] = useState<Record<string, { status: string; type?: string; time: string }>>({});
 
   useEffect(() => {
     async function fetchData() {
@@ -80,51 +78,6 @@ export default function QuickAccessPage() {
     return isHeartbeatRecent ? "online" : "offline";
   };
 
-  const pollQueryError = async (deviceSerial: string, ean: string, startTime: string, deviceId: string) => {
-    let attempts = 0;
-    const maxAttempts = 15; // 15 segundos de polling
-    
-    const interval = setInterval(async () => {
-      attempts++;
-      
-      try {
-        const { data, error } = await supabase
-          .from("product_query_errors")
-          .select("error_message, error_type, created_at")
-          .eq("device_serial", deviceSerial)
-          .eq("ean", ean)
-          .gt("created_at", startTime)
-          .order("created_at", { ascending: false })
-          .limit(1);
-
-        if (data && data.length > 0) {
-          clearInterval(interval);
-          const errorInfo = data[0];
-          setLastResponse(prev => ({
-            ...prev,
-            [deviceId]: {
-              status: errorInfo.error_message,
-              type: errorInfo.error_type,
-              time: new Date().toLocaleTimeString()
-            }
-          }));
-          toast.error(`Resposta: ${errorInfo.error_message} (${errorInfo.error_type})`);
-        } else if (attempts >= maxAttempts) {
-          clearInterval(interval);
-          setLastResponse(prev => ({
-            ...prev,
-            [deviceId]: {
-              status: "Sem erros detectados",
-              time: new Date().toLocaleTimeString()
-            }
-          }));
-        }
-      } catch (err) {
-        console.error("Erro ao verificar status:", err);
-      }
-    }, 1000);
-  };
-
   const sendQuickCommand = async (device: any, command: string, label: string, codbar?: string) => {
     if (!device.serial) {
       toast.error("Dispositivo sem serial.");
@@ -133,7 +86,6 @@ export default function QuickAccessPage() {
 
     const commandId = `${device.id}-${command}`;
     setSendingCommand(commandId);
-    const startTime = new Date().toISOString();
 
     try {
       const timestamp = Date.now();
@@ -163,28 +115,9 @@ export default function QuickAccessPage() {
         payload: payload
       });
 
-      toast.success(`${label} enviado! Aguardando resposta...`);
-
-      if (command === "consulta_ean" && codbar) {
-        pollQueryError(device.serial, codbar, startTime, device.id);
-      } else {
-        setLastResponse(prev => ({
-          ...prev,
-          [device.id]: {
-            status: "200 OK (Enviado)",
-            time: new Date().toLocaleTimeString()
-          }
-        }));
-      }
+      toast.success(`${label} enviado com sucesso (200 OK)!`);
     } catch (err) {
       toast.error(`Falha ao enviar ${label} (Erro no servidor)`);
-      setLastResponse(prev => ({
-        ...prev,
-        [device.id]: {
-          status: "Erro no envio",
-          time: new Date().toLocaleTimeString()
-        }
-      }));
     } finally {
       setSendingCommand(null);
     }
@@ -243,25 +176,6 @@ export default function QuickAccessPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-4 pt-0 space-y-4">
-                  {lastResponse[device.id] && (
-                    <div className="bg-slate-100 rounded-lg p-3 text-xs flex flex-col gap-1 border border-slate-200 animate-in fade-in slide-in-from-top-1">
-                      <div className="flex justify-between items-center text-muted-foreground">
-                        <span className="flex items-center gap-1 font-semibold uppercase tracking-tighter">
-                          <MessageSquare className="h-3 w-3" />
-                          Último Retorno
-                        </span>
-                        <span>{lastResponse[device.id].time}</span>
-                      </div>
-                      <p className={cn(
-                        "font-mono font-medium",
-                        lastResponse[device.id].status.includes("Erro") || lastResponse[device.id].type ? "text-red-600" : "text-emerald-600"
-                      )}>
-                        {lastResponse[device.id].status}
-                        {lastResponse[device.id].type && ` (${lastResponse[device.id].type})`}
-                      </p>
-                    </div>
-                  )}
-
                   <div className="grid grid-cols-2 gap-2 pt-2">
                     <QuickButton
                       icon={ExternalLink}
