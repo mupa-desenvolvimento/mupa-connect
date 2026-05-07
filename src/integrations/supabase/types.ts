@@ -4805,45 +4805,69 @@ export type Database = {
           apelido: string | null
           codigo_etiqueta: string | null
           codigo_produto: string | null
+          company_id: string | null
           consulted_at: string | null
           created_at: string | null
           descricao_produto: string | null
           device_id: string
+          device_serial: string | null
           ean: string | null
           id: number
           link_imagem: string | null
           loja: string | null
           status_code: number | null
+          tenant_id: string | null
         }
         Insert: {
           apelido?: string | null
           codigo_etiqueta?: string | null
           codigo_produto?: string | null
+          company_id?: string | null
           consulted_at?: string | null
           created_at?: string | null
           descricao_produto?: string | null
           device_id: string
+          device_serial?: string | null
           ean?: string | null
           id?: never
           link_imagem?: string | null
           loja?: string | null
           status_code?: number | null
+          tenant_id?: string | null
         }
         Update: {
           apelido?: string | null
           codigo_etiqueta?: string | null
           codigo_produto?: string | null
+          company_id?: string | null
           consulted_at?: string | null
           created_at?: string | null
           descricao_produto?: string | null
           device_id?: string
+          device_serial?: string | null
           ean?: string | null
           id?: never
           link_imagem?: string | null
           loja?: string | null
           status_code?: number | null
+          tenant_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "product_queries_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_queries_log_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_query_errors: {
         Row: {
