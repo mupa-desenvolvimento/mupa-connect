@@ -189,6 +189,9 @@ export default function WhatsAppManagement() {
     if (!testMessage.instanceName || !testMessage.recipientPhone || !testMessage.message.trim()) {
       return toast.error("Todos os campos são obrigatórios");
     }
+    if (!isValidPhone(testMessage.recipientPhone)) {
+      return toast.error("Telefone de destino inválido. Use o formato: 5511999999999");
+    }
     try {
       setSendingTest(true);
       await callApi("sendMessage", {
