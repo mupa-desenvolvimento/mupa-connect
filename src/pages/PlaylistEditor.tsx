@@ -721,7 +721,8 @@ export default function PlaylistEditor() {
           </aside>
 
         <main className="flex-1 flex flex-col overflow-hidden relative">
-          <div className="flex-1 overflow-hidden flex flex-col p-6 gap-6">
+          <div className="flex-1 overflow-hidden flex flex-row p-6 gap-6">
+            {/* Preview Section */}
             <div className="flex-1 relative bg-black/40 rounded-2xl border border-white/5 overflow-hidden shadow-2xl flex flex-col">
               {selectedItem ? (
                 <div className="flex-1 flex flex-col min-h-0">
@@ -729,166 +730,204 @@ export default function PlaylistEditor() {
                     {selectedItem.type === 'campaign' ? (
                       <div className="flex flex-col items-center gap-4 text-center">
                         <div 
-                          className="w-24 h-24 rounded-3xl flex items-center justify-center border-4"
+                          className="w-32 h-32 rounded-[2rem] flex items-center justify-center border-4 shadow-[0_0_30px_rgba(var(--campaign-color-rgb),0.2)]"
                           style={{ 
                             backgroundColor: `${selectedItem.campaign?.color || '#085CF0'}10`,
                             borderColor: `${selectedItem.campaign?.color || '#085CF0'}`,
-                            color: selectedItem.campaign?.color || '#085CF0'
-                          }}
+                            color: selectedItem.campaign?.color || '#085CF0',
+                          } as any}
                         >
-                          <Megaphone className="h-10 w-10" />
+                          <Megaphone className="h-14 w-14" />
                         </div>
                         <div>
-                          <h3 className="text-xl font-bold text-white">{selectedItem.campaign?.name}</h3>
-                          <p className="text-sm text-white/40 mt-1 uppercase tracking-widest font-mono">
-                            Campanha • Prioridade {selectedItem.priority}
-                          </p>
+                          <h3 className="text-2xl font-bold text-white tracking-tight">{selectedItem.campaign?.name}</h3>
+                          <div className="flex items-center justify-center gap-3 mt-2">
+                            <Badge variant="outline" className="text-[10px] border-white/10 bg-white/5 uppercase tracking-widest px-3">
+                              Campanha
+                            </Badge>
+                            <Badge variant="outline" className="text-[10px] border-[#085CF0]/30 bg-[#085CF0]/10 text-[#085CF0] uppercase tracking-widest px-3">
+                              Prioridade {selectedItem.priority}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
                     ) : (
-                      <div className="relative h-full flex items-center justify-center">
-                        {selectedItem.media?.type === 'video' ? <Video className="h-16 w-16 text-white/10 absolute" /> : <ImageIcon className="h-16 w-16 text-white/10 absolute" />}
-                        <img 
-                          src={selectedItem.media?.thumbnail_url || selectedItem.media?.file_url} 
-                          className="max-h-full max-w-full rounded shadow-2xl relative z-10" 
-                        />
+                      <div className="relative h-full w-full flex items-center justify-center">
+                        <div className="absolute inset-0 flex items-center justify-center opacity-[0.03]">
+                          {selectedItem.media?.type === 'video' ? <Video className="h-64 w-64 text-white" /> : <ImageIcon className="h-64 w-64 text-white" />}
+                        </div>
+                        <div className="relative z-10 max-h-full max-w-full aspect-video rounded-xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/5 bg-black">
+                           <img 
+                            src={selectedItem.media?.thumbnail_url || selectedItem.media?.file_url} 
+                            className="w-full h-full object-contain" 
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
 
                   {selectedItem.type === 'campaign' && (
-                    <div className="h-64 border-t border-white/10 bg-[#0c0c0e]/80 backdrop-blur-md flex flex-col">
-                      <div className="h-10 border-b border-white/5 flex items-center justify-between px-6 shrink-0 bg-black/20">
-                        <div className="flex items-center gap-2">
-                          <Layers className="h-3 w-3 text-white/40" />
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">Conteúdos da Campanha</span>
+                    <div className="h-[300px] border-t border-white/10 bg-[#0c0c0e]/80 backdrop-blur-md flex flex-col">
+                      <div className="h-12 border-b border-white/5 flex items-center justify-between px-6 shrink-0 bg-black/20">
+                        <div className="flex items-center gap-3">
+                          <Layers className="h-4 w-4 text-[#085CF0]" />
+                          <span className="text-xs font-bold uppercase tracking-[0.2em] text-white/80">Conteúdos da Campanha</span>
+                          <Badge variant="secondary" className="h-5 px-2 text-[10px] bg-white/10">{campaignContents?.length || 0}</Badge>
                         </div>
-                        <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-2 text-[#085CF0] hover:bg-[#085CF0]/10">
-                          <Plus className="h-3 w-3" /> Adicionar Mídia
-                        </Button>
                       </div>
                       <CampaignDropZone>
                         <ScrollArea className="flex-1">
-                        <div className="p-4 flex gap-3">
-                          {campaignContents?.map((content: any, idx: number) => (
-                            <div key={content.id} className="relative group shrink-0 w-32">
-                              <div className="aspect-video rounded-lg overflow-hidden border border-white/10 bg-black/40 relative">
-                                <img src={content.media?.thumbnail_url || content.media?.file_url} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
-                                <div className="absolute top-1 left-1 bg-black/60 px-1 rounded text-[8px] font-mono text-white">{idx + 1}</div>
-                                <button 
-                                  onClick={async (e) => {
-                                    e.stopPropagation();
-                                    const { error } = await supabase.from("campaign_contents").delete().eq("id", content.id);
-                                    if (error) toast.error("Erro ao remover");
-                                    else { toast.success("Removido"); refetchCampaignContents(); }
-                                  }}
-                                  className="absolute top-1 right-1 h-5 w-5 rounded bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </button>
+                          <div className="p-6 flex gap-4">
+                            {campaignContents?.map((content: any, idx: number) => (
+                              <div key={content.id} className="relative group shrink-0 w-40 animate-in fade-in slide-in-from-right-4 duration-300">
+                                <div className="aspect-video rounded-xl overflow-hidden border border-white/5 bg-black/40 relative shadow-lg group-hover:border-[#085CF0]/50 transition-all">
+                                  <img src={content.media?.thumbnail_url || content.media?.file_url} className="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
+                                  <div className="absolute top-2 left-2 bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold text-white border border-white/10">{idx + 1}</div>
+                                  <button 
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      const { error } = await supabase.from("campaign_contents").delete().eq("id", content.id);
+                                      if (error) toast.error("Erro ao remover");
+                                      else { toast.success("Removido"); refetchCampaignContents(); }
+                                    }}
+                                    className="absolute top-2 right-2 h-7 w-7 rounded-xl bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-xl hover:scale-110 active:scale-95"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
+                                <p className="text-[10px] font-bold text-white/60 mt-3 truncate px-1 group-hover:text-white transition-colors">{content.media?.name}</p>
                               </div>
-                              <p className="text-[9px] font-bold text-white/60 mt-2 truncate">{content.media?.name}</p>
-                            </div>
-                          ))}
-                          {(!campaignContents || campaignContents.length === 0) && (
-                            <div className="w-full h-32 border-2 border-dashed border-white/5 rounded-xl flex flex-col items-center justify-center text-white/10 gap-2">
-                              <Plus className="h-6 w-6" />
-                              <span className="text-[10px] font-bold uppercase">Nenhum conteúdo</span>
-                            </div>
-                          )}
-                        </div>
-                        <ScrollBar orientation="horizontal" />
-                      </ScrollArea>
-                    </CampaignDropZone>
-                  </div>
-                  )}
-
-                  <div className="h-28 bg-card/60 backdrop-blur-md border-t border-white/10 flex items-center justify-between px-6 shrink-0">
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex items-center gap-2">
-                        {selectedItem.isLocked && <Lock className="h-3 w-3 text-amber-500" />}
-                        <span className="text-xs font-bold text-white uppercase tracking-wider">
-                          {selectedItem.type === 'campaign' ? selectedItem.campaign?.name : selectedItem.media?.name}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-6">
-                        {selectedItem.type !== 'campaign' && (
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-3 w-3 text-[#085CF0]" />
-                            <input 
-                              type="number" 
-                              disabled={selectedItem.isLocked}
-                              value={selectedItem.duration} 
-                              onChange={(e) => { 
-                                const d = parseInt(e.target.value); 
-                                setSelectedItem({...selectedItem, duration: d}); 
-                                setItems(items.map(it => it.id === selectedItem.id ? {...it, duration: d} : it)); 
-                                setHasUnsavedChanges(true); 
-                              }} 
-                              className="w-16 bg-black/40 border-white/10 rounded h-8 text-xs px-2 focus:ring-1 focus:ring-[#085CF0] disabled:opacity-50 text-white" 
-                            /> 
-                            <span className="text-[10px] text-white/40 font-bold uppercase">segundos</span>
+                            ))}
+                            {(!campaignContents || campaignContents.length === 0) && (
+                              <div className="w-full h-40 border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center text-white/10 gap-3 hover:border-white/10 transition-colors">
+                                <div className="p-3 rounded-full bg-white/[0.02]">
+                                  <Plus className="h-8 w-8" />
+                                </div>
+                                <span className="text-xs font-bold uppercase tracking-widest">Arraste mídias aqui</span>
+                              </div>
+                            )}
                           </div>
-                        )}
-                        <div className="flex items-center gap-2">
-                          <Layers className="h-3 w-3 text-[#085CF0]" />
-                          <Select 
-                            disabled={selectedItem.isLocked}
-                            value={selectedItem.priority.toString()} 
-                            onValueChange={(v) => {
-                              const p = parseInt(v);
-                              setSelectedItem({...selectedItem, priority: p});
-                              setItems(items.map(it => it.id === selectedItem.id ? {...it, priority: p} : it));
-                              setHasUnsavedChanges(true);
-                            }}
-                          >
-                            <SelectTrigger className="w-20 h-8 text-xs bg-black/40 border-white/10 disabled:opacity-50 text-white">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-[#0c0c0e] border-white/10 text-white">
-                              {[1,2,3,4,5,6,7,8,9,10].map(p => (
-                                <SelectItem key={p} value={p.toString()}>P{p}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <span className="text-[10px] text-white/40 font-bold uppercase">prioridade</span>
-                        </div>
-                      </div>
+                          <ScrollBar orientation="horizontal" />
+                        </ScrollArea>
+                      </CampaignDropZone>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className={cn(
-                          "h-9 px-4 gap-2 text-xs border-white/10",
-                          selectedItem.isLocked ? "bg-amber-500/10 text-amber-500 hover:bg-amber-500/20" : "bg-white/5 text-white/60 hover:text-white"
-                        )}
-                        onClick={() => {
-                          const newLocked = !selectedItem.isLocked;
-                          setSelectedItem({...selectedItem, isLocked: newLocked});
-                          setItems(items.map(it => it.id === selectedItem.id ? {...it, isLocked: newLocked} : it));
-                          setHasUnsavedChanges(true);
-                          toast.success(newLocked ? "Conteúdo bloqueado" : "Conteúdo desbloqueado");
-                        }}
-                      >
-                        {selectedItem.isLocked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
-                        {selectedItem.isLocked ? "Desbloquear" : "Bloquear"}
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        disabled={selectedItem.isLocked}
-                        className="h-9 px-4 text-red-500 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-50" 
-                        onClick={() => removeItem(selectedItem.id)}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" /> Remover
-                      </Button>
-                    </div>
-                  </div>
+                  )}
                 </div>
               ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-white/10"><Layers className="h-24 w-24 mb-4" /><p className="text-sm font-bold uppercase tracking-widest">Playlist Vazia</p></div>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-white/5">
+                  <Monitor className="h-32 w-32 mb-6" />
+                  <p className="text-sm font-bold uppercase tracking-[0.3em]">Selecione um item</p>
+                </div>
               )}
             </div>
+
+            {/* Sidebar Controls */}
+            {selectedItem && (
+              <div className="w-80 bg-[#0c0c0e] border border-white/5 rounded-2xl flex flex-col overflow-hidden shadow-2xl animate-in slide-in-from-right-8 duration-500">
+                <div className="p-6 border-b border-white/5 bg-black/20">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-[10px] font-bold text-[#085CF0] uppercase tracking-[0.2em]">Propriedades</span>
+                    {selectedItem.isLocked && <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[9px] uppercase font-bold">Bloqueado</Badge>}
+                  </div>
+                  <h4 className="text-lg font-bold text-white leading-tight">
+                    {selectedItem.type === 'campaign' ? selectedItem.campaign?.name : selectedItem.media?.name}
+                  </h4>
+                </div>
+                
+                <ScrollArea className="flex-1">
+                  <div className="p-6 space-y-8">
+                    {/* Settings Group */}
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Configurações</Label>
+                        <div className="space-y-4 pt-2">
+                          {selectedItem.type !== 'campaign' && (
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-white/80">Duração</span>
+                                <span className="text-xs font-mono text-[#085CF0]">{selectedItem.duration}s</span>
+                              </div>
+                              <Slider 
+                                disabled={selectedItem.isLocked}
+                                value={[selectedItem.duration]} 
+                                min={1} 
+                                max={600} 
+                                step={1}
+                                onValueChange={([val]) => {
+                                  setSelectedItem({...selectedItem, duration: val});
+                                  setItems(items.map(it => it.id === selectedItem.id ? {...it, duration: val} : it));
+                                  setHasUnsavedChanges(true);
+                                }}
+                                className="py-2"
+                              />
+                            </div>
+                          )}
+                          
+                          <div className="space-y-2">
+                            <span className="text-xs font-medium text-white/80">Prioridade</span>
+                            <Select 
+                              disabled={selectedItem.isLocked}
+                              value={selectedItem.priority.toString()} 
+                              onValueChange={(v) => {
+                                const p = parseInt(v);
+                                setSelectedItem({...selectedItem, priority: p});
+                                setItems(items.map(it => it.id === selectedItem.id ? {...it, priority: p} : it));
+                                setHasUnsavedChanges(true);
+                              }}
+                            >
+                              <SelectTrigger className="w-full bg-black/40 border-white/10 text-sm h-10">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-[#0c0c0e] border-white/10 text-white">
+                                {[1,2,3,4,5,6,7,8,9,10].map(p => (
+                                  <SelectItem key={p} value={p.toString()}>Prioridade {p}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator className="bg-white/5" />
+
+                    {/* Actions Group */}
+                    <div className="space-y-4">
+                      <Label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Ações Rápidas</Label>
+                      <div className="grid grid-cols-1 gap-2">
+                        <Button 
+                          variant="outline" 
+                          className={cn(
+                            "w-full h-11 justify-start gap-3 border-white/5 font-bold text-xs uppercase tracking-widest",
+                            selectedItem.isLocked ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "bg-white/5 text-white/60"
+                          )}
+                          onClick={() => {
+                            const newLocked = !selectedItem.isLocked;
+                            setSelectedItem({...selectedItem, isLocked: newLocked});
+                            setItems(items.map(it => it.id === selectedItem.id ? {...it, isLocked: newLocked} : it));
+                            setHasUnsavedChanges(true);
+                            toast.success(newLocked ? "Conteúdo bloqueado" : "Conteúdo desbloqueado");
+                          }}
+                        >
+                          {selectedItem.isLocked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                          {selectedItem.isLocked ? "Desbloquear" : "Bloquear"}
+                        </Button>
+                        
+                        <Button 
+                          variant="ghost" 
+                          disabled={selectedItem.isLocked}
+                          className="w-full h-11 justify-start gap-3 text-red-500 hover:text-red-400 hover:bg-red-500/10 font-bold text-xs uppercase tracking-widest disabled:opacity-30" 
+                          onClick={() => removeItem(selectedItem.id)}
+                        >
+                          <Trash2 className="h-4 w-4" /> Remover
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
+          </div>
 
             <div className="h-44 bg-[#0c0c0e] border border-white/5 rounded-2xl flex flex-col overflow-hidden shadow-inner shrink-0">
               <div className="h-10 border-b border-white/5 flex items-center justify-between px-4 bg-black/20 shrink-0">
