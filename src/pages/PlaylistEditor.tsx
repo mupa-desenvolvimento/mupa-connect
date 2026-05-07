@@ -653,33 +653,40 @@ export default function PlaylistEditor() {
   };
 
   const addCampaignToPlaylist = async (campaign: any) => {
-    if (id === 'new') {
-      toast.error("Salve a playlist antes de adicionar campanhas.");
-      return;
-    }
-
-    // First check if campaign is already in playlist
-    if (campaigns.some((c: any) => c.id === campaign.id)) {
-      toast.error("Esta campanha já faz parte desta playlist.");
-      return;
-    }
-
     try {
-      const { data, error } = await supabase.from("playlist_campaigns").insert({
-        playlist_id: id as any,
-        campaign_id: campaign.id,
-        tenant_id: tenantId,
+      // Buscar os conteúdos da campanha
+      const { data: contents, error: contentsError } = await supabase
+        .from("campaign_contents")
+        .select("*, media:media_items(*)")
+        .eq("campaign_id", campaign.id)
+        .eq("is_active", true)
+        .order("position");
+
+      if (contentsError) throw contentsError;
+
+      if (!contents || contents.length === 0) {
+        toast.error(`A campanha "${campaign.name}" não possui conteúdos.`);
+        return;
+      }
+
+      // Transformar os conteúdos da campanha em itens da playlist
+      const newItems: EditorPlaylistItem[] = contents.map(content => ({
+        id: `campaign-item-${Date.now()}-${Math.random()}`,
+        mediaId: content.media_id,
+        duration: content.duration_override || content.media?.duration || 10,
         priority: 1,
-        is_active: true,
-        position: items.length
-      }).select().single();
+        type: content.media?.type === 'video' ? 'video' : 'image',
+        media: content.media,
+        campaignId: campaign.id,
+        campaign: campaign
+      }));
 
-      if (error) throw error;
-
-      queryClient.invalidateQueries({ queryKey: ["playlist-campaigns", id] });
-      toast.success(`Campanha ${campaign.name} adicionada à playlist`);
+      const updatedItems = [...items, ...newItems];
+      setItems(updatedItems);
+      setHasUnsavedChanges(true);
+      toast.success(`${contents.length} itens da campanha "${campaign.name}" adicionados.`);
     } catch (err: any) {
-      toast.error(`Erro ao adicionar campanha: ${err.message}`);
+      toast.error(`Erro ao processar campanha: ${err.message}`);
     }
   };
 
