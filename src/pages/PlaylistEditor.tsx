@@ -591,6 +591,50 @@ export default function PlaylistEditor() {
     const newItems = [...items, newItem]; setItems(newItems); setSelectedItem(newItem); setHasUnsavedChanges(true); toast.success(`${media.name} adicionado`);
   };
 
+  const addMultipleItems = async (mediaIds: string[]) => {
+    if (mediaIds.length === 0) return;
+    
+    if (selectedItem?.type === 'campaign') {
+      const contentsToInsert = mediaIds.map((mediaId, index) => ({
+        campaign_id: selectedItem.campaignId,
+        media_id: mediaId,
+        tenant_id: tenantId,
+        position: (campaignContents?.length || 0) + index + 1,
+        is_active: true
+      }));
+
+      const { error } = await supabase.from("campaign_contents").insert(contentsToInsert);
+      
+      if (error) {
+        toast.error("Erro ao adicionar itens à campanha");
+      } else {
+        toast.success(`${mediaIds.length} itens adicionados à campanha ${selectedItem.campaign?.name}`);
+        setSelectedLibraryIds([]);
+        refetchCampaignContents();
+      }
+      return;
+    }
+
+    // Adding to regular playlist
+    const newPlaylistItems: EditorPlaylistItem[] = mediaIds.map(mediaId => {
+      const media = medias?.find(m => m.id === mediaId);
+      return {
+        id: `temp-${Date.now()}-${Math.random()}`,
+        mediaId: mediaId,
+        duration: media?.duration || 10,
+        priority: 1,
+        type: media?.type === 'video' ? 'video' : 'image',
+        media: media
+      };
+    });
+
+    const newItems = [...items, ...newPlaylistItems];
+    setItems(newItems);
+    setSelectedLibraryIds([]);
+    setHasUnsavedChanges(true);
+    toast.success(`${mediaIds.length} itens adicionados`);
+  };
+
   const removeItem = (idToRemove: string) => {
     const newItems = items.filter(item => item.id !== idToRemove); setItems(newItems);
     if (selectedItem?.id === idToRemove) setSelectedItem(newItems.length > 0 ? newItems[0] : null);
