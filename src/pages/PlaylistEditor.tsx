@@ -522,12 +522,16 @@ export default function PlaylistEditor() {
                 <div className="h-full relative px-6 flex items-center" style={{ width: Math.max(800, totalDuration * PIXELS_PER_SECOND + 100) }}>
                   <div className="absolute top-0 bottom-0 w-0.5 bg-[#085CF0] z-30" style={{ left: (currentTime * PIXELS_PER_SECOND) + 24 }} />
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} onDragStart={(e) => setActiveId(e.active.id as string)} modifiers={[restrictToHorizontalAxis]}>
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                       <SortableContext items={items.map(it => it.id)} strategy={horizontalListSortingStrategy}>
                         {items.map((item, index) => (
-                          <div key={item.id} style={{ width: item.duration * PIXELS_PER_SECOND }}>
-                            <SortableItem item={item} index={index} isSelected={selectedItem?.id === item.id} onSelect={setSelectedItem} />
-                          </div>
+                          <SortableItem 
+                            key={item.id} 
+                            item={item} 
+                            index={index} 
+                            isSelected={selectedItem?.id === item.id} 
+                            onSelect={setSelectedItem} 
+                          />
                         ))}
                       </SortableContext>
                     </div>
