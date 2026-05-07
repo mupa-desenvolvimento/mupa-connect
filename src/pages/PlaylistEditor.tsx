@@ -363,6 +363,7 @@ export default function PlaylistEditor() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [debugData, setDebugData] = useState<any>(null);
   const [showDebug, setShowDebug] = useState(false);
+  const [selectedLibraryIds, setSelectedLibraryIds] = useState<string[]>([]);
   const [mediaSearch, setMediaSearch] = useState("");
   const [appearanceConfig, setAppearanceConfig] = useState<any>(DEFAULT_APPEARANCE_CONFIG);
   const [isPlaying, setIsPlaying] = useState(false);
