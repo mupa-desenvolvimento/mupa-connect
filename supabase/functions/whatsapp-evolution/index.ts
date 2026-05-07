@@ -28,7 +28,7 @@ class EvolutionApiError extends Error {
   }
 }
 
-function normalizeErrorDetail(value: unknown): string {
+export function normalizeErrorDetail(value: unknown): string {
   if (value == null) return "";
   if (typeof value === "string") return value;
   if (typeof value === "number" || typeof value === "boolean") return String(value);
@@ -43,7 +43,7 @@ function normalizeErrorDetail(value: unknown): string {
   return String(value);
 }
 
-function normalizePhone(value: unknown): string {
+export function normalizePhone(value: unknown): string {
   return String(value || "").replace(/\D/g, "");
 }
 
