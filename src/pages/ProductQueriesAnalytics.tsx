@@ -149,8 +149,14 @@ export default function ProductQueriesAnalytics() {
         .from("product_queries_log")
         .select("device_id, apelido, device_serial");
 
-      if (tenantId) query = query.eq("tenant_id" as any, tenantId);
-      if (companyId) query = query.eq("company_id" as any, companyId);
+      if (tenantId) {
+        // @ts-ignore
+        query = query.eq("tenant_id", tenantId);
+      }
+      if (companyId) {
+        // @ts-ignore
+        query = query.eq("company_id", companyId);
+      }
       
       const { data, error } = await query;
       if (error) return [];
