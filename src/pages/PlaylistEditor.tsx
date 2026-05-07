@@ -238,7 +238,7 @@ export default function PlaylistEditor() {
     queryFn: async () => {
       let query = supabase.from("campaigns").select(`
         *,
-        campaign_items (
+        campaign_contents (
           *,
           media:media_items (*)
         )
@@ -1140,7 +1140,7 @@ export default function PlaylistEditor() {
                     </div>
                   ) : (
                     campaigns.map((campaign: any) => {
-                      const campaignItems = campaign.campaign_items || [];
+                      const campaignItems = campaign.campaign_contents || [];
                       return (
                         <div key={campaign.id} className="space-y-3">
                           <div className="flex items-center gap-2">
