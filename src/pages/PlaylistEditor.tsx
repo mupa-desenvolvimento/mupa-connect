@@ -8,7 +8,9 @@ import {
   useSensor,
   useSensors,
   DragOverlay,
-  defaultDropAnimationSideEffects
+  defaultDropAnimationSideEffects,
+  useDraggable,
+  useDroppable
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -252,6 +254,74 @@ const SortableItem = ({ item, index, isSelected, onSelect, timelineMode = false 
   );
 };
 
+const DraggableMediaItem = ({ media, onClick }: any) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `library-${media.id}`,
+    data: {
+      type: 'library-media',
+      mediaId: media.id,
+      media: media
+    }
+  });
+
+  const style = transform ? {
+    transform: CSS.Translate.toString(transform),
+  } : undefined;
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style}
+      {...listeners} 
+      {...attributes}
+      className={cn(
+        "relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer border border-white/10 hover:border-[#085CF0] group transition-all",
+        isDragging && "opacity-50 ring-2 ring-[#085CF0] z-50"
+      )}
+      onClick={() => onClick(media.id)}
+    >
+      <img src={media.thumbnail_url || media.file_url} className="w-full h-full object-cover" />
+      <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
+      <div className="absolute bottom-1 left-1 right-1 text-[10px] truncate bg-black/60 px-1 rounded font-bold text-white/90">
+        {media.name}
+      </div>
+      {isDragging && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[#085CF0]/20">
+          <Plus className="h-6 w-6 text-white" />
+        </div>
+      )}
+    </div>
+  );
+};
+
+const CampaignDropZone = ({ children, isActive }: any) => {
+  const { setNodeRef, isOver } = useDroppable({
+    id: 'campaign-drop-zone',
+    data: {
+      accepts: ['library-media']
+    }
+  });
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      className={cn(
+        "flex-1 flex flex-col transition-all duration-200",
+        isOver && "bg-[#085CF0]/10 ring-2 ring-[#085CF0]/30 ring-inset rounded-xl"
+      )}
+    >
+      {children}
+      {isOver && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
+          <div className="bg-[#085CF0] text-white px-4 py-2 rounded-full font-bold text-xs flex items-center gap-2 shadow-xl animate-bounce">
+            <Plus className="h-4 w-4" /> Solte para adicionar à campanha
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function PlaylistEditor() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -444,12 +514,30 @@ export default function PlaylistEditor() {
   };
 
   const handleDragEnd = (event: any) => {
-    const { active, over } = event; setActiveId(null);
-    if (over && active.id !== over.id) {
-      const oldIndex = items.findIndex((i) => i.id === active.id);
-      const newIndex = items.findIndex((i) => i.id === over.id);
-      const newItems = arrayMove(items, oldIndex, newIndex);
-      setItems(newItems); setHasUnsavedChanges(true);
+    const { active, over } = event; 
+    setActiveId(null);
+    
+    if (!over) return;
+
+    // Handle library to campaign drop
+    if (over.id === 'campaign-drop-zone' && active.data.current?.type === 'library-media') {
+      const mediaId = active.data.current.mediaId;
+      addItem(mediaId);
+      return;
+    }
+
+    // Handle timeline reordering
+    if (active.id !== over.id) {
+      const activeItem = items.find(i => i.id === active.id);
+      if (activeItem) {
+        const oldIndex = items.findIndex((i) => i.id === active.id);
+        const newIndex = items.findIndex((i) => i.id === over.id);
+        if (oldIndex !== -1 && newIndex !== -1) {
+          const newItems = arrayMove(items, oldIndex, newIndex);
+          setItems(newItems); 
+          setHasUnsavedChanges(true);
+        }
+      }
     }
   };
 
@@ -503,23 +591,30 @@ export default function PlaylistEditor() {
       </header>
 
       <div className="flex flex-1 overflow-hidden h-full">
-        <aside className="w-80 border-r border-white/5 bg-[#0c0c0e] flex flex-col z-40 overflow-hidden">
-          <Tabs defaultValue="media" className="flex-1 flex flex-col h-full overflow-hidden">
-            <div className="p-4 shrink-0"><TabsList className="grid w-full grid-cols-2 bg-black/40"><TabsTrigger value="media" className="text-[10px] gap-2">Mídias</TabsTrigger><TabsTrigger value="appearance" className="text-[10px] gap-2">Aparência</TabsTrigger></TabsList></div>
-            <TabsContent value="media" className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-3">
-              {medias?.filter(m => m.name.toLowerCase().includes(mediaSearch.toLowerCase())).map((media) => (
-                <div key={media.id} className="relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer border border-white/10 hover:border-[#085CF0]" onClick={() => addItem(media.id)}>
-                  <img src={media.thumbnail_url || media.file_url} className="w-full h-full object-cover" />
-                  <div className="absolute bottom-1 left-1 right-1 text-[10px] truncate bg-black/60 px-1 rounded">{media.name}</div>
-                </div>
-              ))}
-            </TabsContent>
-            <TabsContent value="appearance" className="p-4 space-y-4">
-              <div className="flex items-center justify-between"><Label className="text-xs">Mostrar Nome</Label><Switch checked={appearanceConfig.show_device_name} onCheckedChange={(v) => { setAppearanceConfig({...appearanceConfig, show_device_name: v}); setHasUnsavedChanges(true); }} /></div>
-              <div className="flex items-center justify-between"><Label className="text-xs">Data e Hora</Label><Switch checked={appearanceConfig.show_datetime} onCheckedChange={(v) => { setAppearanceConfig({...appearanceConfig, show_datetime: v}); setHasUnsavedChanges(true); }} /></div>
-            </TabsContent>
-          </Tabs>
-        </aside>
+        <DndContext 
+          sensors={sensors} 
+          collisionDetection={closestCenter} 
+          onDragEnd={handleDragEnd} 
+          onDragStart={(e) => setActiveId(e.active.id as string)}
+        >
+          <aside className="w-80 border-r border-white/5 bg-[#0c0c0e] flex flex-col z-40 overflow-hidden">
+            <Tabs defaultValue="media" className="flex-1 flex flex-col h-full overflow-hidden">
+              <div className="p-4 shrink-0"><TabsList className="grid w-full grid-cols-2 bg-black/40"><TabsTrigger value="media" className="text-[10px] gap-2">Mídias</TabsTrigger><TabsTrigger value="appearance" className="text-[10px] gap-2">Aparência</TabsTrigger></TabsList></div>
+              <TabsContent value="media" className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-3">
+                {medias?.filter(m => m.name.toLowerCase().includes(mediaSearch.toLowerCase())).map((media) => (
+                  <DraggableMediaItem 
+                    key={media.id} 
+                    media={media} 
+                    onClick={addItem} 
+                  />
+                ))}
+              </TabsContent>
+              <TabsContent value="appearance" className="p-4 space-y-4">
+                <div className="flex items-center justify-between"><Label className="text-xs">Mostrar Nome</Label><Switch checked={appearanceConfig.show_device_name} onCheckedChange={(v) => { setAppearanceConfig({...appearanceConfig, show_device_name: v}); setHasUnsavedChanges(true); }} /></div>
+                <div className="flex items-center justify-between"><Label className="text-xs">Data e Hora</Label><Switch checked={appearanceConfig.show_datetime} onCheckedChange={(v) => { setAppearanceConfig({...appearanceConfig, show_datetime: v}); setHasUnsavedChanges(true); }} /></div>
+              </TabsContent>
+            </Tabs>
+          </aside>
 
         <main className="flex-1 flex flex-col overflow-hidden relative">
           <div className="flex-1 overflow-hidden flex flex-col p-6 gap-6">
@@ -568,7 +663,8 @@ export default function PlaylistEditor() {
                           <Plus className="h-3 w-3" /> Adicionar Mídia
                         </Button>
                       </div>
-                      <ScrollArea className="flex-1">
+                      <CampaignDropZone>
+                        <ScrollArea className="flex-1">
                         <div className="p-4 flex gap-3">
                           {campaignContents?.map((content: any, idx: number) => (
                             <div key={content.id} className="relative group shrink-0 w-32">
@@ -599,7 +695,8 @@ export default function PlaylistEditor() {
                         </div>
                         <ScrollBar orientation="horizontal" />
                       </ScrollArea>
-                    </div>
+                    </CampaignDropZone>
+                  </div>
                   )}
 
                   <div className="h-28 bg-card/60 backdrop-blur-md border-t border-white/10 flex items-center justify-between px-6 shrink-0">
@@ -717,27 +814,45 @@ export default function PlaylistEditor() {
               <div className="flex-1 overflow-x-auto relative scrollbar-thin scrollbar-thumb-white/10" ref={timelineScrollRef} onClick={handleTimelineClick}>
                 <div className="h-full relative px-6 flex items-center" style={{ width: Math.max(800, (totalDuration || 0) * PIXELS_PER_SECOND + 100) }}>
                   <div className="absolute top-0 bottom-0 w-0.5 bg-[#085CF0] z-30 pointer-events-none" style={{ left: ((currentTime || 0) * PIXELS_PER_SECOND) + 24 }} />
-                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} onDragStart={(e) => setActiveId(e.active.id as string)} modifiers={[restrictToHorizontalAxis]}>
-                    <div className="flex gap-2">
-                      <SortableContext items={items.map(it => it.id)} strategy={horizontalListSortingStrategy}>
-                        {items.map((item, index) => (
-                          <div key={item.id} className="dnd-item">
-                            <SortableItem 
-                              item={item} 
-                              index={index} 
-                              isSelected={selectedItem?.id === item.id} 
-                              onSelect={setSelectedItem} 
-                            />
-                          </div>
-                        ))}
-                      </SortableContext>
-                    </div>
-                  </DndContext>
+                  <div className="flex gap-2">
+                    <SortableContext items={items.map(it => it.id)} strategy={horizontalListSortingStrategy}>
+                      {items.map((item, index) => (
+                        <div key={item.id} className="dnd-item">
+                          <SortableItem 
+                            item={item} 
+                            index={index} 
+                            isSelected={selectedItem?.id === item.id} 
+                            onSelect={setSelectedItem} 
+                          />
+                        </div>
+                      ))}
+                    </SortableContext>
                 </div>
               </div>
             </div>
           </div>
-        </main>
+
+              <DragOverlay>
+                {activeId ? (
+                  activeId.toString().startsWith('library-') ? (
+                    <div className="w-32 aspect-square rounded-lg overflow-hidden border-2 border-[#085CF0] bg-black shadow-2xl scale-110 opacity-80">
+                      <img 
+                        src={medias?.find(m => `library-${m.id}` === activeId)?.thumbnail_url || medias?.find(m => `library-${m.id}` === activeId)?.file_url} 
+                        className="w-full h-full object-cover" 
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-24 rounded-xl border-2 border-[#085CF0] bg-black/40 shadow-2xl flex items-center px-4 overflow-hidden" style={{ width: Math.max(100, (items.find(it => it.id === activeId)?.duration || 10) * PIXELS_PER_SECOND) }}>
+                      <p className="text-[10px] font-bold text-white truncate">
+                        {items.find(it => it.id === activeId)?.type === 'campaign' ? items.find(it => it.id === activeId)?.campaign?.name : items.find(it => it.id === activeId)?.media?.name}
+                      </p>
+                    </div>
+                  )
+                ) : null}
+              </DragOverlay>
+            </div>
+          </main>
+        </DndContext>
       </div>
     </div>
   );
