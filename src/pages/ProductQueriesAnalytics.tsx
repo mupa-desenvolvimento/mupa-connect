@@ -655,15 +655,42 @@ export default function ProductQueriesAnalytics() {
                   .filter((p: any) => p.errors > 0)
                   .sort((a: any, b: any) => b.errors - a.errors)
                   .slice(0, 5)
-                  .map((prod: any) => (
-                    <TableRow key={`error-prod-${prod.ean}`}>
-                      <TableCell className="font-mono text-xs">{prod.ean}</TableCell>
-                      <TableCell className="max-w-[150px] truncate">{prod.desc}</TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant="destructive">{prod.errors}</Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  .map((prod: any) => {
+                    const errorRate = (prod.errors / prod.count) * 100;
+                    const isNotFound = prod.desc === "Descrição não encontrada." || !prod.desc;
+                    
+                    return (
+                      <TableRow key={`error-prod-${prod.ean}`}>
+                        <TableCell className="font-mono text-xs">{prod.ean}</TableCell>
+                        <TableCell className="max-w-[200px]">
+                          <div className="flex flex-col">
+                            <span className={cn("text-xs font-medium truncate", isNotFound && "text-muted-foreground italic")}>
+                              {isNotFound ? "Produto não identificado" : prod.desc}
+                            </span>
+                            {isNotFound && (
+                              <Badge variant="outline" className="w-fit text-[10px] h-4 px-1 mt-1 opacity-70">
+                                Sem cadastro
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex flex-col items-end gap-1">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="destructive" className="h-5 px-1.5 text-[10px]">{prod.errors}</Badge>
+                              <span className="text-[10px] text-muted-foreground font-bold">{errorRate.toFixed(0)}%</span>
+                            </div>
+                            <div className="w-16 h-1 bg-muted rounded-full overflow-hidden">
+                              <div 
+                                className={cn("h-full rounded-full", errorRate > 50 ? "bg-destructive" : "bg-warning")} 
+                                style={{ width: `${Math.min(errorRate, 100)}%` }} 
+                              />
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 {Object.values(productCounts || {}).filter((p: any) => p.errors > 0).length === 0 && (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
