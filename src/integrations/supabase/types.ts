@@ -6149,6 +6149,78 @@ export type Database = {
           },
         ]
       }
+      whatsapp_contact_group_members: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          recipient_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          recipient_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          recipient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_contact_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_contact_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_contact_group_members_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_contact_groups: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       whatsapp_instances: {
         Row: {
           company_id: string | null
@@ -6243,6 +6315,8 @@ export type Database = {
           name: string
           phone: string
           playlist_notifications: boolean | null
+          role: string | null
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -6256,6 +6330,8 @@ export type Database = {
           name: string
           phone: string
           playlist_notifications?: boolean | null
+          role?: string | null
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -6269,6 +6345,8 @@ export type Database = {
           name?: string
           phone?: string
           playlist_notifications?: boolean | null
+          role?: string | null
+          tenant_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -6281,30 +6359,118 @@ export type Database = {
           },
         ]
       }
+      whatsapp_send_history: {
+        Row: {
+          created_at: string
+          error_details: Json | null
+          failure_count: number
+          group_id: string | null
+          id: string
+          instance_id: string | null
+          message: string
+          recipient_phones: string[]
+          sent_by: string | null
+          status: string
+          success_count: number
+          template_id: string | null
+          tenant_id: string | null
+          total_recipients: number
+        }
+        Insert: {
+          created_at?: string
+          error_details?: Json | null
+          failure_count?: number
+          group_id?: string | null
+          id?: string
+          instance_id?: string | null
+          message: string
+          recipient_phones?: string[]
+          sent_by?: string | null
+          status?: string
+          success_count?: number
+          template_id?: string | null
+          tenant_id?: string | null
+          total_recipients?: number
+        }
+        Update: {
+          created_at?: string
+          error_details?: Json | null
+          failure_count?: number
+          group_id?: string | null
+          id?: string
+          instance_id?: string | null
+          message?: string
+          recipient_phones?: string[]
+          sent_by?: string | null
+          status?: string
+          success_count?: number
+          template_id?: string | null
+          tenant_id?: string | null
+          total_recipients?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_send_history_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_contact_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_send_history_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_send_history_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_templates: {
         Row: {
           category: string | null
           content: string
           created_at: string
+          created_by: string | null
+          description: string | null
           id: string
+          is_active: boolean
           name: string
+          tenant_id: string | null
           updated_at: string
+          variables: string[] | null
         }
         Insert: {
           category?: string | null
           content: string
           created_at?: string
+          created_by?: string | null
+          description?: string | null
           id?: string
+          is_active?: boolean
           name: string
+          tenant_id?: string | null
           updated_at?: string
+          variables?: string[] | null
         }
         Update: {
           category?: string | null
           content?: string
           created_at?: string
+          created_by?: string | null
+          description?: string | null
           id?: string
+          is_active?: boolean
           name?: string
+          tenant_id?: string | null
           updated_at?: string
+          variables?: string[] | null
         }
         Relationships: []
       }
