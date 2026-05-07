@@ -672,7 +672,44 @@ export default function PlaylistEditor() {
         >
           <aside className="w-80 border-r border-white/5 bg-[#0c0c0e] flex flex-col z-40 overflow-hidden">
             <Tabs defaultValue="media" className="flex-1 flex flex-col h-full overflow-hidden">
-              <div className="p-4 shrink-0"><TabsList className="grid w-full grid-cols-2 bg-black/40"><TabsTrigger value="media" className="text-[10px] gap-2">Mídias</TabsTrigger><TabsTrigger value="appearance" className="text-[10px] gap-2">Aparência</TabsTrigger></TabsList></div>
+              <div className="p-4 space-y-4 shrink-0">
+                <TabsList className="grid w-full grid-cols-2 bg-black/40"><TabsTrigger value="media" className="text-[10px] gap-2">Mídias</TabsTrigger><TabsTrigger value="appearance" className="text-[10px] gap-2">Aparência</TabsTrigger></TabsList>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/40" />
+                    <Input 
+                      placeholder="Buscar mídias..." 
+                      className="h-8 pl-8 text-[10px] bg-black/40 border-white/5" 
+                      value={mediaSearch}
+                      onChange={(e) => setMediaSearch(e.target.value)}
+                    />
+                  </div>
+                  {selectedLibraryIds.length > 0 && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 px-2 text-[10px] text-red-500 hover:bg-red-500/10"
+                      onClick={() => setSelectedLibraryIds([])}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+                {selectedLibraryIds.length > 0 && (
+                  <div className="bg-[#085CF0]/10 border border-[#085CF0]/30 rounded-lg p-2 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-[#085CF0]">
+                      {selectedLibraryIds.length} selecionados
+                    </span>
+                    <Button 
+                      size="sm" 
+                      className="h-6 px-2 text-[9px] bg-[#085CF0] hover:bg-[#085CF0]/80"
+                      onClick={() => addMultipleItems(selectedLibraryIds)}
+                    >
+                      Adicionar {selectedLibraryIds.length}
+                    </Button>
+                  </div>
+                )}
+              </div>
               <TabsContent value="media" className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-3">
                 {medias?.filter(m => m.name.toLowerCase().includes(mediaSearch.toLowerCase())).map((media) => (
                   <DraggableMediaItem 
