@@ -674,10 +674,19 @@ export default function QueryErrorsReport() {
                           </TableCell>
                           <TableCell className="py-3">
                             <div className="flex items-center gap-2">
-                              <div className="h-8 w-8 rounded-lg bg-primary/5 flex items-center justify-center border border-primary/10 group-hover:bg-primary/10 transition-colors">
+                              <div className="h-8 w-8 rounded-lg bg-primary/5 flex items-center justify-center border border-primary/10 group-hover:bg-primary/10 transition-colors shrink-0">
                                 <Store className="h-4 w-4 text-primary" />
                               </div>
-                              <span className="text-sm font-semibold text-foreground">{item.store_name || 'Loja Central'}</span>
+                              <div className="flex flex-col">
+                                <span className="text-sm font-bold text-foreground leading-tight">
+                                  {item.store_name}
+                                </span>
+                                {item.num_filial && (
+                                  <Badge variant="secondary" className="w-fit text-[9px] h-3.5 px-1 font-mono uppercase bg-muted/50 text-muted-foreground border-none">
+                                    Filial {item.num_filial}
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
                           </TableCell>
                           <TableCell className="py-3">
