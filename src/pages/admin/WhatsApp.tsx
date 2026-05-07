@@ -13,12 +13,39 @@ import {
   RefreshCw,
   Power,
   Users,
-  Bell
+  Bell,
+  Search,
+  Filter,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Clock,
+  MoreVertical,
+  ChevronRight
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
 
 export default function WhatsAppManagement() {
   const [activeTab, setActiveTab] = useState("instances");
@@ -33,6 +60,34 @@ export default function WhatsAppManagement() {
       return data;
     }
   });
+
+  const { data: recipients } = useQuery({
+    queryKey: ["whatsapp-recipients"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("whatsapp_recipients")
+        .select("*, companies(name)");
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const { data: logs } = useQuery({
+    queryKey: ["whatsapp-logs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("whatsapp_logs")
+        .select(`
+          *,
+          whatsapp_instances (name)
+        `)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data;
+    }
+  });
+
 
   return (
     <div className="flex flex-col gap-6">
@@ -119,47 +174,165 @@ export default function WhatsAppManagement() {
           </TabsContent>
 
           <TabsContent value="recipients">
-             {/* Placeholder for recipients management */}
-             <Card>
-               <CardHeader>
-                 <CardTitle>Gerenciar Destinatários</CardTitle>
-                 <CardDescription>Configure quem recebe os alertas operacionais.</CardDescription>
-               </CardHeader>
-               <CardContent>
-                 <div className="p-8 text-center text-muted-foreground italic">
-                   Módulo de destinatários em desenvolvimento...
+             <div className="space-y-4">
+               <div className="flex justify-between items-center gap-4 bg-card p-4 rounded-xl border border-border/60">
+                 <div className="relative flex-1 max-w-sm">
+                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                   <Input placeholder="Buscar destinatário..." className="pl-10" />
                  </div>
-               </CardContent>
-             </Card>
+                 <Button className="gap-2">
+                   <Plus className="h-4 w-4" /> Novo Destinatário
+                 </Button>
+               </div>
+
+               <Card className="border-border/60">
+                 <Table>
+                   <TableHeader>
+                     <TableRow>
+                       <TableHead>Nome</TableHead>
+                       <TableHead>Telefone</TableHead>
+                       <TableHead>Empresa</TableHead>
+                       <TableHead>Alertas</TableHead>
+                       <TableHead>Status</TableHead>
+                       <TableHead className="text-right">Ações</TableHead>
+                     </TableRow>
+                   </TableHeader>
+                   <TableBody>
+                     {recipients?.map((recipient) => (
+                       <TableRow key={recipient.id}>
+                         <TableCell className="font-medium">{recipient.name}</TableCell>
+                         <TableCell className="font-mono text-xs">{recipient.phone}</TableCell>
+                         <TableCell>{recipient.companies?.name || "Global"}</TableCell>
+                         <TableCell>
+                           <div className="flex flex-wrap gap-1">
+                             {recipient.alert_types?.map((type: string) => (
+                               <Badge key={type} variant="outline" className="text-[10px] py-0 h-4 bg-primary/5 border-primary/20">
+                                 {type}
+                               </Badge>
+                             ))}
+                           </div>
+                         </TableCell>
+                         <TableCell>
+                           <Badge variant={recipient.is_active ? "default" : "secondary"} className={cn("text-[10px]", recipient.is_active && "bg-green-500/10 text-green-600 hover:bg-green-500/20")}>
+                             {recipient.is_active ? "Ativo" : "Inativo"}
+                           </Badge>
+                         </TableCell>
+                         <TableCell className="text-right">
+                           <Button variant="ghost" size="icon" className="h-8 w-8">
+                             <MoreVertical className="h-4 w-4" />
+                           </Button>
+                         </TableCell>
+                       </TableRow>
+                     ))}
+                     {(!recipients || recipients.length === 0) && (
+                       <TableRow>
+                         <TableCell colSpan={6} className="h-24 text-center text-muted-foreground italic">
+                           Nenhum destinatário configurado.
+                         </TableCell>
+                       </TableRow>
+                     )}
+                   </TableBody>
+                 </Table>
+               </Card>
+             </div>
           </TabsContent>
 
           <TabsContent value="automations">
-             <Card>
-               <CardHeader>
-                 <CardTitle>Alertas & Automações</CardTitle>
-                 <CardDescription>Defina as regras para disparos de mensagens automáticas.</CardDescription>
-               </CardHeader>
-               <CardContent>
-                 <div className="p-8 text-center text-muted-foreground italic">
-                   Módulo de automações em desenvolvimento...
-                 </div>
-               </CardContent>
-             </Card>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="border-border/60">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 text-warning" />
+                      Regras de Offline
+                    </CardTitle>
+                    <CardDescription>Configure como o sistema alerta sobre dispositivos desconectados.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/40">
+                      <div>
+                        <p className="text-sm font-medium">Tempo mínimo para alerta</p>
+                        <p className="text-xs text-muted-foreground">Alertar após X minutos offline.</p>
+                      </div>
+                      <Badge variant="outline">15 min</Badge>
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/40">
+                      <div>
+                        <p className="text-sm font-medium">Intervalo entre mensagens (Cooldown)</p>
+                        <p className="text-xs text-muted-foreground">Evitar spam de notificações.</p>
+                      </div>
+                      <Badge variant="outline">2 horas</Badge>
+                    </div>
+                    <Button variant="outline" className="w-full">Editar Configurações</Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-border/60">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Settings className="h-5 w-5 text-primary" />
+                      Tipos de Alerta Ativos
+                    </CardTitle>
+                    <CardDescription>Selecione quais eventos disparam notificações.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {[
+                      { label: "Dispositivo Offline", active: true },
+                      { label: "Erro na Consulta de Preço", active: true },
+                      { label: "Player Travado", active: false },
+                      { label: "Erro de Mídia", active: true },
+                      { label: "Falha de Sincronização", active: true },
+                      { label: "Dispositivo sem Playlist", active: true },
+                    ].map((item) => (
+                      <div key={item.label} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/30 transition-colors">
+                        <span className="text-sm">{item.label}</span>
+                        <div className={cn("h-2 w-2 rounded-full", item.active ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-muted-foreground/30")} />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+             </div>
           </TabsContent>
 
           <TabsContent value="logs">
-             <Card>
-               <CardHeader>
-                 <CardTitle>Histórico de Mensagens</CardTitle>
-                 <CardDescription>Logs de envios e alertas disparados.</CardDescription>
-               </CardHeader>
-               <CardContent>
-                 <div className="p-8 text-center text-muted-foreground italic">
-                   Módulo de logs em desenvolvimento...
-                 </div>
-               </CardContent>
+             <Card className="border-border/60">
+               <Table>
+                 <TableHeader>
+                   <TableRow>
+                     <TableHead>Data/Hora</TableHead>
+                     <TableHead>Instância</TableHead>
+                     <TableHead>Destinatário</TableHead>
+                     <TableHead>Mensagem</TableHead>
+                     <TableHead>Status</TableHead>
+                   </TableRow>
+                 </TableHeader>
+                 <TableBody>
+                   {logs?.map((log) => (
+                     <TableRow key={log.id}>
+                       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                         {format(new Date(log.created_at), "dd/MM HH:mm", { locale: ptBR })}
+                       </TableCell>
+                       <TableCell className="text-xs font-medium">{log.whatsapp_instances?.name || "—"}</TableCell>
+                       <TableCell className="font-mono text-xs">{log.recipient_phone}</TableCell>
+                       <TableCell className="max-w-md truncate text-xs">{log.message}</TableCell>
+                       <TableCell>
+                         <Badge variant={log.status === "sent" ? "default" : "destructive"} className={cn("text-[10px] py-0 h-4", log.status === "sent" ? "bg-green-500/10 text-green-600 border-green-200" : "bg-red-500/10 text-red-600 border-red-200")}>
+                           {log.status === "sent" ? "Enviado" : "Erro"}
+                         </Badge>
+                       </TableCell>
+                     </TableRow>
+                   ))}
+                   {(!logs || logs.length === 0) && (
+                     <TableRow>
+                       <TableCell colSpan={5} className="h-24 text-center text-muted-foreground italic">
+                         Nenhum log registrado.
+                       </TableCell>
+                     </TableRow>
+                   )}
+                 </TableBody>
+               </Table>
              </Card>
           </TabsContent>
+
         </div>
       </Tabs>
     </div>
