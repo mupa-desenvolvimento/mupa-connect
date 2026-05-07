@@ -305,7 +305,7 @@ const DraggableMediaItem = ({ media, onClick, isSelected, onToggleSelect }: any)
   );
 };
 
-const DraggableCampaignItem = ({ campaign, onClick }: any) => {
+const DraggableCampaignItem = ({ campaign, onClick, onEdit, onExpand }: any) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `library-campaign-${campaign.id}`,
     data: {
@@ -319,33 +319,86 @@ const DraggableCampaignItem = ({ campaign, onClick }: any) => {
     transform: CSS.Translate.toString(transform),
   } : undefined;
 
+  const now = new Date();
+  const start = campaign.start_date ? new Date(campaign.start_date) : null;
+  const end = campaign.end_date ? new Date(campaign.end_date) : null;
+  
+  let status: "active" | "scheduled" | "ended" | "offline" = "offline";
+  if (!campaign.is_active) status = "offline";
+  else if (start && now < start) status = "scheduled";
+  else if (end && now > end) status = "ended";
+  else status = "active";
+
   return (
     <div 
       ref={setNodeRef} 
       style={style}
       className={cn(
-        "relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer border transition-all group border-white/10 hover:border-[#085CF0]",
-        isDragging && "opacity-50 ring-2 ring-[#085CF0] z-50"
+        "relative rounded-xl overflow-hidden bg-[#1A1A1E] border transition-all group flex flex-col",
+        isDragging ? "opacity-50 ring-2 ring-[#085CF0] z-50" : "border-white/5 hover:border-[#085CF0]/50 shadow-sm"
       )}
-      onClick={() => onClick(campaign.id)}
     >
-      <div className="w-full h-full flex items-center justify-center relative overflow-hidden bg-black/40">
-        <div 
-          className="absolute inset-0 opacity-10"
-          style={{ backgroundColor: campaign.color || '#085CF0' }}
-        />
-        <Megaphone className="h-8 w-8 relative z-10" style={{ color: campaign.color || '#085CF0' }} />
-      </div>
+      <div className="h-1 w-full shrink-0" style={{ backgroundColor: campaign.color || '#085CF0' }} />
       
+      <div className="p-3 flex flex-col gap-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <h4 className="text-[11px] font-bold text-white truncate group-hover:text-[#085CF0] transition-colors" title={campaign.name}>
+              {campaign.name}
+            </h4>
+            <div className="flex items-center gap-1.5 mt-1">
+              <StatusBadge status={status} className="scale-75 origin-left" />
+              <Badge variant="outline" className="text-[8px] h-3.5 px-1 bg-white/5 border-none text-white/40">
+                P{campaign.priority || 0}
+              </Badge>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6 text-white/40 hover:text-white hover:bg-white/10"
+              onClick={(e) => { e.stopPropagation(); onEdit(campaign.id); }}
+            >
+              <Edit className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1.5 bg-black/20 p-2 rounded-lg border border-white/5">
+          <div className="flex items-center gap-2 text-[9px] text-white/40">
+            <Calendar className="h-3 w-3 text-[#085CF0]/70" />
+            <span>{start ? format(start, "dd MMM") : '--'} até {end ? format(end, "dd MMM") : '--'}</span>
+          </div>
+          <div className="flex items-center gap-2 text-[9px] text-white/40">
+            <Layers className="h-3 w-3 text-[#085CF0]/70" />
+            <span>{campaign.content_count || 0} conteúdos</span>
+          </div>
+        </div>
+
+        <div className="flex gap-2 mt-1">
+          <Button 
+            className="flex-1 h-7 text-[10px] font-bold bg-[#085CF0] hover:bg-[#085CF0]/80 gap-1.5"
+            onClick={() => onClick(campaign)}
+          >
+            <Plus className="h-3 w-3" /> Adicionar
+          </Button>
+          <Button 
+            variant="outline"
+            className="h-7 w-7 p-0 border-white/10 hover:bg-white/5"
+            onClick={() => onExpand(campaign.id)}
+          >
+            <Eye className="h-3 w-3 text-white/40" />
+          </Button>
+        </div>
+      </div>
+
       <div 
         {...listeners} 
         {...attributes}
-        className="absolute inset-0 z-10"
+        className="absolute top-0 right-0 left-0 h-8 cursor-grab active:cursor-grabbing z-10"
       />
-
-      <div className="absolute bottom-1 left-1 right-1 text-[10px] truncate bg-black/60 px-1 rounded font-bold text-white/90 z-20">
-        {campaign.name}
-      </div>
     </div>
   );
 };
