@@ -6149,6 +6149,129 @@ export type Database = {
           },
         ]
       }
+      whatsapp_instances: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          id: string
+          instance_key: string | null
+          last_connection_at: string | null
+          name: string
+          phone: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          instance_key?: string | null
+          last_connection_at?: string | null
+          name: string
+          phone?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          instance_key?: string | null
+          last_connection_at?: string | null
+          name?: string
+          phone?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_instances_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          instance_id: string | null
+          message: string
+          recipient_phone: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          instance_id?: string | null
+          message: string
+          recipient_phone: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          instance_id?: string | null
+          message?: string
+          recipient_phone?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_logs_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_recipients: {
+        Row: {
+          alert_types: string[] | null
+          company_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          phone: string
+          updated_at: string
+        }
+        Insert: {
+          alert_types?: string[] | null
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          phone: string
+          updated_at?: string
+        }
+        Update: {
+          alert_types?: string[] | null
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          phone?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_recipients_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       zones: {
         Row: {
           code: string | null
