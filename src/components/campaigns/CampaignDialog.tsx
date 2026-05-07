@@ -97,13 +97,13 @@ export function CampaignDialog({ campaignId, open, onOpenChange }: CampaignDialo
         company_id: companyId,
       };
 
-      let currentCampaignId = campaignId;
+      let id = currentCampaignId;
 
-      if (campaignId) {
+      if (id) {
         const { error } = await supabase
           .from("campaigns")
           .update(payload)
-          .eq("id", campaignId);
+          .eq("id", id);
         if (error) throw error;
       } else {
         const { data, error } = await supabase
@@ -112,21 +112,22 @@ export function CampaignDialog({ campaignId, open, onOpenChange }: CampaignDialo
           .select()
           .single();
         if (error) throw error;
-        currentCampaignId = data.id;
+        id = data.id;
+        setCurrentCampaignId(id);
       }
 
       // Sincronizar playlists
-      if (currentCampaignId) {
+      if (id) {
         // Remover associações antigas
         await supabase
           .from("playlist_campaigns")
           .delete()
-          .eq("campaign_id", currentCampaignId);
+          .eq("campaign_id", id);
 
         // Adicionar novas associações
         if (values.playlist_ids && values.playlist_ids.length > 0) {
           const associations = values.playlist_ids.map(playlistId => ({
-            campaign_id: currentCampaignId,
+            campaign_id: id,
             playlist_id: playlistId,
             tenant_id: tenantId,
             is_active: values.is_active,
@@ -143,7 +144,13 @@ export function CampaignDialog({ campaignId, open, onOpenChange }: CampaignDialo
 
       toast.success(campaignId ? "Campanha atualizada" : "Campanha criada");
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
-      onOpenChange(false);
+      
+      if (!campaignId) {
+        // Se era uma nova campanha, agora temos ID, podemos ir para a aba de conteúdo
+        setActiveTab("content");
+      } else {
+        onOpenChange(false);
+      }
     } catch (error: any) {
       toast.error("Erro ao salvar campanha: " + error.message);
     } finally {
