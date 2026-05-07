@@ -6236,30 +6236,39 @@ export type Database = {
           alert_types: string[] | null
           company_id: string | null
           created_at: string
+          device_status_notifications: boolean | null
+          error_notifications: boolean | null
           id: string
           is_active: boolean | null
           name: string
           phone: string
+          playlist_notifications: boolean | null
           updated_at: string
         }
         Insert: {
           alert_types?: string[] | null
           company_id?: string | null
           created_at?: string
+          device_status_notifications?: boolean | null
+          error_notifications?: boolean | null
           id?: string
           is_active?: boolean | null
           name: string
           phone: string
+          playlist_notifications?: boolean | null
           updated_at?: string
         }
         Update: {
           alert_types?: string[] | null
           company_id?: string | null
           created_at?: string
+          device_status_notifications?: boolean | null
+          error_notifications?: boolean | null
           id?: string
           is_active?: boolean | null
           name?: string
           phone?: string
+          playlist_notifications?: boolean | null
           updated_at?: string
         }
         Relationships: [
