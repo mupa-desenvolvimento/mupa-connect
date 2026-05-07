@@ -827,9 +827,10 @@ export default function PlaylistEditor() {
                         </div>
                       ))}
                     </SortableContext>
-                  </div>
                 </div>
               </div>
+            </div>
+          </div>
 
               <DragOverlay>
                 {activeId ? (
