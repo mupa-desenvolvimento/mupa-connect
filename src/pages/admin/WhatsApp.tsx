@@ -188,23 +188,51 @@ export default function WhatsAppManagement() {
     if (!newRecipient.name.trim() || !newRecipient.phone.trim()) {
       return toast.error("Nome e telefone são obrigatórios");
     }
-    if (!isValidPhone(newRecipient.phone)) {
-      return toast.error("Por favor, insira um telefone válido com DDI e DDD (ex: 5511999999999)");
+    const cleanedPhone = newRecipient.phone.replace(/\D/g, "");
+    if (!isValidPhone(cleanedPhone)) {
+      return toast.error("Por favor, insira um telefone válido com DDI e DDD");
     }
     try {
       setCreating(true);
-      const { error } = await supabase.from("whatsapp_recipients").insert({
+      const recipientData = {
         name: newRecipient.name.trim(),
-        phone: newRecipient.phone.replace(/\D/g, ""),
+        phone: cleanedPhone,
+        company_id: newRecipient.company_id || null,
+        error_notifications: newRecipient.error_notifications,
+        device_status_notifications: newRecipient.device_status_notifications,
+        playlist_notifications: newRecipient.playlist_notifications,
         is_active: true,
-      });
+      };
+
+      let error;
+      if (newRecipient.id) {
+        const { error: updateError } = await supabase
+          .from("whatsapp_recipients")
+          .update(recipientData)
+          .eq("id", newRecipient.id);
+        error = updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from("whatsapp_recipients")
+          .insert(recipientData);
+        error = insertError;
+      }
+
       if (error) throw error;
-      toast.success("Destinatário cadastrado");
+      toast.success(newRecipient.id ? "Destinatário atualizado" : "Destinatário cadastrado");
       setShowAddRecipientDialog(false);
-      setNewRecipient({ name: "", phone: "" });
+      setNewRecipient({ 
+        id: "", 
+        name: "", 
+        phone: "", 
+        company_id: "", 
+        error_notifications: true, 
+        device_status_notifications: true, 
+        playlist_notifications: true 
+      });
       queryClient.invalidateQueries({ queryKey: ["whatsapp-recipients"] });
     } catch (err: any) {
-      toast.error(err.message || "Erro ao cadastrar destinatário");
+      toast.error(err.message || "Erro ao salvar destinatário");
     } finally {
       setCreating(false);
     }
