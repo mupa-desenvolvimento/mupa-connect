@@ -545,7 +545,13 @@ export default function PlaylistEditor() {
     // Handle library to campaign drop
     if (over.id === 'campaign-drop-zone' && active.data.current?.type === 'library-media') {
       const mediaId = active.data.current.mediaId;
-      addItem(mediaId);
+      
+      // If the dragged item is part of the selection, add all selected
+      if (selectedLibraryIds.includes(mediaId)) {
+        addMultipleItems(selectedLibraryIds);
+      } else {
+        addItem(mediaId);
+      }
       return;
     }
 
