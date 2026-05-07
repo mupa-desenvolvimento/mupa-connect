@@ -618,6 +618,125 @@ export default function WhatsAppManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={showAddRecipientDialog} onOpenChange={setShowAddRecipientDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Novo Destinatário</DialogTitle>
+            <DialogDescription>
+              Cadastre um número para receber notificações automáticas.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="rec-name">Nome</Label>
+              <Input
+                id="rec-name"
+                placeholder="Ex: João Silva"
+                value={newRecipient.name}
+                onChange={(e) => setNewRecipient({ ...newRecipient, name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="rec-phone">Telefone (com DDI e DDD)</Label>
+              <Input
+                id="rec-phone"
+                placeholder="Ex: 5511999999999"
+                value={newRecipient.phone}
+                onChange={(e) => setNewRecipient({ ...newRecipient, phone: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddRecipientDialog(false)} disabled={creating}>
+              Cancelar
+            </Button>
+            <Button onClick={handleAddRecipient} disabled={creating}>
+              {creating ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+              Cadastrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showTestMessageDialog} onOpenChange={setShowTestMessageDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Testar Envio de Mensagem</DialogTitle>
+            <DialogDescription>
+              Envie uma mensagem de teste para validar a conexão.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Instância de Origem</Label>
+              <Select 
+                value={testMessage.instanceName} 
+                onValueChange={(v) => setTestMessage({ ...testMessage, instanceName: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma instância" />
+                </SelectTrigger>
+                <SelectContent>
+                  {instances?.filter(i => i.status === "connected").map((inst) => (
+                    <SelectItem key={inst.id} value={inst.instance_key || inst.name}>
+                      {inst.name}
+                    </SelectItem>
+                  ))}
+                  {instances?.filter(i => i.status === "connected").length === 0 && (
+                    <div className="p-2 text-xs text-muted-foreground text-center">Nenhuma instância conectada</div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="test-phone">Número de Destino</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="test-phone"
+                  placeholder="Ex: 5511999999999"
+                  value={testMessage.recipientPhone}
+                  onChange={(e) => setTestMessage({ ...testMessage, recipientPhone: e.target.value })}
+                  className="flex-1"
+                />
+                <Select 
+                  onValueChange={(v) => setTestMessage({ ...testMessage, recipientPhone: v })}
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Contatos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {recipients?.map((rec) => (
+                      <SelectItem key={rec.id} value={rec.phone}>
+                        {rec.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="test-msg">Mensagem</Label>
+              <Textarea
+                id="test-msg"
+                placeholder="Digite sua mensagem de teste..."
+                value={testMessage.message}
+                onChange={(e) => setTestMessage({ ...testMessage, message: e.target.value })}
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTestMessageDialog(false)} disabled={sendingTest}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSendTestMessage} disabled={sendingTest}>
+              {sendingTest ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <MessageSquare className="h-4 w-4 mr-2" />}
+              Enviar Teste
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
