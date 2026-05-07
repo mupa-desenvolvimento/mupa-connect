@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/use-user-role";
 import { PageHeader } from "@/components/PageHeader";
@@ -19,19 +19,17 @@ import {
   MoreVertical,
   Trash2,
   Edit2,
-  FilterX,
   RefreshCw,
-  Loader2
+  Loader2,
+  Settings2
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { CampaignCalendar } from "@/components/campaigns/CampaignCalendar";
 import { CampaignTimeline } from "@/components/campaigns/CampaignTimeline";
-import { CampaignDialog } from "@/components/campaigns/CampaignDialog";
+import { CampaignEditor } from "@/components/campaigns/CampaignEditor";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 export default function CampaignsPage() {
