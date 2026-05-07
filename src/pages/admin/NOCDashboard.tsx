@@ -5,6 +5,7 @@ import { useUserRole } from "@/hooks/use-user-role";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { AlertCircle, TriangleAlert } from "lucide-react";
 
 // New Components
 import { NOCHeader } from "@/components/admin/noc/NOCHeader";
@@ -75,7 +76,7 @@ export default function NOCDashboard() {
       };
     });
 
-    const criticalStores = processedStores.filter(s => s.healthScore < 80).length;
+    const criticalStores = processedStores.filter(s => s.healthScore < 80);
 
     return {
       online,
@@ -83,7 +84,8 @@ export default function NOCDashboard() {
       unstable,
       noPlaylist,
       playerStuck,
-      criticalStores,
+      criticalStoresCount: criticalStores.length,
+      criticalStoresList: criticalStores,
       queryErrors,
       processedStores
     };
@@ -240,7 +242,7 @@ export default function NOCDashboard() {
 
   return (
     <div className={cn(
-      "flex flex-col h-screen w-full bg-[#050507] text-white overflow-hidden selection:bg-primary/30",
+      "flex flex-col h-screen w-full bg-[#050507] text-white overflow-hidden selection:bg-primary/30 font-sans",
       "fixed inset-0 z-[60]"
     )}>
       <NOCHeader 
@@ -255,11 +257,40 @@ export default function NOCDashboard() {
         sharing={sharing}
       />
 
-      <NOCStatsBar stats={stats} />
+      <NOCStatsBar stats={{...stats, criticalStores: stats.criticalStoresCount}} />
 
       <main className="flex-1 flex overflow-hidden">
         <div className="flex-1 flex flex-col overflow-hidden">
           <ScrollArea className="flex-1 p-6">
+            {/* Critical Incidents Section */}
+            {stats.criticalStoresList.length > 0 && (
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <AlertCircle className="h-4 w-4 text-red-500 animate-pulse" />
+                  <h2 className="text-xs font-black uppercase tracking-[0.3em] text-red-500">
+                    Incidentes Críticos Ativos
+                  </h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {stats.criticalStoresList.slice(0, 3).map(store => (
+                    <div key={store.id} className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <TriangleAlert className="h-5 w-5 text-red-500" />
+                        <div>
+                          <p className="text-[10px] font-black uppercase text-white/80">{store.name}</p>
+                          <p className="text-[9px] text-red-500 font-bold uppercase">{store.offline} OFF / {store.total} TOTAL</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-black text-red-500">{store.healthScore}%</p>
+                        <p className="text-[8px] font-bold text-white/30 uppercase">HEALTH</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="mb-6 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <h2 className="text-xs font-black uppercase tracking-[0.3em] text-white/40">
@@ -278,7 +309,7 @@ export default function NOCDashboard() {
                     key={i} 
                     className={cn(
                       "h-1 rounded-full transition-all duration-500",
-                      i === currentPage ? "w-6 bg-primary" : "w-1.5 bg-white/10"
+                      i === currentPage ? "w-6 bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.5)]" : "w-1.5 bg-white/10"
                     )}
                   />
                 ))}
@@ -288,12 +319,12 @@ export default function NOCDashboard() {
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentPage}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.5, ease: "circOut" }}
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.02 }}
+                transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
                 className={cn(
-                  "grid grid-cols-1 md:grid-cols-2 gap-4",
+                  "grid grid-cols-1 md:grid-cols-2 gap-6",
                   gridCols
                 )}
               >
@@ -310,10 +341,10 @@ export default function NOCDashboard() {
             </AnimatePresence>
           </ScrollArea>
 
-          <InkyInsights devices={devices} stores={stores} />
+          <InkyInsights devices={devices} stores={stats.processedStores} />
         </div>
 
-        <aside className="hidden xl:block w-80 shrink-0 border-l border-white/5">
+        <aside className="hidden xl:block w-80 shrink-0 border-l border-white/5 bg-[#08080a]">
           <EventsFeed tenantId={tenantId} />
         </aside>
       </main>
