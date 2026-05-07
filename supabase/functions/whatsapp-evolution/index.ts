@@ -30,7 +30,15 @@ async function evo(path: string, method = "GET", body?: unknown) {
   const text = await res.text();
   let data: any;
   try { data = JSON.parse(text); } catch { data = { raw: text }; }
-  if (!res.ok) throw new Error(data?.message || data?.error || `Evolution API error ${res.status}`);
+  if (!res.ok) {
+    const detail =
+      (Array.isArray(data?.response?.message) ? data.response.message.join("; ") : data?.response?.message) ||
+      (Array.isArray(data?.message) ? data.message.join("; ") : data?.message) ||
+      data?.error ||
+      `Evolution API error ${res.status}`;
+    console.error("Evolution API error", res.status, path, text);
+    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+  }
   return data;
 }
 
@@ -108,12 +116,20 @@ serve(async (req) => {
         let status = "sent";
         let errorMsg: string | null = null;
         try {
-          data = await evo(`/message/sendText/${instanceName}`, "POST", {
-            number: phone,
-            options: { delay: 1200, presence: "composing" },
-            textMessage: { text: message },
-            text: message,
-          });
+          // Try v2 format first ({ number, text }), then fall back to v1 ({ textMessage: { text } })
+          try {
+            data = await evo(`/message/sendText/${instanceName}`, "POST", {
+              number: phone,
+              text: message,
+            });
+          } catch (firstErr: any) {
+            console.log("sendText v2 failed, trying v1 format:", firstErr.message);
+            data = await evo(`/message/sendText/${instanceName}`, "POST", {
+              number: phone,
+              options: { delay: 1200, presence: "composing", linkPreview: false },
+              textMessage: { text: message },
+            });
+          }
         } catch (e: any) {
           status = "error";
           errorMsg = e.message;
