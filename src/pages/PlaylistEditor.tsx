@@ -695,7 +695,8 @@ export default function PlaylistEditor() {
                         </div>
                         <ScrollBar orientation="horizontal" />
                       </ScrollArea>
-                    </div>
+                    </CampaignDropZone>
+                  </div>
                   )}
 
                   <div className="h-28 bg-card/60 backdrop-blur-md border-t border-white/10 flex items-center justify-between px-6 shrink-0">
