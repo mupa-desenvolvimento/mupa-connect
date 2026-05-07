@@ -29,9 +29,8 @@ export default function NOCDashboard() {
   const [sharing, setSharing] = useState(false);
   const [rotationIndex, setRotationIndex] = useState(0);
 
-  const ROTATION_INTERVAL = 15000; // 15 seconds for rotation
+  const ROTATION_INTERVAL = 15000;
 
-  // Stats calculation
   const stats = useMemo(() => {
     const online = devices.filter(d => getDeviceStatus(d) === "online").length;
     const offline = devices.filter(d => getDeviceStatus(d) === "offline").length;
@@ -43,7 +42,6 @@ export default function NOCDashboard() {
       (d.last_player_activity_at && (Date.now() - new Date(d.last_player_activity_at).getTime()) > 600000)
     ).length;
 
-    // Store stats calculation
     const processedStores = stores.map(store => {
       const cleanCode = store.code?.replace(/^0+/, '');
       const storeDevices = devices.filter(d => {
@@ -62,7 +60,7 @@ export default function NOCDashboard() {
       else if (sUnstable > 0) status = "unstable";
       
       const healthScore = storeDevices.length > 0 ? Math.round((sOnline / storeDevices.length) * 100) : 100;
-      const sla = 99.2; // Example fixed SLA, could be calculated from historical logs
+      const sla = 99.2;
 
       return {
         ...store,
@@ -115,7 +113,7 @@ export default function NOCDashboard() {
       clearInterval(interval);
       clearInterval(rotInterval);
     };
-  }, [companyId, tenantId]);
+  }, [companyId, tenantId, isSuperAdmin]);
 
   async function fetchInitialData() {
     setLoading(true);
@@ -221,7 +219,7 @@ export default function NOCDashboard() {
 
   if (!isTecnico && !loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-[#0a0a0c] text-white">
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0a0a0c] text-white">
         <div className="text-center p-8 border border-white/5 rounded-2xl bg-white/5">
           <h2 className="text-2xl font-black uppercase tracking-tighter mb-2">Acesso Restrito</h2>
           <p className="text-white/40 text-sm">Esta área é exclusiva para técnicos e administradores.</p>
@@ -233,7 +231,6 @@ export default function NOCDashboard() {
     );
   }
 
-  // Calculate pagination for stores
   const storesPerPage = layout === "4" ? 4 : layout === "6" ? 6 : layout === "9" ? 9 : 12;
   const totalPages = Math.ceil(stats.processedStores.length / storesPerPage);
   const currentPage = rotationIndex % (totalPages || 1);
@@ -244,7 +241,7 @@ export default function NOCDashboard() {
   return (
     <div className={cn(
       "flex flex-col h-screen w-full bg-[#050507] text-white overflow-hidden selection:bg-primary/30",
-      isFullscreen && "fixed inset-0 z-50"
+      "fixed inset-0 z-[60]"
     )}>
       <NOCHeader 
         lastUpdate={lastUpdate}
@@ -261,7 +258,6 @@ export default function NOCDashboard() {
       <NOCStatsBar stats={stats} />
 
       <main className="flex-1 flex overflow-hidden">
-        {/* Main Grid Area */}
         <div className="flex-1 flex flex-col overflow-hidden">
           <ScrollArea className="flex-1 p-6">
             <div className="mb-6 flex items-center justify-between">
@@ -317,8 +313,7 @@ export default function NOCDashboard() {
           <InkyInsights devices={devices} stores={stores} />
         </div>
 
-        {/* Sidebar Feed Area */}
-        <aside className="hidden xl:block w-80 shrink-0">
+        <aside className="hidden xl:block w-80 shrink-0 border-l border-white/5">
           <EventsFeed tenantId={tenantId} />
         </aside>
       </main>
