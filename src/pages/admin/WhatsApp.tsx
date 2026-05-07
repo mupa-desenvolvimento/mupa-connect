@@ -26,9 +26,14 @@ import {
   MoreVertical, 
   ChevronRight,
   FileText,
+  Send,
   Building2,
   Pencil
 } from "lucide-react";
+import { TemplatesPanel } from "@/components/whatsapp/TemplatesPanel";
+import { GroupsPanel } from "@/components/whatsapp/GroupsPanel";
+import { ManualSendPanel } from "@/components/whatsapp/ManualSendPanel";
+import { SendHistoryPanel } from "@/components/whatsapp/SendHistoryPanel";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { usePhoneMask } from "@/hooks/usePhoneMask";
