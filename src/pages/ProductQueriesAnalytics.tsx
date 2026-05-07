@@ -61,6 +61,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ReportGeneratorModal } from "@/components/ReportGeneratorModal";
+import { InkySidebar } from "@/components/admin/analytics/InkySidebar";
+import { Sparkles } from "lucide-react";
 
 const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
@@ -73,6 +75,7 @@ export default function ProductQueriesAnalytics() {
   const [selectedStore, setSelectedStore] = useState("all");
   const [selectedDevice, setSelectedDevice] = useState("all");
   const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [inkySidebarOpen, setInkySidebarOpen] = useState(false);
 
   const { data: logs, isLoading, refetch } = useQuery({
     queryKey: ["product-queries-logs", period, selectedStore, selectedDevice, dateRange, tenantId, companyId],
@@ -347,6 +350,15 @@ export default function ProductQueriesAnalytics() {
             </Button>
 
             <Button 
+              variant="outline"
+              className="border-primary/50 hover:bg-primary/5 text-primary group" 
+              onClick={() => setInkySidebarOpen(true)}
+            >
+              <Sparkles className="mr-2 h-4 w-4 group-hover:animate-pulse" />
+              Analisar com IA
+            </Button>
+
+            <Button 
               className="bg-gradient-primary shadow-glow" 
               onClick={() => setReportModalOpen(true)}
             >
@@ -369,7 +381,17 @@ export default function ProductQueriesAnalytics() {
         }}
       />
 
-      {/* KPI Cards */}
+      <InkySidebar 
+        isOpen={inkySidebarOpen} 
+        onClose={() => setInkySidebarOpen(false)} 
+        logs={logs || []}
+        filters={{
+          period,
+          dateRange,
+          store: selectedStore,
+          device: selectedDevice
+        }}
+      />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-border/60">
           <CardContent className="p-5">
