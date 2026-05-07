@@ -88,6 +88,9 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { handlePlaylistError } from "@/utils/error-handlers";
 import { PlaylistErrorBanner } from "@/components/PlaylistErrorBanner";
+import { StatusBadge } from "@/components/StatusBadge";
+import { CampaignEditor } from "@/components/campaigns/CampaignEditor";
+import { CampaignContentManager } from "@/components/campaigns/CampaignContentManager";
 import { format } from "date-fns";
 
 const PIXELS_PER_SECOND = 12;
