@@ -353,7 +353,7 @@ export default function PlaylistEditor() {
       const mappedCampaigns: EditorPlaylistItem[] = (campaignLinks || []).map((cl: any) => ({
         id: `campaign-${cl.id}`,
         dbId: cl.id,
-        duration: 0, // Campaigns don't have fixed duration in timeline block sense, but we can set 5s for visual
+        duration: 5, // Visual width for campaign block in timeline
         priority: cl.priority || 1,
         type: 'campaign' as any,
         campaign: cl.campaigns,
