@@ -10,7 +10,8 @@ import {
   useSensors,
   DragOverlay,
   defaultDropAnimationSideEffects,
-  useDraggable
+  useDraggable,
+  useDroppable
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -135,11 +136,13 @@ const DraggableCampaign = ({ campaign, children }: { campaign: any; children: Re
   const style = transform ? {
     transform: CSS.Translate.toString(transform),
     opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 1000 : 1
+    zIndex: isDragging ? 1000 : 1,
+    touchAction: "none",
+    userSelect: "none"
   } : {};
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div ref={setNodeRef} style={style} className="select-none" {...attributes} {...listeners}>
       {children}
     </div>
   );
@@ -179,7 +182,7 @@ const SortableItem = ({
     transform,
     transition,
     isDragging
-  } = useSortable({ id: item.id });
+  } = useSortable({ id: item.id, data: { type: "playlist-item" } });
 
   const media = item.media;
 
@@ -248,6 +251,15 @@ const SortableItem = ({
   );
 };
 
+const TimelineDropZone = ({ children }: { children: React.ReactNode }) => {
+  const { setNodeRef } = useDroppable({ id: "timeline-dropzone" });
+  return (
+    <div ref={setNodeRef} className="flex relative z-10">
+      {children}
+    </div>
+  );
+};
+
 // --- Main Component ---
 export default function PlaylistEditor() {
   const { id } = useParams<{ id: string }>();
@@ -289,6 +301,7 @@ export default function PlaylistEditor() {
   const [applyToAllDevices, setApplyToAllDevices] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeDragType, setActiveDragType] = useState<string | null>(null);
   const [debugData, setDebugData] = useState<any>(null);
   const [showDebug, setShowDebug] = useState(false);
   const [mediaSearch, setMediaSearch] = useState("");
@@ -601,35 +614,51 @@ export default function PlaylistEditor() {
 
   const handleDragStart = (event: any) => {
     setActiveId(event.active.id);
+    setActiveDragType(event.active.data?.current?.type ?? "playlist-item");
   };
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
     setActiveId(null);
+    setActiveDragType(null);
     
     const activeData = active.data.current;
     
     // Check if we're dragging a campaign
     if (activeData?.type === 'campaign') {
+      const isOverTimeline =
+        !!over &&
+        (over.id === "timeline-dropzone" || items.some((i) => i.id === over.id));
+
+      if (!isOverTimeline) return;
+
       const campaign = activeData.campaign;
       const campaignItems = campaign.campaign_contents || [];
       
       if (campaignItems.length > 0) {
+        const createTempId = () => {
+          const uuid = globalThis.crypto?.randomUUID?.();
+          return uuid ? `temp-${uuid}` : `temp-${Date.now()}-${Math.random()}`;
+        };
+
+        const newCampaignItems: EditorPlaylistItem[] = campaignItems
+          .filter((it: any) => !!it?.media)
+          .map((it: any) => ({
+            id: createTempId(),
+            mediaId: it.media.id,
+            duration: it.duration_override || it.media.duration || 10,
+            priority: 1,
+            type: it.media.type === "video" ? "video" : "image",
+            media: it.media,
+          }));
+
+        const insertIndex =
+          over?.id && over.id !== "timeline-dropzone"
+            ? Math.max(0, items.findIndex((i) => i.id === over.id))
+            : items.length;
+
         const newItems: EditorPlaylistItem[] = [...items];
-        
-        campaignItems.forEach((item: any) => {
-          if (item.media) {
-            const newItem: EditorPlaylistItem = {
-              id: `temp-${Date.now()}-${Math.random()}`,
-              mediaId: item.media.id,
-              duration: item.duration_override || item.media.duration || 10,
-              priority: 1,
-              type: item.media.type === 'video' ? 'video' : 'image',
-              media: item.media
-            };
-            newItems.push(newItem);
-          }
-        });
+        newItems.splice(insertIndex, 0, ...newCampaignItems);
         
         setItems(newItems);
         triggerAutoSave(newItems, playlistName);
@@ -639,7 +668,7 @@ export default function PlaylistEditor() {
     }
     
     // Original logic for sorting playlist items
-    if (over && active.id !== over.id) {
+    if (over && over.id !== "timeline-dropzone" && active.id !== over.id) {
       const oldIndex = items.findIndex((i) => i.id === active.id);
       const newIndex = items.findIndex((i) => i.id === over.id);
       const newItems = arrayMove(items, oldIndex, newIndex);
@@ -647,6 +676,19 @@ export default function PlaylistEditor() {
       triggerAutoSave(newItems, playlistName);
     }
   };
+
+  const collisionDetectionStrategy = useCallback(
+    (args: any) => {
+      if (activeDragType === "campaign") return closestCenter(args);
+      return closestCenter({
+        ...args,
+        droppableContainers: args.droppableContainers.filter(
+          (container: any) => container.id !== "timeline-dropzone"
+        ),
+      });
+    },
+    [activeDragType]
+  );
 
   const addItem = (mediaId: string) => {
     console.log("Adding item to playlist. MediaId:", mediaId);
@@ -813,6 +855,13 @@ export default function PlaylistEditor() {
         </div>
       </header>
 
+      <DndContext 
+        sensors={sensors}
+        collisionDetection={collisionDetectionStrategy}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        modifiers={activeDragType === "playlist-item" ? [restrictToHorizontalAxis] : []}
+      >
       <div className="flex flex-1 overflow-hidden h-full">
         {/* Left Sidebar - Media Library */}
         <aside className="w-80 border-r border-white/5 bg-[#0c0c0e] flex flex-col z-40 h-full overflow-hidden">
@@ -1386,38 +1435,30 @@ export default function PlaylistEditor() {
                       <div className="absolute top-0 -left-1.5 w-4 h-4 rounded-full bg-[#085CF0] border-2 border-white/20 shadow-lg" />
                     </div>
 
-                    <DndContext 
-                      sensors={sensors}
-                      collisionDetection={closestCenter}
-                      onDragStart={handleDragStart}
-                      onDragEnd={handleDragEnd}
-                      modifiers={[restrictToHorizontalAxis]}
+                    <SortableContext 
+                      items={items.map(i => i.id)}
+                      strategy={horizontalListSortingStrategy}
                     >
-                      <SortableContext 
-                        items={items.map(i => i.id)}
-                        strategy={horizontalListSortingStrategy}
-                      >
-                        <div className="flex relative z-10">
-                          <AnimatePresence>
-                            {items.map((item, index) => (
-                              <div 
-                                key={item.id} 
-                                style={{ width: `${item.duration * PIXELS_PER_SECOND}px` }}
-                                className="shrink-0"
-                              >
-                                <SortableItem 
-                                  item={item} 
-                                  index={index}
-                                  isSelected={selectedItem?.id === item.id}
-                                  onSelect={setSelectedItem}
-                                  timelineMode={true}
-                                />
-                              </div>
-                            ))}
-                          </AnimatePresence>
-                        </div>
-                      </SortableContext>
-                    </DndContext>
+                      <TimelineDropZone>
+                        <AnimatePresence>
+                          {items.map((item, index) => (
+                            <div 
+                              key={item.id} 
+                              style={{ width: `${item.duration * PIXELS_PER_SECOND}px` }}
+                              className="shrink-0"
+                            >
+                              <SortableItem 
+                                item={item} 
+                                index={index}
+                                isSelected={selectedItem?.id === item.id}
+                                onSelect={setSelectedItem}
+                                timelineMode={true}
+                              />
+                            </div>
+                          ))}
+                        </AnimatePresence>
+                      </TimelineDropZone>
+                    </SortableContext>
                   </div>
                   <ScrollBar orientation="horizontal" className="z-40" />
                 </ScrollArea>
@@ -1551,6 +1592,7 @@ export default function PlaylistEditor() {
            </ScrollArea>
         </aside>
       </div>
+      </DndContext>
 
       {/* Debug Overlay */}
       <AnimatePresence>
