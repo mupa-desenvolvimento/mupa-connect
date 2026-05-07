@@ -958,7 +958,7 @@ export default function PlaylistEditor() {
                 </div>
               </div>
               
-              <ScrollArea className="flex-1" orientation="horizontal">
+              <ScrollArea className="flex-1">
                 <div 
                   className="h-full relative px-8 flex items-center min-w-full" 
                   style={{ width: Math.max(items.length * 200 + 100, 800) }}
