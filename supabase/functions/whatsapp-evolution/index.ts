@@ -30,7 +30,15 @@ async function evo(path: string, method = "GET", body?: unknown) {
   const text = await res.text();
   let data: any;
   try { data = JSON.parse(text); } catch { data = { raw: text }; }
-  if (!res.ok) throw new Error(data?.message || data?.error || `Evolution API error ${res.status}`);
+  if (!res.ok) {
+    const detail =
+      (Array.isArray(data?.response?.message) ? data.response.message.join("; ") : data?.response?.message) ||
+      (Array.isArray(data?.message) ? data.message.join("; ") : data?.message) ||
+      data?.error ||
+      `Evolution API error ${res.status}`;
+    console.error("Evolution API error", res.status, path, text);
+    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+  }
   return data;
 }
 
