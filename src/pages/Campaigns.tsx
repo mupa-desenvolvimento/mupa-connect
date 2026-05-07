@@ -293,6 +293,12 @@ export default function CampaignsPage() {
           </>
         )}
       </div>
+
+      <CampaignDialog 
+        open={isDialogOpen} 
+        onOpenChange={setIsDialogOpen} 
+        campaignId={selectedCampaignId}
+      />
     </div>
   );
 }
