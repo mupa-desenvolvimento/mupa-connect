@@ -1,24 +1,16 @@
-import { assertEquals, assertStringIncludes } from "https://deno.land/std@0.168.0/testing/asserts.ts";
-import "./index.ts";
+import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
+import { normalizeErrorDetail, normalizePhone } from "./index.ts";
 
-const endpoint = "http://127.0.0.1:9999";
+Deno.test("normalizes Evolution object error into a readable message", () => {
+  const message = normalizeErrorDetail([{ jid: "+51995643344@s.whatsapp.net", exists: false }]);
+  assertEquals(message, "Número não encontrado no WhatsApp: +51995643344@s.whatsapp.net");
+});
 
-Deno.test("rejects invalid phone with clear 400 response", async () => {
-  const res = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: "Bearer invalid-test-token",
-    },
-    body: JSON.stringify({
-      action: "sendMessage",
-      instanceName: "suporte",
-      phone: "abc",
-      message: "Teste",
-    }),
-  });
+Deno.test("normalizes nested Evolution validation arrays", () => {
+  const message = normalizeErrorDetail([["instance requires property \"textMessage\""]]);
+  assertEquals(message, "instance requires property \"textMessage\"");
+});
 
-  const body = await res.text();
-  assertEquals(res.status, 401);
-  assertStringIncludes(body, "Unauthorized");
+Deno.test("normalizes phone numbers before sending", () => {
+  assertEquals(normalizePhone("+55 (11) 99999-9999"), "5511999999999");
 });
