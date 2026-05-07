@@ -1086,6 +1086,7 @@ export default function PlaylistEditor() {
               
               <ScrollArea className="flex-1">
                 <div 
+                  id="playlist-timeline-drop-zone"
                   className="h-full relative px-8 flex items-center min-w-full" 
                   style={{ width: Math.max(items.length * 200 + 100, 800) }}
                   ref={timelineScrollRef} 
