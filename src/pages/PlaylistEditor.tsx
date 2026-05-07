@@ -266,7 +266,16 @@ export default function PlaylistEditor() {
       setIsDefault(playlistData.is_company_default || false);
       setAppearanceConfig(normalizeAppearanceConfig(playlistData.appearance_config));
       if (playlistData.playlist_items && playlistData.playlist_items.length > 0) {
-        const mappedItems = playlistData.playlist_items.map((it: any) => ({ id: it.id, dbId: it.id, mediaId: it.media_id, duration: it.duracao, priority: it.prioridade || 1, type: it.tipo, media: medias?.find(m => m.id === it.media_id) }));
+        const mappedItems = playlistData.playlist_items.map((it: any) => ({ 
+          id: it.id, 
+          dbId: it.id, 
+          mediaId: it.media_id, 
+          duration: it.duracao, 
+          priority: it.prioridade || 1, 
+          type: it.tipo, 
+          isLocked: it.is_locked || false,
+          media: medias?.find(m => m.id === it.media_id) 
+        }));
         setItems(mappedItems);
         if (!selectedItem) setSelectedItem(mappedItems[0]);
       } else { setItems([]); }
