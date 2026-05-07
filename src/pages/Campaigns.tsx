@@ -68,7 +68,13 @@ export default function CampaignsPage() {
   ) || [];
 
   const handleEdit = (id: string) => {
-    toast.info("Em breve: Edição de campanha");
+    setSelectedCampaignId(id);
+    setIsDialogOpen(true);
+  };
+
+  const handleCreate = () => {
+    setSelectedCampaignId(null);
+    setIsDialogOpen(true);
   };
 
   const handleDelete = async (id: string) => {
