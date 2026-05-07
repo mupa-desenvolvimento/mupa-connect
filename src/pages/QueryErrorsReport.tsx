@@ -476,8 +476,9 @@ export default function QueryErrorsReport() {
           </div>
         }
       />
+    </div>
 
-      <Sheet open={isAiPanelOpen} onOpenChange={setIsAiPanelOpen}>
+    <Sheet open={isAiPanelOpen} onOpenChange={setIsAiPanelOpen}>
         <SheetContent className="w-full sm:max-w-xl md:max-w-2xl overflow-hidden flex flex-col p-0">
           <SheetHeader className="p-6 border-b bg-muted/20">
             <div className="flex items-center gap-3">
