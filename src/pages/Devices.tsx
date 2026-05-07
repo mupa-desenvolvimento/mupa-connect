@@ -604,7 +604,7 @@ export default function DevicesPage() {
                 </Card>
               ))}
             </div>
-          ) : null)}
+          ) : null}
         </div>
       </div>
 
