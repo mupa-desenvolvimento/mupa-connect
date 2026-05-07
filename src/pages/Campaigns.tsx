@@ -27,6 +27,7 @@ import {
 import { toast } from "sonner";
 import { CampaignCalendar } from "@/components/campaigns/CampaignCalendar";
 import { CampaignTimeline } from "@/components/campaigns/CampaignTimeline";
+import { CampaignDialog } from "@/components/campaigns/CampaignDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
