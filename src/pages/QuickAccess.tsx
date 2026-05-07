@@ -80,6 +80,51 @@ export default function QuickAccessPage() {
     return isHeartbeatRecent ? "online" : "offline";
   };
 
+  const pollQueryError = async (deviceSerial: string, ean: string, startTime: string, deviceId: string) => {
+    let attempts = 0;
+    const maxAttempts = 15; // 15 segundos de polling
+    
+    const interval = setInterval(async () => {
+      attempts++;
+      
+      try {
+        const { data, error } = await supabase
+          .from("product_query_errors")
+          .select("error_message, error_type, created_at")
+          .eq("device_serial", deviceSerial)
+          .eq("ean", ean)
+          .gt("created_at", startTime)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (data && data.length > 0) {
+          clearInterval(interval);
+          const errorInfo = data[0];
+          setLastResponse(prev => ({
+            ...prev,
+            [deviceId]: {
+              status: errorInfo.error_message,
+              type: errorInfo.error_type,
+              time: new Date().toLocaleTimeString()
+            }
+          }));
+          toast.error(`Resposta: ${errorInfo.error_message} (${errorInfo.error_type})`);
+        } else if (attempts >= maxAttempts) {
+          clearInterval(interval);
+          setLastResponse(prev => ({
+            ...prev,
+            [deviceId]: {
+              status: "Sem erros detectados",
+              time: new Date().toLocaleTimeString()
+            }
+          }));
+        }
+      } catch (err) {
+        console.error("Erro ao verificar status:", err);
+      }
+    }, 1000);
+  };
+
   const sendQuickCommand = async (device: any, command: string, label: string, codbar?: string) => {
     if (!device.serial) {
       toast.error("Dispositivo sem serial.");
@@ -88,6 +133,7 @@ export default function QuickAccessPage() {
 
     const commandId = `${device.id}-${command}`;
     setSendingCommand(commandId);
+    const startTime = new Date().toISOString();
 
     try {
       const timestamp = Date.now();
@@ -117,9 +163,28 @@ export default function QuickAccessPage() {
         payload: payload
       });
 
-      toast.success(`${label} enviado com sucesso (200 OK)!`);
+      toast.success(`${label} enviado! Aguardando resposta...`);
+
+      if (command === "consulta_ean" && codbar) {
+        pollQueryError(device.serial, codbar, startTime, device.id);
+      } else {
+        setLastResponse(prev => ({
+          ...prev,
+          [device.id]: {
+            status: "200 OK (Enviado)",
+            time: new Date().toLocaleTimeString()
+          }
+        }));
+      }
     } catch (err) {
       toast.error(`Falha ao enviar ${label} (Erro no servidor)`);
+      setLastResponse(prev => ({
+        ...prev,
+        [device.id]: {
+          status: "Erro no envio",
+          time: new Date().toLocaleTimeString()
+        }
+      }));
     } finally {
       setSendingCommand(null);
     }
