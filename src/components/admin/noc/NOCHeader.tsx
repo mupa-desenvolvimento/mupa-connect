@@ -91,17 +91,21 @@ export function NOCHeader({
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="h-9 gap-2 bg-white/5 border-white/10 text-white/70">
               <LayoutGrid className="h-4 w-4" />
-              <span className="hidden sm:inline">Grid</span>
+              <span className="hidden sm:inline">Layouts</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 bg-[#111114] border-white/10 text-white">
-            <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest opacity-40">Estrutura</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-56 bg-[#111114] border-white/10 text-white shadow-2xl">
+            <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest opacity-40">Estrutura Operacional</DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-white/5" />
             <DropdownMenuRadioGroup value={layout} onValueChange={onLayoutChange}>
-              <DropdownMenuRadioItem value="auto" className="text-xs">Auto Adaptável</DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="4" className="text-xs">4 Painéis (2x2)</DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="6" className="text-xs">6 Painéis (3x2)</DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="9" className="text-xs">9 Painéis (3x3)</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="auto" className="text-xs">Wallboard (TV/NOC)</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="list" className="text-xs">Lista Operacional</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="executive" className="text-xs">Visão Executiva</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="map" className="text-xs">Mapa de Saude</DropdownMenuRadioItem>
+              <DropdownMenuSeparator className="bg-white/5" />
+              <DropdownMenuRadioItem value="4" className="text-xs">Grade 2x2</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="6" className="text-xs">Grade 3x2</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="9" className="text-xs">Grade 3x3</DropdownMenuRadioItem>
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>
