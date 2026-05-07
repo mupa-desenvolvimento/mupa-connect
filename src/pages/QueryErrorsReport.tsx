@@ -696,35 +696,102 @@ export default function QueryErrorsReport() {
         )}
       </div>
 
-      {/* Future Enhancements Teaser */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-border/40">
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border/40">
-          <div className="h-10 w-10 rounded-lg bg-accent/10 text-accent grid place-items-center">
-            <ArrowUpRight className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground">RANKING SEMANAL</p>
-            <p className="text-xs text-muted-foreground">Em breve</p>
-          </div>
+      {/* Rankings Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-6">
+        {/* Top Produtos */}
+        <Card className="border-border/60">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Package className="h-4 w-4 text-warning" />
+              Top Produtos com Falha
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {topProducts.map((item, idx) => (
+              <div key={idx} className="space-y-1.5">
+                <div className="flex justify-between text-xs">
+                  <span className="font-medium truncate max-w-[180px]" title={item.product_name}>{item.product_name || 'Desconhecido'}</span>
+                  <span className="text-muted-foreground font-semibold">{item.error_count} falhas</span>
+                </div>
+                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-warning transition-all" 
+                    style={{ width: `${Math.min((item.error_count / (topProducts[0]?.error_count || 1)) * 100, 100)}%` }} 
+                  />
+                </div>
+              </div>
+            ))}
+            {topProducts.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sem dados no período</p>}
+          </CardContent>
+        </Card>
+
+        {/* Top Lojas */}
+        <Card className="border-border/60">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Store className="h-4 w-4 text-primary" />
+              Top Lojas Críticas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {topStores.map((item, idx) => (
+              <div key={idx} className="space-y-1.5">
+                <div className="flex justify-between text-xs">
+                  <span className="font-medium truncate max-w-[180px]">{item.name}</span>
+                  <span className="text-muted-foreground font-semibold">{item.count} falhas</span>
+                </div>
+                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-primary transition-all" 
+                    style={{ width: `${Math.min((item.count / (topStores[0]?.count || 1)) * 100, 100)}%` }} 
+                  />
+                </div>
+              </div>
+            ))}
+            {topStores.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sem dados no período</p>}
+          </CardContent>
+        </Card>
+
+        {/* Top Dispositivos */}
+        <Card className="border-border/60">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Monitor className="h-4 w-4 text-accent" />
+              Top Dispositivos
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {topDevices.map((item, idx) => (
+              <div key={idx} className="space-y-1.5">
+                <div className="flex justify-between text-xs">
+                  <span className="font-medium truncate max-w-[180px]">{item.name}</span>
+                  <span className="text-muted-foreground font-semibold">{item.count} falhas</span>
+                </div>
+                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-accent transition-all" 
+                    style={{ width: `${Math.min((item.count / (topDevices[0]?.count || 1)) * 100, 100)}%` }} 
+                  />
+                </div>
+              </div>
+            ))}
+            {topDevices.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sem dados no período</p>}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Health Indicator Footer */}
+      <div className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border/40 mt-6">
+        <div className="h-10 w-10 rounded-full bg-success/10 text-success grid place-items-center">
+          <History className="h-5 w-5" />
         </div>
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border/40">
-          <div className="h-10 w-10 rounded-lg bg-success/10 text-success grid place-items-center">
-            <ArrowDownRight className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground">AUTOMAÇÃO WHATSAPP</p>
-            <p className="text-xs text-muted-foreground">Em breve</p>
-          </div>
+        <div className="flex-1">
+          <p className="text-sm font-semibold">Monitoramento de Saúde Operacional</p>
+          <p className="text-xs text-muted-foreground">O sistema monitora 24/7 falhas de integração para garantir a melhor experiência no PDV.</p>
         </div>
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border/40">
-          <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary grid place-items-center">
-            <ArrowUpRight className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground">IA PREDITIVA</p>
-            <p className="text-xs text-muted-foreground">Em desenvolvimento</p>
-          </div>
-        </div>
+        <Badge variant="outline" className="bg-success/5 text-success border-success/20">
+          Sistema Operacional
+        </Badge>
       </div>
     </div>
   );
