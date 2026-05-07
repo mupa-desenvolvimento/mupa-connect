@@ -234,6 +234,11 @@ const App = () => {
                     <NOCDashboard />
                   </ProtectedRoute>
                 } />
+                <Route path="/admin/monitoring/store/:storeId" element={
+                  <ProtectedRoute requireTecnico>
+                    <StoreMonitoring />
+                  </ProtectedRoute>
+                } />
                 <Route path="/face-track-demo" element={<FaceTrackDemo />} />
               </Route>
 
