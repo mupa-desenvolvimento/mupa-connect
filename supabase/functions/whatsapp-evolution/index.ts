@@ -110,7 +110,9 @@ serve(async (req) => {
         try {
           data = await evo(`/message/sendText/${instanceName}`, "POST", {
             number: phone,
+            options: { delay: 1200, presence: "composing" },
             textMessage: { text: message },
+            text: message,
           });
         } catch (e: any) {
           status = "error";
