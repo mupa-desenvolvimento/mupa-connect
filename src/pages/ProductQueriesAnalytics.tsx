@@ -212,10 +212,11 @@ export default function ProductQueriesAnalytics() {
     .slice(0, 5) as any[];
 
   const devicesRanking = logs?.reduce((acc: any, log) => {
-    const name = log.apelido || log.device_id;
-    if (!acc[log.device_id]) acc[log.device_id] = { name, count: 0, errors: 0 };
-    acc[log.device_id].count++;
-    if (log.status_code !== 200) acc[log.device_id].errors++;
+    const deviceKey = log.device_serial || log.device_id;
+    const name = log.apelido || deviceKey;
+    if (!acc[deviceKey]) acc[deviceKey] = { name, serial: log.device_serial || log.device_id, count: 0, errors: 0 };
+    acc[deviceKey].count++;
+    if (log.status_code !== 200) acc[deviceKey].errors++;
     return acc;
   }, {});
 
