@@ -117,25 +117,67 @@ const normalizeAppearanceConfig = (config?: any) => ({
 });
 
 const SortableItem = ({ item, index, isSelected, onSelect, timelineMode = false }: any) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
+    id: item.id,
+    disabled: item.isLocked 
+  });
   const media = item.media;
-  const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 10 : 1, opacity: isDragging ? 0.5 : 1 };
+  const style = { 
+    transform: CSS.Transform.toString(transform), 
+    transition, 
+    zIndex: isDragging ? 10 : 1, 
+    opacity: isDragging ? 0.5 : 1,
+    width: item.duration * PIXELS_PER_SECOND 
+  };
 
   return (
     <div 
-      ref={setNodeRef} style={style} onClick={() => onSelect(item)}
-      className={`relative shrink-0 ${timelineMode ? 'w-full h-24' : 'w-48 h-32'} rounded-xl border transition-all cursor-pointer group overflow-hidden ${
-        isSelected ? 'border-[#085CF0] ring-2 ring-[#085CF0]/20 bg-[#085CF0]/5 shadow-xl shadow-[#085CF0]/10' : 'border-border/40 bg-card/40 hover:border-[#085CF0]/30'
-      } ${isDragging ? 'shadow-2xl' : ''}`}
+      ref={setNodeRef} 
+      style={style} 
+      onClick={() => onSelect(item)}
+      className={`relative shrink-0 h-28 rounded-xl border transition-all cursor-pointer group overflow-hidden ${
+        isSelected ? 'border-[#085CF0] ring-2 ring-[#085CF0]/20 bg-[#085CF0]/10 shadow-lg' : 'border-white/10 bg-white/5 hover:border-white/20'
+      } ${item.isLocked ? 'opacity-80' : ''}`}
     >
       <div className="absolute inset-0">
-        <img src={media?.thumbnail_url || media?.file_url} alt={media?.name} className="w-full h-full object-cover opacity-60 group-hover:opacity-100" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+        <img src={media?.thumbnail_url || media?.file_url} alt={media?.name} className="w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
       </div>
-      <div className="absolute top-2 left-2"><span className="text-[10px] font-mono font-bold text-white px-1.5 py-0.5 rounded bg-black/60 border border-white/10">{index + 1}</span></div>
-      <div className="absolute top-2 right-2"><span className="text-[10px] font-bold text-white px-1.5 py-0.5 rounded bg-[#085CF0]/80 flex items-center gap-1"><Clock className="h-2.5 w-2.5" /> {item.duration}s</span></div>
-      <div {...attributes} {...listeners} className="absolute bottom-2 left-2 p-1 rounded bg-black/40 hover:bg-[#085CF0]/60 text-white/50 hover:text-white cursor-grab active:cursor-grabbing"><GripVertical className="h-4 w-4" /></div>
-      <div className="absolute bottom-2 left-9 right-2"><p className="text-[10px] font-medium text-white truncate">{media?.name || 'Sem nome'}</p></div>
+      
+      <div className="absolute top-2 left-2 flex gap-1.5">
+        <span className="text-[10px] font-mono font-bold text-white/90 px-1.5 py-0.5 rounded bg-black/60 border border-white/10">{index + 1}</span>
+        {item.isLocked && (
+          <div className="bg-amber-500/20 text-amber-500 border border-amber-500/30 rounded px-1.5 py-0.5 flex items-center">
+            <Lock className="h-2.5 w-2.5" />
+          </div>
+        )}
+      </div>
+
+      <div className="absolute top-2 right-2">
+        <span className="text-[10px] font-bold text-white/90 px-1.5 py-0.5 rounded bg-black/60 border border-white/10 flex items-center gap-1">
+          <Clock className="h-2.5 w-2.5 text-[#085CF0]" /> {item.duration}s
+        </span>
+      </div>
+
+      {!item.isLocked && (
+        <div {...attributes} {...listeners} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white/0 group-hover:text-white/100 group-hover:bg-[#085CF0]/80 transition-all cursor-grab active:cursor-grabbing">
+          <GripVertical className="h-4 w-4" />
+        </div>
+      )}
+
+      <div className="absolute bottom-2 left-2 right-2">
+        <p className="text-[10px] font-bold text-white truncate drop-shadow-md">{media?.name || 'Sem nome'}</p>
+        <div className="flex items-center gap-2 mt-1">
+          <Badge variant="outline" className="text-[8px] h-3.5 px-1 py-0 border-white/10 bg-black/40 text-white/40 uppercase">
+            {item.type}
+          </Badge>
+          {item.priority > 1 && (
+            <Badge variant="outline" className="text-[8px] h-3.5 px-1 py-0 border-blue-500/30 bg-blue-500/10 text-blue-400 font-bold">
+              P{item.priority}
+            </Badge>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
