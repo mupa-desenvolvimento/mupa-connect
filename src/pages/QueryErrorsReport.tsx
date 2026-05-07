@@ -107,17 +107,14 @@ export default function QueryErrorsReport() {
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
 
   const { data: errors, isLoading, refetch } = useQuery({
-    queryKey: ["product-query-errors", period, selectedStore, selectedDevice, selectedErrorType, dateRange],
+    queryKey: ["product-query-errors-enriched", period, selectedStore, selectedDevice, selectedErrorType, dateRange],
     queryFn: async () => {
-      let query = supabase
-        .from("product_query_errors")
-        .select("*");
+      // Step 1: Fetch errors
+      let query = supabase.from("product_query_errors").select("*");
 
       if (period === "custom" && dateRange?.from) {
         query = query.gte("created_at", startOfDay(dateRange.from).toISOString());
-        if (dateRange.to) {
-          query = query.lte("created_at", endOfDay(dateRange.to).toISOString());
-        }
+        if (dateRange.to) query = query.lte("created_at", endOfDay(dateRange.to).toISOString());
       } else if (period !== "all") {
         const days = parseInt(period);
         const date = subDays(new Date(), days);
@@ -128,9 +125,40 @@ export default function QueryErrorsReport() {
       if (selectedDevice !== "all") query = query.eq("device_serial", selectedDevice);
       if (selectedErrorType !== "all") query = query.eq("error_type", selectedErrorType);
 
-      const { data, error } = await query.order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
+      const { data: errorRows, error: fetchError } = await query.order("created_at", { ascending: false });
+      if (fetchError) throw fetchError;
+
+      if (!errorRows || errorRows.length === 0) return [];
+
+      // Step 2: Enrich with real store and device data
+      const uniqueSerials = Array.from(new Set(errorRows.map(e => e.device_serial?.trim())));
+      
+      const { data: devicesData } = await supabase
+        .from("dispositivos")
+        .select("serial, apelido_interno, store_id, num_filial, stores(name)")
+        .in("serial", uniqueSerials);
+
+      const deviceMap = new Map();
+      devicesData?.forEach(d => {
+        const serial = d.serial?.trim();
+        if (serial) {
+          deviceMap.set(serial, {
+            apelido: d.apelido_interno,
+            num_filial: d.num_filial,
+            store_name: (d.stores as any)?.name || (d.num_filial ? `Loja ${d.num_filial}` : null)
+          });
+        }
+      });
+
+      return errorRows.map(e => {
+        const enrichment = deviceMap.get(e.device_serial?.trim());
+        return {
+          ...e,
+          device_name: enrichment?.apelido || e.device_name,
+          store_name: enrichment?.store_name || e.store_name,
+          num_filial: enrichment?.num_filial
+        };
+      });
     },
   });
 
@@ -350,11 +378,12 @@ export default function QueryErrorsReport() {
   }
 
   return (
-    <div className="space-y-6 pb-20">
-      <PageHeader
-        title="Inteligência de Falhas"
-        description="Análise preventiva de falhas de consulta e erros de integração ERP."
-        actions={
+    <div className="flex flex-col gap-4 h-[calc(100vh-5rem)] overflow-hidden pb-4">
+      <div className="shrink-0 space-y-4">
+        <PageHeader
+          title="Inteligência de Falhas"
+          description="Análise preventiva de falhas de consulta e erros de integração ERP."
+          actions={
           <div className="flex flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <Select value={period} onValueChange={setPeriod}>
@@ -450,8 +479,9 @@ export default function QueryErrorsReport() {
           </div>
         }
       />
+    </div>
 
-      <Sheet open={isAiPanelOpen} onOpenChange={setIsAiPanelOpen}>
+    <Sheet open={isAiPanelOpen} onOpenChange={setIsAiPanelOpen}>
         <SheetContent className="w-full sm:max-w-xl md:max-w-2xl overflow-hidden flex flex-col p-0">
           <SheetHeader className="p-6 border-b bg-muted/20">
             <div className="flex items-center gap-3">
@@ -511,288 +541,295 @@ export default function QueryErrorsReport() {
         </SheetContent>
       </Sheet>
 
-      {/* KPI Section */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: "Total Erros", value: kpis.totalErrors, icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10" },
-          { label: "Produtos Afetados", value: kpis.affectedProducts, icon: Package, color: "text-warning", bg: "bg-warning/10" },
-          { label: "Lojas Críticas", value: kpis.criticalStores, icon: Store, color: "text-primary", bg: "bg-primary/10" },
-          { label: "Dispositivos Críticos", value: kpis.affectedDevices, icon: Monitor, color: "text-accent", bg: "bg-accent/10" },
-        ].map((kpi, i) => (
-          <Card key={i} className="border-border/40 overflow-hidden relative group transition-all hover:shadow-lg hover:border-primary/20">
-            <div className={cn("absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 rounded-full blur-2xl opacity-10", kpi.bg)} />
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className={cn("h-12 w-12 rounded-xl grid place-items-center shrink-0", kpi.bg, kpi.color)}>
-                <kpi.icon className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{kpi.label}</p>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-2xl font-display font-bold">{kpi.value.toLocaleString()}</h3>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Inky AI Insight */}
-      <Card className="border-primary/20 bg-primary/5 overflow-hidden">
-        <CardContent className="p-4 flex gap-4 items-center">
-          <div className="h-10 w-10 rounded-full bg-primary/10 grid place-items-center shrink-0">
-            <CircleAlert className="h-5 w-5 text-primary" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-primary mb-0.5">Inky AI - Análise Preventiva</p>
-            <p className="text-sm text-muted-foreground">
-              {kpis.totalErrors > 0 
-                ? `Detectamos que o produto ${aggregatedList[0]?.product_name || aggregatedList[0]?.ean} é o mais crítico, com ${aggregatedList[0]?.error_count} falhas. Verifique a integração do ERP.`
-                : "Tudo certo por aqui! Não detectamos padrões de erro críticos no período selecionado."}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Main Content Area */}
-      <div className="space-y-4">
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div className="relative w-full md:w-96">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Buscar por produto, EAN ou serial..." 
-              className="pl-9 h-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          
-          <div className="flex items-center gap-4 w-full md:w-auto">
-            <Tabs value={viewMode} onValueChange={(v: any) => setViewMode(v)} className="w-full md:w-auto">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="table" className="gap-2"><List className="h-4 w-4" /> Tabela</TabsTrigger>
-                <TabsTrigger value="cards" className="gap-2"><LayoutGrid className="h-4 w-4" /> Cards</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-        </div>
-
-        {filteredList.length === 0 ? (
-          <div className="h-96 flex flex-col items-center justify-center border rounded-xl bg-card/50 text-muted-foreground">
-            <Inbox className="h-12 w-12 mb-4 opacity-20" />
-            <p className="text-lg font-medium">Nenhum erro encontrado</p>
-            <p className="text-sm">Tente ajustar os filtros ou o termo de busca.</p>
-          </div>
-        ) : viewMode === "table" ? (
-          <Card className="border-border/60 overflow-hidden">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader className="bg-muted/40">
-                  <TableRow>
-                    <TableHead className="w-[150px]">Dispositivo</TableHead>
-                    <TableHead>Produto</TableHead>
-                    <TableHead>Loja</TableHead>
-                    <TableHead>Erro</TableHead>
-                    <TableHead className="text-center">Qtd.</TableHead>
-                    <TableHead>Última Ocorrência</TableHead>
-                    <TableHead className="text-right">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredList.map((item) => (
-                    <TableRow key={item.id} className="group hover:bg-muted/30 transition-colors">
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="font-medium text-sm">{item.device_name || 'Desconhecido'}</span>
-                          <code className="text-[10px] text-muted-foreground uppercase">{item.device_serial}</code>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="font-medium text-sm truncate max-w-[200px]">{item.product_name || 'Produto s/ Nome'}</span>
-                          <span className="text-xs text-muted-foreground">EAN: {item.ean || 'N/A'}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Store className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="text-sm">{item.store_name || 'Loja Central'}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="font-mono text-[10px] uppercase">
-                          {item.error_type}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className={cn(
-                          "inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold border",
-                          getSeverityColor(getSeverity(item.error_count))
-                        )}>
-                          {item.error_count}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-xs text-muted-foreground">
-                          {format(parseISO(item.last_occurrence), "dd/MM/yy 'às' HH:mm")}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Badge className={cn(
-                          item.status === 'active' ? "bg-success/10 text-success border-success/20" : "bg-muted text-muted-foreground"
-                        )}>
-                          {item.status === 'active' ? 'Ativo' : 'Resolvido'}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredList.map((item) => (
-              <Card key={item.id} className="border-border/60 hover:border-primary/30 transition-all hover:shadow-md group">
-                <CardHeader className="p-4 pb-0 flex flex-row items-start justify-between space-y-0">
-                  <div className="space-y-1">
-                    <Badge variant="outline" className="font-mono text-[10px] uppercase">
-                      {item.error_type}
-                    </Badge>
-                    <h4 className="font-bold text-sm truncate leading-none pt-2" title={item.product_name}>
-                      {item.product_name || 'Produto sem nome'}
-                    </h4>
-                    <p className="text-[10px] text-muted-foreground">EAN: {item.ean || 'N/A'}</p>
+      <ScrollArea className="flex-1 px-1">
+        <div className="space-y-6">
+          {/* KPI Section */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { label: "Total Erros", value: kpis.totalErrors, icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10" },
+              { label: "Produtos Afetados", value: kpis.affectedProducts, icon: Package, color: "text-warning", bg: "bg-warning/10" },
+              { label: "Lojas Críticas", value: kpis.criticalStores, icon: Store, color: "text-primary", bg: "bg-primary/10" },
+              { label: "Dispositivos Críticos", value: kpis.affectedDevices, icon: Monitor, color: "text-accent", bg: "bg-accent/10" },
+            ].map((kpi, i) => (
+              <Card key={i} className="border-border/40 overflow-hidden relative group transition-all hover:shadow-lg hover:border-primary/20">
+                <div className={cn("absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 rounded-full blur-2xl opacity-10", kpi.bg)} />
+                <CardContent className="p-5 flex items-center gap-4">
+                  <div className={cn("h-12 w-12 rounded-xl grid place-items-center shrink-0", kpi.bg, kpi.color)}>
+                    <kpi.icon className="h-6 w-6" />
                   </div>
-                  <div className={cn(
-                    "h-10 w-10 rounded-full flex items-center justify-center text-xs font-bold border",
-                    getSeverityColor(getSeverity(item.error_count))
-                  )}>
-                    {item.error_count}
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4 space-y-3">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="p-2 rounded-lg bg-muted/40 border border-border/50">
-                      <p className="text-[10px] text-muted-foreground uppercase font-semibold">Loja</p>
-                      <p className="text-xs truncate">{item.store_name || 'Matriz'}</p>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{kpi.label}</p>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-2xl font-display font-bold">{kpi.value.toLocaleString()}</h3>
                     </div>
-                    <div className="p-2 rounded-lg bg-muted/40 border border-border/50">
-                      <p className="text-[10px] text-muted-foreground uppercase font-semibold">Terminal</p>
-                      <p className="text-xs truncate">{item.device_name || item.device_serial}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-border/40">
-                    <span className="text-[10px] text-muted-foreground">
-                      Última: {format(parseISO(item.last_occurrence), "dd/MM 'às' HH:mm")}
-                    </span>
-                    <Button variant="ghost" size="sm" className="h-6 text-[10px] hover:text-primary">
-                      Ver logs
-                    </Button>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
-        )}
-      </div>
 
-      {/* Rankings Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-6">
-        {/* Top Produtos */}
-        <Card className="border-border/60">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Package className="h-4 w-4 text-warning" />
-              Top Produtos com Falha
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {topProducts.map((item, idx) => (
-              <div key={idx} className="space-y-1.5">
-                <div className="flex justify-between text-xs">
-                  <span className="font-medium truncate max-w-[180px]" title={item.product_name}>{item.product_name || 'Desconhecido'}</span>
-                  <span className="text-muted-foreground font-semibold">{item.error_count} falhas</span>
-                </div>
-                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-warning transition-all" 
-                    style={{ width: `${Math.min((item.error_count / (topProducts[0]?.error_count || 1)) * 100, 100)}%` }} 
-                  />
-                </div>
+          {/* Inky AI Insight */}
+          <Card className="border-primary/20 bg-primary/5 overflow-hidden">
+            <CardContent className="p-4 flex gap-4 items-center">
+              <div className="h-10 w-10 rounded-full bg-primary/10 grid place-items-center shrink-0">
+                <CircleAlert className="h-5 w-5 text-primary" />
               </div>
-            ))}
-            {topProducts.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sem dados no período</p>}
-          </CardContent>
-        </Card>
-
-        {/* Top Lojas */}
-        <Card className="border-border/60">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Store className="h-4 w-4 text-primary" />
-              Top Lojas Críticas
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {topStores.map((item, idx) => (
-              <div key={idx} className="space-y-1.5">
-                <div className="flex justify-between text-xs">
-                  <span className="font-medium truncate max-w-[180px]">{item.name}</span>
-                  <span className="text-muted-foreground font-semibold">{item.count} falhas</span>
-                </div>
-                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-primary transition-all" 
-                    style={{ width: `${Math.min((item.count / (topStores[0]?.count || 1)) * 100, 100)}%` }} 
-                  />
-                </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-primary mb-0.5">Inky AI - Análise Preventiva</p>
+                <p className="text-sm text-muted-foreground">
+                  {kpis.totalErrors > 0 
+                    ? `Detectamos que o produto ${aggregatedList[0]?.product_name || aggregatedList[0]?.ean} é o mais crítico, com ${aggregatedList[0]?.error_count} falhas. Verifique a integração do ERP.`
+                    : "Tudo certo por aqui! Não detectamos padrões de erro críticos no período selecionado."}
+                </p>
               </div>
-            ))}
-            {topStores.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sem dados no período</p>}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Top Dispositivos */}
-        <Card className="border-border/60">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Monitor className="h-4 w-4 text-accent" />
-              Top Dispositivos
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {topDevices.map((item, idx) => (
-              <div key={idx} className="space-y-1.5">
-                <div className="flex justify-between text-xs">
-                  <span className="font-medium truncate max-w-[180px]">{item.name}</span>
-                  <span className="text-muted-foreground font-semibold">{item.count} falhas</span>
-                </div>
-                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-accent transition-all" 
-                    style={{ width: `${Math.min((item.count / (topDevices[0]?.count || 1)) * 100, 100)}%` }} 
-                  />
-                </div>
+          {/* Main Content Area */}
+          <div className="space-y-4">
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-card p-4 rounded-xl border border-border/60 shadow-sm">
+              <div className="relative w-full md:w-96">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Buscar por produto, EAN ou serial..." 
+                  className="pl-9 h-10 bg-background/50 border-border/40 focus:bg-background"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
-            ))}
-            {topDevices.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sem dados no período</p>}
-          </CardContent>
-        </Card>
-      </div>
+              
+              <div className="flex items-center gap-4 w-full md:w-auto">
+                <Tabs value={viewMode} onValueChange={(v: any) => setViewMode(v)} className="w-full md:w-auto">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="table" className="gap-2"><List className="h-4 w-4" /> Tabela</TabsTrigger>
+                    <TabsTrigger value="cards" className="gap-2"><LayoutGrid className="h-4 w-4" /> Cards</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
+            </div>
 
-      {/* Health Indicator Footer */}
-      <div className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border/40 mt-6">
-        <div className="h-10 w-10 rounded-full bg-success/10 text-success grid place-items-center">
-          <History className="h-5 w-5" />
+            {filteredList.length === 0 ? (
+              <div className="h-96 flex flex-col items-center justify-center border rounded-xl bg-card/50 text-muted-foreground">
+                <Inbox className="h-12 w-12 mb-4 opacity-20" />
+                <p className="text-lg font-medium">Nenhum erro encontrado</p>
+                <p className="text-sm">Tente ajustar os filtros ou o termo de busca.</p>
+              </div>
+            ) : viewMode === "table" ? (
+              <Card className="border-border/60 overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader className="bg-muted/40 sticky top-0 z-20">
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="w-[150px] font-bold text-foreground">Dispositivo</TableHead>
+                        <TableHead className="font-bold text-foreground">Produto</TableHead>
+                        <TableHead className="font-bold text-foreground">Loja</TableHead>
+                        <TableHead className="font-bold text-foreground">Erro</TableHead>
+                        <TableHead className="text-center font-bold text-foreground">Qtd.</TableHead>
+                        <TableHead className="font-bold text-foreground">Última Ocorrência</TableHead>
+                        <TableHead className="text-right font-bold text-foreground">Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredList.map((item) => (
+                        <TableRow key={item.id} className="group hover:bg-muted/30 transition-colors border-border/40">
+                          <TableCell className="py-3">
+                            <div className="flex flex-col">
+                              <span className="font-medium text-sm text-foreground">{item.device_name || 'Desconhecido'}</span>
+                              <code className="text-[10px] text-muted-foreground uppercase font-mono tracking-wider">{item.device_serial}</code>
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-3">
+                            <div className="flex flex-col">
+                              <span className="font-bold text-sm truncate max-w-[200px] text-foreground" title={item.product_name}>{item.product_name || 'Produto s/ Nome'}</span>
+                              <span className="text-[10px] text-muted-foreground uppercase font-mono">EAN: {item.ean || 'N/A'}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-3">
+                            <div className="flex items-center gap-2">
+                              <div className="h-8 w-8 rounded-lg bg-primary/5 flex items-center justify-center border border-primary/10 group-hover:bg-primary/10 transition-colors">
+                                <Store className="h-4 w-4 text-primary" />
+                              </div>
+                              <span className="text-sm font-semibold text-foreground">{item.store_name || 'Loja Central'}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-3">
+                            <Badge variant="outline" className="font-mono text-[10px] uppercase bg-muted/30 border-border/60 text-muted-foreground px-2 py-0">
+                              {item.error_type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center py-3">
+                            <span className={cn(
+                              "inline-flex items-center justify-center w-9 h-9 rounded-full text-xs font-bold border shadow-sm",
+                              getSeverityColor(getSeverity(item.error_count))
+                            )}>
+                              {item.error_count}
+                            </span>
+                          </TableCell>
+                          <TableCell className="py-3">
+                            <div className="flex items-center gap-1.5 text-muted-foreground">
+                              <History className="h-3.5 w-3.5" />
+                              <span className="text-xs font-medium">
+                                {format(parseISO(item.last_occurrence), "dd/MM 'às' HH:mm")}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right py-3">
+                            <Badge className={cn(
+                              "font-bold text-[10px] px-2 py-0.5 uppercase tracking-wider",
+                              item.status === 'active' ? "bg-success/10 text-success border-success/20 shadow-[0_0_10px_rgba(34,197,94,0.1)]" : "bg-muted text-muted-foreground border-transparent"
+                            )} variant="outline">
+                              {item.status === 'active' ? 'Ativo' : 'Resolvido'}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {filteredList.map((item) => (
+                  <Card key={item.id} className="border-border/60 hover:border-primary/30 transition-all hover:shadow-md group">
+                    <CardHeader className="p-4 pb-0 flex flex-row items-start justify-between space-y-0">
+                      <div className="space-y-1">
+                        <Badge variant="outline" className="font-mono text-[10px] uppercase bg-muted/30">
+                          {item.error_type}
+                        </Badge>
+                        <h4 className="font-bold text-sm truncate leading-none pt-2" title={item.product_name}>
+                          {item.product_name || 'Produto sem nome'}
+                        </h4>
+                        <p className="text-[10px] text-muted-foreground tracking-wider">EAN: {item.ean || 'N/A'}</p>
+                      </div>
+                      <div className={cn(
+                        "h-10 w-10 rounded-full flex items-center justify-center text-xs font-bold border shrink-0 ml-2",
+                        getSeverityColor(getSeverity(item.error_count))
+                      )}>
+                        {item.error_count}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 space-y-3">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="p-2 rounded-lg bg-muted/40 border border-border/50">
+                          <p className="text-[10px] text-muted-foreground uppercase font-semibold">Loja</p>
+                          <p className="text-xs truncate font-medium">{item.store_name || 'Matriz'}</p>
+                        </div>
+                        <div className="p-2 rounded-lg bg-muted/40 border border-border/50">
+                          <p className="text-[10px] text-muted-foreground uppercase font-semibold">Terminal</p>
+                          <p className="text-xs truncate font-medium">{item.device_name || item.device_serial}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t border-border/40">
+                        <span className="text-[10px] text-muted-foreground">
+                          Última: {format(parseISO(item.last_occurrence), "dd/MM 'às' HH:mm")}
+                        </span>
+                        <Button variant="ghost" size="sm" className="h-6 text-[10px] hover:text-primary px-2">
+                          Ver logs
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Rankings Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-6">
+            <Card className="border-border/60 shadow-sm">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Package className="h-4 w-4 text-warning" />
+                  Top Produtos com Falha
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {topProducts.map((item, idx) => (
+                  <div key={idx} className="space-y-1.5">
+                    <div className="flex justify-between text-xs">
+                      <span className="font-medium truncate max-w-[180px]" title={item.product_name}>{item.product_name || 'Desconhecido'}</span>
+                      <span className="text-muted-foreground font-semibold">{item.error_count} falhas</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-warning transition-all shadow-[0_0_8px_rgba(245,158,11,0.3)]" 
+                        style={{ width: `${Math.min((item.error_count / (topProducts[0]?.error_count || 1)) * 100, 100)}%` }} 
+                      />
+                    </div>
+                  </div>
+                ))}
+                {topProducts.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sem dados no período</p>}
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/60 shadow-sm">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Store className="h-4 w-4 text-primary" />
+                  Top Lojas Críticas
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {topStores.map((item, idx) => (
+                  <div key={idx} className="space-y-1.5">
+                    <div className="flex justify-between text-xs">
+                      <span className="font-medium truncate max-w-[180px]">{item.name}</span>
+                      <span className="text-muted-foreground font-semibold">{item.count} falhas</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-primary transition-all shadow-[0_0_8px_rgba(59,130,246,0.3)]" 
+                        style={{ width: `${Math.min((item.count / (topStores[0]?.count || 1)) * 100, 100)}%` }} 
+                      />
+                    </div>
+                  </div>
+                ))}
+                {topStores.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sem dados no período</p>}
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/60 shadow-sm">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Monitor className="h-4 w-4 text-accent" />
+                  Top Dispositivos
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {topDevices.map((item, idx) => (
+                  <div key={idx} className="space-y-1.5">
+                    <div className="flex justify-between text-xs">
+                      <span className="font-medium truncate max-w-[180px]">{item.name}</span>
+                      <span className="text-muted-foreground font-semibold">{item.count} falhas</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-accent transition-all shadow-[0_0_8px_rgba(139,92,246,0.3)]" 
+                        style={{ width: `${Math.min((item.count / (topDevices[0]?.count || 1)) * 100, 100)}%` }} 
+                      />
+                    </div>
+                  </div>
+                ))}
+                {topDevices.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sem dados no período</p>}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Health Indicator Footer */}
+          <div className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border/40 mt-6 shadow-sm">
+            <div className="h-10 w-10 rounded-full bg-success/10 text-success grid place-items-center shrink-0 border border-success/20">
+              <History className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold">Monitoramento de Saúde Operacional</p>
+              <p className="text-xs text-muted-foreground">O sistema monitora 24/7 falhas de integração para garantir a melhor experiência no PDV.</p>
+            </div>
+            <Badge variant="outline" className="bg-success/5 text-success border-success/20 font-semibold">
+              Sistema Operacional
+            </Badge>
+          </div>
         </div>
-        <div className="flex-1">
-          <p className="text-sm font-semibold">Monitoramento de Saúde Operacional</p>
-          <p className="text-xs text-muted-foreground">O sistema monitora 24/7 falhas de integração para garantir a melhor experiência no PDV.</p>
-        </div>
-        <Badge variant="outline" className="bg-success/5 text-success border-success/20">
-          Sistema Operacional
-        </Badge>
-      </div>
+      </ScrollArea>
     </div>
   );
 }
