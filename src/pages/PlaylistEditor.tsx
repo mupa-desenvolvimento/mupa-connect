@@ -971,27 +971,25 @@ export default function PlaylistEditor() {
                       <div className="space-y-2">
                         <Label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Configurações</Label>
                         <div className="space-y-4 pt-2">
-                          {selectedItem.type !== 'campaign' && (
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs font-medium text-white/80">Duração</span>
-                                <span className="text-xs font-mono text-[#085CF0]">{selectedItem.duration}s</span>
-                              </div>
-                              <Slider 
-                                disabled={selectedItem.isLocked}
-                                value={[selectedItem.duration]} 
-                                min={1} 
-                                max={600} 
-                                step={1}
-                                onValueChange={([val]) => {
-                                  setSelectedItem({...selectedItem, duration: val});
-                                  setItems(items.map(it => it.id === selectedItem.id ? {...it, duration: val} : it));
-                                  setHasUnsavedChanges(true);
-                                }}
-                                className="py-2"
-                              />
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-medium text-white/80">Duração</span>
+                              <span className="text-xs font-mono text-[#085CF0]">{selectedItem.duration}s</span>
                             </div>
-                          )}
+                            <Slider 
+                              disabled={selectedItem.isLocked}
+                              value={[selectedItem.duration]} 
+                              min={1} 
+                              max={600} 
+                              step={1}
+                              onValueChange={([val]) => {
+                                setSelectedItem({...selectedItem, duration: val});
+                                setItems(items.map(it => it.id === selectedItem.id ? {...it, duration: val} : it));
+                                setHasUnsavedChanges(true);
+                              }}
+                              className="py-2"
+                            />
+                          </div>
                           
                           <div className="space-y-2">
                             <span className="text-xs font-medium text-white/80">Prioridade</span>
