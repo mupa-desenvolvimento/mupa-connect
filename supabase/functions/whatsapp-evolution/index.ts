@@ -43,6 +43,10 @@ function normalizeErrorDetail(value: unknown): string {
   return String(value);
 }
 
+function normalizePhone(value: unknown): string {
+  return String(value || "").replace(/\D/g, "");
+}
+
 async function evo(path: string, method = "GET", body?: unknown) {
   const res = await fetch(`${EVOLUTION_API_URL}${path}`, {
     method,
@@ -133,6 +137,10 @@ serve(async (req) => {
       }
       case "sendMessage": {
         if (!instanceName || !phone || !message) return json({ error: "instanceName, phone, message required" }, 400);
+        const normalizedPhone = normalizePhone(phone);
+        if (normalizedPhone.length < 8 || normalizedPhone.length > 15) {
+          return json({ error: "Telefone inválido. Informe o número com DDI e DDD, usando apenas números." }, 400);
+        }
         let data: any;
         let status = "sent";
         let errorMsg: string | null = null;
@@ -140,13 +148,13 @@ serve(async (req) => {
           // Try v2 format first ({ number, text }), then fall back to v1 ({ textMessage: { text } })
           try {
             data = await evo(`/message/sendText/${instanceName}`, "POST", {
-              number: phone,
+              number: normalizedPhone,
               text: message,
             });
           } catch (firstErr: any) {
             console.log("sendText v2 failed, trying v1 format:", firstErr.message);
             data = await evo(`/message/sendText/${instanceName}`, "POST", {
-              number: phone,
+              number: normalizedPhone,
               options: { delay: 1200, presence: "composing", linkPreview: false },
               textMessage: { text: message },
             });
@@ -159,7 +167,7 @@ serve(async (req) => {
           .select("id").eq("instance_key", instanceName).maybeSingle();
         await admin.from("whatsapp_logs").insert({
           instance_id: inst?.id || null,
-          recipient_phone: phone,
+          recipient_phone: normalizedPhone,
           message,
           status,
           error_message: errorMsg,
