@@ -37,7 +37,7 @@ import {
   List,
   Download,
   FileSpreadsheet,
-  FileJson
+  File
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format, subDays, startOfDay, endOfDay, parseISO } from "date-fns";
@@ -302,7 +302,7 @@ export default function QueryErrorsReport() {
                   Exportar para Excel
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleExportPDF} className="gap-2 cursor-pointer">
-                  <FileJson className="h-4 w-4 text-red-500" />
+                  <File className="h-4 w-4 text-red-500" />
                   Exportar para PDF
                 </DropdownMenuItem>
               </DropdownMenuContent>
