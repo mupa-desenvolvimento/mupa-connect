@@ -11,7 +11,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { CampaignForm, CampaignFormValues } from "./CampaignForm";
+import { CampaignContentManager } from "./CampaignContentManager";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
+import { LayoutGrid, Settings2 } from "lucide-react";
 
 interface CampaignDialogProps {
   campaignId?: string | null;
