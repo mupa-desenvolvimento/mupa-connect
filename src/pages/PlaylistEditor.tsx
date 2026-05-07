@@ -159,7 +159,7 @@ const SortableItem = ({ item, index, isSelected, onSelect }: any) => {
     >
       {/* Thumbnail Area */}
       <div className="relative h-[160px] w-full overflow-hidden bg-black/40">
-        {!isCampaign ? (
+        {!isCampaignItem ? (
           <img 
             src={media?.thumbnail_url || media?.file_url} 
             alt={media?.name} 
