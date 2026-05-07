@@ -339,30 +339,57 @@ export default function QueryErrorsReport() {
   };
 
   const handleExportPDF = () => {
-    const doc = new jsPDF();
-    doc.text("Relatório de Erros de Consulta de Produtos", 14, 15);
-    doc.setFontSize(10);
-    doc.text(`Gerado em: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, 14, 22);
-    
-    const tableColumn = ["Dispositivo", "Produto", "Erro", "Qtd", "Última Ocorrência"];
-    const tableRows = filteredList.map(item => [
-      item.device_name || item.device_serial,
-      item.product_name || item.ean,
-      item.error_type,
-      item.error_count,
-      format(parseISO(item.last_occurrence), "dd/MM/yy HH:mm")
-    ]);
+    try {
+      const doc = new jsPDF();
+      
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.setTextColor(59, 130, 246);
+      doc.text("MUPA", 14, 22);
+      
+      doc.setFontSize(14);
+      doc.setTextColor(0, 0, 0);
+      doc.text("Relatório de Erros de Consulta de Produtos", 14, 32);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Gerado em: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, 14, 40);
 
-    (doc as any).autoTable({
-      head: [tableColumn],
-      body: tableRows,
-      startY: 25,
-      styles: { fontSize: 8 },
-      headStyles: { fillStyle: 'f', fillColor: [59, 130, 246] }
-    });
-    
-    doc.save(`relatorio-erros-${format(new Date(), "yyyy-MM-dd")}.pdf`);
-    toast({ title: "Sucesso", description: "Relatório PDF exportado com sucesso." });
+      const tableColumn = ["Dispositivo", "Produto", "Erro", "Qtd", "Última Ocorrência"];
+      const tableRows = filteredList.map(item => [
+        item.device_name || item.device_serial,
+        item.product_name || item.ean,
+        item.error_type,
+        item.error_count,
+        format(parseISO(item.last_occurrence), "dd/MM/yy HH:mm")
+      ]);
+
+      (doc as any).autoTable({
+        head: [tableColumn],
+        body: tableRows,
+        startY: 45,
+        styles: { fontSize: 8, cellPadding: 3 },
+        headStyles: { 
+          fillColor: [59, 130, 246],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold'
+        },
+        alternateRowStyles: {
+          fillColor: [245, 247, 250]
+        },
+        margin: { top: 45 }
+      });
+      
+      doc.save(`relatorio-erros-mupa-${format(new Date(), "yyyy-MM-dd")}.pdf`);
+      toast({ title: "Sucesso", description: "Relatório PDF exportado com sucesso." });
+    } catch (error) {
+      console.error("Erro ao exportar PDF:", error);
+      toast({ 
+        title: "Erro na exportação", 
+        description: "Não foi possível gerar o PDF. Verifique o console.",
+        variant: "destructive" 
+      });
+    }
   };
 
   if (isLoading) {
