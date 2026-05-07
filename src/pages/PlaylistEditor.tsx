@@ -1113,13 +1113,13 @@ export default function PlaylistEditor() {
               </div>
               
               <ScrollArea className="flex-1">
-                <div 
-                  id="playlist-timeline-drop-zone"
-                  className="h-full relative px-8 flex items-center min-w-full" 
-                  style={{ width: Math.max(items.length * 200 + 100, 800) }}
-                  ref={timelineScrollRef} 
-                  onClick={handleTimelineClick}
-                >
+                <TimelineDropZone>
+                  <div 
+                    className="h-full flex items-center" 
+                    style={{ width: Math.max(items.length * 200 + 100, 800) }}
+                    ref={timelineScrollRef} 
+                    onClick={handleTimelineClick}
+                  >
                   {/* Playhead */}
                   <div 
                     className="absolute top-0 bottom-0 w-[2px] bg-[#085CF0] z-30 pointer-events-none shadow-[0_0_15px_rgba(8,92,240,0.5)] transition-all duration-100 ease-linear" 
