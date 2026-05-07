@@ -102,6 +102,9 @@ export default function QueryErrorsReport() {
   const [selectedErrorType, setSelectedErrorType] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
+  const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
 
   const { data: errors, isLoading, refetch } = useQuery({
     queryKey: ["product-query-errors", period, selectedStore, selectedDevice, selectedErrorType, dateRange],
@@ -129,6 +132,34 @@ export default function QueryErrorsReport() {
       if (error) throw error;
       return data;
     },
+  });
+
+  const { data: stores } = useQuery({
+    queryKey: ["filter-stores-errors"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_query_errors")
+        .select("store_id, store_name")
+        .not("store_id", "is", null);
+      
+      if (error) return [];
+      const uniqueStores = Array.from(new Map((data as any[]).map(d => [d.store_id, d.store_name || d.store_id])).entries());
+      return uniqueStores.map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+    }
+  });
+
+  const { data: devices } = useQuery({
+    queryKey: ["filter-devices-errors"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_query_errors")
+        .select("device_serial, device_name")
+        .not("device_serial", "is", null);
+      
+      if (error) return [];
+      const uniqueDevices = Array.from(new Map((data as any[]).map(d => [d.device_serial, d.device_name || d.device_serial])).entries());
+      return uniqueDevices.map(([serial, name]) => ({ serial, name })).sort((a, b) => a.name.localeCompare(b.name));
+    }
   });
 
   // Aggregations
@@ -160,6 +191,62 @@ export default function QueryErrorsReport() {
     affectedProducts: new Set(errors?.map(e => e.ean)).size,
     criticalStores: new Set(errors?.filter(e => aggregatedList.find(a => a.store_id === e.store_id && a.error_count > 50)).map(e => e.store_id)).size,
     affectedDevices: new Set(errors?.map(e => e.device_serial)).size
+  };
+
+  // Rankings
+  const topProducts = [...aggregatedList]
+    .sort((a, b) => b.error_count - a.error_count)
+    .slice(0, 5);
+
+  const storesRanking = aggregatedList.reduce((acc: any, curr) => {
+    const key = curr.store_id || 'central';
+    if (!acc[key]) acc[key] = { name: curr.store_name || 'Loja Central', count: 0 };
+    acc[key].count += curr.error_count;
+    return acc;
+  }, {});
+
+  const topStores = Object.values(storesRanking)
+    .sort((a: any, b: any) => b.count - a.count)
+    .slice(0, 5) as any[];
+
+  const devicesRanking = aggregatedList.reduce((acc: any, curr) => {
+    const key = curr.device_serial;
+    if (!acc[key]) acc[key] = { name: curr.device_name || curr.device_serial, count: 0 };
+    acc[key].count += curr.error_count;
+    return acc;
+  }, {});
+
+  const topDevices = Object.values(devicesRanking)
+    .sort((a: any, b: any) => b.count - a.count)
+    .slice(0, 5) as any[];
+
+  const handleAnalyzeWithAI = async () => {
+    if (aggregatedList.length === 0) {
+      toast({ title: "Aviso", description: "Não há dados suficientes para análise." });
+      return;
+    }
+
+    setIsAiPanelOpen(true);
+    setIsAnalyzing(true);
+    setAiAnalysis(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-errors', {
+        body: { errors: aggregatedList }
+      });
+
+      if (error) throw error;
+      setAiAnalysis(data.analysis);
+    } catch (error) {
+      console.error('Error analyzing with AI:', error);
+      toast({
+        title: "Erro na Análise",
+        description: "Não foi possível completar a análise com IA no momento.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const getSeverity = (count: number) => {
