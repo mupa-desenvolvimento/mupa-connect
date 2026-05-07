@@ -46,7 +46,15 @@ import {
   X,
   Pause,
   AlertTriangle,
-  ExternalLink
+  ExternalLink,
+  Lock,
+  Unlock,
+  ChevronRight,
+  Eye,
+  History,
+  MoreVertical,
+  Edit,
+  Megaphone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -96,6 +104,7 @@ interface EditorPlaylistItem {
   priority: number;
   type: string;
   media?: any;
+  isLocked?: boolean;
 }
 
 const DEFAULT_APPEARANCE_CONFIG = {
@@ -116,25 +125,67 @@ const normalizeAppearanceConfig = (config?: any) => ({
 });
 
 const SortableItem = ({ item, index, isSelected, onSelect, timelineMode = false }: any) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
+    id: item.id,
+    disabled: item.isLocked 
+  });
   const media = item.media;
-  const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 10 : 1, opacity: isDragging ? 0.5 : 1 };
+  const style = { 
+    transform: CSS.Transform.toString(transform), 
+    transition, 
+    zIndex: isDragging ? 10 : 1, 
+    opacity: isDragging ? 0.5 : 1,
+    width: item.duration * PIXELS_PER_SECOND 
+  };
 
   return (
     <div 
-      ref={setNodeRef} style={style} onClick={() => onSelect(item)}
-      className={`relative shrink-0 ${timelineMode ? 'w-full h-24' : 'w-48 h-32'} rounded-xl border transition-all cursor-pointer group overflow-hidden ${
-        isSelected ? 'border-[#085CF0] ring-2 ring-[#085CF0]/20 bg-[#085CF0]/5 shadow-xl shadow-[#085CF0]/10' : 'border-border/40 bg-card/40 hover:border-[#085CF0]/30'
-      } ${isDragging ? 'shadow-2xl' : ''}`}
+      ref={setNodeRef} 
+      style={style} 
+      onClick={() => onSelect(item)}
+      className={`relative shrink-0 h-28 rounded-xl border transition-all cursor-pointer group overflow-hidden ${
+        isSelected ? 'border-[#085CF0] ring-2 ring-[#085CF0]/20 bg-[#085CF0]/10 shadow-lg' : 'border-white/10 bg-white/5 hover:border-white/20'
+      } ${item.isLocked ? 'opacity-80' : ''}`}
     >
       <div className="absolute inset-0">
-        <img src={media?.thumbnail_url || media?.file_url} alt={media?.name} className="w-full h-full object-cover opacity-60 group-hover:opacity-100" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+        <img src={media?.thumbnail_url || media?.file_url} alt={media?.name} className="w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
       </div>
-      <div className="absolute top-2 left-2"><span className="text-[10px] font-mono font-bold text-white px-1.5 py-0.5 rounded bg-black/60 border border-white/10">{index + 1}</span></div>
-      <div className="absolute top-2 right-2"><span className="text-[10px] font-bold text-white px-1.5 py-0.5 rounded bg-[#085CF0]/80 flex items-center gap-1"><Clock className="h-2.5 w-2.5" /> {item.duration}s</span></div>
-      <div {...attributes} {...listeners} className="absolute bottom-2 left-2 p-1 rounded bg-black/40 hover:bg-[#085CF0]/60 text-white/50 hover:text-white cursor-grab active:cursor-grabbing"><GripVertical className="h-4 w-4" /></div>
-      <div className="absolute bottom-2 left-9 right-2"><p className="text-[10px] font-medium text-white truncate">{media?.name || 'Sem nome'}</p></div>
+      
+      <div className="absolute top-2 left-2 flex gap-1.5">
+        <span className="text-[10px] font-mono font-bold text-white/90 px-1.5 py-0.5 rounded bg-black/60 border border-white/10">{index + 1}</span>
+        {item.isLocked && (
+          <div className="bg-amber-500/20 text-amber-500 border border-amber-500/30 rounded px-1.5 py-0.5 flex items-center">
+            <Lock className="h-2.5 w-2.5" />
+          </div>
+        )}
+      </div>
+
+      <div className="absolute top-2 right-2">
+        <span className="text-[10px] font-bold text-white/90 px-1.5 py-0.5 rounded bg-black/60 border border-white/10 flex items-center gap-1">
+          <Clock className="h-2.5 w-2.5 text-[#085CF0]" /> {item.duration}s
+        </span>
+      </div>
+
+      {!item.isLocked && (
+        <div {...attributes} {...listeners} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white/0 group-hover:text-white/100 group-hover:bg-[#085CF0]/80 transition-all cursor-grab active:cursor-grabbing">
+          <GripVertical className="h-4 w-4" />
+        </div>
+      )}
+
+      <div className="absolute bottom-2 left-2 right-2">
+        <p className="text-[10px] font-bold text-white truncate drop-shadow-md">{media?.name || 'Sem nome'}</p>
+        <div className="flex items-center gap-2 mt-1">
+          <Badge variant="outline" className="text-[8px] h-3.5 px-1 py-0 border-white/10 bg-black/40 text-white/40 uppercase">
+            {item.type}
+          </Badge>
+          {item.priority > 1 && (
+            <Badge variant="outline" className="text-[8px] h-3.5 px-1 py-0 border-blue-500/30 bg-blue-500/10 text-blue-400 font-bold">
+              P{item.priority}
+            </Badge>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
@@ -216,7 +267,16 @@ export default function PlaylistEditor() {
       setIsDefault(playlistData.is_company_default || false);
       setAppearanceConfig(normalizeAppearanceConfig(playlistData.appearance_config));
       if (playlistData.playlist_items && playlistData.playlist_items.length > 0) {
-        const mappedItems = playlistData.playlist_items.map((it: any) => ({ id: it.id, dbId: it.id, mediaId: it.media_id, duration: it.duracao, priority: it.prioridade || 1, type: it.tipo, media: medias?.find(m => m.id === it.media_id) }));
+        const mappedItems = playlistData.playlist_items.map((it: any) => ({ 
+          id: it.id, 
+          dbId: it.id, 
+          mediaId: it.media_id, 
+          duration: it.duracao, 
+          priority: it.prioridade || 1, 
+          type: it.tipo, 
+          isLocked: it.is_locked || false,
+          media: medias?.find(m => m.id === it.media_id) 
+        }));
         setItems(mappedItems);
         if (!selectedItem) setSelectedItem(mappedItems[0]);
       } else { setItems([]); }
@@ -243,7 +303,18 @@ export default function PlaylistEditor() {
       }
       await supabase.from("playlist_items").delete().eq("playlist_id", currentPlaylistId as any);
       if (updatedItems.length > 0) {
-        const itemsToInsert = updatedItems.map((it, idx) => ({ playlist_id: currentPlaylistId as any, media_id: it.mediaId, duracao: it.duration, prioridade: it.priority, tipo: it.type, ordem: idx + 1, position: idx + 1, conteudo_id: it.mediaId, ativo: true }));
+        const itemsToInsert = updatedItems.map((it, idx) => ({ 
+          playlist_id: currentPlaylistId as any, 
+          media_id: it.mediaId, 
+          duracao: it.duration, 
+          prioridade: it.priority, 
+          tipo: it.type, 
+          ordem: idx + 1, 
+          position: idx + 1, 
+          conteudo_id: it.mediaId, 
+          ativo: true,
+          is_locked: it.isLocked || false
+        }));
         const { error: insertError } = await supabase.from("playlist_items").insert(itemsToInsert);
         if (insertError) throw insertError;
       }
@@ -340,14 +411,82 @@ export default function PlaylistEditor() {
                     {selectedItem.media?.type === 'video' ? <Video className="h-16 w-16 text-white/10" /> : <ImageIcon className="h-16 w-16 text-white/10" />}
                     <img src={selectedItem.media?.thumbnail_url || selectedItem.media?.file_url} className="max-h-full max-w-full rounded shadow-2xl" />
                   </div>
-                  <div className="h-24 bg-card/40 backdrop-blur-md border-t border-white/5 flex items-center justify-between px-6">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">{selectedItem.media?.name}</span>
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2"><Clock className="h-3 w-3 text-[#085CF0]" /><input type="number" value={selectedItem.duration} onChange={(e) => { const d = parseInt(e.target.value); setSelectedItem({...selectedItem, duration: d}); setItems(items.map(it => it.id === selectedItem.id ? {...it, duration: d} : it)); setHasUnsavedChanges(true); }} className="w-16 bg-black/20 border-white/10 rounded h-7 text-xs px-2" /> <span className="text-xs text-white/40">segundos</span></div>
+                  <div className="h-28 bg-card/60 backdrop-blur-md border-t border-white/10 flex items-center justify-between px-6">
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2">
+                        {selectedItem.isLocked && <Lock className="h-3 w-3 text-amber-500" />}
+                        <span className="text-xs font-bold text-white uppercase tracking-wider">{selectedItem.media?.name}</span>
+                      </div>
+                      <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-3 w-3 text-[#085CF0]" />
+                          <input 
+                            type="number" 
+                            disabled={selectedItem.isLocked}
+                            value={selectedItem.duration} 
+                            onChange={(e) => { 
+                              const d = parseInt(e.target.value); 
+                              setSelectedItem({...selectedItem, duration: d}); 
+                              setItems(items.map(it => it.id === selectedItem.id ? {...it, duration: d} : it)); 
+                              setHasUnsavedChanges(true); 
+                            }} 
+                            className="w-16 bg-black/40 border-white/10 rounded h-8 text-xs px-2 focus:ring-1 focus:ring-[#085CF0] disabled:opacity-50" 
+                          /> 
+                          <span className="text-[10px] text-white/40 font-bold uppercase">segundos</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Layers className="h-3 w-3 text-[#085CF0]" />
+                          <Select 
+                            disabled={selectedItem.isLocked}
+                            value={selectedItem.priority.toString()} 
+                            onValueChange={(v) => {
+                              const p = parseInt(v);
+                              setSelectedItem({...selectedItem, priority: p});
+                              setItems(items.map(it => it.id === selectedItem.id ? {...it, priority: p} : it));
+                              setHasUnsavedChanges(true);
+                            }}
+                          >
+                            <SelectTrigger className="w-20 h-8 text-xs bg-black/40 border-white/10 disabled:opacity-50">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#0c0c0e] border-white/10 text-white">
+                              {[1,2,3,4,5,6,7,8,9,10].map(p => (
+                                <SelectItem key={p} value={p.toString()}>P{p}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <span className="text-[10px] text-white/40 font-bold uppercase">prioridade</span>
+                        </div>
                       </div>
                     </div>
-                    <Button variant="ghost" className="text-red-500 hover:text-red-400 hover:bg-red-500/10" onClick={() => removeItem(selectedItem.id)}><Trash2 className="h-4 w-4 mr-2" /> Remover</Button>
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className={cn(
+                          "h-9 px-4 gap-2 text-xs border-white/10",
+                          selectedItem.isLocked ? "bg-amber-500/10 text-amber-500 hover:bg-amber-500/20" : "bg-white/5 text-white/60 hover:text-white"
+                        )}
+                        onClick={() => {
+                          const newLocked = !selectedItem.isLocked;
+                          setSelectedItem({...selectedItem, isLocked: newLocked});
+                          setItems(items.map(it => it.id === selectedItem.id ? {...it, isLocked: newLocked} : it));
+                          setHasUnsavedChanges(true);
+                          toast.success(newLocked ? "Conteúdo bloqueado" : "Conteúdo desbloqueado");
+                        }}
+                      >
+                        {selectedItem.isLocked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                        {selectedItem.isLocked ? "Desbloquear" : "Bloquear"}
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        disabled={selectedItem.isLocked}
+                        className="h-9 px-4 text-red-500 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-50" 
+                        onClick={() => removeItem(selectedItem.id)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" /> Remover
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -355,43 +494,83 @@ export default function PlaylistEditor() {
               )}
             </div>
 
-            <div className="h-48 bg-[#0c0c0e] border border-white/5 rounded-2xl flex flex-col overflow-hidden">
-              <div className="h-8 border-b border-white/5 flex items-center justify-between px-4 bg-black/20 shrink-0">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Timeline da Playlist</span>
-                <div className="flex items-center gap-4">
-                   <div className="flex items-center gap-2 text-[10px] text-[#085CF0] font-mono"><Clock className="h-3 w-3" /> {currentTime.toFixed(1)}s / {totalDuration}s</div>
-                   <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsPlaying(!isPlaying)}>{isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3 fill-current" />}</Button>
+            <div className="h-64 bg-[#0c0c0e] border border-white/5 rounded-2xl flex flex-col overflow-hidden shadow-inner">
+              <div className="h-10 border-b border-white/5 flex items-center justify-between px-4 bg-black/20 shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-[#085CF0] animate-pulse" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">Timeline Principal</span>
+                </div>
+                <div className="flex items-center gap-6">
+                   <div className="flex items-center gap-3 text-[10px] text-white/40 font-mono">
+                     <span className="text-[#085CF0] font-bold">{currentTime.toFixed(1)}s</span>
+                     <span className="opacity-20">/</span>
+                     <span>{totalDuration}s</span>
+                   </div>
+                   <div className="flex items-center gap-1">
+                     <Button 
+                       variant="ghost" 
+                       size="icon" 
+                       className="h-7 w-7 text-white/60 hover:text-[#085CF0] hover:bg-[#085CF0]/10" 
+                       onClick={() => setIsPlaying(!isPlaying)}
+                     >
+                       {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 fill-current" />}
+                     </Button>
+                   </div>
                 </div>
               </div>
               <div className="flex-1 overflow-x-auto relative" ref={timelineScrollRef} onClick={handleTimelineClick}>
                 <div className="h-full relative px-6 flex items-center" style={{ width: Math.max(800, totalDuration * PIXELS_PER_SECOND + 100) }}>
                   <div className="absolute top-0 bottom-0 w-0.5 bg-[#085CF0] z-30" style={{ left: (currentTime * PIXELS_PER_SECOND) + 24 }} />
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} onDragStart={(e) => setActiveId(e.active.id as string)} modifiers={[restrictToHorizontalAxis]}>
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                       <SortableContext items={items.map(it => it.id)} strategy={horizontalListSortingStrategy}>
                         {items.map((item, index) => (
-                          <div key={item.id} style={{ width: item.duration * PIXELS_PER_SECOND }}>
-                            <SortableItem item={item} index={index} isSelected={selectedItem?.id === item.id} onSelect={setSelectedItem} />
-                          </div>
+                          <SortableItem 
+                            key={item.id} 
+                            item={item} 
+                            index={index} 
+                            isSelected={selectedItem?.id === item.id} 
+                            onSelect={setSelectedItem} 
+                          />
                         ))}
                       </SortableContext>
                     </div>
                   </DndContext>
                 </div>
               </div>
-              {campaigns.length > 0 && (
-                <div className="h-10 border-t border-white/5 bg-black/20 flex items-center relative overflow-hidden">
-                  <div className="absolute left-0 top-0 bottom-0 w-24 bg-black border-r border-white/5 z-10 flex items-center px-3 text-[9px] font-bold text-white/40">CAMPANHAS</div>
-                  <div className="flex-1 flex gap-2 ml-24 px-4 overflow-x-auto scrollbar-none">
-                    {campaigns.map(c => (
-                      <div key={c.id} className="h-6 rounded border border-dashed flex items-center px-2 gap-2" style={{ backgroundColor: `${c.color}20`, borderColor: c.color, color: c.color }}>
-                         <span className="text-[9px] font-bold truncate max-w-[100px]">{c.name}</span>
-                         <Badge variant="outline" className="h-3.5 px-1 text-[8px] border-current opacity-70">P{c.priority}</Badge>
+              <AnimatePresence>
+                {campaigns.length > 0 && (
+                  <div className="border-t border-white/5 bg-black/40 flex flex-col shrink-0">
+                    <div className="h-8 border-b border-white/5 flex items-center justify-between px-4 bg-black/20">
+                      <div className="flex items-center gap-2">
+                        <Megaphone className="h-3 w-3 text-white/40" />
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-white/40">Campanhas Ativas</span>
                       </div>
-                    ))}
+                    </div>
+                    <div className="h-12 flex items-center gap-3 px-4 overflow-x-auto scrollbar-none">
+                      {campaigns.map(c => (
+                        <motion.div 
+                          key={c.id} 
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          className="h-8 shrink-0 rounded-lg border flex items-center px-3 gap-3 cursor-pointer hover:brightness-110 transition-all" 
+                          style={{ 
+                            backgroundColor: `${c.color || '#085CF0'}15`, 
+                            borderColor: `${c.color || '#085CF0'}40`, 
+                            color: c.color || '#085CF0' 
+                          }}
+                        >
+                           <div className="flex flex-col">
+                             <span className="text-[10px] font-bold truncate max-w-[120px] leading-none">{c.name}</span>
+                             <span className="text-[8px] opacity-60 font-mono mt-0.5 uppercase">PRIORIDADE {c.priority}</span>
+                           </div>
+                           <ChevronRight className="h-3 w-3 opacity-40" />
+                        </motion.div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </main>
