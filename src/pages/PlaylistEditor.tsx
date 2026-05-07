@@ -302,7 +302,18 @@ export default function PlaylistEditor() {
       }
       await supabase.from("playlist_items").delete().eq("playlist_id", currentPlaylistId as any);
       if (updatedItems.length > 0) {
-        const itemsToInsert = updatedItems.map((it, idx) => ({ playlist_id: currentPlaylistId as any, media_id: it.mediaId, duracao: it.duration, prioridade: it.priority, tipo: it.type, ordem: idx + 1, position: idx + 1, conteudo_id: it.mediaId, ativo: true }));
+        const itemsToInsert = updatedItems.map((it, idx) => ({ 
+          playlist_id: currentPlaylistId as any, 
+          media_id: it.mediaId, 
+          duracao: it.duration, 
+          prioridade: it.priority, 
+          tipo: it.type, 
+          ordem: idx + 1, 
+          position: idx + 1, 
+          conteudo_id: it.mediaId, 
+          ativo: true,
+          is_locked: it.isLocked || false
+        }));
         const { error: insertError } = await supabase.from("playlist_items").insert(itemsToInsert);
         if (insertError) throw insertError;
       }
