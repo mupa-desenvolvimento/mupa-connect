@@ -378,6 +378,34 @@ const CampaignDropZone = ({ children }: any) => {
   );
 };
 
+const TimelineDropZone = ({ children }: any) => {
+  const { setNodeRef, isOver } = useDroppable({
+    id: 'playlist-timeline-drop-zone',
+    data: {
+      accepts: ['library-campaign']
+    }
+  });
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      className={cn(
+        "h-full relative px-8 flex items-center min-w-full",
+        isOver && "bg-[#085CF0]/5 ring-2 ring-[#085CF0]/20 ring-inset"
+      )}
+    >
+      {children}
+      {isOver && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
+          <div className="bg-[#085CF0] text-white px-4 py-2 rounded-full font-bold text-xs flex items-center gap-2 shadow-xl animate-bounce">
+            <Plus className="h-4 w-4" /> Adicionar Campanha à Playlist
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function PlaylistEditor() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
