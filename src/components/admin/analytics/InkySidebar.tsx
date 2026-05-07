@@ -75,8 +75,7 @@ export function InkySidebar({ isOpen, onClose, logs, filters }: InkySidebarProps
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const { data, error } = await supabase
-      .from("inky_insights")
+    const { data, error } = await (supabase.from("inky_insights") as any)
       .select("*")
       .eq("tenant_id", tenantId)
       .gte("created_at", today.toISOString())
