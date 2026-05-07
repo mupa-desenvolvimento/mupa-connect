@@ -14,8 +14,10 @@ import {
   Users,
   Activity,
   User,
-  Building2
+  Building2,
+  MessageSquare
 } from "lucide-react";
+
 import {
   Sidebar,
   SidebarContent,
@@ -101,7 +103,9 @@ export function AppSidebar() {
               <SidebarMenu>
                 {renderItem({ title: "Empresas & Revendas", url: "/superadmin", icon: Building2 })}
                 {renderItem({ title: "Aplicativos", url: "/admin/apps", icon: MonitorPlay })}
+                {renderItem({ title: "WhatsApp", url: "/superadmin/whatsapp", icon: MessageSquare })}
                 {renderItem({ title: "Monitoramento", url: "/admin/player-logs", icon: LayoutDashboard })}
+
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

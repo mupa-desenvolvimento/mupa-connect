@@ -1,0 +1,400 @@
+import { useState } from "react";
+import { PageHeader } from "@/components/PageHeader";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { 
+  MessageSquare, 
+  Smartphone, 
+  Settings, 
+  History, 
+  Plus, 
+  QrCode, 
+  RefreshCw,
+  Power,
+  Users,
+  Bell,
+  Search,
+  Filter,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Clock,
+  MoreVertical,
+  ChevronRight
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+
+export default function WhatsAppManagement() {
+  const [activeTab, setActiveTab] = useState("instances");
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [showQrDialog, setShowQrDialog] = useState(false);
+  const [connectingInstance, setConnectingInstance] = useState<string | null>(null);
+
+  const handleGenerateQR = async (instanceName: string) => {
+    try {
+      setConnectingInstance(instanceName);
+      toast.info("Gerando QR Code...");
+      
+      const { data, error } = await supabase.functions.invoke('whatsapp-evolution', {
+        body: { action: 'getQRCode', instanceName }
+      });
+
+      if (error) throw error;
+      
+      if (data?.base64) {
+        setQrCodeUrl(data.base64);
+        setShowQrDialog(true);
+      } else {
+        toast.error("Não foi possível obter o QR Code");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao conectar");
+    } finally {
+      setConnectingInstance(null);
+    }
+  };
+
+
+  const { data: instances, isLoading: loadingInstances } = useQuery({
+    queryKey: ["whatsapp-instances"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("whatsapp_instances")
+        .select("*, companies(name)");
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const { data: recipients } = useQuery({
+    queryKey: ["whatsapp-recipients"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("whatsapp_recipients")
+        .select("*, companies(name)");
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const { data: logs } = useQuery({
+    queryKey: ["whatsapp-logs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("whatsapp_logs")
+        .select(`
+          *,
+          whatsapp_instances (name)
+        `)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data;
+    }
+  });
+
+
+  return (
+    <div className="flex flex-col gap-6">
+      <PageHeader 
+        title="WhatsApp Integration" 
+        description="Manage WhatsApp instances, automations, and operational alerts."
+        actions={
+          <Button className="bg-gradient-primary text-primary-foreground shadow-glow">
+            <Plus className="mr-2 h-4 w-4" /> Nova Instância
+          </Button>
+        }
+      />
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="bg-background border">
+          <TabsTrigger value="instances" className="gap-2">
+            <Smartphone className="h-4 w-4" /> Instâncias
+          </TabsTrigger>
+          <TabsTrigger value="recipients" className="gap-2">
+            <Users className="h-4 w-4" /> Destinatários
+          </TabsTrigger>
+          <TabsTrigger value="automations" className="gap-2">
+            <Bell className="h-4 w-4" /> Alertas & Regras
+          </TabsTrigger>
+          <TabsTrigger value="logs" className="gap-2">
+            <History className="h-4 w-4" /> Histórico
+          </TabsTrigger>
+        </TabsList>
+
+        <div className="mt-6">
+          <TabsContent value="instances">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {instances?.map((instance) => (
+                <Card key={instance.id} className="border-border/60 hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg">{instance.name}</CardTitle>
+                        <CardDescription>{instance.companies?.name || "Global"}</CardDescription>
+                      </div>
+                      <Badge variant={instance.status === "connected" ? "default" : "secondary"} className={instance.status === "connected" ? "bg-green-500 hover:bg-green-600" : ""}>
+                        {instance.status === "connected" ? "Conectado" : "Desconectado"}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="text-sm space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Número:</span>
+                        <span className="font-mono">{instance.phone || "—"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Última Conexão:</span>
+                        <span>{instance.last_connection_at ? new Date(instance.last_connection_at).toLocaleDateString() : "Nunca"}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      {instance.status !== "connected" ? (
+                        <Button 
+                          variant="outline" 
+                          className="w-full gap-2 border-primary/20 text-primary hover:bg-primary/5"
+                          onClick={() => handleGenerateQR(instance.instance_key || instance.name)}
+                          disabled={connectingInstance === (instance.instance_key || instance.name)}
+                        >
+                          {connectingInstance === (instance.instance_key || instance.name) ? (
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <QrCode className="h-4 w-4" />
+                          )}
+                          Gerar QR
+                        </Button>
+                      ) : (
+
+                        <Button variant="outline" className="w-full gap-2 border-destructive/20 text-destructive hover:bg-destructive/5">
+                          <Power className="h-4 w-4" /> Desconectar
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="icon" className="shrink-0">
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              
+              <Card className="border-dashed border-2 flex flex-col items-center justify-center p-8 text-center bg-muted/20">
+                <Smartphone className="h-10 w-10 text-muted-foreground mb-4 opacity-20" />
+                <h3 className="font-medium text-muted-foreground mb-2">Adicionar Novo Número</h3>
+                <p className="text-xs text-muted-foreground mb-4 max-w-[200px]">Conecte um novo WhatsApp via Evolution API.</p>
+                <Button variant="outline" size="sm">
+                  Começar Configuração
+                </Button>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="recipients">
+             <div className="space-y-4">
+               <div className="flex justify-between items-center gap-4 bg-card p-4 rounded-xl border border-border/60">
+                 <div className="relative flex-1 max-w-sm">
+                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                   <Input placeholder="Buscar destinatário..." className="pl-10" />
+                 </div>
+                 <Button className="gap-2">
+                   <Plus className="h-4 w-4" /> Novo Destinatário
+                 </Button>
+               </div>
+
+               <Card className="border-border/60">
+                 <Table>
+                   <TableHeader>
+                     <TableRow>
+                       <TableHead>Nome</TableHead>
+                       <TableHead>Telefone</TableHead>
+                       <TableHead>Empresa</TableHead>
+                       <TableHead>Alertas</TableHead>
+                       <TableHead>Status</TableHead>
+                       <TableHead className="text-right">Ações</TableHead>
+                     </TableRow>
+                   </TableHeader>
+                   <TableBody>
+                     {recipients?.map((recipient) => (
+                       <TableRow key={recipient.id}>
+                         <TableCell className="font-medium">{recipient.name}</TableCell>
+                         <TableCell className="font-mono text-xs">{recipient.phone}</TableCell>
+                         <TableCell>{recipient.companies?.name || "Global"}</TableCell>
+                         <TableCell>
+                           <div className="flex flex-wrap gap-1">
+                             {recipient.alert_types?.map((type: string) => (
+                               <Badge key={type} variant="outline" className="text-[10px] py-0 h-4 bg-primary/5 border-primary/20">
+                                 {type}
+                               </Badge>
+                             ))}
+                           </div>
+                         </TableCell>
+                         <TableCell>
+                           <Badge variant={recipient.is_active ? "default" : "secondary"} className={cn("text-[10px]", recipient.is_active && "bg-green-500/10 text-green-600 hover:bg-green-500/20")}>
+                             {recipient.is_active ? "Ativo" : "Inativo"}
+                           </Badge>
+                         </TableCell>
+                         <TableCell className="text-right">
+                           <Button variant="ghost" size="icon" className="h-8 w-8">
+                             <MoreVertical className="h-4 w-4" />
+                           </Button>
+                         </TableCell>
+                       </TableRow>
+                     ))}
+                     {(!recipients || recipients.length === 0) && (
+                       <TableRow>
+                         <TableCell colSpan={6} className="h-24 text-center text-muted-foreground italic">
+                           Nenhum destinatário configurado.
+                         </TableCell>
+                       </TableRow>
+                     )}
+                   </TableBody>
+                 </Table>
+               </Card>
+             </div>
+          </TabsContent>
+
+          <TabsContent value="automations">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="border-border/60">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 text-warning" />
+                      Regras de Offline
+                    </CardTitle>
+                    <CardDescription>Configure como o sistema alerta sobre dispositivos desconectados.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/40">
+                      <div>
+                        <p className="text-sm font-medium">Tempo mínimo para alerta</p>
+                        <p className="text-xs text-muted-foreground">Alertar após X minutos offline.</p>
+                      </div>
+                      <Badge variant="outline">15 min</Badge>
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/40">
+                      <div>
+                        <p className="text-sm font-medium">Intervalo entre mensagens (Cooldown)</p>
+                        <p className="text-xs text-muted-foreground">Evitar spam de notificações.</p>
+                      </div>
+                      <Badge variant="outline">2 horas</Badge>
+                    </div>
+                    <Button variant="outline" className="w-full">Editar Configurações</Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-border/60">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Settings className="h-5 w-5 text-primary" />
+                      Tipos de Alerta Ativos
+                    </CardTitle>
+                    <CardDescription>Selecione quais eventos disparam notificações.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {[
+                      { label: "Dispositivo Offline", active: true },
+                      { label: "Erro na Consulta de Preço", active: true },
+                      { label: "Player Travado", active: false },
+                      { label: "Erro de Mídia", active: true },
+                      { label: "Falha de Sincronização", active: true },
+                      { label: "Dispositivo sem Playlist", active: true },
+                    ].map((item) => (
+                      <div key={item.label} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/30 transition-colors">
+                        <span className="text-sm">{item.label}</span>
+                        <div className={cn("h-2 w-2 rounded-full", item.active ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-muted-foreground/30")} />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+             </div>
+          </TabsContent>
+
+          <TabsContent value="logs">
+             <Card className="border-border/60">
+               <Table>
+                 <TableHeader>
+                   <TableRow>
+                     <TableHead>Data/Hora</TableHead>
+                     <TableHead>Instância</TableHead>
+                     <TableHead>Destinatário</TableHead>
+                     <TableHead>Mensagem</TableHead>
+                     <TableHead>Status</TableHead>
+                   </TableRow>
+                 </TableHeader>
+                 <TableBody>
+                   {logs?.map((log) => (
+                     <TableRow key={log.id}>
+                       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                         {format(new Date(log.created_at), "dd/MM HH:mm", { locale: ptBR })}
+                       </TableCell>
+                       <TableCell className="text-xs font-medium">{log.whatsapp_instances?.name || "—"}</TableCell>
+                       <TableCell className="font-mono text-xs">{log.recipient_phone}</TableCell>
+                       <TableCell className="max-w-md truncate text-xs">{log.message}</TableCell>
+                       <TableCell>
+                         <Badge variant={log.status === "sent" ? "default" : "destructive"} className={cn("text-[10px] py-0 h-4", log.status === "sent" ? "bg-green-500/10 text-green-600 border-green-200" : "bg-red-500/10 text-red-600 border-red-200")}>
+                           {log.status === "sent" ? "Enviado" : "Erro"}
+                         </Badge>
+                       </TableCell>
+                     </TableRow>
+                   ))}
+                   {(!logs || logs.length === 0) && (
+                     <TableRow>
+                       <TableCell colSpan={5} className="h-24 text-center text-muted-foreground italic">
+                         Nenhum log registrado.
+                       </TableCell>
+                     </TableRow>
+                   )}
+                 </TableBody>
+               </Table>
+             </Card>
+          </TabsContent>
+
+        </div>
+      </Tabs>
+
+      {showQrDialog && qrCodeUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <Card className="w-full max-w-sm">
+            <CardHeader>
+              <CardTitle>Conectar WhatsApp</CardTitle>
+              <CardDescription>Escaneie o código abaixo com seu aplicativo WhatsApp.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center">
+              <div className="bg-white p-4 rounded-xl mb-4 border border-border shadow-inner">
+                <img src={qrCodeUrl} alt="QR Code" className="w-64 h-64" />
+              </div>
+              <p className="text-xs text-muted-foreground text-center mb-6">
+                Abra o WhatsApp {">"} Aparelhos Conectados {">"} Conectar um Aparelho.
+              </p>
+              <Button className="w-full" onClick={() => setShowQrDialog(false)}>Fechar</Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}
+
