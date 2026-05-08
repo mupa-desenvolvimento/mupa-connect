@@ -10,7 +10,7 @@
 
 @layer base {
   :root {
-    /* Surfaces - Light Mode (keeping defaults but slightly more Mupa) */
+    /* Surfaces - Light Mode */
     --background: 220 33% 98%;
     --foreground: 224 32% 12%;
 
@@ -22,7 +22,7 @@
 
     /* Brand - Cyan Mupa */
     --primary: 191 100% 45%;
-    --primary-foreground: 224 50% 8%;
+    --primary-foreground: 0 0% 100%;
     --primary-glow: 188 100% 60%;
 
     --secondary: 220 20% 94%;
@@ -54,29 +54,29 @@
     --gradient-glow: radial-gradient(circle at center, rgba(0, 194, 255, 0.15) 0%, transparent 70%);
 
     /* Shadows */
-    --shadow-premium: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
-    --shadow-glow: 0 0 20px rgba(0, 194, 255, 0.3);
+    --shadow-premium: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
+    --shadow-glow: 0 0 20px rgba(0, 194, 255, 0.2);
 
-    /* Sidebar */
-    --sidebar-background: 224 36% 10%;
-    --sidebar-foreground: 220 18% 82%;
+    /* Sidebar Tokens (Light) */
+    --sidebar-background: 210 20% 98%;
+    --sidebar-foreground: 224 32% 20%;
     --sidebar-primary: 191 100% 45%;
-    --sidebar-primary-foreground: 224 50% 8%;
-    --sidebar-accent: 224 30% 16%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 224 30% 16%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 191 100% 95%;
+    --sidebar-accent-foreground: 191 100% 45%;
+    --sidebar-border: 220 18% 92%;
     --sidebar-ring: 191 100% 45%;
   }
 
   .dark {
-    /* Backgrounds Requested: #050816, #081120, #0B1324 */
-    --background: 229 64% 5%; /* #050816 */
+    /* Backgrounds: #050816 (deep navy) */
+    --background: 229 64% 5%;
     --foreground: 210 20% 98%;
 
-    --card: 222 53% 9%; /* #0B1324 */
+    --card: 222 53% 8%;
     --card-foreground: 210 20% 98%;
 
-    --popover: 218 60% 8%; /* #081120 */
+    --popover: 222 53% 6%;
     --popover-foreground: 210 20% 98%;
 
     --primary: 191 100% 50%;
@@ -101,20 +101,21 @@
     --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 222 25% 18%;
-    --input: 222 25% 18%;
+    --border: 222 25% 14%;
+    --input: 222 25% 14%;
     --ring: 191 100% 50%;
 
     --shadow-premium: 0 20px 50px -12px rgba(0, 0, 0, 0.8);
     --shadow-glow: 0 0 30px rgba(0, 194, 255, 0.4);
 
+    /* Sidebar Tokens (Dark) */
     --sidebar-background: 229 64% 4%;
     --sidebar-foreground: 210 15% 85%;
     --sidebar-primary: 191 100% 50%;
     --sidebar-primary-foreground: 229 64% 5%;
     --sidebar-accent: 222 30% 10%;
-    --sidebar-accent-foreground: 210 20% 98%;
-    --sidebar-border: 222 25% 12%;
+    --sidebar-accent-foreground: 191 100% 50%;
+    --sidebar-border: 222 25% 10%;
     --sidebar-ring: 191 100% 50%;
   }
 }

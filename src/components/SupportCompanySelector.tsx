@@ -50,11 +50,11 @@ export function SupportCompanySelector() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="h-9 gap-2 bg-background/50 border-primary/20 hover:border-primary/50 text-xs">
-          <Building2 className="h-3.5 w-3.5 text-primary" />
+          <Building2 className="h-4 w-4 text-primary" />
           <span className="max-w-[120px] truncate">
             {currentCompany?.name || "Selecionar Empresa"}
           </span>
-          <ChevronDown className="h-3 w-3 opacity-50" />
+          <ChevronDown className="h-4 w-4 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[280px]">
