@@ -145,25 +145,25 @@ export default function CampaignsPage() {
         }
       />
 
-      <div className="flex items-center gap-2 bg-card p-3 rounded-xl border border-border/60 shadow-sm">
-        <div className="flex-1 flex gap-2">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="flex flex-col md:flex-row items-center gap-4 bg-[#1a1a1e]/40 p-4 rounded-2xl border border-white/5 shadow-2xl backdrop-blur-md">
+        <div className="flex-1 flex items-center gap-4 w-full">
+          <div className="relative flex-1 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20 group-focus-within:text-primary transition-colors" />
             <Input 
-              placeholder="Buscar campanhas..." 
+              placeholder="Pesquisar campanhas..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9 bg-background/50"
+              className="pl-12 h-11 bg-black/40 border-white/5 focus:border-primary/30 transition-all rounded-xl text-white font-medium"
             />
           </div>
         </div>
 
-        <Tabs value={view} onValueChange={(v: any) => setView(v)} className="w-auto">
-          <TabsList className="bg-muted/30 h-9 p-1">
-            <TabsTrigger value="grid" className="h-7 text-xs px-3 gap-2"><LayoutGrid className="h-3.5 w-3.5" /> Cards</TabsTrigger>
-            <TabsTrigger value="list" className="h-7 text-xs px-3 gap-2"><List className="h-3.5 w-3.5" /> Lista</TabsTrigger>
-            <TabsTrigger value="calendar" className="h-7 text-xs px-3 gap-2"><CalendarIcon className="h-3.5 w-3.5" /> Calendário</TabsTrigger>
-            <TabsTrigger value="timeline" className="h-7 text-xs px-3 gap-2"><Clock className="h-3.5 w-3.5" /> Timeline</TabsTrigger>
+        <Tabs value={view} onValueChange={(v: any) => setView(v)} className="w-full md:w-auto">
+          <TabsList className="bg-black/40 h-11 p-1 border border-white/5 rounded-xl">
+            <TabsTrigger value="grid" className="h-9 text-[10px] font-black uppercase tracking-widest px-4 gap-2 data-[state=active]:bg-white data-[state=active]:text-black"><LayoutGrid className="h-3.5 w-3.5" /> Grid</TabsTrigger>
+            <TabsTrigger value="list" className="h-9 text-[10px] font-black uppercase tracking-widest px-4 gap-2 data-[state=active]:bg-white data-[state=active]:text-black"><List className="h-3.5 w-3.5" /> Lista</TabsTrigger>
+            <TabsTrigger value="calendar" className="h-9 text-[10px] font-black uppercase tracking-widest px-4 gap-2 data-[state=active]:bg-white data-[state=active]:text-black"><CalendarIcon className="h-3.5 w-3.5" /> Calendário</TabsTrigger>
+            <TabsTrigger value="timeline" className="h-9 text-[10px] font-black uppercase tracking-widest px-4 gap-2 data-[state=active]:bg-white data-[state=active]:text-black"><Clock className="h-3.5 w-3.5" /> Timeline</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
