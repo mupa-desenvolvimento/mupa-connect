@@ -670,9 +670,15 @@ export default function PlaylistEditor() {
 
   const handleDragOver = useCallback((event: any) => {
     const newOverId = event.over?.id ?? null;
+    
     if (newOverId !== lastOverIdRef.current) {
-      lastOverIdRef.current = newOverId;
-      setOverId(newOverId);
+      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+      
+      rafIdRef.current = requestAnimationFrame(() => {
+        lastOverIdRef.current = newOverId;
+        setOverId(newOverId);
+        rafIdRef.current = null;
+      });
     }
   }, []);
 
