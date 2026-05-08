@@ -329,9 +329,12 @@ export function CampaignContentManager({ campaignId, onContentChange }: Campaign
                   <div className="space-y-6">
                     <div className="space-y-3">
                       <label className="text-[10px] font-black uppercase text-white/40 tracking-widest">Duração</label>
-                      <div className="flex items-center gap-3 bg-black/40 p-4 rounded-2xl border border-white/5">
-                        <Clock className="h-4 w-4 text-primary" />
-                        <Input type="number" value={selectedItem.duration_override || 10} onChange={e => updateItemProperty(selectedItem.id, 'duration_override', parseInt(e.target.value))} className="bg-transparent border-none text-xl font-black text-white focus-visible:ring-0 p-0 h-auto" />
+                      <div className="flex items-center gap-4 bg-black/60 p-5 rounded-2xl border border-white/10 group focus-within:border-primary/50 transition-colors">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                          <Clock className="h-5 w-5 text-primary" />
+                        </div>
+                        <Input type="number" value={selectedItem.duration_override || 10} onChange={e => updateItemProperty(selectedItem.id, 'duration_override', parseInt(e.target.value))} className="bg-transparent border-none text-2xl font-black text-white focus-visible:ring-0 p-0 h-auto" />
+                        <span className="text-xs font-black text-white/20 uppercase">Segundos</span>
                       </div>
                     </div>
                     <div className="space-y-3">
