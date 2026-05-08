@@ -170,29 +170,32 @@ export function StoreCard({ store, playlists, onRefresh }: StoreCardProps) {
     <Card 
       ref={setNodeRef}
       className={cn(
-        "bg-card/50 backdrop-blur-sm border-white/5 hover:border-white/10 transition-all overflow-hidden group",
-        isOver && "border-primary ring-2 ring-primary/20 bg-primary/5"
+        "bg-card/40 backdrop-blur-md border-white/5 hover:border-[#085CF0]/30 transition-all duration-500 overflow-hidden group shadow-premium hover:shadow-glow",
+        isOver && "border-[#085CF0] ring-4 ring-[#085CF0]/10 bg-[#085CF0]/5"
       )}
     >
-      <CardHeader className="p-4 pb-2 border-b border-white/5">
+      <CardHeader className="p-4 pb-2 border-b border-white/5 bg-white/5">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+            <div className="p-2.5 rounded-xl bg-[#085CF0]/10 text-[#085CF0] shadow-glow shadow-[#085CF0]/20 group-hover:scale-110 transition-transform duration-300">
               <Store className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <CardTitle className="text-lg font-semibold">{store.name}</CardTitle>
+                <CardTitle className="text-lg font-bold tracking-tight text-white">{store.name}</CardTitle>
                 {store.group_name && (
-                  <Badge variant="outline" className="text-[9px] bg-blue-500/5 text-blue-400 border-blue-500/10">
-                    GRUPO: {store.group_name}
+                  <Badge variant="outline" className="text-[9px] bg-[#085CF0]/5 text-[#085CF0] border-[#085CF0]/20 font-bold uppercase tracking-widest">
+                    {store.group_name}
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider">Código: {store.code}</p>
+              <p className="text-[10px] text-muted-foreground/60 uppercase font-bold tracking-widest">Código: {store.code}</p>
             </div>
           </div>
-          <Badge variant="outline" className={devicesWithoutSector.length > 0 ? "text-yellow-500 border-yellow-500/20" : ""}>
+          <Badge variant="secondary" className={cn(
+            "h-6 px-2 font-bold text-[10px] uppercase tracking-tighter",
+            devicesWithoutSector.length > 0 ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" : "bg-[#085CF0]/10 text-[#085CF0] border-[#085CF0]/20"
+          )}>
             {storeDevices.length} PDVs
           </Badge>
         </div>
