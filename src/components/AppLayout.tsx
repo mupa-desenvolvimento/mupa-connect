@@ -71,11 +71,11 @@ export default function AppLayout() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="min-h-screen flex w-full bg-[#050816]">
         <AppSidebar />
 
-        <div className={cn("flex-1 flex flex-col min-w-0", isMobile && "pb-16")}>
-          <header className="h-14 flex items-center gap-3 border-b border-border bg-background/80 backdrop-blur sticky top-0 z-30 px-3">
+        <div className={cn("flex-1 flex flex-col min-w-0", isMobile && "pb-20")}>
+          <header className="h-16 flex items-center gap-4 border-b border-white/5 bg-[#050816]/60 backdrop-blur-2xl sticky top-0 z-30 px-6">
             <SidebarTrigger className={cn(isMobile && "hidden")} />
             {isMobile && (
               <div className="flex items-center gap-2">
