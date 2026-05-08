@@ -57,7 +57,8 @@ export function CampaignEditor({ campaignId, onClose }: CampaignEditorProps) {
           *,
           playlist_campaigns (
             playlist_id
-          )
+          ),
+          campaign_contents (count)
         `)
         .eq("id", id)
         .single();
@@ -77,6 +78,10 @@ export function CampaignEditor({ campaignId, onClose }: CampaignEditorProps) {
           is_active: data.is_active ?? true,
           playlist_ids: (data.playlist_campaigns as any[])?.map((pc: any) => pc.playlist_id) || [],
         });
+        
+        // Em vez de campaign_contents (count) direto, vamos contar manualmente se necessário ou ajustar a query
+        const contentCount = (data as any).campaign_contents?.[0]?.count || 0;
+        setCampaignStats({ contentCount });
       }
     } catch (error: any) {
       toast.error("Erro ao carregar campanha: " + error.message);
@@ -84,6 +89,16 @@ export function CampaignEditor({ campaignId, onClose }: CampaignEditorProps) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Re-fetch stats when content might have changed
+  const refreshStats = async () => {
+    if (!currentCampaignId) return;
+    const { count } = await supabase
+      .from("campaign_contents")
+      .select("*", { count: 'exact', head: true })
+      .eq("campaign_id", currentCampaignId);
+    setCampaignStats({ contentCount: count || 0 });
   };
 
   const onSubmit = async (values: CampaignFormValues) => {
