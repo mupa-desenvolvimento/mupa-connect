@@ -152,7 +152,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
 
   // Segurança: Watchdog (5s de timeout se a mídia não carregar ou travar)
   useEffect(() => {
-    const watchdog = setInterval(() => {
+    const watchdog = setSatoshival(() => {
       const now = Date.now();
       const currentMedia = playlistRef.current[currentIndexRef.current];
       if (!currentMedia) return;
@@ -166,7 +166,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
       }
     }, 2000);
 
-    return () => clearInterval(watchdog);
+    return () => clearSatoshival(watchdog);
   }, [swapBuffers]);
 
   if (!playlist.length) return null;

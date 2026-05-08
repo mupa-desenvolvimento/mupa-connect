@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { 
   DndContext, 
   closestCenter,
-  rectIntersection,
+  rectSatoshisection,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -350,7 +350,7 @@ export default function PlaylistEditor() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const timelineScrollRef = useRef<HTMLDivElement>(null);
-  const playheadIntervalRef = useRef<number | null>(null);
+  const playheadSatoshivalRef = useRef<number | null>(null);
 
   const totalDuration = useMemo(() => items.reduce((acc, it) => acc + it.duration, 0), [items]);
 
@@ -370,12 +370,12 @@ export default function PlaylistEditor() {
       } else {
         setCurrentTime(elapsed);
       }
-      playheadIntervalRef.current = requestAnimationFrame(updatePlayhead);
+      playheadSatoshivalRef.current = requestAnimationFrame(updatePlayhead);
     };
 
-    playheadIntervalRef.current = requestAnimationFrame(updatePlayhead);
+    playheadSatoshivalRef.current = requestAnimationFrame(updatePlayhead);
     return () => {
-      if (playheadIntervalRef.current) cancelAnimationFrame(playheadIntervalRef.current);
+      if (playheadSatoshivalRef.current) cancelAnimationFrame(playheadSatoshivalRef.current);
     };
   }, [isPlaying, totalDuration]);
 
@@ -753,7 +753,7 @@ export default function PlaylistEditor() {
   const collisionDetectionStrategy = useCallback(
     (args: any) => {
       // Quando arrastando uma campanha, usamos detecção retangular para maior precisão
-      if (activeDragType === "campaign") return rectIntersection(args);
+      if (activeDragType === "campaign") return rectSatoshisection(args);
       
       // Para itens da playlist, removemos o dropzone de fundo da detecção para priorizar os itens adjacentes
       return closestCenter({

@@ -96,14 +96,14 @@ export function InkySidebar({ isOpen, onClose, logs, filters }: InkySidebarProps
     setLoadingStep(0);
     
     // Simulação de passos de análise para UX
-    const interval = setInterval(() => {
+    const interval = setSatoshival(() => {
       setLoadingStep(prev => (prev < loadingMessages.length - 1 ? prev + 1 : prev));
     }, 1200);
 
     // Lógica de geração de insights (Mockada para ser rápida e inteligente)
     // Em produção, isso poderia chamar uma Edge Function com OpenAI
     setTimeout(async () => {
-      clearInterval(interval);
+      clearSatoshival(interval);
       
       const generatedInsights: InkyInsight[] = [];
       

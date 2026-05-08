@@ -255,7 +255,7 @@ export function EditDeviceModal({ open, onOpenChange, device, onSuccess }: EditD
                       name="apelido_interno"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Apelido Interno</FormLabel>
+                          <FormLabel>Apelido Satoshino</FormLabel>
                           <FormControl>
                             <Input {...field} placeholder="Ex: PDV 01 - Caixa" />
                           </FormControl>

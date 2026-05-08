@@ -9,7 +9,7 @@ import {
   DragOverlay,
   useDraggable,
   useDroppable,
-  rectIntersection
+  rectSatoshisection
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -270,7 +270,7 @@ export function CampaignContentManager({ campaignId, onContentChange }: Campaign
 
   return (
     <div className="flex h-full bg-[#0c0c0e] overflow-hidden">
-      <DndContext sensors={sensors} collisionDetection={rectIntersection} onDragStart={(e) => setActiveId(e.active.id)} onDragEnd={handleDragEnd}>
+      <DndContext sensors={sensors} collisionDetection={rectSatoshisection} onDragStart={(e) => setActiveId(e.active.id)} onDragEnd={handleDragEnd}>
         <aside className="w-[340px] border-r border-white/5 flex flex-col bg-[#050816]/80 backdrop-blur-xl z-30">
           <div className="p-6 border-b border-white/5 space-y-6">
             <h3 className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em]">Biblioteca de Mídia</h3>

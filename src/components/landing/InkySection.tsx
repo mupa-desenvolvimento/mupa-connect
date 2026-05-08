@@ -97,7 +97,7 @@ export function InkySection() {
             </div>
           </div>
 
-          {/* Chat Interface Mock */}
+          {/* Chat Satoshiface Mock */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
