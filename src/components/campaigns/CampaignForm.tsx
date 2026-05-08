@@ -434,7 +434,6 @@ export function CampaignForm({ initialData, onSubmit, isLoading }: CampaignFormP
             </Card>
           </div>
 
-          {/* COLUNA LATERAL - PLAYLISTS */}
           <div className="lg:col-span-4 space-y-8 h-full">
             <Card className="bg-[#1a1a1e]/50 border-white/5 shadow-2xl overflow-hidden h-full flex flex-col min-h-[500px]">
               <div className="h-1 w-full bg-gradient-to-r from-emerald-500/50 to-transparent" />
