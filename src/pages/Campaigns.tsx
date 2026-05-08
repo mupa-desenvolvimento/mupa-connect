@@ -159,11 +159,11 @@ export default function CampaignsPage() {
         </div>
 
         <Tabs value={view} onValueChange={(v: any) => setView(v)} className="w-full md:w-auto">
-          <TabsList className="bg-black/40 h-11 p-1 border border-white/5 rounded-xl">
-            <TabsTrigger value="grid" className="h-9 text-[10px] font-black uppercase tracking-widest px-4 gap-2 data-[state=active]:bg-white data-[state=active]:text-black"><LayoutGrid className="h-3.5 w-3.5" /> Grid</TabsTrigger>
-            <TabsTrigger value="list" className="h-9 text-[10px] font-black uppercase tracking-widest px-4 gap-2 data-[state=active]:bg-white data-[state=active]:text-black"><List className="h-3.5 w-3.5" /> Lista</TabsTrigger>
-            <TabsTrigger value="calendar" className="h-9 text-[10px] font-black uppercase tracking-widest px-4 gap-2 data-[state=active]:bg-white data-[state=active]:text-black"><CalendarIcon className="h-3.5 w-3.5" /> Calendário</TabsTrigger>
-            <TabsTrigger value="timeline" className="h-9 text-[10px] font-black uppercase tracking-widest px-4 gap-2 data-[state=active]:bg-white data-[state=active]:text-black"><Clock className="h-3.5 w-3.5" /> Timeline</TabsTrigger>
+          <TabsList className="bg-black/40 h-11 p-1 border border-white/5 rounded-xl gap-1">
+            <TabsTrigger value="grid" className="h-9 text-[9px] font-black uppercase tracking-widest px-4 gap-2 data-[state=active]:bg-white data-[state=active]:text-black rounded-lg transition-all"><LayoutGrid className="h-3 w-3" /> Grid</TabsTrigger>
+            <TabsTrigger value="list" className="h-9 text-[9px] font-black uppercase tracking-widest px-4 gap-2 data-[state=active]:bg-white data-[state=active]:text-black rounded-lg transition-all"><List className="h-3 w-3" /> Lista</TabsTrigger>
+            <TabsTrigger value="calendar" className="h-9 text-[9px] font-black uppercase tracking-widest px-4 gap-2 data-[state=active]:bg-white data-[state=active]:text-black rounded-lg transition-all"><CalendarIcon className="h-3 w-3" /> Calendário</TabsTrigger>
+            <TabsTrigger value="timeline" className="h-9 text-[9px] font-black uppercase tracking-widest px-4 gap-2 data-[state=active]:bg-white data-[state=active]:text-black rounded-lg transition-all"><Clock className="h-3 w-3" /> Timeline</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
