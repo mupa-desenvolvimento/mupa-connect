@@ -1577,7 +1577,7 @@ export default function PlaylistEditor() {
                             </motion.div>
                           </div>
                         )}
-                        <AnimatePresence>
+                        <AnimatePresence mode="popLayout" initial={false}>
                           {items.map((item, index) => (
                             <React.Fragment key={item.id}>
                               {activeDragType === 'campaign' && overId === item.id && (
