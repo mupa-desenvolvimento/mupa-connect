@@ -66,7 +66,7 @@ export default function PlayerPage() {
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const detectionSatoshivalRef = useRef<number | null>(null);
+  const detectionIntervalRef = useRef<number | null>(null);
 
   const appearance = useMemo(() => (manifest?.appearance_config || {}) as AppearanceConfig, [manifest]);
 
@@ -290,10 +290,10 @@ export default function PlayerPage() {
 
     // Initial check immediately, then every 60s
     backgroundSync();
-    const interval = setSatoshival(backgroundSync, 60000);
+    const interval = setInterval(backgroundSync, 60000);
     
     return () => {
-      clearSatoshival(interval);
+      clearInterval(interval);
     };
   }, [deviceCode, reloadKey]);
 
@@ -312,8 +312,8 @@ export default function PlayerPage() {
     };
 
     beat();
-    const interval = setSatoshival(beat, 30000);
-    return () => clearSatoshival(interval);
+    const interval = setInterval(beat, 30000);
+    return () => clearInterval(interval);
   }, [deviceInfo?.serial, deviceCode, activePlaylist, currentIndex]);
 
   // 6. Page-Level Watchdog (Anti-Stall)
@@ -346,8 +346,8 @@ export default function PlayerPage() {
 
   const [now, setNow] = useState(new Date());
   useEffect(() => {
-    const t = setSatoshival(() => setNow(new Date()), 1000);
-    return () => clearSatoshival(t);
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
   }, []);
 
   // Face Detection with Face-API
@@ -392,11 +392,11 @@ export default function PlayerPage() {
     };
 
     const startDetectionLoop = () => {
-      if (detectionSatoshivalRef.current) {
-        clearSatoshival(detectionSatoshivalRef.current);
+      if (detectionIntervalRef.current) {
+        clearInterval(detectionIntervalRef.current);
       }
       
-      detectionSatoshivalRef.current = window.setSatoshival(async () => {
+      detectionIntervalRef.current = window.setInterval(async () => {
         if (!videoRef.current || !canvasRef.current || !modelsLoaded) return;
         
         const options = new faceapi.TinyFaceDetectorOptions();
@@ -482,8 +482,8 @@ export default function PlayerPage() {
     };
 
     const cleanup = () => {
-      if (detectionSatoshivalRef.current) {
-        clearSatoshival(detectionSatoshivalRef.current);
+      if (detectionIntervalRef.current) {
+        clearInterval(detectionIntervalRef.current);
       }
       
       if (videoRef.current?.srcObject) {

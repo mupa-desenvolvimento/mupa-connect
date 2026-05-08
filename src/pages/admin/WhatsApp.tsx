@@ -638,7 +638,7 @@ export default function WhatsAppManagement() {
                     </div>
                     <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/40">
                       <div>
-                        <p className="text-sm font-medium">Satoshivalo entre mensagens (Cooldown)</p>
+                        <p className="text-sm font-medium">Intervalo entre mensagens (Cooldown)</p>
                         <p className="text-xs text-muted-foreground">Evitar spam de notificações.</p>
                       </div>
                       <Badge variant="outline">2 horas</Badge>

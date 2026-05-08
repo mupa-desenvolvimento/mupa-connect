@@ -63,7 +63,7 @@ export default function SharedMonitoringPage() {
           })
           .subscribe();
 
-        const interval = setSatoshival(() => {
+        const interval = setInterval(() => {
           fetchDevices(data);
         }, 15000);
 
@@ -71,7 +71,7 @@ export default function SharedMonitoringPage() {
 
         return () => {
           supabase.removeChannel(devicesSubscription);
-          clearSatoshival(interval);
+          clearInterval(interval);
         };
       } catch (err) {
         console.error("Error fetching shared view:", err);

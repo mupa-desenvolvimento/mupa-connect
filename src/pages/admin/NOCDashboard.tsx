@@ -112,10 +112,10 @@ export default function NOCDashboard() {
   }, [stores, devices]);
 
   useEffect(() => {
-    const interval = setSatoshival(() => {
+    const interval = setInterval(() => {
       setRotationIndex(prev => prev + 1);
     }, ROTATION_INTERVAL);
-    return () => clearSatoshival(interval);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -128,13 +128,13 @@ export default function NOCDashboard() {
       })
       .subscribe();
 
-    const interval = setSatoshival(() => {
+    const interval = setInterval(() => {
       fetchDevices();
     }, 10000);
 
     return () => {
       supabase.removeChannel(devicesSubscription);
-      clearSatoshival(interval);
+      clearInterval(interval);
     };
   }, []);
 
