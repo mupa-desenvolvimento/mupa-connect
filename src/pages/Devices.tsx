@@ -303,10 +303,10 @@ export default function DevicesPage() {
         }
       />
 
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-card p-4 rounded-xl border border-border/60 shadow-sm sticky top-0 z-10">
-        <div className="relative flex-1 w-full md:max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder={isSuperAdmin ? "Buscar por nome, serial ou empresa..." : "Buscar dispositivo ou serial..."} className="pl-10 h-10 bg-background/50 border-border/40 focus:bg-background" value={search} onChange={(e) => setSearch(e.target.value)} />
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-[#1a1a1e]/40 p-5 rounded-2xl border border-white/5 shadow-2xl backdrop-blur-md sticky top-0 z-10">
+        <div className="relative flex-1 w-full md:max-w-sm group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20 group-focus-within:text-primary transition-colors" />
+          <Input placeholder={isSuperAdmin ? "Buscar por nome, serial ou empresa..." : "Buscar dispositivo ou serial..."} className="pl-12 h-11 bg-black/40 border-white/5 focus:border-primary/50 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <div className="flex flex-wrap gap-2 w-full md:w-auto">
           <Select value={storeFilter} onValueChange={setStoreFilter}>
