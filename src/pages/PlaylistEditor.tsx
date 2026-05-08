@@ -47,7 +47,8 @@ import {
   ChevronDown,
   ChevronUp,
   X,
-  Pause
+  Pause,
+  Megaphone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -99,6 +100,8 @@ interface EditorPlaylistItem {
   priority: number;
   type: string;
   media?: any;
+  campaignName?: string;
+  campaignColor?: string;
 }
 
 const DEFAULT_APPEARANCE_CONFIG = {
@@ -236,11 +239,22 @@ const SortableItem = ({
         <GripVertical className="h-4 w-4" />
       </div>
 
-      {/* Name */}
-      <div className="absolute bottom-2 left-9 right-2">
+      {/* Name & Campaign */}
+      <div className="absolute bottom-2 left-9 right-2 flex flex-col gap-0.5">
         <p className="text-[10px] font-medium text-white truncate drop-shadow-lg">
           {media?.name || 'Sem nome'}
         </p>
+        {item.campaignName && (
+          <div className="flex items-center gap-1 overflow-hidden">
+            <Megaphone className="h-2 w-2 text-white/60 shrink-0" />
+            <span 
+              className="text-[8px] font-bold uppercase tracking-wider truncate"
+              style={{ color: item.campaignColor || '#9b87f5' }}
+            >
+              {item.campaignName}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Selected Indicator */}
@@ -384,15 +398,25 @@ export default function PlaylistEditor() {
       setAppearanceConfig(normalizeAppearanceConfig(playlistData.appearance_config));
       
       if (playlistData.playlist_items && playlistData.playlist_items.length > 0) {
-        const mappedItems = playlistData.playlist_items.map((it: any) => ({
-          id: it.id,
-          dbId: it.id,
-          mediaId: it.media_id,
-          duration: it.duracao,
-          priority: it.prioridade || 1,
-          type: it.tipo,
-          media: medias?.find(m => m.id === it.media_id)
-        }));
+        const mappedItems = playlistData.playlist_items.map((it: any) => {
+          const media = medias?.find(m => m.id === it.media_id);
+          // Tentar encontrar a campanha se não houver uma vinculada
+          const campaign = campaigns?.find((c: any) => 
+            c.campaign_contents?.some((cc: any) => cc.media_id === it.media_id)
+          );
+
+          return {
+            id: it.id,
+            dbId: it.id,
+            mediaId: it.media_id,
+            duration: it.duracao,
+            priority: it.prioridade || 1,
+            type: it.tipo,
+            media: media,
+            campaignName: campaign?.name,
+            campaignColor: campaign?.color || '#9b87f5'
+          };
+        });
         setItems(mappedItems);
         if (!selectedItem) {
           setSelectedItem(mappedItems[0]);
@@ -405,7 +429,7 @@ export default function PlaylistEditor() {
       setItems([]);
       setSelectedItem(null);
     }
-  }, [playlistData, medias, id]);
+  }, [playlistData, medias, id, campaigns]);
 
   const savePlaylist = async (updatedItems: EditorPlaylistItem[], updatedName: string) => {
     if (isSaving) return;
@@ -651,6 +675,8 @@ export default function PlaylistEditor() {
             priority: 1,
             type: it.media.type === "video" ? "video" : "image",
             media: it.media,
+            campaignName: campaign.name,
+            campaignColor: campaign.color || '#9b87f5'
           }));
 
         const insertIndex =
@@ -691,8 +717,8 @@ export default function PlaylistEditor() {
     [activeDragType]
   );
 
-  const addItem = (mediaId: string) => {
-    console.log("Adding item to playlist. MediaId:", mediaId);
+  const addItem = (mediaId: string, campaignInfo?: { name: string, color?: string }) => {
+    console.log("Adding item to playlist. MediaId:", mediaId, "Campaign:", campaignInfo);
     const media = medias?.find(m => m.id === mediaId);
     if (!media) {
       console.error("Media not found for ID:", mediaId);
@@ -704,7 +730,9 @@ export default function PlaylistEditor() {
       duration: media.duration || 10,
       priority: 1,
       type: media.type === 'video' ? 'video' : 'image',
-      media: media
+      media: media,
+      campaignName: campaignInfo?.name,
+      campaignColor: campaignInfo?.color
     };
     const newItems = [...items, newItem];
     console.log("New items state will be:", newItems);
@@ -1313,9 +1341,12 @@ export default function PlaylistEditor() {
                                         initial={{ x: -10, opacity: 0 }}
                                         animate={{ x: 0, opacity: 1 }}
                                         className="flex items-center gap-3 p-2 rounded-lg bg-white/[0.02] border border-white/5 group hover:bg-white/[0.05] hover:border-white/10 transition-all cursor-pointer"
-                                        onClick={() => {
+                                         onClick={() => {
                                           if (item.media) {
-                                            addItem(item.media.id);
+                                            addItem(item.media.id, { 
+                                              name: campaign.name, 
+                                              color: campaign.color || '#9b87f5' 
+                                            });
                                           }
                                         }}
                                       >
