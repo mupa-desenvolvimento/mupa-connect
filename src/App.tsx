@@ -21,7 +21,7 @@ import Landing from "./pages/Landing";
 import SuperAdmin from "./pages/SuperAdmin";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
-import NotFound from "./pages/NotFound.tsx";
+import NotFound from "./pages/NotFound";
 import PlayerMonitoring from "./pages/PlayerMonitoring";
 import ProductQueriesAnalytics from "./pages/ProductQueriesAnalytics";
 import UsersPage from "./pages/Users";
