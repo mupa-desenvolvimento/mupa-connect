@@ -412,7 +412,7 @@ const SidebarMenuItem = React.forwardRef<HTMLLIElement, React.ComponentProps<"li
 SidebarMenuItem.displayName = "SidebarMenuItem";
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-xl p-3 text-left text-[11px] font-black uppercase tracking-widest outline-none ring-sidebar-ring transition-all hover:bg-white/5 hover:text-white focus-visible:ring-2 active:bg-white/10 disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:shadow-glow data-[state=open]:hover:bg-white/5 group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:!p-3 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+  "peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-xl p-3 text-left text-[11px] font-black uppercase tracking-widest outline-none ring-sidebar-ring transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent/80 disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:shadow-glow data-[state=open]:hover:bg-sidebar-accent group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:!p-3 [&>span:last-child]:truncate [&>svg]:size-[18px] [&>svg]:shrink-0",
   {
     variants: {
       variant: {
