@@ -651,6 +651,7 @@ export default function GroupsPage() {
     // 1. Device -> Group
     if (activeData.type === 'device' && overData.type === 'group') {
       const device = activeData.device;
+      const deviceName = device.apelido_interno || device.nome || "Dispositivo";
       const group = overData.group;
       
       try {
