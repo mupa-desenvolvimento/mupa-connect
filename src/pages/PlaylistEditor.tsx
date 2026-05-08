@@ -188,12 +188,16 @@ const SortableItem = ({
   } = useSortable({ id: item.id, data: { type: "playlist-item" } });
 
   const media = item.media;
+  const hasCampaign = !!item.campaignName;
+  const campaignColor = item.campaignColor || '#9b87f5';
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 10 : 1,
     opacity: isDragging ? 0.5 : 1,
+    borderColor: !isSelected && hasCampaign ? `${campaignColor}60` : undefined,
+    boxShadow: !isSelected && hasCampaign ? `0 0 15px ${campaignColor}25` : undefined,
   };
 
   return (
@@ -201,13 +205,13 @@ const SortableItem = ({
       ref={setNodeRef} 
       style={style}
       onClick={() => onSelect(item)}
-      className={`relative shrink-0 ${timelineMode ? 'w-full h-24' : 'w-48 h-32'} rounded-xl border transition-all cursor-pointer group overflow-hidden ${
+      className={`relative shrink-0 ${timelineMode ? 'w-full h-28' : 'w-48 h-32'} rounded-xl border transition-all duration-300 cursor-pointer group overflow-hidden ${
         isSelected 
           ? 'border-[#085CF0] ring-2 ring-[#085CF0]/20 bg-[#085CF0]/5 shadow-xl shadow-[#085CF0]/10' 
-          : 'border-border/40 bg-card/40 hover:border-[#085CF0]/30'
+          : 'border-border/40 bg-card/40 hover:scale-[1.02] active:scale-[0.98]'
       } ${isDragging ? 'shadow-2xl' : ''}`}
     >
-      <div className="absolute inset-0">
+      <div className={`absolute inset-0 ${timelineMode && hasCampaign ? 'bottom-6' : ''} transition-all duration-300`}>
         <img 
           src={media?.thumbnail_url || media?.file_url} 
           alt={media?.name} 
@@ -217,14 +221,14 @@ const SortableItem = ({
       </div>
 
       {/* Item Order Badge */}
-      <div className="absolute top-2 left-2">
+      <div className="absolute top-2 left-2 z-10">
          <span className="text-[10px] font-mono font-bold text-white px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm border border-white/10">
            {index + 1}
          </span>
       </div>
 
       {/* Duration Badge */}
-      <div className="absolute top-2 right-2">
+      <div className="absolute top-2 right-2 z-10">
          <span className="text-[10px] font-bold text-white px-1.5 py-0.5 rounded bg-[#085CF0]/80 backdrop-blur-sm flex items-center gap-1">
            <Clock className="h-2.5 w-2.5" /> {item.duration}s
          </span>
@@ -234,32 +238,50 @@ const SortableItem = ({
       <div 
         {...attributes} 
         {...listeners} 
-        className="absolute bottom-2 left-2 p-1 rounded bg-black/40 hover:bg-[#085CF0]/60 text-white/50 hover:text-white transition-colors cursor-grab active:cursor-grabbing"
+        className={`absolute ${timelineMode && hasCampaign ? 'bottom-8' : 'bottom-2'} left-2 p-1 rounded bg-black/40 hover:bg-[#085CF0]/60 text-white/50 hover:text-white transition-all cursor-grab active:cursor-grabbing z-10`}
       >
         <GripVertical className="h-4 w-4" />
       </div>
 
-      {/* Name & Campaign */}
-      <div className="absolute bottom-2 left-9 right-2 flex flex-col gap-0.5">
+      {/* Name & Campaign Label */}
+      <div className={`absolute ${timelineMode && hasCampaign ? 'bottom-8' : 'bottom-2'} left-9 right-2 transition-all duration-300 z-10`}>
         <p className="text-[10px] font-medium text-white truncate drop-shadow-lg">
           {media?.name || 'Sem nome'}
         </p>
-        {item.campaignName && (
-          <div className="flex items-center gap-1 overflow-hidden">
-            <Megaphone className="h-2 w-2 text-white/60 shrink-0" />
-            <span 
-              className="text-[8px] font-bold uppercase tracking-wider truncate"
-              style={{ color: item.campaignColor || '#9b87f5' }}
-            >
-              {item.campaignName}
-            </span>
-          </div>
-        )}
       </div>
+
+      {/* Campaign Badge - Below Content */}
+      {timelineMode && hasCampaign && (
+        <div 
+          className="absolute bottom-0 left-0 right-0 h-6 flex items-center px-3 gap-1.5 animate-in slide-in-from-bottom-2 duration-500 z-20"
+          style={{ backgroundColor: campaignColor }}
+        >
+          <div className="flex items-center justify-center w-4 h-4 rounded-full bg-white/20 shrink-0">
+            <Megaphone className="h-2 w-2 text-white" />
+          </div>
+          <span className="text-[9px] font-black uppercase tracking-[0.1em] text-white truncate drop-shadow-sm">
+            {item.campaignName}
+          </span>
+          <div className="ml-auto w-1 h-1 rounded-full bg-white/40 animate-pulse" />
+        </div>
+      )}
+
+      {/* Legacy Campaign label for non-timeline mode or extra info */}
+      {!timelineMode && hasCampaign && (
+        <div className="absolute bottom-2 left-9 right-2 flex items-center gap-1 overflow-hidden z-10">
+          <Megaphone className="h-2 w-2 text-white/60 shrink-0" />
+          <span 
+            className="text-[8px] font-bold uppercase tracking-wider truncate"
+            style={{ color: campaignColor }}
+          >
+            {item.campaignName}
+          </span>
+        </div>
+      )}
 
       {/* Selected Indicator */}
       {isSelected && (
-        <div className="absolute inset-0 border-2 border-[#085CF0] pointer-events-none rounded-xl" />
+        <div className="absolute inset-0 border-2 border-[#085CF0] pointer-events-none rounded-xl z-30" />
       )}
     </div>
   );
