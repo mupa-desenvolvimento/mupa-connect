@@ -103,6 +103,7 @@ const App = () => {
               {/* Player rota fullscreen, sem layout e sem auth obrigatória (usa deviceCode) */}
               <Route path="/play" element={<Player />} />
               <Route path="/play/:deviceCode" element={<Player />} />
+              <Route path="/play/:deviceCode/*" element={<Player />} />
 
               {/* Monitoramento Compartilhado - Sem login obrigatório (protegido por token) */}
               <Route path="/monitoring/view/:token" element={<SharedMonitoringPage />} />
