@@ -530,36 +530,36 @@ function StoreCard({ item, status }: any) {
 }
 
 function DeviceCard({ item, status }: any) {
-  const statusColor = status === "online" ? "bg-success shadow-[0_0_12px_hsl(var(--success)/0.4)]" : status === "unstable" ? "bg-warning shadow-[0_0_12px_hsl(var(--warning)/0.4)]" : "bg-destructive shadow-[0_0_12px_hsl(var(--destructive)/0.4)]";
-  const borderColor = status === "online" ? "border-success/20" : status === "unstable" ? "border-warning/20" : "border-destructive/20";
-  const textColor = status === "online" ? "text-success" : status === "unstable" ? "text-warning" : "text-destructive";
+  const statusColor = status === "online" ? "bg-emerald-500 shadow-glow shadow-emerald-500/40" : status === "unstable" ? "bg-yellow-500 shadow-glow shadow-yellow-500/40" : "bg-destructive shadow-glow shadow-destructive/40";
+  const borderColor = status === "online" ? "border-emerald-500/20" : status === "unstable" ? "border-yellow-500/20" : "border-destructive/20";
+  const textColor = status === "online" ? "text-emerald-500" : status === "unstable" ? "text-yellow-500" : "text-destructive";
 
   return (
     <div className={cn(
-      "flex flex-col justify-between p-3 rounded-lg border-2 bg-[#09090b] transition-all hover:scale-[1.02] h-full",
+      "flex flex-col justify-between p-4 rounded-2xl border-2 bg-black/40 backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:border-[#085CF0]/30 h-full shadow-premium",
       borderColor
     )}>
-      <div className="flex items-start justify-between mb-1">
+      <div className="flex items-start justify-between mb-2">
         <div className="flex flex-col overflow-hidden">
-          <span className="text-sm font-black uppercase truncate text-white leading-tight">{item.apelido_interno || item.serial}</span>
-          <span className="text-[10px] opacity-50 font-bold uppercase tracking-wider">{item.num_filial || 'Sem Filial'}</span>
+          <span className="text-sm font-black uppercase truncate text-white leading-tight tracking-tight">{item.apelido_interno || item.serial}</span>
+          <span className="text-[10px] opacity-40 font-bold uppercase tracking-widest mt-1">{item.num_filial || 'Sem Filial'}</span>
         </div>
-        <div className="flex flex-col items-end gap-1">
-          <div className={cn("h-3 w-3 rounded-full shrink-0 shadow-[0_0_10px_rgba(0,0,0,0.5)]", statusColor, status !== 'offline' && "animate-pulse")} />
+        <div className="flex flex-col items-end gap-1.5">
+          <div className={cn("h-3 w-3 rounded-full shrink-0 shadow-glow", statusColor, status !== 'offline' && "animate-pulse")} />
           {item.persistence && (
-            <Activity className="h-2.5 w-2.5 text-primary animate-pulse" />
+            <Activity className="h-3 w-3 text-[#085CF0] animate-pulse" />
           )}
         </div>
       </div>
       
       <div className="flex items-end justify-between mt-auto">
-        <div className="flex flex-col">
-          <span className="text-[9px] uppercase font-bold opacity-40">Visto por último</span>
-          <span className="text-[10px] font-bold truncate">
+        <div className="flex flex-col min-w-0 flex-1">
+          <span className="text-[9px] uppercase font-black opacity-30 tracking-widest">Atividade</span>
+          <span className="text-[10px] font-bold truncate text-white/80">
             {item.last_heartbeat_at ? formatDistanceToNow(new Date(item.last_heartbeat_at), { addSuffix: true, locale: ptBR }) : 'Nunca'}
           </span>
         </div>
-        <Badge variant="outline" className={cn("text-[8px] h-4 px-1 border-0 bg-background/50 uppercase font-black", textColor)}>
+        <Badge variant="outline" className={cn("text-[8px] h-4 px-2 border-0 bg-background/50 uppercase font-black tracking-tighter", textColor)}>
           {status}
         </Badge>
       </div>
