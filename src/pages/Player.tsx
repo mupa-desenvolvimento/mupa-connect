@@ -39,7 +39,7 @@ const isValidUUID = (value: any): boolean => {
   return uuidRegex.test(value);
 };
 
-export default function PlayerPage() {
+export default function Player() {
   useEffect(() => {
     // Force black background for all players
     document.body.style.backgroundColor = "black";
