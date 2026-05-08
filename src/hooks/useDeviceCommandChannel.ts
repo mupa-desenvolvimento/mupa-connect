@@ -67,6 +67,7 @@ async function runCommand(cmd: DeviceCommand, h: CommandHandlerContext) {
     switch (cmd.command) {
       case "reload_playlist":
         await h.reloadPlaylist();
+        sendCommandToAndroid("RELOAD_PAGE", {}, cmd.device_id);
         break;
       case "play_campaign": {
         const id = cmd.payload?.campaign_id;
