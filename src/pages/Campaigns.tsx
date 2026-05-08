@@ -149,12 +149,12 @@ export default function CampaignsPage() {
         <div className="flex-1 flex items-center gap-4 w-full">
           <div className="relative flex-1 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20 group-focus-within:text-primary transition-colors" />
-            <Input 
-              placeholder="Pesquisar campanhas..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-11 bg-black/40 border-white/5 focus:border-primary/30 transition-all rounded-xl text-white font-medium"
-            />
+              <Input 
+                placeholder="Pesquisar campanhas..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 h-11 bg-black/40 border-white/5 focus:border-primary/50 transition-all rounded-xl text-white font-bold uppercase tracking-widest text-[10px]"
+              />
           </div>
         </div>
 
