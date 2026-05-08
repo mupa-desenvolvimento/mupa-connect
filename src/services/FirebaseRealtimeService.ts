@@ -22,7 +22,14 @@ export type DeviceUpdatePayload = {
   ts: number;
 };
 
+export type DeviceCommandPayload = {
+  comando: string;
+  payload?: any;
+  ts: number;
+};
+
 export const FirebaseRealtimeService = {
+
   /**
    * Subscribe a player to its update channel.
    * Skips the very first snapshot (initial value) so reloads only happen on real changes.
