@@ -71,27 +71,14 @@ interface CampaignContentManagerProps {
   onContentChange?: () => void;
 }
 
-const DraggableLibraryItem = ({ media, onClick, isSelected, onToggleSelect }: any) => {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: `lib-${media.id}`,
-    data: {
-      type: 'library-media',
-      media: media
-    }
-  });
-
-  const style = transform ? {
-    transform: CSS.Translate.toString(transform),
-  } : undefined;
-
   return (
     <div 
       ref={setNodeRef} 
       style={style}
       className={cn(
-        "relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer border transition-all group",
-        isSelected ? "border-primary ring-2 ring-primary/20" : "border-white/10 hover:border-primary",
-        isDragging && "opacity-50 ring-2 ring-primary z-50"
+        "relative aspect-square rounded-xl overflow-hidden bg-[#1a1a1e] cursor-pointer border-2 transition-all group shadow-lg",
+        isSelected ? "border-primary ring-4 ring-primary/20" : "border-white/5 hover:border-white/20",
+        isDragging && "opacity-50 ring-2 ring-primary z-50 scale-95"
       )}
       onClick={(e) => {
         if (e.shiftKey || e.ctrlKey || e.metaKey) {
@@ -101,8 +88,8 @@ const DraggableLibraryItem = ({ media, onClick, isSelected, onToggleSelect }: an
         }
       }}
     >
-      <img src={media.thumbnail_url || media.file_url} className="w-full h-full object-cover" />
-      <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
+      <img src={media.thumbnail_url || media.file_url} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
       
       <div 
         {...listeners} 
@@ -110,29 +97,38 @@ const DraggableLibraryItem = ({ media, onClick, isSelected, onToggleSelect }: an
         className="absolute inset-0 z-10"
       />
 
-      <div className="absolute top-1 right-1 z-20">
+      <div className="absolute top-2 right-2 z-20">
         <div 
           onClick={(e) => {
             e.stopPropagation();
             onToggleSelect(media.id);
           }}
           className={cn(
-            "h-4 w-4 rounded border flex items-center justify-center transition-colors",
-            isSelected ? "bg-primary border-primary" : "bg-black/40 border-white/20 hover:border-white/40"
+            "h-5 w-5 rounded-md border flex items-center justify-center transition-all",
+            isSelected ? "bg-primary border-primary shadow-glow" : "bg-black/40 border-white/10 hover:border-white/30"
           )}
         >
-          {isSelected && <CheckCircle2 className="h-3 w-3 text-white" />}
+          {isSelected && <CheckCircle className="h-3 w-3 text-white" />}
         </div>
       </div>
 
-      <div className="absolute bottom-1 left-1 right-1 text-[10px] truncate bg-black/60 px-1 rounded font-bold text-white/90 z-20">
-        {media.name}
+      <div className="absolute bottom-2 left-2 right-2 z-20">
+        <p className="text-[9px] font-black uppercase tracking-widest text-white/90 truncate drop-shadow-lg mb-1">
+          {media.name}
+        </p>
+        <div className="flex items-center gap-2">
+          <Badge className="bg-black/60 border-none text-[8px] h-3.5 px-1 font-bold text-white/40">
+            {media.type === 'video' ? <FileVideo className="h-2.5 w-2.5 mr-1" /> : <FileImage className="h-2.5 w-2.5 mr-1" />}
+            {media.type?.toUpperCase()}
+          </Badge>
+          <span className="text-[8px] font-bold text-white/40">{media.duration || 10}s</span>
+        </div>
       </div>
     </div>
   );
 };
 
-const SortableCampaignItem = ({ item, index, onRemove, onUpdateDuration }: any) => {
+const SortableCampaignItem = ({ item, index, isSelected, onSelect, onRemove, onToggleLock }: any) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
     id: item.id 
   });
@@ -148,50 +144,82 @@ const SortableCampaignItem = ({ item, index, onRemove, onUpdateDuration }: any) 
     <div 
       ref={setNodeRef} 
       style={style} 
+      onClick={() => onSelect(item)}
       className={cn(
-        "relative shrink-0 w-[140px] h-[180px] rounded-xl border border-white/10 bg-[#1A1A1E] overflow-hidden flex flex-col transition-all group",
-        isDragging && "border-primary shadow-glow"
+        "relative shrink-0 w-[180px] h-[240px] rounded-2xl border-2 bg-[#1A1A1E] overflow-hidden flex flex-col transition-all group cursor-pointer shadow-2xl",
+        isSelected ? "border-primary ring-4 ring-primary/10 scale-[1.02]" : "border-white/5 hover:border-white/10",
+        isDragging && "border-primary shadow-glow scale-95",
+        item.is_locked && "opacity-80"
       )}
     >
-      <div className="relative h-[100px] w-full overflow-hidden bg-black/40">
+      <div className="relative h-[160px] w-full overflow-hidden bg-black">
         <img 
           src={item.media?.thumbnail_url || item.media?.file_url} 
-          className="w-full h-full object-cover" 
+          className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity" 
         />
-        <div 
-          {...attributes} 
-          {...listeners} 
-          className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity cursor-grab active:cursor-grabbing"
-        >
-          <GripVertical className="h-6 w-6 text-white" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1E] via-transparent to-transparent" />
+        
+        {!item.is_locked && (
+          <div 
+            {...attributes} 
+            {...listeners} 
+            className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity cursor-grab active:cursor-grabbing z-20"
+          >
+            <GripVertical className="h-8 w-8 text-white/40" />
+          </div>
+        )}
+
+        <div className="absolute top-3 left-3 z-30">
+          <div className="flex items-center gap-2">
+            <span className="w-6 h-6 rounded-lg bg-black/60 backdrop-blur-md flex items-center justify-center text-[10px] font-black text-white/90 border border-white/10">
+              {index + 1}
+            </span>
+            {item.is_locked && (
+              <Badge className="bg-orange-500/20 text-orange-500 border-none text-[8px] h-5 font-black tracking-widest px-2">
+                <Lock className="h-2.5 w-2.5 mr-1" /> LOCK
+              </Badge>
+            )}
+          </div>
         </div>
-        <button 
-          onClick={() => onRemove(item.id)}
-          className="absolute top-1 right-1 p-1 rounded-md bg-black/60 text-white/60 hover:text-red-500 hover:bg-black/80 transition-all opacity-0 group-hover:opacity-100"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
-        <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-black/60 text-[10px] font-bold text-white/80 border border-white/10">
-          {index + 1}
+
+        <div className="absolute top-3 right-3 z-30 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          {!item.is_locked && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); onRemove(item.id); }}
+              className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="flex-1 p-2 flex flex-col justify-between">
-        <p className="text-[10px] font-bold text-white/90 truncate">{item.media?.name}</p>
-        <div className="flex items-center justify-between mt-1">
-          <div className="flex items-center gap-1">
-            <Clock className="h-3 w-3 text-primary" />
-            <input 
-              type="number" 
-              value={item.duration_override || item.media?.duration || 10} 
-              onChange={(e) => onUpdateDuration(item.id, parseInt(e.target.value))}
-              className="w-8 bg-transparent border-none text-[10px] font-bold text-white focus:ring-0 p-0"
-            />
-            <span className="text-[9px] text-white/40">s</span>
+      <div className="flex-1 p-4 flex flex-col justify-between relative z-10">
+        <div className="space-y-1">
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/90 truncate">{item.media?.name || 'Sem nome'}</p>
+          <div className="flex items-center gap-2">
+            <Badge className="bg-white/5 border-none text-[8px] h-4 px-1.5 font-bold text-white/20">
+              {item.media?.type === 'video' ? 'VIDEO' : 'IMAGE'}
+            </Badge>
           </div>
-          {item.media?.type === 'video' ? <Video className="h-3 w-3 text-white/20" /> : <ImageIcon className="h-3 w-3 text-white/20" />}
+        </div>
+        
+        <div className="flex items-center justify-between mt-auto">
+          <div className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-md border border-white/5">
+            <Clock className="h-3 w-3 text-primary" />
+            <span className="text-[10px] font-black text-white/60">
+              {item.duration_override || item.media?.duration || 10}s
+            </span>
+          </div>
+          {isSelected && (
+            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+          )}
         </div>
       </div>
+
+      {isSelected && (
+        <div className="absolute inset-0 border-2 border-primary pointer-events-none rounded-2xl z-40 shadow-[inset_0_0_20px_rgba(var(--primary),0.2)]" />
+      )}
     </div>
   );
 };
