@@ -141,7 +141,7 @@ const getGroupColor = (id: string, storedKey?: string | null) => {
 };
 
 // Draggable Store Component
-const DraggableStore = ({ ls }: { ls: any }) => {
+const DraggableStore = ({ ls, devices = [] }: { ls: any; devices?: any[] }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `store-${ls.store_id}`,
     data: {
@@ -157,23 +157,56 @@ const DraggableStore = ({ ls }: { ls: any }) => {
     cursor: 'grab',
   };
   
+  const storeDevices = devices.filter(d => {
+    const normalize = (val: string | null | undefined) => {
+      if (!val) return "";
+      return val.replace(/FIL-/gi, "").replace(/\s+/g, "").replace(/^0+/, "").toLowerCase();
+    };
+    const normalizedStoreCode = normalize(ls.store?.code);
+    const normalizedDeviceFilial = normalize(d.num_filial);
+    return d.store_id === ls.store?.id || (normalizedStoreCode !== "" && normalizedStoreCode === normalizedDeviceFilial);
+  });
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
-      className="flex items-center gap-2 rounded-md border bg-card px-2.5 py-1.5 transition-all hover:border-primary/40 hover:shadow-sm"
+      className="flex flex-col gap-2 rounded-xl border bg-card/40 backdrop-blur-sm p-3 transition-all hover:border-[#085CF0]/40 hover:shadow-premium group"
     >
-      <Store className="h-3.5 w-3.5 shrink-0 text-primary/70" />
-      <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium leading-tight truncate">
-          {ls.store?.name || "—"}
-        </p>
-        <p className="text-[10px] text-muted-foreground leading-tight truncate">
-          {ls.store?.code || ""}
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-[#085CF0]/10 text-[#085CF0]">
+          <Store className="h-4 w-4 shrink-0" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold leading-tight truncate text-white">
+            {ls.store?.name || "—"}
+          </p>
+          <p className="text-[10px] text-muted-foreground/60 leading-tight truncate font-bold uppercase tracking-widest">
+            {ls.store?.code || ""}
+          </p>
+        </div>
+        <Badge variant="outline" className="text-[10px] border-[#085CF0]/20 bg-[#085CF0]/5 text-[#085CF0]">
+          {storeDevices.length} PDVs
+        </Badge>
       </div>
+      
+      {storeDevices.length > 0 && (
+        <div className="mt-2 pl-2 border-l-2 border-[#085CF0]/20 flex flex-col gap-1">
+          {storeDevices.slice(0, 3).map(d => (
+            <div key={d.id} className="flex items-center gap-1.5 text-[10px] text-white/50">
+              <Monitor className="h-3 w-3 text-[#085CF0]/60" />
+              <span className="truncate">{d.apelido_interno || d.nome || "Dispositivo"}</span>
+            </div>
+          ))}
+          {storeDevices.length > 3 && (
+            <p className="text-[9px] text-muted-foreground italic pl-4">
+              + {storeDevices.length - 3} outros...
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 };
