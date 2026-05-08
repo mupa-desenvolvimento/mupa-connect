@@ -398,15 +398,25 @@ export default function PlaylistEditor() {
       setAppearanceConfig(normalizeAppearanceConfig(playlistData.appearance_config));
       
       if (playlistData.playlist_items && playlistData.playlist_items.length > 0) {
-        const mappedItems = playlistData.playlist_items.map((it: any) => ({
-          id: it.id,
-          dbId: it.id,
-          mediaId: it.media_id,
-          duration: it.duracao,
-          priority: it.prioridade || 1,
-          type: it.tipo,
-          media: medias?.find(m => m.id === it.media_id)
-        }));
+        const mappedItems = playlistData.playlist_items.map((it: any) => {
+          const media = medias?.find(m => m.id === it.media_id);
+          // Tentar encontrar a campanha se não houver uma vinculada
+          const campaign = campaigns?.find((c: any) => 
+            c.campaign_contents?.some((cc: any) => cc.media_id === it.media_id)
+          );
+
+          return {
+            id: it.id,
+            dbId: it.id,
+            mediaId: it.media_id,
+            duration: it.duracao,
+            priority: it.prioridade || 1,
+            type: it.tipo,
+            media: media,
+            campaignName: campaign?.name,
+            campaignColor: campaign?.color || '#9b87f5'
+          };
+        });
         setItems(mappedItems);
         if (!selectedItem) {
           setSelectedItem(mappedItems[0]);
