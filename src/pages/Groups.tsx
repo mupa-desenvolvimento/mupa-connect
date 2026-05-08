@@ -187,8 +187,6 @@ const DraggableDevice = ({ gd }: { gd: any }) => {
       device: gd.device
     }
   });
-
-  console.log(gd.device);
   
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -204,24 +202,24 @@ const DraggableDevice = ({ gd }: { gd: any }) => {
       {...attributes}
       {...listeners}
       className={cn(
-        "flex items-center gap-2 rounded-md border bg-card px-2.5 py-1.5 transition-all hover:border-primary/40 hover:shadow-sm"
+        "flex items-center gap-2 rounded-xl border bg-card/40 backdrop-blur-sm px-3 py-2 transition-all hover:border-[#085CF0]/40 hover:shadow-premium group"
       )}
     >
-      <Monitor className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      <Monitor className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-[#085CF0] transition-colors" />
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium leading-tight truncate">
-          {gd.device?.apelido_interno || "Device."}
+        <p className="text-xs font-bold leading-tight truncate text-foreground/90">
+          {gd.device?.apelido_interno || gd.device?.nome || "Dispositivo"}
         </p>
-        <p className="text-[10px] text-muted-foreground leading-tight truncate">
-          {gd.device?.num_filial || ""}
+        <p className="text-[10px] text-muted-foreground/60 leading-tight truncate uppercase tracking-widest font-bold">
+          {gd.device?.num_filial || "Sem Filial"}
         </p>
       </div>
       <CircleDot
         className={cn(
-          "h-3 w-3 shrink-0",
-          gd.device?.status === "active" || gd.device?.status === "online"
-            ? "text-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.2)]"
-            : "text-muted-foreground/40"
+          "h-2.5 w-2.5 shrink-0 transition-all",
+          gd.device?.status === "active" || gd.device?.status === "online" || gd.device?.online
+            ? "text-emerald-500 shadow-glow shadow-emerald-500/40"
+            : "text-muted-foreground/20"
         )}
       />
     </div>
