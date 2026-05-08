@@ -32,7 +32,7 @@ export default function FaceTrackDemoPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
-  const detectionsetIntervalRef = useRef<number | null>(null);
+  const detectionIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
     const loadModels = async () => {
@@ -77,11 +77,11 @@ export default function FaceTrackDemoPage() {
     };
 
     const startDetectionLoop = () => {
-      if (detectionsetIntervalRef.current) {
-        clearInterval(detectionsetIntervalRef.current);
+      if (detectionIntervalRef.current) {
+        clearInterval(detectionIntervalRef.current);
       }
       
-      detectionsetIntervalRef.current = window.setInterval(async () => {
+      detectionIntervalRef.current = window.setInterval(async () => {
         if (!videoRef.current || !modelsLoaded) return;
         
         try {
@@ -145,8 +145,8 @@ export default function FaceTrackDemoPage() {
     };
 
     const cleanup = () => {
-      if (detectionsetIntervalRef.current) {
-        clearInterval(detectionsetIntervalRef.current);
+      if (detectionIntervalRef.current) {
+        clearInterval(detectionIntervalRef.current);
       }
       
       if (videoRef.current?.srcObject) {
