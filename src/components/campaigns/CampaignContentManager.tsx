@@ -341,7 +341,7 @@ export function CampaignContentManager({ campaignId, onContentChange }: Campaign
                       <label className="text-[10px] font-black uppercase text-white/40 tracking-widest">Prioridade</label>
                       <div className="grid grid-cols-5 gap-2">
                         {[1,2,3,4,5].map(p => (
-                          <Button key={p} variant="ghost" onClick={() => updateItemProperty(selectedItem.id, 'priority_override', p)} className={cn("h-10 font-black text-xs rounded-xl border", selectedItem.priority_override === p ? "bg-primary border-primary text-white" : "bg-white/5 border-white/5 text-white/20")}>P{p}</Button>
+                          <Button key={p} variant="ghost" onClick={() => updateItemProperty(selectedItem.id, 'priority_override', p)} className={cn("h-12 font-black text-xs rounded-xl border transition-all", selectedItem.priority_override === p ? "bg-primary border-primary text-primary-foreground shadow-glow" : "bg-white/5 border-white/5 text-white/20 hover:text-white hover:bg-white/10")}>P{p}</Button>
                         ))}
                       </div>
                     </div>
