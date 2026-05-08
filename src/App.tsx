@@ -93,16 +93,15 @@ const App = () => {
           <DevicePersistenceMonitor />
           <BrowserRouter>
             <Routes>
+              {/* Player rota fullscreen, sem layout e sem auth obrigatória (usa deviceCode) */}
+              <Route path="/play" element={<Player />} />
+              <Route path="/play/:deviceCode" element={<Player />} />
+              <Route path="/play/:deviceCode/*" element={<Player />} />
+
               {/* Rotas Públicas */}
               <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <Landing />} />
               <Route path="/landing" element={session ? <Navigate to="/dashboard" replace /> : <Landing />} />
               <Route path="/login" element={session ? <Navigate to="/dashboard" replace /> : <Login />} />
-              <Route path="/recuperar-senha" element={<ForgotPassword />} />
-              <Route path="/redefinir-senha" element={<ResetPassword />} />
-              
-              {/* Player rota fullscreen, sem layout e sem auth obrigatória (usa deviceCode) */}
-              <Route path="/play" element={<Player />} />
-              <Route path="/play/:deviceCode" element={<Player />} />
               <Route path="/play/:deviceCode/*" element={<Player />} />
 
               {/* Monitoramento Compartilhado - Sem login obrigatório (protegido por token) */}
