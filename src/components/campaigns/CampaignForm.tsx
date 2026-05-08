@@ -7,7 +7,7 @@ import {
   CalendarIcon, 
   Loader2, 
   Check, 
-  Calendar, 
+  Calendar as CalendarLucide, 
   Clock, 
   Info, 
   Palette, 
