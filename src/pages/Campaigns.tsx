@@ -168,16 +168,25 @@ export default function CampaignsPage() {
         </Tabs>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: "Total", val: stats.total, color: "text-foreground" },
-          { label: "Ativas", val: stats.active, color: "text-green-500" },
-          { label: "Agendadas", val: stats.scheduled, color: "text-blue-500" },
-          { label: "Expiradas", val: stats.expired, color: "text-red-500" },
+          { label: "Total", val: stats.total, color: "text-white", icon: Layers, bg: "bg-white/5" },
+          { label: "Ativas", val: stats.active, color: "text-green-500", icon: Sparkles, bg: "bg-green-500/10" },
+          { label: "Agendadas", val: stats.scheduled, color: "text-blue-500", icon: CalendarIcon, bg: "bg-blue-500/10" },
+          { label: "Expiradas", val: stats.expired, color: "text-red-500", icon: Clock, bg: "bg-red-500/10" },
         ].map(s => (
-          <Card key={s.label} className="p-4 flex items-center justify-between border-border/60">
-            <span className="text-sm text-muted-foreground font-medium">{s.label}</span>
-            <span className={cn("text-2xl font-bold", s.color)}>{s.val}</span>
+          <Card key={s.label} className="p-6 relative overflow-hidden bg-[#1a1a1e]/40 border-white/5 shadow-2xl group hover:bg-[#1a1a1e]/80 transition-all duration-300">
+            <div className="flex items-center justify-between relative z-10">
+              <div className="space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">{s.label}</span>
+                <p className={cn("text-3xl font-black tracking-tighter", s.color)}>{s.val}</p>
+              </div>
+              <div className={cn("p-3 rounded-2xl border border-white/5", s.bg)}>
+                <s.icon className={cn("h-5 w-5", s.color)} />
+              </div>
+            </div>
+            {/* Background Glow */}
+            <div className={cn("absolute -bottom-6 -right-6 w-24 h-24 blur-[60px] opacity-10 rounded-full", s.bg)} />
           </Card>
         ))}
       </div>
