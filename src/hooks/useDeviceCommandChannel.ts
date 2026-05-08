@@ -77,7 +77,9 @@ async function runCommand(cmd: DeviceCommand, h: CommandHandlerContext) {
       case "set_volume": {
         const v = Number(cmd.payload?.volume);
         if (!Number.isFinite(v)) throw new Error("volume inválido");
-        await h.setVolume(Math.max(0, Math.min(100, v)));
+        const volume = Math.max(0, Math.min(100, v));
+        await h.setVolume(volume);
+        sendCommandToAndroid("CHANGE_VOLUME", { volume }, cmd.device_id);
         break;
       }
       case "screenshot": {
