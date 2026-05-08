@@ -137,7 +137,7 @@ export default function CampaignsPage() {
               <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} /> Atualizar
             </Button>
             {isMarketing && (
-              <Button className="bg-gradient-primary text-primary-foreground shadow-glow h-9" size="sm" onClick={handleCreate}>
+              <Button variant="premium" size="sm" onClick={handleCreate}>
                 <Plus className="h-4 w-4 mr-2" /> Nova campanha
               </Button>
             )}
