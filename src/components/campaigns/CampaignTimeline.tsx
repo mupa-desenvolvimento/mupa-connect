@@ -40,8 +40,8 @@ export function CampaignTimeline({ campaigns, onSelectCampaign }: CampaignTimeli
     <div className="flex flex-col h-full bg-[#0c0c0e]/40 rounded-2xl border border-white/5 overflow-hidden shadow-premium backdrop-blur-md">
       <div className="p-4 md:p-6 border-b border-white/5 flex items-center justify-between bg-black/20">
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-sm font-bold text-primary bg-primary/10 px-4 py-1.5 rounded-lg border border-primary/20">
-            <Clock className="h-4 w-4" />
+          <div className="flex items-center gap-3 text-xs font-black text-primary bg-primary/10 px-5 py-2 rounded-xl border border-primary/20 uppercase tracking-[0.2em] italic">
+            <Clock className="h-4 w-4 text-primary" />
             {format(scrollDate, "dd 'de' MMMM", { locale: ptBR })}
           </div>
         </div>
