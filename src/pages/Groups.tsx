@@ -323,7 +323,7 @@ const GroupItem = ({
 
   const isRoot = level === 0;
   const isMap = viewMode === 'map';
-  const NodeIcon = isRoot ? Network : level === 1 ? Folder : Store;
+  const NodeIcon = isRoot ? Network : Folder;
   const rootForColor = isRoot ? group : (allGroups.find(g => g.id === group.parent_id) || group);
   const color = getGroupColor(rootForColor.id, (rootForColor as any).color);
 
