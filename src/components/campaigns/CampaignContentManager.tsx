@@ -271,10 +271,13 @@ export function CampaignContentManager({ campaignId, onContentChange }: Campaign
   return (
     <div className="flex h-full bg-[#0c0c0e] overflow-hidden">
       <DndContext sensors={sensors} collisionDetection={rectIntersection} onDragStart={(e) => setActiveId(e.active.id)} onDragEnd={handleDragEnd}>
-        <aside className="w-[320px] border-r border-white/5 flex flex-col bg-[#0c0c0e]/60 z-30">
-          <div className="p-5 border-b border-white/5 space-y-5">
-            <h3 className="text-[10px] font-black uppercase text-white/40 tracking-widest">Media Pool</h3>
-            <Input className="bg-black/40 border-white/5 h-10 text-xs rounded-xl text-white" placeholder="Pesquisar..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+        <aside className="w-[340px] border-r border-white/5 flex flex-col bg-[#050816]/80 backdrop-blur-xl z-30">
+          <div className="p-6 border-b border-white/5 space-y-6">
+            <h3 className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em]">Biblioteca de Mídia</h3>
+            <div className="relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20 group-focus-within:text-primary transition-colors" />
+              <Input className="bg-black/60 border-white/10 h-11 pl-10 text-[10px] font-black uppercase tracking-widest rounded-xl text-white focus:border-primary/50" placeholder="Filtrar mídias..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+            </div>
           </div>
           <ScrollArea className="flex-1">
             <div className="p-5 grid grid-cols-2 gap-4">
