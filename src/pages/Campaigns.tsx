@@ -224,12 +224,12 @@ export default function CampaignsPage() {
                       transition={{ delay: index * 0.05 }}
                       whileHover={{ y: -4 }}
                     >
-                      <Card className="group relative border-white/5 bg-[#1a1a1e]/40 hover:bg-[#1a1a1e]/80 transition-all duration-500 h-[300px] flex flex-col overflow-hidden shadow-2xl">
+                      <Card className="group relative border border-white/5 bg-black/40 hover:bg-black/60 transition-all duration-500 h-[320px] flex flex-col overflow-hidden shadow-premium rounded-2xl">
                         {/* Indicador de Cor Premium */}
-                        <div className="absolute top-0 left-0 right-0 h-1 z-20" style={{ backgroundColor: campaignColor }} />
-                        <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black/20 to-transparent pointer-events-none" />
+                        <div className="absolute top-0 left-0 right-0 h-1.5 z-20" style={{ backgroundColor: campaignColor, boxShadow: `0 0 20px ${campaignColor}` }} />
+                        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
                         
-                        <CardContent className="p-6 flex flex-col flex-1 gap-5 relative z-10">
+                        <CardContent className="p-8 flex flex-col flex-1 gap-6 relative z-10">
                           <div className="flex items-start justify-between gap-4">
                             <div className="min-w-0 flex-1 space-y-1">
                               <div className="flex items-center gap-2">
