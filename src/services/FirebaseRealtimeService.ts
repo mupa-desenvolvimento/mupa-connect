@@ -22,7 +22,14 @@ export type DeviceUpdatePayload = {
   ts: number;
 };
 
+export type DeviceCommandPayload = {
+  comando: string;
+  payload?: any;
+  ts: number;
+};
+
 export const FirebaseRealtimeService = {
+
   /**
    * Subscribe a player to its update channel.
    * Skips the very first snapshot (initial value) so reloads only happen on real changes.
@@ -175,4 +182,33 @@ export const FirebaseRealtimeService = {
       console.warn("[Firebase] Log event failed", err);
     }
   },
+
+  /**
+   * Subscribe to real-time commands via Firebase.
+   */
+  subscribeToCommands: (
+    deviceCode: string,
+    onCommand: (payload: DeviceCommandPayload) => void
+  ) => {
+    if (!deviceCode) return () => {};
+
+    console.log(`[Firebase] Subscribing to commands for device: ${deviceCode}`);
+    const commandRef = ref(database, `devices/${deviceCode}/commands`);
+    let isFirst = true;
+
+    const unsubscribe = onValue(commandRef, (snapshot) => {
+      const data = snapshot.val();
+      if (isFirst) {
+        isFirst = false;
+        return;
+      }
+      if (data) {
+        console.log(`[Firebase] Command received for ${deviceCode}:`, data);
+        onCommand(data as DeviceCommandPayload);
+      }
+    });
+
+    return unsubscribe;
+  },
 };
+

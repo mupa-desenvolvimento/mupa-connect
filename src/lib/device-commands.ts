@@ -9,6 +9,7 @@ export type DeviceCommandKind =
   | "clear_cache"
   | "ping"
   | "open_app"
+  | "abrir_app"
   | "reboot_device"
   | "restart_player"
   | "reload_page"
@@ -20,7 +21,12 @@ export type DeviceCommandKind =
   | "tts_speak"
   | "open_url"
   | "ota_update"
-  | "watchdog_config";
+  | "watchdog_config"
+  | "consulta_ean"
+  | "reset_app"
+  | "fecha_app"
+  | "ip_server";
+
 
 export interface DeviceCommandPayload {
   playlist_id?: string;
