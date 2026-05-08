@@ -313,10 +313,13 @@ export function CampaignContentManager({ campaignId, onContentChange }: Campaign
 
         <AnimatePresence>
           {selectedItem && (
-            <motion.aside initial={{ width: 0, opacity: 0 }} animate={{ width: 340, opacity: 1 }} exit={{ width: 0, opacity: 0 }} className="border-l border-white/5 bg-[#0c0c0e]/80 backdrop-blur-xl flex flex-col shrink-0 overflow-hidden">
-              <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                <h3 className="text-[10px] font-black uppercase text-white/40 tracking-widest">Propriedades</h3>
-                <Button variant="ghost" size="icon" onClick={() => setSelectedItem(null)} className="h-8 w-8 rounded-full bg-white/5 hover:bg-white/10 text-white/40"><X className="h-4 w-4" /></Button>
+            <motion.aside initial={{ width: 0, opacity: 0 }} animate={{ width: 360, opacity: 1 }} exit={{ width: 0, opacity: 0 }} className="border-l border-white/5 bg-[#081120]/90 backdrop-blur-2xl flex flex-col shrink-0 overflow-hidden shadow-2xl">
+              <div className="p-8 border-b border-white/5 flex items-center justify-between">
+                <div className="space-y-1">
+                  <h3 className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em]">Configurações do Item</h3>
+                  <p className="text-[11px] font-black text-white uppercase italic">Editor de Atributos</p>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => setSelectedItem(null)} className="h-10 w-10 rounded-full bg-white/5 hover:bg-white/10 text-white/40"><X className="h-5 w-5" /></Button>
               </div>
               <ScrollArea className="flex-1">
                 <div className="p-6 space-y-8">
