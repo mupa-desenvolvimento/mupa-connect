@@ -180,13 +180,13 @@ export function CampaignEditor({ campaignId, onClose }: CampaignEditorProps) {
   return (
     <div className="flex flex-col h-full bg-[#0c0c0e] rounded-2xl border border-white/5 overflow-hidden shadow-2xl relative">
       {/* HEADER FIXO PREMIUM */}
-      <header className="sticky top-0 z-50 bg-[#0c0c0e]/80 backdrop-blur-xl border-b border-white/5 p-4 md:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-5 w-full md:w-auto">
+      <header className="sticky top-0 z-50 bg-[#0c0c0e]/80 backdrop-blur-2xl border-b border-white/5 p-6 md:px-10 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex items-center gap-6 w-full md:w-auto">
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={onClose} 
-            className="h-10 w-10 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white shrink-0"
+            className="h-10 w-10 rounded-full bg-white/5 hover:bg-white/10 text-white/40 hover:text-white shrink-0"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -194,13 +194,13 @@ export function CampaignEditor({ campaignId, onClose }: CampaignEditorProps) {
           <div className="flex flex-col min-w-0">
             <div className="flex items-center gap-3">
               <div 
-                className="w-3 h-3 rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)]" 
+                className="w-3 h-3 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.5)]" 
                 style={{ 
                   backgroundColor: campaignColor,
-                  boxShadow: `0 0 15px ${campaignColor}60`
+                  boxShadow: `0 0 20px ${campaignColor}`
                 }} 
               />
-              <h2 className="text-xl font-black text-white uppercase tracking-tight truncate max-w-[200px] md:max-w-md">
+              <h2 className="text-2xl font-black text-white uppercase tracking-tighter truncate max-w-[200px] md:max-w-md italic">
                 {initialData?.name || (campaignId ? "Carregando..." : "Nova Campanha")}
               </h2>
               {initialData?.is_active ? (
