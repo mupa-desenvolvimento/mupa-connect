@@ -695,8 +695,8 @@ export default function PlaylistEditor() {
     [activeDragType]
   );
 
-  const addItem = (mediaId: string) => {
-    console.log("Adding item to playlist. MediaId:", mediaId);
+  const addItem = (mediaId: string, campaignInfo?: { name: string, color?: string }) => {
+    console.log("Adding item to playlist. MediaId:", mediaId, "Campaign:", campaignInfo);
     const media = medias?.find(m => m.id === mediaId);
     if (!media) {
       console.error("Media not found for ID:", mediaId);
@@ -708,7 +708,9 @@ export default function PlaylistEditor() {
       duration: media.duration || 10,
       priority: 1,
       type: media.type === 'video' ? 'video' : 'image',
-      media: media
+      media: media,
+      campaignName: campaignInfo?.name,
+      campaignColor: campaignInfo?.color
     };
     const newItems = [...items, newItem];
     console.log("New items state will be:", newItems);
