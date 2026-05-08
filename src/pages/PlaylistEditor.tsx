@@ -1599,8 +1599,22 @@ export default function PlaylistEditor() {
                                 onSelect={setSelectedItem}
                                 timelineMode={true}
                               />
-                            </div>
+                              </div>
+                            </React.Fragment>
                           ))}
+                          {activeDragType === 'campaign' && (overId === 'timeline-dropzone' || overId === null) && items.length > 0 && (
+                            <motion.div 
+                              layoutId="campaign-placeholder-end"
+                              initial={{ width: 0, opacity: 0 }}
+                              animate={{ width: 120, opacity: 1 }}
+                              className="h-28 bg-[#085CF0]/20 border-2 border-dashed border-[#085CF0]/50 rounded-xl flex items-center justify-center shrink-0 overflow-hidden ml-2"
+                            >
+                              <div className="flex flex-col items-center gap-1">
+                                <Plus className="h-4 w-4 text-[#085CF0] animate-pulse" />
+                                <span className="text-[8px] font-black text-[#085CF0] uppercase">No final</span>
+                              </div>
+                            </motion.div>
+                          )}
                         </AnimatePresence>
                       </TimelineDropZone>
                     </SortableContext>
