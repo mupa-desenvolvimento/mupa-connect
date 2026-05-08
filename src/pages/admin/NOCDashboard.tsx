@@ -498,32 +498,31 @@ function MetricCard({ label, value, color, icon: Icon }: any) {
 }
 
 function StoreCard({ item, status }: any) {
-  const statusColor = status === "online" ? "bg-success shadow-[0_0_12px_hsl(var(--success)/0.4)]" : status === "unstable" ? "bg-warning shadow-[0_0_12px_hsl(var(--warning)/0.4)]" : "bg-destructive shadow-[0_0_12px_hsl(var(--destructive)/0.4)]";
-  const borderColor = status === "online" ? "border-success/20" : status === "unstable" ? "border-warning/20" : "border-destructive/20";
-  const textColor = status === "online" ? "text-success" : status === "unstable" ? "text-warning" : "text-destructive";
+  const statusColor = status === "online" ? "bg-emerald-500 shadow-glow shadow-emerald-500/40" : status === "unstable" ? "bg-yellow-500 shadow-glow shadow-yellow-500/40" : "bg-destructive shadow-glow shadow-destructive/40";
+  const borderColor = status === "online" ? "border-emerald-500/20" : status === "unstable" ? "border-yellow-500/20" : "border-destructive/20";
 
   return (
     <div className={cn(
-      "flex flex-col justify-between p-3 rounded-lg border-2 bg-[#09090b] transition-all hover:scale-[1.02] h-full",
+      "flex flex-col justify-between p-4 rounded-2xl border-2 bg-black/40 backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:border-[#085CF0]/30 h-full shadow-premium",
       borderColor
     )}>
-      <div className="flex items-start justify-between mb-1">
+      <div className="flex items-start justify-between mb-2">
         <div className="flex flex-col overflow-hidden">
-          <span className="text-sm font-black uppercase truncate text-white leading-tight">{item.name}</span>
-          <span className="text-[10px] opacity-50 font-bold uppercase tracking-wider">{item.code}</span>
+          <span className="text-sm font-black uppercase truncate text-white leading-tight tracking-tight">{item.name}</span>
+          <span className="text-[10px] opacity-40 font-bold uppercase tracking-widest mt-1">{item.code}</span>
         </div>
-        <div className={cn("h-3 w-3 rounded-full shrink-0 mt-1 shadow-[0_0_10px_rgba(0,0,0,0.5)]", statusColor)} />
+        <div className={cn("h-3 w-3 rounded-full shrink-0 mt-1", statusColor)} />
       </div>
       
       <div className="flex items-end justify-between mt-auto">
         <div className="flex flex-col">
-          <span className="text-[9px] uppercase font-bold opacity-40">Dispositivos</span>
-          <span className="text-xl font-black leading-none">{item.deviceCount}</span>
+          <span className="text-[9px] uppercase font-black opacity-30 tracking-widest">PDVs</span>
+          <span className="text-2xl font-black leading-none text-white">{item.deviceCount}</span>
         </div>
-        <div className="flex gap-1 text-[8px] font-black">
-          {item.offline > 0 && <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-500">{item.offline} OFF</span>}
-          {item.unstable > 0 && <span className="px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-500">{item.unstable} WARN</span>}
-          {item.online > 0 && <span className="px-1.5 py-0.5 rounded bg-green-500/20 text-green-500">{item.online} ON</span>}
+        <div className="flex gap-1.5 text-[9px] font-black uppercase tracking-tighter">
+          {item.offline > 0 && <span className="px-2 py-0.5 rounded-lg bg-red-500/10 text-red-500 border border-red-500/20">{item.offline} OFF</span>}
+          {item.unstable > 0 && <span className="px-2 py-0.5 rounded-lg bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">{item.unstable} WARN</span>}
+          {item.online > 0 && <span className="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">{item.online} ON</span>}
         </div>
       </div>
     </div>
