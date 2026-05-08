@@ -71,6 +71,19 @@ interface CampaignContentManagerProps {
   onContentChange?: () => void;
 }
 
+const DraggableLibraryItem = ({ media, onClick, isSelected, onToggleSelect }: any) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `lib-${media.id}`,
+    data: {
+      type: 'library-media',
+      media: media
+    }
+  });
+
+  const style = transform ? {
+    transform: CSS.Translate.toString(transform),
+  } : undefined;
+
   return (
     <div 
       ref={setNodeRef} 
