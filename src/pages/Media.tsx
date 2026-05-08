@@ -432,7 +432,7 @@ export default function MediaPage() {
             {folders.map((folder) => (
               <Card 
                 key={folder.id} 
-                className="overflow-hidden group hover:border-primary/40 hover:bg-muted/30 transition-all cursor-pointer border-border/60 shadow-sm"
+                className="overflow-hidden group hover:border-primary/50 hover:bg-white/[0.03] transition-all cursor-pointer border-white/5 bg-black/40 shadow-premium rounded-2xl"
                 onClick={() => setCurrentFolder(folder.id)}
               >
                 <CardContent className="p-3 flex items-center justify-between">
