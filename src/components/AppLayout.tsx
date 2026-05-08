@@ -85,10 +85,10 @@ export default function AppLayout() {
             )}
 
             <div className="relative hidden md:block">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
               <Input
-                placeholder="Buscar dispositivo, loja, mídia…"
-                className="pl-8 h-9 w-[320px] bg-muted/40 border-transparent focus-visible:bg-card"
+                placeholder="Pesquisar..."
+                className="pl-10 h-10 w-[280px] bg-white/5 border-transparent focus:border-primary/50 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all"
               />
             </div>
             <div className="ml-auto flex items-center gap-2">
