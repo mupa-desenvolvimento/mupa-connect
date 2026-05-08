@@ -520,6 +520,7 @@ const GroupItem = ({
                     <DraggableStore 
                       key={ls.id} 
                       ls={ls}
+                      devices={allDevices}
                     />
                   ))}
                 </div>
