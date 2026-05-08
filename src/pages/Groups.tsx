@@ -68,6 +68,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { StoreCard } from "@/components/groups/StoreCard";
 
 // ===== Soft color palette per group =====
 const GROUP_COLOR_PALETTE = [
