@@ -339,6 +339,7 @@ export default function PlaylistEditor() {
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeDragType, setActiveDragType] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
   const [debugData, setDebugData] = useState<any>(null);
   const [showDebug, setShowDebug] = useState(false);
   const [mediaSearch, setMediaSearch] = useState("");
@@ -665,10 +666,15 @@ export default function PlaylistEditor() {
     setActiveDragType(event.active.data?.current?.type ?? "playlist-item");
   };
 
+  const handleDragOver = (event: any) => {
+    setOverId(event.over?.id ?? null);
+  };
+
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
     setActiveId(null);
     setActiveDragType(null);
+    setOverId(null);
     
     const activeData = active.data.current;
     
@@ -910,10 +916,11 @@ export default function PlaylistEditor() {
         </div>
       </header>
 
-      <DndContext 
+      <DndContext
         sensors={sensors}
         collisionDetection={collisionDetectionStrategy}
         onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
         modifiers={activeDragType === "playlist-item" ? [restrictToHorizontalAxis] : []}
       >
@@ -1566,11 +1573,25 @@ export default function PlaylistEditor() {
                         )}
                         <AnimatePresence>
                           {items.map((item, index) => (
-                            <div 
-                              key={item.id} 
-                              style={{ width: `${item.duration * PIXELS_PER_SECOND}px` }}
-                              className="shrink-0"
-                            >
+                            <React.Fragment key={item.id}>
+                              {activeDragType === 'campaign' && overId === item.id && (
+                                <motion.div 
+                                  layoutId="campaign-placeholder"
+                                  initial={{ width: 0, opacity: 0 }}
+                                  animate={{ width: 120, opacity: 1 }}
+                                  exit={{ width: 0, opacity: 0 }}
+                                  className="h-28 bg-[#085CF0]/20 border-2 border-dashed border-[#085CF0]/50 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
+                                >
+                                  <div className="flex flex-col items-center gap-1">
+                                    <Plus className="h-4 w-4 text-[#085CF0] animate-pulse" />
+                                    <span className="text-[8px] font-black text-[#085CF0] uppercase">Inserir aqui</span>
+                                  </div>
+                                </motion.div>
+                              )}
+                              <div 
+                                style={{ width: `${item.duration * PIXELS_PER_SECOND}px` }}
+                                className="shrink-0"
+                              >
                               <SortableItem 
                                 item={item} 
                                 index={index}
@@ -1578,8 +1599,22 @@ export default function PlaylistEditor() {
                                 onSelect={setSelectedItem}
                                 timelineMode={true}
                               />
-                            </div>
+                              </div>
+                            </React.Fragment>
                           ))}
+                          {activeDragType === 'campaign' && (overId === 'timeline-dropzone' || overId === null) && items.length > 0 && (
+                            <motion.div 
+                              layoutId="campaign-placeholder-end"
+                              initial={{ width: 0, opacity: 0 }}
+                              animate={{ width: 120, opacity: 1 }}
+                              className="h-28 bg-[#085CF0]/20 border-2 border-dashed border-[#085CF0]/50 rounded-xl flex items-center justify-center shrink-0 overflow-hidden ml-2"
+                            >
+                              <div className="flex flex-col items-center gap-1">
+                                <Plus className="h-4 w-4 text-[#085CF0] animate-pulse" />
+                                <span className="text-[8px] font-black text-[#085CF0] uppercase">No final</span>
+                              </div>
+                            </motion.div>
+                          )}
                         </AnimatePresence>
                       </TimelineDropZone>
                     </SortableContext>
