@@ -57,7 +57,7 @@ export default function AppLayout() {
 
   if (isEditor || isNOC) {
     return (
-      <div className={cn("min-h-screen w-full", isEditor ? "bg-[#09090b]" : "bg-background")}>
+      <div className={cn("min-h-screen w-full", isEditor ? "bg-black" : "bg-background")}>
         {isNOC ? (
           <div className="h-screen w-screen p-4">
             <Outlet />
@@ -71,36 +71,36 @@ export default function AppLayout() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-[#050816]">
+      <div className="min-h-screen flex w-full bg-background transition-colors duration-300">
         <AppSidebar />
 
         <div className={cn("flex-1 flex flex-col min-w-0", isMobile && "pb-20")}>
-          <header className="h-16 flex items-center gap-4 border-b border-white/5 bg-[#050816]/60 backdrop-blur-2xl sticky top-0 z-30 px-6">
+          <header className="h-16 flex items-center gap-4 border-b border-border bg-background/60 backdrop-blur-2xl sticky top-0 z-30 px-6">
             <SidebarTrigger className={cn(isMobile && "hidden")} />
             {isMobile && (
               <div className="flex items-center gap-2">
                 <img src="/Artboard 15.svg" alt="Mupa" className="h-7 w-7" />
-                <span className="font-bold font-bold text-sm tracking-tight">Mupa</span>
+                <span className="font-bold text-sm tracking-tight">Mupa</span>
               </div>
             )}
 
             <div className="relative hidden md:block">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
               <Input
                 placeholder="Pesquisar..."
-                className="pl-10 h-10 w-[280px] bg-white/5 border-transparent focus:border-primary/50 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all"
+                className="pl-10 h-10 w-[280px] bg-muted/50 border-transparent focus:border-primary/50 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all"
               />
             </div>
             <div className="ml-auto flex items-center gap-2">
               <SupportCompanySelector />
-              <Button variant="ghost" size="icon" aria-label="Notificações">
+              <Button variant="ghost" size="icon" aria-label="Notificações" className="h-9 w-9">
                 <Bell className="h-4 w-4" />
               </Button>
               <ThemeToggle />
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="ml-2 h-8 w-8 rounded-full bg-gradient-accent grid place-items-center text-xs font-semibold text-accent-foreground relative overflow-hidden">
+                  <Button variant="secondary" size="icon" className="ml-2 h-9 w-9 rounded-full relative overflow-hidden text-xs">
                     {userInitials}
                   </Button>
                 </DropdownMenuTrigger>
