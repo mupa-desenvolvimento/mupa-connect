@@ -148,9 +148,7 @@ export function CampaignForm({ initialData, onSubmit, isLoading }: CampaignFormP
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 animate-in fade-in duration-500">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* COLUNA PRINCIPAL - IDENTIDADE E AGENDAMENTO */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-8 space-y-8">
             
             {/* CARD 1: IDENTIDADE E VISIBILIDADE */}
