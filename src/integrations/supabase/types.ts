@@ -569,8 +569,10 @@ export type Database = {
           duration_override: number | null
           id: string
           is_active: boolean | null
+          is_locked: boolean | null
           media_id: string
           position: number | null
+          priority_override: number | null
           tenant_id: string | null
           weight: number | null
         }
@@ -580,8 +582,10 @@ export type Database = {
           duration_override?: number | null
           id?: string
           is_active?: boolean | null
+          is_locked?: boolean | null
           media_id: string
           position?: number | null
+          priority_override?: number | null
           tenant_id?: string | null
           weight?: number | null
         }
@@ -591,8 +595,10 @@ export type Database = {
           duration_override?: number | null
           id?: string
           is_active?: boolean | null
+          is_locked?: boolean | null
           media_id?: string
           position?: number | null
+          priority_override?: number | null
           tenant_id?: string | null
           weight?: number | null
         }
