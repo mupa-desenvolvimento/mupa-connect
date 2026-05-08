@@ -345,10 +345,10 @@ export function CampaignContentManager({ campaignId, onContentChange }: Campaign
                         ))}
                       </div>
                     </div>
-                    <Button variant="ghost" onClick={() => updateItemProperty(selectedItem.id, 'is_locked', !selectedItem.is_locked)} className={cn("w-full h-14 flex items-center justify-between px-4 rounded-2xl border", selectedItem.is_locked ? "bg-orange-500/10 border-orange-500/50 text-orange-500" : "bg-white/5 border-white/5 text-white/40")}>
-                      <div className="flex items-center gap-3">
-                        {selectedItem.is_locked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
-                        <span className="text-[10px] font-black uppercase tracking-widest">Bloquear Posição</span>
+                    <Button variant="ghost" onClick={() => updateItemProperty(selectedItem.id, 'is_locked', !selectedItem.is_locked)} className={cn("w-full h-16 flex items-center justify-between px-6 rounded-2xl border transition-all", selectedItem.is_locked ? "bg-orange-500/10 border-orange-500/30 text-orange-500" : "bg-white/5 border-white/5 text-white/40 hover:bg-white/10")}>
+                      <div className="flex items-center gap-4">
+                        {selectedItem.is_locked ? <Lock className="h-5 w-5" /> : <Unlock className="h-5 w-5" />}
+                        <span className="text-[11px] font-black uppercase tracking-[0.1em]">Bloquear Posição</span>
                       </div>
                     </Button>
                     <Button className="w-full h-12 text-red-500/60 hover:text-red-500 hover:bg-red-500/10 gap-2 font-black text-[10px] uppercase tracking-widest rounded-2xl" variant="ghost" onClick={() => handleRemove(selectedItem.id)} disabled={selectedItem.is_locked}><Trash2 className="h-4 w-4" /> Remover Item</Button>
