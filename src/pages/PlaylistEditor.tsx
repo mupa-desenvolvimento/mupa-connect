@@ -1305,7 +1305,7 @@ export default function PlaylistEditor() {
                                 transition={{ duration: 0.2, ease: "easeInOut" }}
                                 className="overflow-hidden"
                               >
-                                <div className="mt-1 space-y-1 pl-4 border-l-2 border-white/5 ml-4">
+                                <div className="mt-1 space-y-1 pl-4 border-l-2 border-white/5 ml-4 overflow-hidden">
                                   {campaignItems.length > 0 ? (
                                     campaignItems.map((item: any) => (
                                       <motion.div
