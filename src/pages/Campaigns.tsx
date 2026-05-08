@@ -25,7 +25,8 @@ import {
   ArrowLeft,
   Megaphone,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  Image as ImageIcon
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
