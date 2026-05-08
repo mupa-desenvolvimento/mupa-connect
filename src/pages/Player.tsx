@@ -39,13 +39,14 @@ const isValidUUID = (value: any): boolean => {
   return uuidRegex.test(value);
 };
 
-export default function PlayerPage() {
+export default function Player() {
   useEffect(() => {
     // Force black background for all players
     document.body.style.backgroundColor = "black";
     document.documentElement.classList.add("dark");
   }, []);
-  const { deviceCode } = useParams();
+  const { deviceCode, "*": extraPath } = useParams();
+  console.log("[Player] Initializing with deviceCode:", deviceCode, "extraPath:", extraPath);
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get("preview") === "true";
   const previewPlaylistId = searchParams.get("id");
