@@ -46,22 +46,22 @@ export function CampaignTimeline({ campaigns, onSelectCampaign }: CampaignTimeli
           </div>
         </div>
         <div className="flex gap-2">
-          <div className="flex items-center bg-muted/30 rounded-lg p-1 border border-border/20 mr-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setZoom(Math.max(0.5, zoom - 0.2))}>
-              <ZoomOut className="h-4 w-4" />
+          <div className="flex items-center bg-white/5 rounded-xl p-1 border border-white/5 mr-4">
+            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10" onClick={() => setZoom(Math.max(0.5, zoom - 0.2))}>
+              <ZoomOut className="h-4 w-4 text-white/40" />
             </Button>
-            <div className="text-[10px] font-bold px-2 text-muted-foreground">{Math.round(zoom * 100)}%</div>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setZoom(Math.min(3, zoom + 0.2))}>
-              <ZoomIn className="h-4 w-4" />
+            <div className="text-[10px] font-black px-3 text-white/40 uppercase tracking-widest">{Math.round(zoom * 100)}%</div>
+            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10" onClick={() => setZoom(Math.min(3, zoom + 0.2))}>
+              <ZoomIn className="h-4 w-4 text-white/40" />
             </Button>
           </div>
-          <Button variant="outline" size="sm" className="h-9" onClick={() => setScrollDate(addDays(scrollDate, -1))}>
+          <Button variant="secondary" size="sm" className="h-10 text-[10px] font-black uppercase tracking-widest px-6" onClick={() => setScrollDate(addDays(scrollDate, -1))}>
             Anterior
           </Button>
-          <Button variant="outline" size="sm" className="h-9" onClick={() => setScrollDate(new Date())}>
+          <Button variant="secondary" size="sm" className="h-10 text-[10px] font-black uppercase tracking-widest px-6" onClick={() => setScrollDate(new Date())}>
             Hoje
           </Button>
-          <Button variant="outline" size="sm" className="h-9" onClick={() => setScrollDate(addDays(scrollDate, 1))}>
+          <Button variant="secondary" size="sm" className="h-10 text-[10px] font-black uppercase tracking-widest px-6" onClick={() => setScrollDate(addDays(scrollDate, 1))}>
             Próximo
           </Button>
         </div>
