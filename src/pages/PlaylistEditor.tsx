@@ -1319,9 +1319,12 @@ export default function PlaylistEditor() {
                                         initial={{ x: -10, opacity: 0 }}
                                         animate={{ x: 0, opacity: 1 }}
                                         className="flex items-center gap-3 p-2 rounded-lg bg-white/[0.02] border border-white/5 group hover:bg-white/[0.05] hover:border-white/10 transition-all cursor-pointer"
-                                        onClick={() => {
+                                         onClick={() => {
                                           if (item.media) {
-                                            addItem(item.media.id);
+                                            addItem(item.media.id, { 
+                                              name: campaign.name, 
+                                              color: campaign.color || '#9b87f5' 
+                                            });
                                           }
                                         }}
                                       >
