@@ -66,7 +66,7 @@ export default function PlayerPage() {
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const detectionIntervalRef = useRef<number | null>(null);
+  const detectionsetIntervalRef = useRef<number | null>(null);
 
   const appearance = useMemo(() => (manifest?.appearance_config || {}) as AppearanceConfig, [manifest]);
 
@@ -392,11 +392,11 @@ export default function PlayerPage() {
     };
 
     const startDetectionLoop = () => {
-      if (detectionIntervalRef.current) {
-        clearInterval(detectionIntervalRef.current);
+      if (detectionsetIntervalRef.current) {
+        clearInterval(detectionsetIntervalRef.current);
       }
       
-      detectionIntervalRef.current = window.setInterval(async () => {
+      detectionsetIntervalRef.current = window.setInterval(async () => {
         if (!videoRef.current || !canvasRef.current || !modelsLoaded) return;
         
         const options = new faceapi.TinyFaceDetectorOptions();
@@ -482,8 +482,8 @@ export default function PlayerPage() {
     };
 
     const cleanup = () => {
-      if (detectionIntervalRef.current) {
-        clearInterval(detectionIntervalRef.current);
+      if (detectionsetIntervalRef.current) {
+        clearInterval(detectionsetIntervalRef.current);
       }
       
       if (videoRef.current?.srcObject) {

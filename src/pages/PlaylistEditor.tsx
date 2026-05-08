@@ -350,7 +350,7 @@ export default function PlaylistEditor() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const timelineScrollRef = useRef<HTMLDivElement>(null);
-  const playheadIntervalRef = useRef<number | null>(null);
+  const playheadsetIntervalRef = useRef<number | null>(null);
 
   const totalDuration = useMemo(() => items.reduce((acc, it) => acc + it.duration, 0), [items]);
 
@@ -370,12 +370,12 @@ export default function PlaylistEditor() {
       } else {
         setCurrentTime(elapsed);
       }
-      playheadIntervalRef.current = requestAnimationFrame(updatePlayhead);
+      playheadsetIntervalRef.current = requestAnimationFrame(updatePlayhead);
     };
 
-    playheadIntervalRef.current = requestAnimationFrame(updatePlayhead);
+    playheadsetIntervalRef.current = requestAnimationFrame(updatePlayhead);
     return () => {
-      if (playheadIntervalRef.current) cancelAnimationFrame(playheadIntervalRef.current);
+      if (playheadsetIntervalRef.current) cancelAnimationFrame(playheadsetIntervalRef.current);
     };
   }, [isPlaying, totalDuration]);
 
