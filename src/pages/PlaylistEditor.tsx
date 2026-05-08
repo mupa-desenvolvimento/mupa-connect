@@ -1749,13 +1749,6 @@ export default function PlaylistEditor() {
       </div>
       </DndContext>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={collisionDetectionStrategy}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-      >
       <DragOverlay dropAnimation={null}>
         {activeId && activeDragType === 'campaign' && campaigns?.find(c => `campaign-${c.id}` === activeId) && (
           <div className="z-[1000] pointer-events-none scale-105 transition-transform">
