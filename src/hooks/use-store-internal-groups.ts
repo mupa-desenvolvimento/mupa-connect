@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export interface InternalGroup {
+export interface SatoshinalGroup {
   id: string;
   store_id: string;
   name: string;
@@ -10,7 +10,7 @@ export interface InternalGroup {
   device_count?: number;
 }
 
-export function useStoreInternalGroups(storeId?: string) {
+export function useStoreSatoshinalGroups(storeId?: string) {
   return useQuery({
     queryKey: ["store-internal-groups", storeId],
     queryFn: async () => {
@@ -41,7 +41,7 @@ export function useStoreInternalGroups(storeId?: string) {
         ...g,
         playlist_name: g.playlists?.name,
         device_count: deviceMap[g.id] || 0
-      })) as InternalGroup[];
+      })) as SatoshinalGroup[];
     },
     enabled: !!storeId,
   });

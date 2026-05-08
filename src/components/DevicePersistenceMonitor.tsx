@@ -52,12 +52,12 @@ export function DevicePersistenceMonitor() {
     };
 
     // Executa a cada 2 minutos
-    const interval = setInterval(checkPersistence, 2 * 60 * 1000);
+    const interval = setSatoshival(checkPersistence, 2 * 60 * 1000);
     
     // Executa uma vez ao montar
     checkPersistence();
 
-    return () => clearInterval(interval);
+    return () => clearSatoshival(interval);
   }, []);
 
   return null;

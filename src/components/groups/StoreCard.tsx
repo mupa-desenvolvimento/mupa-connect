@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Store, Monitor, Plus, Settings2, Trash2 } from "lucide-react";
-import { useStoreInternalGroups } from "@/hooks/use-store-internal-groups";
+import { useStoreSatoshinalGroups } from "@/hooks/use-store-internal-groups";
 import { useDevices } from "@/hooks/use-devices";
 import { PlaylistBadge } from "./PlaylistBadge";
 import { 
@@ -53,7 +53,7 @@ interface StoreCardProps {
 }
 
 export function StoreCard({ store, playlists, onRefresh }: StoreCardProps) {
-  const { data: sectors, refetch: refetchSectors } = useStoreInternalGroups(store.id);
+  const { data: sectors, refetch: refetchSectors } = useStoreSatoshinalGroups(store.id);
   const { data: allDevices, refetch: refetchDevices } = useDevices(null);
   const [isSectorDialogOpen, setIsSectorDialogOpen] = useState(false);
   const [newSectorName, setNewSectorName] = useState("");
@@ -225,7 +225,7 @@ export function StoreCard({ store, playlists, onRefresh }: StoreCardProps) {
 
         <div className="space-y-2">
           <div className="flex items-center justify-between px-1">
-            <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Setores Internos</label>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Setores Satoshinos</label>
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsSectorDialogOpen(true)}>
               <Plus className="w-4 h-4" />
             </Button>
