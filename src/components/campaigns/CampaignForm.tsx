@@ -3,7 +3,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Loader2, Check } from "lucide-react";
+import { 
+  CalendarIcon, 
+  Loader2, 
+  Check, 
+  Calendar, 
+  Clock, 
+  Info, 
+  Palette, 
+  Settings2, 
+  Layers,
+  Activity
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +28,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Popover,
   PopoverContent,
