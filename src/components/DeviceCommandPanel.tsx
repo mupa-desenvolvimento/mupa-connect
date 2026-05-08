@@ -84,7 +84,7 @@ export function DeviceCommandPanel({ deviceId, deviceName }: Props) {
     <div className="grid gap-4 lg:grid-cols-2">
       <Card>
         <CardHeader>
-          <CardTitle className="font-display flex items-center gap-2">
+          <CardTitle className="font-bold flex items-center gap-2">
             <Send className="h-4 w-4 text-primary" />
             Enviar comando {deviceName ? `· ${deviceName}` : ""}
           </CardTitle>
@@ -151,7 +151,7 @@ export function DeviceCommandPanel({ deviceId, deviceName }: Props) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="font-display flex items-center gap-2">
+          <CardTitle className="font-bold flex items-center gap-2">
             <Activity className="h-4 w-4 text-primary" />
             Logs de execução (ao vivo)
           </CardTitle>

@@ -80,7 +80,7 @@ export default function AppLayout() {
             {isMobile && (
               <div className="flex items-center gap-2">
                 <img src="/Artboard 15.svg" alt="Mupa" className="h-7 w-7" />
-                <span className="font-display font-bold text-sm tracking-tight">Mupa</span>
+                <span className="font-bold font-bold text-sm tracking-tight">Mupa</span>
               </div>
             )}
 

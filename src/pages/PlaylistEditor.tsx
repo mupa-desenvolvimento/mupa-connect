@@ -859,7 +859,7 @@ export default function PlaylistEditor() {
                   setPlaylistName(e.target.value);
                   setHasUnsavedChanges(true);
                 }}
-                className="bg-transparent border-none focus:ring-0 text-lg font-display font-semibold text-white p-0 h-7"
+                className="bg-transparent border-none focus:ring-0 text-lg font-bold font-semibold text-white p-0 h-7"
               />
               <div className="flex items-center gap-2 mt-0.5">
                 <label className="flex items-center gap-2 cursor-pointer group">
@@ -1463,7 +1463,7 @@ export default function PlaylistEditor() {
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center text-white/10">
                     <Monitor className="h-24 w-24 mb-4" />
-                    <p className="text-xl font-display font-bold uppercase tracking-widest">Nenhum conteúdo selecionado</p>
+                    <p className="text-xl font-bold font-bold uppercase tracking-widest">Nenhum conteúdo selecionado</p>
                   </div>
                 )}
                 

@@ -126,7 +126,7 @@ export function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalP
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="font-display">Cadastrar Novo Usuário</DialogTitle>
+          <DialogTitle className="font-bold">Cadastrar Novo Usuário</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">

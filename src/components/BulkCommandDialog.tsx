@@ -230,7 +230,7 @@ export function BulkCommandDialog({
     <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) reset(); }}>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="p-6 pb-3 border-b">
-          <DialogTitle className="font-display flex items-center gap-2">
+          <DialogTitle className="font-bold flex items-center gap-2">
             <Megaphone className="h-5 w-5 text-primary" />
             Envio de comando em massa
           </DialogTitle>
