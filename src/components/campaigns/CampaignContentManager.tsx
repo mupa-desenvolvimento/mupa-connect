@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { 
   DndContext, 
   closestCenter,
@@ -8,7 +8,8 @@ import {
   useSensors,
   DragOverlay,
   useDraggable,
-  useDroppable
+  useDroppable,
+  rectIntersection
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -30,28 +31,44 @@ import {
   CheckCircle2,
   Loader2,
   X,
-  PlusCircle
+  PlusCircle,
+  Settings2,
+  Lock,
+  Unlock,
+  Maximize2,
+  Monitor,
+  Filter,
+  CheckCircle,
+  FileVideo,
+  FileImage,
+  ChevronRight,
+  Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useMedias } from "@/hooks/use-playlist-data";
 import { useUserRole } from "@/hooks/use-user-role";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface CampaignMedia {
   id: string;
   media_id: string;
   position: number;
   duration_override?: number;
+  priority_override?: number;
+  is_locked?: boolean;
   media: any;
 }
 
 interface CampaignContentManagerProps {
   campaignId: string;
+  onContentChange?: () => void;
 }
 
 const DraggableLibraryItem = ({ media, onClick, isSelected, onToggleSelect }: any) => {
