@@ -192,8 +192,8 @@ export default function CampaignsPage() {
         ) : (
           <>
             {view === "grid" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-y-auto h-full pr-2">
-                {filteredCampaigns.map((c) => {
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 overflow-y-auto h-full pr-2 pb-10 custom-scrollbar">
+                {filteredCampaigns.map((c, index) => {
                   const now = new Date();
                   const start = new Date(c.start_date);
                   const end = new Date(c.end_date);
@@ -204,58 +204,95 @@ export default function CampaignsPage() {
                   else if (now > end) status = "ended";
                   else status = "active";
 
+                  const campaignColor = c.color || '#9b87f5';
+
                   return (
-                    <Card key={c.id} className="group border-border/60 shadow-sm hover:shadow-md transition-all h-[280px] flex flex-col overflow-hidden">
-                      <div className="h-1.5 w-full shrink-0" style={{ backgroundColor: c.color || '#9b87f5' }} />
-                      <CardContent className="p-4 flex flex-col flex-1 gap-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0 flex-1">
-                            <h3 className="font-bold text-base truncate group-hover:text-primary transition-colors" title={c.name}>{c.name}</h3>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge variant="secondary" className="text-[10px] h-4 px-1.5 font-medium bg-muted/50 border-none">P{c.priority}</Badge>
+                    <motion.div
+                      key={c.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      whileHover={{ y: -4 }}
+                    >
+                      <Card className="group relative border-white/5 bg-[#1a1a1e]/40 hover:bg-[#1a1a1e]/80 transition-all duration-500 h-[300px] flex flex-col overflow-hidden shadow-2xl">
+                        {/* Indicador de Cor Premium */}
+                        <div className="absolute top-0 left-0 right-0 h-1 z-20" style={{ backgroundColor: campaignColor }} />
+                        <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black/20 to-transparent pointer-events-none" />
+                        
+                        <CardContent className="p-6 flex flex-col flex-1 gap-5 relative z-10">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="min-w-0 flex-1 space-y-1">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: campaignColor, boxShadow: `0 0 10px ${campaignColor}60` }} />
+                                <Badge variant="secondary" className="text-[9px] h-4 font-black bg-white/5 border-none text-white/40 tracking-widest px-1.5 uppercase">P{c.priority}</Badge>
+                              </div>
+                              <h3 className="font-black text-lg uppercase tracking-tighter text-white group-hover:text-primary transition-colors leading-tight truncate" title={c.name}>{c.name}</h3>
                               <StatusBadge status={status} />
                             </div>
+                            
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-white/5 hover:bg-white/10 text-white/40">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48 bg-[#1a1a1e] border-white/10 text-white shadow-2xl">
+                                <DropdownMenuItem onClick={() => handleEdit(c.id)} className="cursor-pointer gap-3 font-bold text-xs uppercase tracking-widest py-3">
+                                  <Edit2 className="h-4 w-4 text-primary" /> Editar Detalhes
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-red-400 cursor-pointer gap-3 font-bold text-xs uppercase tracking-widest py-3" onClick={() => handleDelete(c.id)}>
+                                  <Trash2 className="h-4 w-4" /> Excluir Campanha
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-40">
-                              <DropdownMenuItem onClick={() => handleEdit(c.id)} className="cursor-pointer"><Edit2 className="h-3.5 w-3.5 mr-2 text-muted-foreground" /> Editar</DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive cursor-pointer" onClick={() => handleDelete(c.id)}><Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir</DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
 
-                        <div className="flex flex-col gap-2 mt-1 flex-1">
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 p-2.5 rounded-lg border border-border/40">
-                            <CalendarIcon className="h-3.5 w-3.5 text-primary/70 shrink-0" />
-                            <span className="truncate">{format(start, "dd MMM")} até {format(end, "dd MMM")}</span>
+                          <div className="space-y-3 flex-1">
+                            <div className="flex flex-col gap-2">
+                              <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-white/40 bg-black/40 px-3 py-2 rounded-xl border border-white/5">
+                                <CalendarIcon className="h-3.5 w-3.5 text-primary/60 shrink-0" />
+                                <span>{format(start, "dd MMM", { locale: ptBR })} — {format(end, "dd MMM", { locale: ptBR })}</span>
+                              </div>
+                              <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-white/40 bg-black/40 px-3 py-2 rounded-xl border border-white/5">
+                                <Clock className="h-3.5 w-3.5 text-primary/60 shrink-0" />
+                                <span>{c.start_time.substring(0,5)} — {c.end_time.substring(0,5)}</span>
+                              </div>
+                            </div>
+                            
+                            {c.description && (
+                              <p className="text-[10px] text-white/30 line-clamp-2 leading-relaxed font-medium italic overflow-hidden">
+                                {c.description}
+                              </p>
+                            )}
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 p-2.5 rounded-lg border border-border/40">
-                            <Clock className="h-3.5 w-3.5 text-primary/70 shrink-0" />
-                            <span>{c.start_time.substring(0,5)} — {c.end_time.substring(0,5)}</span>
-                          </div>
-                          {c.description && (
-                            <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed italic opacity-80 mt-1">
-                              "{c.description}"
-                            </p>
-                          )}
-                        </div>
 
-                        <div className="pt-3 mt-auto border-t border-border/40 flex items-center justify-between text-[10px] text-muted-foreground/60 font-medium">
-                          <div className="flex items-center gap-1.5">
-                            <Layers className="h-3 w-3" />
-                            <span>Playlist Principal</span>
+                          <div className="pt-4 mt-auto border-t border-white/5 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className="flex -space-x-2">
+                                {[1,2,3].map(i => (
+                                  <div key={i} className="w-6 h-6 rounded-full border-2 border-[#1a1a1e] bg-white/5 flex items-center justify-center overflow-hidden">
+                                    <ImageIcon className="w-3 h-3 text-white/20" />
+                                  </div>
+                                ))}
+                              </div>
+                              <span className="text-[9px] font-black uppercase tracking-widest text-white/20">Media Pool</span>
+                            </div>
+                            
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 px-3 text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 rounded-lg gap-1.5" 
+                              onClick={() => handleEdit(c.id)}
+                            >
+                              Editor <ChevronRight className="h-3 w-3" />
+                            </Button>
                           </div>
-                          <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] text-primary hover:bg-primary/5 font-semibold" onClick={() => handleEdit(c.id)}>
-                            Ver Detalhes
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+
+                        {/* Hover Overlay Glow */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                      </Card>
+                    </motion.div>
                   );
                 })}
               </div>
