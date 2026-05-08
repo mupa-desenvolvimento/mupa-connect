@@ -340,6 +340,7 @@ export default function PlaylistEditor() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeDragType, setActiveDragType] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
+  const lastOverIdRef = useRef<string | null>(null);
   const [debugData, setDebugData] = useState<any>(null);
   const [showDebug, setShowDebug] = useState(false);
   const [mediaSearch, setMediaSearch] = useState("");
@@ -666,15 +667,20 @@ export default function PlaylistEditor() {
     setActiveDragType(event.active.data?.current?.type ?? "playlist-item");
   };
 
-  const handleDragOver = (event: any) => {
-    setOverId(event.over?.id ?? null);
-  };
+  const handleDragOver = useCallback((event: any) => {
+    const newOverId = event.over?.id ?? null;
+    if (newOverId !== lastOverIdRef.current) {
+      lastOverIdRef.current = newOverId;
+      setOverId(newOverId);
+    }
+  }, []);
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
     setActiveId(null);
     setActiveDragType(null);
     setOverId(null);
+    lastOverIdRef.current = null;
     
     const activeData = active.data.current;
     
@@ -1571,7 +1577,7 @@ export default function PlaylistEditor() {
                             </motion.div>
                           </div>
                         )}
-                        <AnimatePresence>
+                        <AnimatePresence mode="popLayout" initial={false}>
                           {items.map((item, index) => (
                             <React.Fragment key={item.id}>
                               {activeDragType === 'campaign' && overId === item.id && (
