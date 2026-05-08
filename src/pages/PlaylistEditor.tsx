@@ -238,11 +238,22 @@ const SortableItem = ({
         <GripVertical className="h-4 w-4" />
       </div>
 
-      {/* Name */}
-      <div className="absolute bottom-2 left-9 right-2">
+      {/* Name & Campaign */}
+      <div className="absolute bottom-2 left-9 right-2 flex flex-col gap-0.5">
         <p className="text-[10px] font-medium text-white truncate drop-shadow-lg">
           {media?.name || 'Sem nome'}
         </p>
+        {item.campaignName && (
+          <div className="flex items-center gap-1 overflow-hidden">
+            <Megaphone className="h-2 w-2 text-white/60 shrink-0" />
+            <span 
+              className="text-[8px] font-bold uppercase tracking-wider truncate"
+              style={{ color: item.campaignColor || '#9b87f5' }}
+            >
+              {item.campaignName}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Selected Indicator */}
