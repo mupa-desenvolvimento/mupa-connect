@@ -1541,6 +1541,25 @@ export default function PlaylistEditor() {
                       strategy={horizontalListSortingStrategy}
                     >
                       <TimelineDropZone>
+                        {activeId && activeDragType === 'campaign' && (
+                          <div className="absolute inset-0 z-50 pointer-events-none overflow-hidden rounded-xl">
+                            <motion.div 
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              className="absolute inset-0 bg-[#085CF0]/10 border-2 border-dashed border-[#085CF0]/50 flex items-center justify-center backdrop-blur-[2px]"
+                            >
+                              <div className="flex flex-col items-center gap-3 bg-black/80 px-8 py-6 rounded-3xl border border-white/10 shadow-2xl">
+                                <div className="w-16 h-16 rounded-full bg-[#085CF0] flex items-center justify-center shadow-[0_0_30px_rgba(8,92,240,0.5)] animate-pulse">
+                                  <Plus className="h-8 w-8 text-white" />
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-lg font-black text-white uppercase tracking-tighter">Solte para Adicionar Campanha</p>
+                                  <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Os conteúdos serão inseridos nesta posição</p>
+                                </div>
+                              </div>
+                            </motion.div>
+                          </div>
+                        )}
                         <AnimatePresence>
                           {items.map((item, index) => (
                             <div 
