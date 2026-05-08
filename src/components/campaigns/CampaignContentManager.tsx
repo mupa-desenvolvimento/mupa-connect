@@ -114,10 +114,10 @@ const SortableCampaignItem = ({ item, index, isSelected, onSelect, onRemove }: a
       style={style} 
       onClick={() => onSelect(item)}
       className={cn(
-        "relative shrink-0 w-[180px] h-[240px] rounded-2xl border-2 bg-[#1A1A1E] overflow-hidden flex flex-col transition-all group cursor-pointer shadow-2xl",
-        isSelected ? "border-primary ring-4 ring-primary/10 scale-[1.02]" : "border-white/5 hover:border-white/10",
-        isDragging && "border-primary shadow-glow scale-95",
-        item.is_locked && "opacity-80"
+        "relative shrink-0 w-[200px] h-[260px] rounded-2xl border-2 bg-black/40 overflow-hidden flex flex-col transition-all group cursor-pointer shadow-premium",
+        isSelected ? "border-primary ring-4 ring-primary/10 scale-[1.02] bg-black/60" : "border-white/5 hover:border-white/20",
+        isDragging && "border-primary shadow-glow scale-95 opacity-50",
+        item.is_locked && "grayscale-[0.5]"
       )}
     >
       <div className="relative h-[160px] w-full overflow-hidden bg-black">
