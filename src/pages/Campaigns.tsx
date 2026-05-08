@@ -278,14 +278,14 @@ export default function CampaignsPage() {
 
                           <div className="pt-4 mt-auto border-t border-white/5 flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <div className="flex -space-x-2">
+                              <div className="flex -space-x-2.5">
                                 {[1,2,3].map(i => (
-                                  <div key={i} className="w-6 h-6 rounded-full border-2 border-[#1a1a1e] bg-white/5 flex items-center justify-center overflow-hidden">
-                                    <ImageIcon className="w-3 h-3 text-white/20" />
+                                  <div key={i} className="w-7 h-7 rounded-full border-2 border-black bg-white/5 flex items-center justify-center overflow-hidden shadow-lg transition-transform group-hover:translate-x-1">
+                                    <ImageIcon className="w-3.5 h-3.5 text-white/20" />
                                   </div>
                                 ))}
                               </div>
-                              <span className="text-[9px] font-black uppercase tracking-widest text-white/20">Media Pool</span>
+                              <span className="text-[10px] font-black uppercase tracking-widest text-white/20 group-hover:text-primary transition-colors">Media Pool</span>
                             </div>
                             
                             <Button 
