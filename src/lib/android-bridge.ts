@@ -11,9 +11,9 @@ export interface AndroidCommand {
 }
 
 export const sendCommandToAndroid = (action: string, payload: any = {}, deviceId?: string) => {
-  const command: AndroidCommand = {
+  const command = {
     action: action.toUpperCase(),
-    payload,
+    ...payload,
     timestamp: Date.now(),
     device_id: deviceId
   };
