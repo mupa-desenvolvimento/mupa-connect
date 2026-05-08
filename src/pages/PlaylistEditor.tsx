@@ -47,7 +47,8 @@ import {
   ChevronDown,
   ChevronUp,
   X,
-  Pause
+  Pause,
+  Megaphone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
