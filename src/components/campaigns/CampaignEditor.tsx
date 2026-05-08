@@ -239,7 +239,8 @@ export function CampaignEditor({ campaignId, onClose }: CampaignEditorProps) {
           </Button>
           <Button 
             onClick={() => (document.querySelector('form button[type="submit"]') as HTMLButtonElement)?.click()}
-            className="bg-white text-black hover:bg-white/90 font-black text-xs uppercase tracking-widest h-10 px-6 shadow-[0_0_20px_rgba(255,255,255,0.1)] gap-2 rounded-xl"
+            variant="premium"
+            className="h-11 px-8 rounded-xl gap-3 transition-all hover:scale-[1.02] active:scale-[0.98]"
             disabled={isLoading}
           >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
