@@ -341,6 +341,7 @@ export default function PlaylistEditor() {
   const [activeDragType, setActiveDragType] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
   const lastOverIdRef = useRef<string | null>(null);
+  const rafIdRef = useRef<number | null>(null);
   const [debugData, setDebugData] = useState<any>(null);
   const [showDebug, setShowDebug] = useState(false);
   const [mediaSearch, setMediaSearch] = useState("");
@@ -669,9 +670,15 @@ export default function PlaylistEditor() {
 
   const handleDragOver = useCallback((event: any) => {
     const newOverId = event.over?.id ?? null;
+    
     if (newOverId !== lastOverIdRef.current) {
-      lastOverIdRef.current = newOverId;
-      setOverId(newOverId);
+      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+      
+      rafIdRef.current = requestAnimationFrame(() => {
+        lastOverIdRef.current = newOverId;
+        setOverId(newOverId);
+        rafIdRef.current = null;
+      });
     }
   }, []);
 
@@ -681,6 +688,10 @@ export default function PlaylistEditor() {
     setActiveDragType(null);
     setOverId(null);
     lastOverIdRef.current = null;
+    if (rafIdRef.current) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
     
     const activeData = active.data.current;
     
