@@ -1611,6 +1611,30 @@ export default function PlaylistEditor() {
                          </div>
                       </section>
 
+                      {selectedItem.campaignName && (
+                        <section className="p-4 rounded-xl border border-white/5 bg-white/5 space-y-3 animate-in fade-in zoom-in-95 duration-500">
+                          <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
+                            <Megaphone className="h-3 w-3 text-[#9b87f5]" /> Campanha Vinculada
+                          </label>
+                          <div className="flex items-center gap-3">
+                            <div 
+                              className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg relative overflow-hidden group"
+                              style={{ backgroundColor: selectedItem.campaignColor || '#9b87f5' }}
+                            >
+                              <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              <Megaphone className="h-5 w-5 text-white relative z-10" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-white truncate">{selectedItem.campaignName}</p>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] text-white/40 font-medium uppercase tracking-tight">Conteúdo de Campanha</span>
+                                <div className="w-1 h-1 rounded-full bg-green-500 animate-pulse" />
+                              </div>
+                            </div>
+                          </div>
+                        </section>
+                      )}
+
                       <Separator className="bg-white/5" />
 
                       {/* Content Settings */}
