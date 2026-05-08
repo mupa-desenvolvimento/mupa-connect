@@ -84,10 +84,10 @@ export function DeviceItem({ device, isSelected, onToggle, onClick }: DeviceItem
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group relative flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 cursor-pointer",
+        "group relative flex items-center gap-3 p-3 rounded-2xl border transition-all duration-300 cursor-pointer overflow-hidden backdrop-blur-md",
         isSelected 
-          ? "bg-primary/10 border-primary/30 shadow-[0_0_15px_rgba(var(--primary),0.1)]" 
-          : "bg-white/5 border-white/5 hover:border-white/10 hover:bg-white/[0.07]",
+          ? "bg-[#085CF0]/10 border-[#085CF0]/40 shadow-glow shadow-[#085CF0]/20 scale-[1.02]" 
+          : "bg-white/5 border-white/5 hover:border-[#085CF0]/30 hover:bg-white/[0.08] hover:scale-[1.01]",
         isDragging && "opacity-0"
       )}
       onClick={() => device.group_id && onClick?.(device.group_id)}
@@ -99,7 +99,7 @@ export function DeviceItem({ device, isSelected, onToggle, onClick }: DeviceItem
         <Checkbox 
           checked={isSelected} 
           onCheckedChange={() => {}} // Controlled by div onClick for shiftKey support
-          className="border-white/20 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+          className="border-white/20 data-[state=checked]:bg-[#085CF0] data-[state=checked]:border-[#085CF0] rounded-md transition-all duration-300"
         />
         
         <div 

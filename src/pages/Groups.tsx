@@ -68,62 +68,45 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { StoreCard } from "@/components/groups/StoreCard";
 
-// ===== Soft color palette per group =====
+// ===== Premium color palette for groups =====
 const GROUP_COLOR_PALETTE = [
   {
-    key: "blue",
-    bar: "bg-blue-400/70 dark:bg-blue-400/60",
-    softBg: "bg-blue-50/60 dark:bg-blue-950/20",
-    iconBg: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
-    iconHover: "group-hover/node:bg-blue-500 group-hover/node:text-white",
-    badge: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
-    line: "bg-blue-300/60 dark:bg-blue-400/30",
+    key: "mupa-blue",
+    bar: "bg-[#085CF0]",
+    softBg: "bg-[#085CF0]/5",
+    iconBg: "bg-[#085CF0]/10 text-[#085CF0]",
+    iconHover: "group-hover/node:bg-[#085CF0] group-hover/node:text-white",
+    badge: "bg-[#085CF0]/10 text-[#085CF0]",
+    line: "bg-[#085CF0]/20",
   },
   {
-    key: "green",
-    bar: "bg-emerald-400/70 dark:bg-emerald-400/60",
-    softBg: "bg-emerald-50/60 dark:bg-emerald-950/20",
-    iconBg: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-    iconHover: "group-hover/node:bg-emerald-500 group-hover/node:text-white",
-    badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-    line: "bg-emerald-300/60 dark:bg-emerald-400/30",
+    key: "mupa-cyan",
+    bar: "bg-[#00C2FF]",
+    softBg: "bg-[#00C2FF]/5",
+    iconBg: "bg-[#00C2FF]/10 text-[#00C2FF]",
+    iconHover: "group-hover/node:bg-[#00C2FF] group-hover/node:text-white",
+    badge: "bg-[#00C2FF]/10 text-[#00C2FF]",
+    line: "bg-[#00C2FF]/20",
   },
   {
-    key: "orange",
-    bar: "bg-orange-400/70 dark:bg-orange-400/60",
-    softBg: "bg-orange-50/60 dark:bg-orange-950/20",
-    iconBg: "bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300",
-    iconHover: "group-hover/node:bg-orange-500 group-hover/node:text-white",
-    badge: "bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300",
-    line: "bg-orange-300/60 dark:bg-orange-400/30",
+    key: "mupa-indigo",
+    bar: "bg-[#6366F1]",
+    softBg: "bg-[#6366F1]/5",
+    iconBg: "bg-[#6366F1]/10 text-[#6366F1]",
+    iconHover: "group-hover/node:bg-[#6366F1] group-hover/node:text-white",
+    badge: "bg-[#6366F1]/10 text-[#6366F1]",
+    line: "bg-[#6366F1]/20",
   },
   {
-    key: "violet",
-    bar: "bg-violet-400/70 dark:bg-violet-400/60",
-    softBg: "bg-violet-50/60 dark:bg-violet-950/20",
-    iconBg: "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
-    iconHover: "group-hover/node:bg-violet-500 group-hover/node:text-white",
-    badge: "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
-    line: "bg-violet-300/60 dark:bg-violet-400/30",
-  },
-  {
-    key: "amber",
-    bar: "bg-amber-400/70 dark:bg-amber-400/60",
-    softBg: "bg-amber-50/60 dark:bg-amber-950/20",
-    iconBg: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
-    iconHover: "group-hover/node:bg-amber-500 group-hover/node:text-white",
-    badge: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
-    line: "bg-amber-300/60 dark:bg-amber-400/30",
-  },
-  {
-    key: "rose",
-    bar: "bg-rose-400/70 dark:bg-rose-400/60",
-    softBg: "bg-rose-50/60 dark:bg-rose-950/20",
-    iconBg: "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
-    iconHover: "group-hover/node:bg-rose-500 group-hover/node:text-white",
-    badge: "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
-    line: "bg-rose-300/60 dark:bg-rose-400/30",
+    key: "emerald",
+    bar: "bg-[#10B981]",
+    softBg: "bg-[#10B981]/5",
+    iconBg: "bg-[#10B981]/10 text-[#10B981]",
+    iconHover: "group-hover/node:bg-[#10B981] group-hover/node:text-white",
+    badge: "bg-[#10B981]/10 text-[#10B981]",
+    line: "bg-[#10B981]/20",
   },
 ];
 
@@ -141,7 +124,7 @@ const getGroupColor = (id: string, storedKey?: string | null) => {
 };
 
 // Draggable Store Component
-const DraggableStore = ({ ls }: { ls: any }) => {
+const DraggableStore = ({ ls, devices = [] }: { ls: any; devices?: any[] }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `store-${ls.store_id}`,
     data: {
@@ -157,23 +140,56 @@ const DraggableStore = ({ ls }: { ls: any }) => {
     cursor: 'grab',
   };
   
+  const storeDevices = devices.filter(d => {
+    const normalize = (val: string | null | undefined) => {
+      if (!val) return "";
+      return val.replace(/FIL-/gi, "").replace(/\s+/g, "").replace(/^0+/, "").toLowerCase();
+    };
+    const normalizedStoreCode = normalize(ls.store?.code);
+    const normalizedDeviceFilial = normalize(d.num_filial);
+    return d.store_id === ls.store?.id || (normalizedStoreCode !== "" && normalizedStoreCode === normalizedDeviceFilial);
+  });
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
-      className="flex items-center gap-2 rounded-md border bg-card px-2.5 py-1.5 transition-all hover:border-primary/40 hover:shadow-sm"
+      className="flex flex-col gap-2 rounded-xl border bg-card/40 backdrop-blur-sm p-3 transition-all hover:border-[#085CF0]/40 hover:shadow-premium group"
     >
-      <Store className="h-3.5 w-3.5 shrink-0 text-primary/70" />
-      <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium leading-tight truncate">
-          {ls.store?.name || "—"}
-        </p>
-        <p className="text-[10px] text-muted-foreground leading-tight truncate">
-          {ls.store?.code || ""}
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-[#085CF0]/10 text-[#085CF0]">
+          <Store className="h-4 w-4 shrink-0" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold leading-tight truncate text-white">
+            {ls.store?.name || "—"}
+          </p>
+          <p className="text-[10px] text-muted-foreground/60 leading-tight truncate font-bold uppercase tracking-widest">
+            {ls.store?.code || ""}
+          </p>
+        </div>
+        <Badge variant="outline" className="text-[10px] border-[#085CF0]/20 bg-[#085CF0]/5 text-[#085CF0]">
+          {storeDevices.length} PDVs
+        </Badge>
       </div>
+      
+      {storeDevices.length > 0 && (
+        <div className="mt-2 pl-2 border-l-2 border-[#085CF0]/20 flex flex-col gap-1">
+          {storeDevices.slice(0, 3).map(d => (
+            <div key={d.id} className="flex items-center gap-1.5 text-[10px] text-white/50">
+              <Monitor className="h-3 w-3 text-[#085CF0]/60" />
+              <span className="truncate">{d.apelido_interno || d.nome || "Dispositivo"}</span>
+            </div>
+          ))}
+          {storeDevices.length > 3 && (
+            <p className="text-[9px] text-muted-foreground italic pl-4">
+              + {storeDevices.length - 3} outros...
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 };
@@ -202,24 +218,24 @@ const DraggableDevice = ({ gd }: { gd: any }) => {
       {...attributes}
       {...listeners}
       className={cn(
-        "flex items-center gap-2 rounded-md border bg-card px-2.5 py-1.5 transition-all hover:border-primary/40 hover:shadow-sm"
+        "flex items-center gap-2 rounded-xl border bg-card/40 backdrop-blur-sm px-3 py-2 transition-all hover:border-[#085CF0]/40 hover:shadow-premium group"
       )}
     >
-      <Monitor className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      <Monitor className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-[#085CF0] transition-colors" />
       <div className="min-w-0 flex-1">
         <p className="text-xs font-medium leading-tight truncate">
           {gd.device?.apelido_interno || gd.device?.nome || "Dispositivo"}
         </p>
-        <p className="text-[10px] text-muted-foreground leading-tight truncate">
-          {gd.device?.num_filial || ""}
+        <p className="text-[10px] text-muted-foreground/60 leading-tight truncate uppercase tracking-widest font-bold">
+          {gd.device?.num_filial || "Sem Filial"}
         </p>
       </div>
       <CircleDot
         className={cn(
-          "h-3 w-3 shrink-0",
-          gd.device?.status === "active" || gd.device?.status === "online"
-            ? "text-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.2)]"
-            : "text-muted-foreground/40"
+          "h-2.5 w-2.5 shrink-0 transition-all",
+          gd.device?.status === "active" || gd.device?.status === "online" || gd.device?.online
+            ? "text-emerald-500 shadow-glow shadow-emerald-500/40"
+            : "text-muted-foreground/20"
         )}
       />
     </div>
@@ -292,7 +308,7 @@ const GroupItem = ({
 
   const isRoot = level === 0;
   const isMap = viewMode === 'map';
-  const NodeIcon = isRoot ? Network : level === 1 ? Folder : Store;
+  const NodeIcon = isRoot ? Network : Folder;
   const rootForColor = isRoot ? group : (allGroups.find(g => g.id === group.parent_id) || group);
   const color = getGroupColor(rootForColor.id, (rootForColor as any).color);
 
@@ -303,7 +319,7 @@ const GroupItem = ({
         "w-full group/node relative transition-all duration-200",
         isMap && level > 0 && "pl-6 sm:pl-10 mt-2",
         isHovered && "z-10",
-        isOver && "ring-2 ring-primary ring-offset-2 ring-offset-background rounded-xl"
+        isOver && "ring-2 ring-[#085CF0] ring-offset-2 ring-offset-background rounded-xl"
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -489,6 +505,7 @@ const GroupItem = ({
                     <DraggableStore 
                       key={ls.id} 
                       ls={ls}
+                      devices={allDevices}
                     />
                   ))}
                 </div>
@@ -636,6 +653,7 @@ export default function GroupsPage() {
     // 1. Device -> Group
     if (activeData.type === 'device' && overData.type === 'group') {
       const device = activeData.device;
+      const deviceName = device.apelido_interno || device.nome || "Dispositivo";
       const group = overData.group;
       
       try {
@@ -666,6 +684,7 @@ export default function GroupsPage() {
     // 2. Device -> Store
     else if (activeData.type === 'device' && overData.type === 'store') {
       const device = activeData.device;
+      const deviceName = device.apelido_interno || device.nome || "Dispositivo";
       const store = overData.store;
       
       try {
@@ -1006,33 +1025,15 @@ export default function GroupsPage() {
                 ) : filteredStores.length > 0 ? (
                   <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 pb-2">
                     {filteredStores.map(store => (
-                      <Card key={store.id} className="overflow-hidden">
-                        <div className="p-4 border-b bg-muted/30 flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Store className="w-5 h-5 text-primary" />
-                            <div>
-                              <span className="font-bold text-base">{store.name}</span>
-                              <span className="text-xs text-muted-foreground ml-2">({store.code})</span>
-                            </div>
-                          </div>
-                          <div className="flex gap-2 items-center">
-                            <Select 
-                              value={store.playlist_id || "none"} 
-                              onValueChange={(v) => {}}
-                            >
-                              <SelectTrigger className="h-8 w-[180px] text-xs">
-                                <SelectValue placeholder="Playlist da Loja" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="none">Sem playlist (Herança)</SelectItem>
-                                {playlists?.map(p => (
-                                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      </Card>
+                      <StoreCard 
+                        key={store.id} 
+                        store={store} 
+                        playlists={playlists || []}
+                        onRefresh={() => {
+                          refetchGroups();
+                          refetchStores();
+                        }}
+                      />
                     ))}
                   </div>
                 ) : (
