@@ -139,9 +139,11 @@ export function CampaignForm({ initialData, onSubmit, isLoading }: CampaignFormP
     }
   }, [initialData, form]);
 
-  const filteredPlaylists = playlists?.filter(p => 
-    p.name.toLowerCase().includes(playlistSearch.toLowerCase())
-  );
+  const filteredPlaylists = useMemo(() => {
+    return playlists?.filter(p => 
+      p.name.toLowerCase().includes(playlistSearch.toLowerCase())
+    ) || [];
+  }, [playlists, playlistSearch]);
 
   return (
     <Form {...form}>
