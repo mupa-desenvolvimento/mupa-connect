@@ -69,9 +69,14 @@ export function AppSidebar() {
 
   const renderItem = (item: { title: string; url: string; icon: any }) => (
     <SidebarMenuItem key={item.title}>
-      <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
-        <NavLink to={item.url} end={item.url === "/"} className="flex items-center gap-3">
-          <item.icon className="h-4 w-4 shrink-0" />
+      <SidebarMenuButton 
+        asChild 
+        isActive={isActive(item.url)} 
+        tooltip={item.title}
+        className="transition-all duration-300"
+      >
+        <NavLink to={item.url} end={item.url === "/"} className="flex items-center gap-3.5">
+          <item.icon className="shrink-0" />
           {!collapsed && <span className="truncate">{item.title}</span>}
         </NavLink>
       </SidebarMenuButton>
