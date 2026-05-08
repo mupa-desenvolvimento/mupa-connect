@@ -45,7 +45,7 @@ export function useDeviceCommandChannel(
     if (!deviceId) return;
 
     const unsubscribe = subscribeToDeviceCommands(deviceId, async (cmd) => {
-      await runCommand(cmd, handlersRef.current);
+      await runCommand(cmd, handlersRef.current, deviceId);
     });
 
     return unsubscribe;
