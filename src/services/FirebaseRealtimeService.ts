@@ -178,6 +178,9 @@ export const FirebaseRealtimeService = {
       // Manter apenas os últimos 50 logs para evitar sobrecarga no banco
       // (Isso é um "set" em um path fixo baseado em tempo, o Firebase não remove automático, 
       // mas podemos implementar uma limpeza periódica se necessário. Por ora apenas registramos).
+    } catch (err) {
+      console.warn("[Firebase] Log event failed", err);
+    }
   },
 
   /**
