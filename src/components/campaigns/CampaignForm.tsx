@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -139,20 +139,19 @@ export function CampaignForm({ initialData, onSubmit, isLoading }: CampaignFormP
     }
   }, [initialData, form]);
 
-  const filteredPlaylists = playlists?.filter(p => 
-    p.name.toLowerCase().includes(playlistSearch.toLowerCase())
-  );
+  const filteredPlaylists = useMemo(() => {
+    return playlists?.filter(p => 
+      p.name.toLowerCase().includes(playlistSearch.toLowerCase())
+    ) || [];
+  }, [playlists, playlistSearch]);
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 animate-in fade-in duration-500">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* COLUNA PRINCIPAL - IDENTIDADE E AGENDAMENTO */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-8 space-y-8">
             
-            {/* CARD 1: IDENTIDADE E VISIBILIDADE */}
-            <Card className="bg-[#1a1a1e]/50 border-white/5 shadow-2xl overflow-hidden backdrop-blur-sm group">
+            <Card className="bg-[#1a1a1e]/50 border-white/5 shadow-2xl overflow-hidden group">
               <div className="h-1 w-full bg-gradient-to-r from-primary/50 via-primary/20 to-transparent" />
               <CardHeader className="pb-6">
                 <div className="flex items-center justify-between">
@@ -283,8 +282,7 @@ export function CampaignForm({ initialData, onSubmit, isLoading }: CampaignFormP
               </CardContent>
             </Card>
 
-            {/* CARD 2: AGENDAMENTO PREMIUM */}
-            <Card className="bg-[#1a1a1e]/50 border-white/5 shadow-2xl overflow-hidden backdrop-blur-sm">
+            <Card className="bg-[#1a1a1e]/50 border-white/5 shadow-2xl overflow-hidden">
               <div className="h-1 w-full bg-gradient-to-r from-blue-500/50 via-blue-500/20 to-transparent" />
               <CardHeader className="pb-6">
                 <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-white/80">
@@ -436,9 +434,8 @@ export function CampaignForm({ initialData, onSubmit, isLoading }: CampaignFormP
             </Card>
           </div>
 
-          {/* COLUNA LATERAL - PLAYLISTS */}
           <div className="lg:col-span-4 space-y-8 h-full">
-            <Card className="bg-[#1a1a1e]/50 border-white/5 shadow-2xl overflow-hidden backdrop-blur-sm h-full flex flex-col min-h-[500px]">
+            <Card className="bg-[#1a1a1e]/50 border-white/5 shadow-2xl overflow-hidden h-full flex flex-col min-h-[500px]">
               <div className="h-1 w-full bg-gradient-to-r from-emerald-500/50 to-transparent" />
               <CardHeader className="pb-4">
                 <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-white/80">
@@ -518,7 +515,7 @@ export function CampaignForm({ initialData, onSubmit, isLoading }: CampaignFormP
                 
                 <div className="pt-4 border-t border-white/5 flex items-center justify-between">
                   <div className="text-[9px] font-black uppercase tracking-widest text-white/20">
-                    {form.watch("playlist_ids").length} Selecionadas
+                    {form.watch("playlist_ids")?.length || 0} Selecionadas
                   </div>
                   <Button 
                     variant="ghost" 
