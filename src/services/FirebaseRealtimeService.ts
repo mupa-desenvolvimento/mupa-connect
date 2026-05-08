@@ -178,8 +178,34 @@ export const FirebaseRealtimeService = {
       // Manter apenas os últimos 50 logs para evitar sobrecarga no banco
       // (Isso é um "set" em um path fixo baseado em tempo, o Firebase não remove automático, 
       // mas podemos implementar uma limpeza periódica se necessário. Por ora apenas registramos).
-    } catch (err) {
-      console.warn("[Firebase] Log event failed", err);
-    }
+  },
+
+  /**
+   * Subscribe to real-time commands via Firebase.
+   */
+  subscribeToCommands: (
+    deviceCode: string,
+    onCommand: (payload: DeviceCommandPayload) => void
+  ) => {
+    if (!deviceCode) return () => {};
+
+    console.log(`[Firebase] Subscribing to commands for device: ${deviceCode}`);
+    const commandRef = ref(database, `devices/${deviceCode}/commands`);
+    let isFirst = true;
+
+    const unsubscribe = onValue(commandRef, (snapshot) => {
+      const data = snapshot.val();
+      if (isFirst) {
+        isFirst = false;
+        return;
+      }
+      if (data) {
+        console.log(`[Firebase] Command received for ${deviceCode}:`, data);
+        onCommand(data as DeviceCommandPayload);
+      }
+    });
+
+    return unsubscribe;
   },
 };
+
