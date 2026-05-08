@@ -85,7 +85,7 @@ export default function AppLayout() {
             )}
 
             <div className="relative hidden md:block">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/50" />
               <Input
                 placeholder="Pesquisar..."
                 className="pl-10 h-10 w-[280px] bg-muted/50 border-transparent focus:border-primary/50 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all"
@@ -94,7 +94,7 @@ export default function AppLayout() {
             <div className="ml-auto flex items-center gap-2">
               <SupportCompanySelector />
               <Button variant="ghost" size="icon" aria-label="Notificações" className="h-9 w-9">
-                <Bell className="h-4 w-4" />
+                <Bell className="h-[18px] w-[18px]" />
               </Button>
               <ThemeToggle />
 
