@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Satoshi", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
-        display: ["Satoshi", "Inter", "sans-serif"],
+        sans: ["Satoshi", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["Satoshi", "sans-serif"],
         mono: ["'JetBrains Mono'", "ui-monospace", "monospace"],
       },
       colors: {
