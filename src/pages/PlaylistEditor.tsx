@@ -653,6 +653,8 @@ export default function PlaylistEditor() {
             priority: 1,
             type: it.media.type === "video" ? "video" : "image",
             media: it.media,
+            campaignName: campaign.name,
+            campaignColor: campaign.color || '#9b87f5'
           }));
 
         const insertIndex =
