@@ -12,7 +12,8 @@ export function StatusBadge({ status }: { status: DeviceStatus | "active" | "sch
   };
   const m = map[status];
   return (
-    <span className={cn("status-dot inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-full", m.cls)}>
+    <span className={cn("inline-flex items-center text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border", m.cls)}>
+      <div className={cn("w-1 h-1 rounded-full mr-1.5", m.cls.split(' ')[0].replace('text-', 'bg-'))} />
       {m.label}
     </span>
   );

@@ -287,64 +287,67 @@ export default function MediaPage() {
           <div className="flex gap-2">
             <Dialog open={isFolderDialogOpen} onOpenChange={setIsFolderDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="h-9">
+                <Button variant="secondary" size="sm" className="h-10 text-[10px] font-black uppercase tracking-widest px-6">
                   <FolderPlus className="h-4 w-4 mr-2" /> Nova Pasta
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="bg-[#1a1a1e] border-white/10 text-white rounded-2xl">
                 <DialogHeader>
-                  <DialogTitle>Criar Nova Pasta</DialogTitle>
+                  <DialogTitle className="text-xl font-black uppercase tracking-tighter italic">Criar Nova Pasta</DialogTitle>
                 </DialogHeader>
-                <div className="py-4">
-                  <Label htmlFor="folderName">Nome da Pasta</Label>
+                <div className="py-6 space-y-3">
+                  <Label htmlFor="folderName" className="text-[10px] font-black uppercase tracking-widest text-white/40 px-1">Nome da Pasta</Label>
                   <Input 
                     id="folderName" 
                     value={newFolderName} 
                     onChange={(e) => setNewFolderName(e.target.value)}
                     placeholder="Ex: Promoções de Maio"
-                    className="mt-2"
+                    className="bg-black/60 border-white/10 h-12 focus:border-primary/50 text-sm font-bold rounded-xl"
                   />
                 </div>
                 <DialogFooter>
-                  <Button onClick={createFolder}>Criar</Button>
+                  <Button variant="premium" onClick={createFolder} className="h-11 px-8 rounded-xl">Criar Pasta</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
 
-            <Button variant="outline" size="sm" className="h-9" onClick={() => navigate("/midias/lixeira")}>
+            <Button variant="secondary" size="sm" className="h-10 text-[10px] font-black uppercase tracking-widest px-6" onClick={() => navigate("/midias/lixeira")}>
               <Recycle className="h-4 w-4 mr-2" /> Lixeira
             </Button>
 
             <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-gradient-primary text-primary-foreground shadow-glow h-9" size="sm">
+                <Button variant="premium" className="h-10 px-6" size="sm">
                   <Upload className="h-4 w-4 mr-2" /> Enviar mídias
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Upload de Mídias</DialogTitle>
-                </DialogHeader>
-                <MediaUpload 
-                  tenantId={tenantId} 
-                  companyId={companyId}
-                  currentFolderId={currentFolder} 
-                  onUploadComplete={fetchMedia}
-                  onClose={() => setIsUploadDialogOpen(false)}
-                />
+              <DialogContent className="max-w-2xl bg-[#0c0c0e] border-white/5 rounded-2xl p-0 overflow-hidden shadow-2xl">
+                <div className="p-8 border-b border-white/5 bg-white/[0.02]">
+                  <DialogTitle className="text-2xl font-black uppercase tracking-tighter italic text-white">Upload de Mídias</DialogTitle>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white/20 mt-1">Formatos suportados: MP4, JPG, PNG</p>
+                </div>
+                <div className="p-8">
+                  <MediaUpload 
+                    tenantId={tenantId} 
+                    companyId={companyId}
+                    currentFolderId={currentFolder} 
+                    onUploadComplete={fetchMedia}
+                    onClose={() => setIsUploadDialogOpen(false)}
+                  />
+                </div>
               </DialogContent>
             </Dialog>
           </div>
         }
       />
 
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-muted/20 p-4 rounded-xl border border-border/40 backdrop-blur-md">
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <div className="relative w-full md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="flex flex-col md:flex-row gap-6 items-center justify-between bg-[#1a1a1e]/40 p-6 rounded-2xl border border-white/5 shadow-2xl backdrop-blur-md">
+        <div className="flex items-center gap-4 w-full md:w-auto">
+          <div className="relative w-full md:w-72 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20 group-focus-within:text-primary transition-colors" />
             <Input 
-              placeholder="Buscar mídias..." 
-              className="pl-9 h-9"
+              placeholder="Pesquisar arquivos..." 
+              className="pl-12 h-11 bg-black/40 border-white/5 focus:border-primary/50 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -429,7 +432,7 @@ export default function MediaPage() {
             {folders.map((folder) => (
               <Card 
                 key={folder.id} 
-                className="overflow-hidden group hover:border-primary/40 hover:bg-muted/30 transition-all cursor-pointer border-border/60 shadow-sm"
+                className="overflow-hidden group hover:border-primary/50 hover:bg-white/[0.03] transition-all cursor-pointer border-white/5 bg-black/40 shadow-premium rounded-2xl"
                 onClick={() => setCurrentFolder(folder.id)}
               >
                 <CardContent className="p-3 flex items-center justify-between">
@@ -462,8 +465,8 @@ export default function MediaPage() {
             ))}
 
             {filteredItems.map((m) => (
-              <Card key={m.id} className="overflow-hidden group hover:border-primary/40 hover:shadow-md transition-all border-border/60 bg-background/50 flex flex-col">
-                <div className="aspect-video bg-muted/30 relative overflow-hidden flex items-center justify-center border-b border-border/40">
+              <Card key={m.id} className="overflow-hidden group hover:border-primary/50 hover:shadow-glow transition-all border-white/5 bg-black/40 flex flex-col rounded-2xl shadow-premium">
+                <div className="aspect-video bg-black relative overflow-hidden flex items-center justify-center border-b border-white/5">
                   {m.type === "image" ? (
                     <img 
                       src={m.file_url} 
