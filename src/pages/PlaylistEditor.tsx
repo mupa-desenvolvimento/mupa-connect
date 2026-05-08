@@ -1541,6 +1541,25 @@ export default function PlaylistEditor() {
                       strategy={horizontalListSortingStrategy}
                     >
                       <TimelineDropZone>
+                        {activeId && activeDragType === 'campaign' && (
+                          <div className="absolute inset-0 z-50 pointer-events-none overflow-hidden rounded-xl">
+                            <motion.div 
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              className="absolute inset-0 bg-[#085CF0]/10 border-2 border-dashed border-[#085CF0]/50 flex items-center justify-center backdrop-blur-[2px]"
+                            >
+                              <div className="flex flex-col items-center gap-3 bg-black/80 px-8 py-6 rounded-3xl border border-white/10 shadow-2xl">
+                                <div className="w-16 h-16 rounded-full bg-[#085CF0] flex items-center justify-center shadow-[0_0_30px_rgba(8,92,240,0.5)] animate-pulse">
+                                  <Plus className="h-8 w-8 text-white" />
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-lg font-black text-white uppercase tracking-tighter">Solte para Adicionar Campanha</p>
+                                  <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Os conteúdos serão inseridos nesta posição</p>
+                                </div>
+                              </div>
+                            </motion.div>
+                          </div>
+                        )}
                         <AnimatePresence>
                           {items.map((item, index) => (
                             <div 
@@ -1718,6 +1737,67 @@ export default function PlaylistEditor() {
         </aside>
       </div>
       </DndContext>
+
+      <DragOverlay dropAnimation={null}>
+        {activeId && activeDragType === 'campaign' && campaigns?.find(c => `campaign-${c.id}` === activeId) && (
+          <div className="z-[1000] pointer-events-none scale-105 transition-transform">
+            {(() => {
+              const campaign = campaigns.find(c => `campaign-${c.id}` === activeId);
+              const color = campaign.color || '#9b87f5';
+              return (
+                <div 
+                  className="flex flex-col gap-2 p-4 rounded-2xl bg-black/90 border-2 backdrop-blur-xl shadow-2xl min-w-[280px] animate-in zoom-in-95 duration-200"
+                  style={{ borderColor: color }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
+                      style={{ backgroundColor: color }}
+                    >
+                      <Megaphone className="h-5 w-5 text-white animate-bounce" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black text-white uppercase tracking-wider">{campaign.name}</h4>
+                      <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">
+                        Solte para inserir {campaign.campaign_contents?.length || 0} mídias
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Visual indication of items being dragged */}
+                  <div className="flex -space-x-3 mt-1 overflow-hidden">
+                    {campaign.campaign_contents?.slice(0, 5).map((content: any, idx: number) => (
+                      <div 
+                        key={idx}
+                        className="w-12 h-12 rounded-lg border-2 border-black bg-white/5 overflow-hidden shadow-xl transform rotate-3"
+                        style={{ zIndex: 5 - idx }}
+                      >
+                        <img 
+                          src={content.media?.thumbnail_url || content.media?.file_url} 
+                          className="w-full h-full object-cover opacity-80"
+                        />
+                      </div>
+                    ))}
+                    {(campaign.campaign_contents?.length || 0) > 5 && (
+                      <div className="w-12 h-12 rounded-lg border-2 border-black bg-white/10 flex items-center justify-center text-[10px] font-bold text-white z-0 backdrop-blur-md">
+                        +{(campaign.campaign_contents?.length || 0) - 5}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="mt-2 h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                    <motion.div 
+                      className="h-full bg-white/40"
+                      animate={{ x: ["-100%", "100%"] }}
+                      transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+                    />
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+      </DragOverlay>
 
       {/* Debug Overlay */}
       <AnimatePresence>
