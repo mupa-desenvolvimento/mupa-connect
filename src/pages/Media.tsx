@@ -291,7 +291,26 @@ export default function MediaPage() {
                   <FolderPlus className="h-4 w-4 mr-2" /> Nova Pasta
                 </Button>
               </DialogTrigger>
-...
+              <DialogContent className="bg-[#1a1a1e] border-white/10 text-white rounded-2xl">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-black uppercase tracking-tighter italic">Criar Nova Pasta</DialogTitle>
+                </DialogHeader>
+                <div className="py-6 space-y-3">
+                  <Label htmlFor="folderName" className="text-[10px] font-black uppercase tracking-widest text-white/40 px-1">Nome da Pasta</Label>
+                  <Input 
+                    id="folderName" 
+                    value={newFolderName} 
+                    onChange={(e) => setNewFolderName(e.target.value)}
+                    placeholder="Ex: Promoções de Maio"
+                    className="bg-black/60 border-white/10 h-12 focus:border-primary/50 text-sm font-bold rounded-xl"
+                  />
+                </div>
+                <DialogFooter>
+                  <Button variant="premium" onClick={createFolder} className="h-11 px-8 rounded-xl">Criar Pasta</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
             <Button variant="secondary" size="sm" className="h-10 text-[10px] font-black uppercase tracking-widest px-6" onClick={() => navigate("/midias/lixeira")}>
               <Recycle className="h-4 w-4 mr-2" /> Lixeira
             </Button>
@@ -302,17 +321,20 @@ export default function MediaPage() {
                   <Upload className="h-4 w-4 mr-2" /> Enviar mídias
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Upload de Mídias</DialogTitle>
-                </DialogHeader>
-                <MediaUpload 
-                  tenantId={tenantId} 
-                  companyId={companyId}
-                  currentFolderId={currentFolder} 
-                  onUploadComplete={fetchMedia}
-                  onClose={() => setIsUploadDialogOpen(false)}
-                />
+              <DialogContent className="max-w-2xl bg-[#0c0c0e] border-white/5 rounded-2xl p-0 overflow-hidden shadow-2xl">
+                <div className="p-8 border-b border-white/5 bg-white/[0.02]">
+                  <DialogTitle className="text-2xl font-black uppercase tracking-tighter italic text-white">Upload de Mídias</DialogTitle>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white/20 mt-1">Formatos suportados: MP4, JPG, PNG</p>
+                </div>
+                <div className="p-8">
+                  <MediaUpload 
+                    tenantId={tenantId} 
+                    companyId={companyId}
+                    currentFolderId={currentFolder} 
+                    onUploadComplete={fetchMedia}
+                    onClose={() => setIsUploadDialogOpen(false)}
+                  />
+                </div>
               </DialogContent>
             </Dialog>
           </div>
