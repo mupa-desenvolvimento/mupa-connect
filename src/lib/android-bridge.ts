@@ -37,3 +37,8 @@ export const sendCommandToAndroid = (action: string, payload: any = {}, deviceId
     return false;
   }
 };
+
+// Expose to window for manual debugging or third-party scripts
+if (typeof window !== "undefined") {
+  (window as any).sendCommandToAndroid = sendCommandToAndroid;
+}
