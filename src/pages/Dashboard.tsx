@@ -143,7 +143,7 @@ export default function DashboardPage() {
 
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {(statsData || []).map((s: any) => (
-          <Card key={s.label} className="border-border/60 hover:shadow-elegant transition-all duration-300 bg-background/50 hover:bg-background/80">
+          <Card key={s.label} className="border-border/40 hover:shadow-premium transition-all duration-300 bg-card/40 hover:bg-card/60">
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div>
@@ -153,7 +153,7 @@ export default function DashboardPage() {
                     {s.total !== undefined && <span className="text-base text-muted-foreground font-normal"> / {s.total}</span>}
                   </p>
                 </div>
-                <div className={cn("h-10 w-10 rounded-xl bg-muted/30 border border-border/40 grid place-items-center", s.accent)}>
+                <div className={cn("h-10 w-10 rounded-xl bg-muted/20 border border-border/40 grid place-items-center", s.accent)}>
                   <s.icon className="h-5 w-5" />
                 </div>
               </div>
@@ -163,7 +163,7 @@ export default function DashboardPage() {
       </section>
 
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-border/60 bg-background/50">
+        <Card className="border-border/40 bg-card/40">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -186,7 +186,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/60 bg-background/50">
+        <Card className="border-border/40 bg-card/40">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -202,7 +202,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/60 bg-background/50">
+        <Card className="border-border/40 bg-card/40">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="min-w-0">
@@ -217,7 +217,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/60 bg-background/50">
+        <Card className="border-border/40 bg-card/40">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="min-w-0">
@@ -234,7 +234,7 @@ export default function DashboardPage() {
       </section>
 
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 pb-4">
-        <Card className="lg:col-span-2 border-border/60 bg-card/50">
+        <Card className="lg:col-span-2 border-border/40 bg-card/50">
           <CardHeader className="pb-2">
             <CardTitle className="font-bold text-lg font-bold">Status dos dispositivos</CardTitle>
           </CardHeader>
@@ -269,7 +269,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/60 bg-card/50">
+        <Card className="border-border/40 bg-card/50">
           <CardHeader className="pb-2">
             <CardTitle className="font-bold text-lg font-bold">Atividade recente</CardTitle>
           </CardHeader>
@@ -281,7 +281,7 @@ export default function DashboardPage() {
                 <div className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">Sincronizado agora</div>
               </div>
             </div>
-            <div className="p-8 text-center border border-dashed border-border/60 rounded-xl">
+            <div className="p-8 text-center border border-dashed border-border/40 rounded-xl">
                <Activity className="h-8 w-8 mx-auto opacity-10 mb-2" />
                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Aguardando novos eventos</p>
             </div>
