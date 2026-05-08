@@ -99,6 +99,8 @@ interface EditorPlaylistItem {
   priority: number;
   type: string;
   media?: any;
+  campaignName?: string;
+  campaignColor?: string;
 }
 
 const DEFAULT_APPEARANCE_CONFIG = {
