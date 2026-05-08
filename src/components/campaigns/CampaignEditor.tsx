@@ -19,7 +19,8 @@ import {
   CheckCircle2, 
   AlertCircle,
   Megaphone,
-  Trash2
+  Trash2,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
