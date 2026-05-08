@@ -429,7 +429,7 @@ export default function PlaylistEditor() {
       setItems([]);
       setSelectedItem(null);
     }
-  }, [playlistData, medias, id]);
+  }, [playlistData, medias, id, campaigns]);
 
   const savePlaylist = async (updatedItems: EditorPlaylistItem[], updatedName: string) => {
     if (isSaving) return;
