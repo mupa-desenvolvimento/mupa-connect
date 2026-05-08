@@ -136,9 +136,12 @@ export function AppSidebar() {
 
       <SidebarFooter>
         {!collapsed && (
-          <div className="rounded-xl border border-sidebar-border bg-sidebar-accent/50 p-4 text-[9px] font-black uppercase tracking-widest text-sidebar-foreground/40 mb-4">
-            <div className="text-primary mb-1">Mupa Cloud</div>
-            <div className="opacity-50">Sistema Multitenant v3.0</div>
+          <div className="rounded-xl border border-sidebar-border/50 bg-sidebar-accent/30 p-4 text-[10px] font-medium uppercase tracking-[0.12em] text-sidebar-foreground/40 mb-6 mx-2 backdrop-blur-sm">
+            <div className="text-primary font-bold mb-1 flex items-center gap-2">
+              <div className="size-1.5 rounded-full bg-primary animate-pulse" />
+              Mupa Cloud
+            </div>
+            <div className="opacity-60">Sistema Multitenant v3.0</div>
           </div>
         )}
       </SidebarFooter>
