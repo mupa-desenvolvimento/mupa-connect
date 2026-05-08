@@ -3,7 +3,7 @@ import {
   ChevronRight, 
   ChevronDown, 
   Store, 
-  Layers, 
+  Folder, 
   Monitor, 
   Edit2, 
   Plus, 
