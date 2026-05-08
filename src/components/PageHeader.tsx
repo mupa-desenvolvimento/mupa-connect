@@ -13,7 +13,7 @@ export function PageHeader({ title, description, actions, className }: Props) {
     <div className={cn("flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10 mt-2", className)}>
       <div className="space-y-1">
         <h1 className="text-white/40 text-xs md:text-sm font-black uppercase tracking-[0.3em] max-w-2xl leading-relaxed italic">
-          {description || title}
+          {title} {description && <span className="opacity-50 ml-2">/ {description}</span>}
         </h1>
       </div>
       {actions && (
