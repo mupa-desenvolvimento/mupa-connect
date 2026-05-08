@@ -152,7 +152,7 @@ export function CampaignForm({ initialData, onSubmit, isLoading }: CampaignFormP
           <div className="lg:col-span-8 space-y-8">
             
             {/* CARD 1: IDENTIDADE E VISIBILIDADE */}
-            <Card className="bg-[#1a1a1e]/50 border-white/5 shadow-2xl overflow-hidden backdrop-blur-sm group">
+            <Card className="bg-[#1a1a1e]/50 border-white/5 shadow-2xl overflow-hidden group">
               <div className="h-1 w-full bg-gradient-to-r from-primary/50 via-primary/20 to-transparent" />
               <CardHeader className="pb-6">
                 <div className="flex items-center justify-between">
