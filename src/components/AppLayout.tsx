@@ -88,7 +88,7 @@ export default function AppLayout() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground/50" />
               <Input
                 placeholder="Pesquisar..."
-                className="pl-10 h-10 w-[280px] bg-muted/50 border-transparent focus:border-primary/50 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all"
+                className="pl-10 h-10 w-[280px] bg-muted/50 border-transparent focus:border-primary/50 text-[13px] font-medium tracking-wide rounded-xl transition-all"
               />
             </div>
             <div className="ml-auto flex items-center gap-2">
