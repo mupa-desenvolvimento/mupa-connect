@@ -338,13 +338,13 @@ export default function MediaPage() {
         }
       />
 
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-muted/20 p-4 rounded-xl border border-border/40 backdrop-blur-md">
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <div className="relative w-full md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="flex flex-col md:flex-row gap-6 items-center justify-between bg-[#1a1a1e]/40 p-6 rounded-2xl border border-white/5 shadow-2xl backdrop-blur-md">
+        <div className="flex items-center gap-4 w-full md:w-auto">
+          <div className="relative w-full md:w-72 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20 group-focus-within:text-primary transition-colors" />
             <Input 
-              placeholder="Buscar mídias..." 
-              className="pl-9 h-9"
+              placeholder="Pesquisar arquivos..." 
+              className="pl-12 h-11 bg-black/40 border-white/5 focus:border-primary/50 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
