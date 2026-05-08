@@ -69,15 +69,15 @@ export function CampaignTimeline({ campaigns, onSelectCampaign }: CampaignTimeli
 
       <div className="flex-1 overflow-auto relative custom-scrollbar" ref={timelineRef}>
         {/* Time Labels Header */}
-        <div className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm border-b border-border/40 flex h-10">
-          <div className="w-48 flex-shrink-0 border-r border-border/40 bg-muted/30 flex items-center px-4 font-bold text-xs uppercase text-muted-foreground tracking-wider">
+        <div className="sticky top-0 z-20 bg-[#0c0c0e]/95 backdrop-blur-md border-b border-white/5 flex h-12">
+          <div className="w-56 flex-shrink-0 border-r border-white/5 bg-white/[0.02] flex items-center px-6 font-black text-[10px] uppercase text-white/40 tracking-[0.2em]">
             Campanha
           </div>
           <div className="flex" style={{ width: 24 * hourWidth }}>
             {hours.map(h => (
               <div 
                 key={h} 
-                className="border-r border-border/20 flex-shrink-0 text-[10px] font-bold text-muted-foreground/70 flex items-center justify-center"
+                className="border-r border-white/5 flex-shrink-0 text-[10px] font-black text-white/20 flex items-center justify-center uppercase tracking-widest"
                 style={{ width: hourWidth }}
               >
                 {h.toString().padStart(2, '0')}:00
