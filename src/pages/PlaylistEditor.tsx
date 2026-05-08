@@ -1573,11 +1573,25 @@ export default function PlaylistEditor() {
                         )}
                         <AnimatePresence>
                           {items.map((item, index) => (
-                            <div 
-                              key={item.id} 
-                              style={{ width: `${item.duration * PIXELS_PER_SECOND}px` }}
-                              className="shrink-0"
-                            >
+                            <React.Fragment key={item.id}>
+                              {activeDragType === 'campaign' && overId === item.id && (
+                                <motion.div 
+                                  layoutId="campaign-placeholder"
+                                  initial={{ width: 0, opacity: 0 }}
+                                  animate={{ width: 120, opacity: 1 }}
+                                  exit={{ width: 0, opacity: 0 }}
+                                  className="h-28 bg-[#085CF0]/20 border-2 border-dashed border-[#085CF0]/50 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
+                                >
+                                  <div className="flex flex-col items-center gap-1">
+                                    <Plus className="h-4 w-4 text-[#085CF0] animate-pulse" />
+                                    <span className="text-[8px] font-black text-[#085CF0] uppercase">Inserir aqui</span>
+                                  </div>
+                                </motion.div>
+                              )}
+                              <div 
+                                style={{ width: `${item.duration * PIXELS_PER_SECOND}px` }}
+                                className="shrink-0"
+                              >
                               <SortableItem 
                                 item={item} 
                                 index={index}
