@@ -1248,60 +1248,107 @@ export default function PlaylistEditor() {
                   ) : (
                     campaigns.map((campaign: any) => {
                       const campaignItems = campaign.campaign_contents || [];
+                      const isExpanded = expandedCampaignId === campaign.id;
+                      
                       return (
-                        <DraggableCampaign key={campaign.id} campaign={campaign}>
-                          <div className="space-y-3 cursor-grab active:cursor-grabbing">
-                            <div className="flex items-center gap-2">
-                              <div 
-                                className="h-3 w-3 rounded-full"
-                                style={{ backgroundColor: campaign.color || '#9b87f5' }}
-                              />
-                              <h4 className="text-sm font-semibold text-white">
-                                {campaign.name}
-                              </h4>
-                              <Badge variant="outline" className="text-[10px] border-white/10">
-                                P{campaign.priority}
-                              </Badge>
-                            </div>
-                            
-                            {campaignItems.length > 0 ? (
-                              <div className="grid grid-cols-2 gap-2">
-                                {campaignItems.map((item: any) => (
-                                  <motion.div
-                                    key={item.id}
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    className="relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer group border border-white/10 hover:border-[#085CF0]/50 transition-colors"
-                                    onClick={() => {
-                                      if (item.media) {
-                                        addItem(item.media.id);
-                                      }
-                                    }}
-                                  >
-                                    <img 
-                                      src={item.media?.thumbnail_url || item.media?.file_url} 
-                                      alt={item.media?.name} 
-                                      className="w-full h-full object-cover opacity-80 group-hover:opacity-100" 
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100" />
-                                    <div className="absolute bottom-1.5 left-1.5 right-1.5 opacity-0 group-hover:opacity-100 flex justify-between items-center">
-                                      <span className="text-[10px] text-white font-medium truncate">
-                                        {item.media?.name}
-                                      </span>
-                                      <Plus className="h-3 w-3 text-[#3b82f6] shrink-0" />
-                                    </div>
-                                  </motion.div>
-                                ))}
+                        <div key={campaign.id} className="space-y-1">
+                          <DraggableCampaign campaign={campaign}>
+                            <div 
+                              className={cn(
+                                "flex items-center justify-between p-3 rounded-xl border border-white/5 transition-all cursor-grab active:cursor-grabbing group",
+                                isExpanded ? "bg-[#085CF0]/10 border-[#085CF0]/30" : "bg-black/20 hover:bg-black/40"
+                              )}
+                            >
+                              <div className="flex items-center gap-3 overflow-hidden">
+                                <div 
+                                  className="h-2 w-2 rounded-full shrink-0"
+                                  style={{ backgroundColor: campaign.color || '#9b87f5' }}
+                                />
+                                <div className="flex flex-col min-w-0">
+                                  <h4 className="text-sm font-semibold text-white truncate">
+                                    {campaign.name}
+                                  </h4>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[10px] text-white/40 uppercase tracking-wider font-medium">
+                                      {campaignItems.length} {campaignItems.length === 1 ? 'mídia' : 'mídias'}
+                                    </span>
+                                    <Badge variant="outline" className="text-[8px] h-3.5 px-1 border-white/5 text-white/30">
+                                      P{campaign.priority}
+                                    </Badge>
+                                  </div>
+                                </div>
                               </div>
-                            ) : (
-                              <p className="text-[10px] text-white/30 px-2">
-                                Nenhum item nesta campanha
-                              </p>
+                              
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className={cn(
+                                  "h-8 w-8 rounded-lg text-white/40 hover:text-white hover:bg-white/5 transition-transform",
+                                  isExpanded && "rotate-180"
+                                )}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedCampaignId(isExpanded ? null : campaign.id);
+                                }}
+                              >
+                                <ChevronDown className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </DraggableCampaign>
+
+                          <AnimatePresence>
+                            {isExpanded && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.2, ease: "easeInOut" }}
+                                className="overflow-hidden"
+                              >
+                                <div className="mt-1 space-y-1 pl-4 border-l-2 border-white/5 ml-4">
+                                  {campaignItems.length > 0 ? (
+                                    campaignItems.map((item: any) => (
+                                      <motion.div
+                                        key={item.id}
+                                        initial={{ x: -10, opacity: 0 }}
+                                        animate={{ x: 0, opacity: 1 }}
+                                        className="flex items-center gap-3 p-2 rounded-lg bg-white/[0.02] border border-white/5 group hover:bg-white/[0.05] hover:border-white/10 transition-all cursor-pointer"
+                                        onClick={() => {
+                                          if (item.media) {
+                                            addItem(item.media.id);
+                                          }
+                                        }}
+                                      >
+                                        <div className="h-10 w-10 rounded-md overflow-hidden bg-black/40 shrink-0">
+                                          <img 
+                                            src={item.media?.thumbnail_url || item.media?.file_url} 
+                                            alt={item.media?.name} 
+                                            className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" 
+                                          />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-xs font-medium text-white/80 truncate group-hover:text-white transition-colors">
+                                            {item.media?.name}
+                                          </p>
+                                          <p className="text-[10px] text-white/40">
+                                            {item.media?.type || 'Mídia'} • {item.duracao || 10}s
+                                          </p>
+                                        </div>
+                                        <Plus className="h-3.5 w-3.5 text-[#085CF0] opacity-0 group-hover:opacity-100 transition-all transform scale-75 group-hover:scale-100" />
+                                      </motion.div>
+                                    ))
+                                  ) : (
+                                    <div className="py-4 text-center">
+                                      <p className="text-[10px] text-white/20 uppercase tracking-widest font-bold">
+                                        Vazia
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              </motion.div>
                             )}
-                            
-                            <Separator className="bg-white/5" />
-                          </div>
-                        </DraggableCampaign>
+                          </AnimatePresence>
+                        </div>
                       );
                     })
                   )}
