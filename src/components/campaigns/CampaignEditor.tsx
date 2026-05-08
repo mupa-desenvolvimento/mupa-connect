@@ -269,7 +269,7 @@ export function CampaignEditor({ campaignId, onClose }: CampaignEditorProps) {
 
         <div className="flex-1 overflow-hidden">
           <TabsContent value="details" className="m-0 h-full focus-visible:ring-0 overflow-y-auto custom-scrollbar">
-            <div className="max-w-5xl mx-auto py-8 px-6">
+            <div className="w-full py-6 px-6">
               <CampaignForm 
                 initialData={initialData} 
                 onSubmit={onSubmit} 
