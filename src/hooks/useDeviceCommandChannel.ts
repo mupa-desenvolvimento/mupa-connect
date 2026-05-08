@@ -90,9 +90,56 @@ async function runCommand(cmd: DeviceCommand, h: CommandHandlerContext) {
         break;
       case "reboot":
         await h.reboot();
+        sendCommandToAndroid("RELOAD_PAGE", {}, cmd.device_id);
         break;
+      case "reboot_device":
+        await sendCommandToAndroid("REBOOT", {}, cmd.device_id);
+        break;
+      case "open_app": {
+        const pkg = cmd.payload?.package || cmd.payload?.packageName;
+        if (!pkg) throw new Error("package ausente");
+        await h.openApp?.(String(pkg));
+        sendCommandToAndroid("OPEN_APP", { package: pkg }, cmd.device_id);
+        break;
+      }
+      case "restart_player":
+        await h.restartPlayer?.();
+        sendCommandToAndroid("RESTART_PLAYER", {}, cmd.device_id);
+        break;
+      case "reload_page":
+        await h.reloadPage?.();
+        sendCommandToAndroid("RELOAD_PAGE", {}, cmd.device_id);
+        break;
+      case "fullscreen": {
+        const enabled = cmd.payload?.enabled ?? true;
+        await h.fullscreen?.(Boolean(enabled));
+        sendCommandToAndroid("FULLSCREEN", { enabled }, cmd.device_id);
+        break;
+      }
+      case "update_apk": {
+        const url = cmd.payload?.url;
+        if (!url) throw new Error("URL do APK ausente");
+        await h.updateApk?.(String(url));
+        sendCommandToAndroid("UPDATE_APK", { url }, cmd.device_id);
+        break;
+      }
+      case "start_service": {
+        const service = cmd.payload?.service;
+        if (!service) throw new Error("serviço ausente");
+        await h.startService?.(String(service));
+        sendCommandToAndroid("START_SERVICE", { service }, cmd.device_id);
+        break;
+      }
+      case "stop_service": {
+        const service = cmd.payload?.service;
+        if (!service) throw new Error("serviço ausente");
+        await h.stopService?.(String(service));
+        sendCommandToAndroid("STOP_SERVICE", { service }, cmd.device_id);
+        break;
+      }
       case "ping":
         message = "pong";
+        sendCommandToAndroid("PING", {}, cmd.device_id);
         break;
       default:
         ok = false;
