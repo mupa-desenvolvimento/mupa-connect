@@ -317,7 +317,7 @@ const GroupItem = ({
         "w-full group/node relative transition-all duration-200",
         isMap && level > 0 && "pl-6 sm:pl-10 mt-2",
         isHovered && "z-10",
-        isOver && "ring-2 ring-primary ring-offset-2 ring-offset-background rounded-xl"
+        isOver && "ring-2 ring-[#085CF0] ring-offset-2 ring-offset-background rounded-xl"
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
