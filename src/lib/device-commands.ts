@@ -15,12 +15,24 @@ export type DeviceCommandKind =
   | "fullscreen"
   | "update_apk"
   | "start_service"
-  | "stop_service";
+  | "stop_service"
+  | "set_brightness"
+  | "tts_speak"
+  | "open_url"
+  | "ota_update"
+  | "watchdog_config";
 
 export interface DeviceCommandPayload {
   playlist_id?: string;
   campaign_id?: string;
   volume?: number;
+  brightness?: number;
+  package?: string;
+  packageName?: string;
+  url?: string;
+  text?: string;
+  enabled?: boolean;
+  service?: string;
   [key: string]: unknown;
 }
 
