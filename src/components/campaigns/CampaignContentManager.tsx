@@ -78,9 +78,7 @@ const DraggableLibraryItem = ({ media, onClick, isSelected, onToggleSelect }: an
     >
       <img src={media.thumbnail_url || media.file_url} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
-      
       <div {...listeners} {...attributes} className="absolute inset-0 z-10" />
-
       <div className="absolute top-2 right-2 z-20">
         <div 
           onClick={(e) => { e.stopPropagation(); onToggleSelect(media.id); }}
@@ -92,11 +90,8 @@ const DraggableLibraryItem = ({ media, onClick, isSelected, onToggleSelect }: an
           {isSelected && <CheckCircle className="h-3 w-3 text-white" />}
         </div>
       </div>
-
       <div className="absolute bottom-2 left-2 right-2 z-20">
-        <p className="text-[9px] font-black uppercase tracking-widest text-white/90 truncate drop-shadow-lg mb-1">
-          {media.name}
-        </p>
+        <p className="text-[9px] font-black uppercase tracking-widest text-white/90 truncate drop-shadow-lg mb-1">{media.name}</p>
         <div className="flex items-center gap-2">
           <Badge className="bg-black/60 border-none text-[8px] h-3.5 px-1 font-bold text-white/40">
             {media.type === 'video' ? <FileVideo className="h-2.5 w-2.5 mr-1" /> : <FileImage className="h-2.5 w-2.5 mr-1" />}
@@ -128,18 +123,14 @@ const SortableCampaignItem = ({ item, index, isSelected, onSelect, onRemove }: a
       <div className="relative h-[160px] w-full overflow-hidden bg-black">
         <img src={item.media?.thumbnail_url || item.media?.file_url} className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1E] via-transparent to-transparent" />
-        
         {!item.is_locked && (
           <div {...attributes} {...listeners} className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity cursor-grab active:cursor-grabbing z-20">
             <GripVertical className="h-8 w-8 text-white/40" />
           </div>
         )}
-
         <div className="absolute top-3 left-3 z-30">
           <div className="flex items-center gap-2">
-            <span className="w-6 h-6 rounded-lg bg-black/60 backdrop-blur-md flex items-center justify-center text-[10px] font-black text-white/90 border border-white/10">
-              {index + 1}
-            </span>
+            <span className="w-6 h-6 rounded-lg bg-black/60 backdrop-blur-md flex items-center justify-center text-[10px] font-black text-white/90 border border-white/10">{index + 1}</span>
             {item.is_locked && (
               <Badge className="bg-orange-500/20 text-orange-500 border-none text-[8px] h-5 font-black tracking-widest px-2">
                 <Lock className="h-2.5 w-2.5 mr-1" /> LOCK
@@ -147,35 +138,25 @@ const SortableCampaignItem = ({ item, index, isSelected, onSelect, onRemove }: a
             )}
           </div>
         </div>
-
         <div className="absolute top-3 right-3 z-30 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
           {!item.is_locked && (
-            <button 
-              onClick={(e) => { e.stopPropagation(); onRemove(item.id); }}
-              className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
-            >
+            <button onClick={(e) => { e.stopPropagation(); onRemove(item.id); }} className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
               <Trash2 className="h-4 w-4" />
             </button>
           )}
         </div>
       </div>
-
       <div className="flex-1 p-4 flex flex-col justify-between relative z-10">
         <div className="space-y-1">
           <p className="text-[10px] font-black uppercase tracking-widest text-white/90 truncate">{item.media?.name || 'Sem nome'}</p>
           <div className="flex items-center gap-2">
-            <Badge className="bg-white/5 border-none text-[8px] h-4 px-1.5 font-bold text-white/20">
-              {item.media?.type === 'video' ? 'VIDEO' : 'IMAGE'}
-            </Badge>
+            <Badge className="bg-white/5 border-none text-[8px] h-4 px-1.5 font-bold text-white/20">{item.media?.type === 'video' ? 'VIDEO' : 'IMAGE'}</Badge>
           </div>
         </div>
-        
         <div className="flex items-center justify-between mt-auto">
           <div className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-md border border-white/5">
             <Clock className="h-3 w-3 text-primary" />
-            <span className="text-[10px] font-black text-white/60">
-              {item.duration_override || item.media?.duration || 10}s
-            </span>
+            <span className="text-[10px] font-black text-white/60">{item.duration_override || item.media?.duration || 10}s</span>
           </div>
           {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />}
         </div>
@@ -214,7 +195,7 @@ export function CampaignContentManager({ campaignId, onContentChange }: Campaign
         .order("position");
 
       if (error) throw error;
-      setCampaignItems((data || []).map(i => ({ ...i, is_locked: i.is_locked || false, priority_override: i.weight || 1 })));
+      setCampaignItems((data || []).map(i => ({ ...i, is_locked: (i as any).is_locked || false, priority_override: i.weight || 1 })));
     } catch (e: any) { toast.error("Erro: " + e.message); } finally { setLoading(false); }
   };
 
@@ -236,7 +217,23 @@ export function CampaignContentManager({ campaignId, onContentChange }: Campaign
       }
       onContentChange?.();
       toast.success("Conteúdo atualizado");
-    } catch (e: any) { toast.error("Erro: " + e.message); }
+    } catch (e: any) { toast.error("Erro ao salvar: " + e.message); }
+  };
+
+  const handleRemove = (id: string) => {
+    const item = campaignItems.find(i => i.id === id);
+    if (item?.is_locked) { toast.error("Item bloqueado"); return; }
+    const newItems = campaignItems.filter(i => i.id !== id);
+    setCampaignItems(newItems);
+    if (selectedItem?.id === id) setSelectedItem(null);
+    saveContent(newItems);
+  };
+
+  const updateItemProperty = (id: string, property: string, value: any) => {
+    const newItems = campaignItems.map(i => i.id === id ? { ...i, [property]: value } : i);
+    setCampaignItems(newItems);
+    if (selectedItem?.id === id) setSelectedItem({ ...selectedItem, [property]: value });
+    saveContent(newItems);
   };
 
   const handleDragEnd = (event: any) => {
@@ -276,13 +273,16 @@ export function CampaignContentManager({ campaignId, onContentChange }: Campaign
       <DndContext sensors={sensors} collisionDetection={rectIntersection} onDragStart={(e) => setActiveId(e.active.id)} onDragEnd={handleDragEnd}>
         <aside className="w-[320px] border-r border-white/5 flex flex-col bg-[#0c0c0e]/60 z-30">
           <div className="p-5 border-b border-white/5 space-y-5">
-            <h3 className="text-[10px] font-black uppercase text-white/40">Media Pool</h3>
+            <h3 className="text-[10px] font-black uppercase text-white/40 tracking-widest">Media Pool</h3>
             <Input className="bg-black/40 border-white/5 h-10 text-xs rounded-xl text-white" placeholder="Pesquisar..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
           </div>
           <ScrollArea className="flex-1">
             <div className="p-5 grid grid-cols-2 gap-4">
               {filteredLibrary?.map((m) => (
-                <DraggableLibraryItem key={m.id} media={m} isSelected={selectedMedia.includes(m.id)} onToggleSelect={id => setSelectedMedia(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])} onClick={() => {}} />
+                <DraggableLibraryItem key={m.id} media={m} isSelected={selectedMedia.includes(m.id)} onToggleSelect={id => setSelectedMedia(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])} onClick={() => {
+                  const newItem: CampaignMedia = { id: crypto.randomUUID(), media_id: m.id, position: campaignItems.length, duration_override: m.duration, priority_override: 1, is_locked: false, media: m };
+                  const newItems = [...campaignItems, newItem]; setCampaignItems(newItems); saveContent(newItems);
+                }} />
               ))}
             </div>
           </ScrollArea>
@@ -290,37 +290,73 @@ export function CampaignContentManager({ campaignId, onContentChange }: Campaign
 
         <main className="flex-1 flex flex-col overflow-hidden">
           <div className="p-5 border-b border-white/5 flex items-center justify-between bg-[#0c0c0e]/40">
-            <h3 className="text-sm font-black text-white uppercase">Timeline</h3>
-            <Badge variant="outline">{campaignItems.length} Itens</Badge>
+            <h3 className="text-xs font-black text-white uppercase tracking-widest">Visual Timeline</h3>
+            <Badge variant="outline" className="text-[10px] font-black">{campaignItems.length} Itens</Badge>
           </div>
-          <div className="flex-1 flex items-center p-6 overflow-x-auto overflow-y-hidden">
-            <SortableContext items={campaignItems.map(i => i.id)} strategy={horizontalListSortingStrategy}>
-              <div className="flex gap-4">
-                {campaignItems.map((item, index) => (
-                  <SortableCampaignItem key={item.id} item={item} index={index} isSelected={selectedItem?.id === item.id} onSelect={setSelectedItem} onRemove={handleRemove} />
-                ))}
-              </div>
-            </SortableContext>
-          </div>
+          <ScrollArea className="flex-1">
+            <div className="p-10 min-h-full flex items-center">
+              <SortableContext items={campaignItems.map(i => i.id)} strategy={horizontalListSortingStrategy}>
+                <div className="flex gap-6 pb-10">
+                  {campaignItems.map((item, index) => (
+                    <SortableCampaignItem key={item.id} item={item} index={index} isSelected={selectedItem?.id === item.id} onSelect={setSelectedItem} onRemove={handleRemove} />
+                  ))}
+                  {campaignItems.length === 0 && <div className="w-[300px] h-[200px] border-2 border-dashed border-white/5 rounded-3xl flex items-center justify-center text-white/10 text-xs uppercase font-bold">Arraste itens aqui</div>}
+                </div>
+              </SortableContext>
+            </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
         </main>
 
         <AnimatePresence>
           {selectedItem && (
-            <motion.aside initial={{ width: 0 }} animate={{ width: 340 }} exit={{ width: 0 }} className="border-l border-white/5 bg-[#0c0c0e]/80 p-6 space-y-6">
-              <h3 className="text-[10px] font-black uppercase text-white/40">Propriedades</h3>
-              <div className="aspect-video bg-black rounded-2xl border border-white/5 overflow-hidden">
-                <img src={selectedItem.media?.thumbnail_url} className="w-full h-full object-cover" />
+            <motion.aside initial={{ width: 0, opacity: 0 }} animate={{ width: 340, opacity: 1 }} exit={{ width: 0, opacity: 0 }} className="border-l border-white/5 bg-[#0c0c0e]/80 backdrop-blur-xl flex flex-col shrink-0 overflow-hidden">
+              <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                <h3 className="text-[10px] font-black uppercase text-white/40 tracking-widest">Propriedades</h3>
+                <Button variant="ghost" size="icon" onClick={() => setSelectedItem(null)} className="h-8 w-8 rounded-full bg-white/5 hover:bg-white/10 text-white/40"><X className="h-4 w-4" /></Button>
               </div>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between bg-black/40 p-4 rounded-2xl">
-                   <Clock className="h-4 w-4 text-primary" />
-                   <Input type="number" value={selectedItem.duration_override || 10} onChange={e => updateItemProperty(selectedItem.id, 'duration_override', parseInt(e.target.value))} className="w-20 bg-transparent border-none text-right font-black text-white" />
+              <ScrollArea className="flex-1">
+                <div className="p-6 space-y-8">
+                  <div className="aspect-video bg-black rounded-2xl border border-white/5 overflow-hidden shadow-2xl">
+                    <img src={selectedItem.media?.thumbnail_url || selectedItem.media?.file_url} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="space-y-6">
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black uppercase text-white/40 tracking-widest">Duração</label>
+                      <div className="flex items-center gap-3 bg-black/40 p-4 rounded-2xl border border-white/5">
+                        <Clock className="h-4 w-4 text-primary" />
+                        <Input type="number" value={selectedItem.duration_override || 10} onChange={e => updateItemProperty(selectedItem.id, 'duration_override', parseInt(e.target.value))} className="bg-transparent border-none text-xl font-black text-white focus-visible:ring-0 p-0 h-auto" />
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black uppercase text-white/40 tracking-widest">Prioridade</label>
+                      <div className="grid grid-cols-5 gap-2">
+                        {[1,2,3,4,5].map(p => (
+                          <Button key={p} variant="ghost" onClick={() => updateItemProperty(selectedItem.id, 'priority_override', p)} className={cn("h-10 font-black text-xs rounded-xl border", selectedItem.priority_override === p ? "bg-primary border-primary text-white" : "bg-white/5 border-white/5 text-white/20")}>P{p}</Button>
+                        ))}
+                      </div>
+                    </div>
+                    <Button variant="ghost" onClick={() => updateItemProperty(selectedItem.id, 'is_locked', !selectedItem.is_locked)} className={cn("w-full h-14 flex items-center justify-between px-4 rounded-2xl border", selectedItem.is_locked ? "bg-orange-500/10 border-orange-500/50 text-orange-500" : "bg-white/5 border-white/5 text-white/40")}>
+                      <div className="flex items-center gap-3">
+                        {selectedItem.is_locked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                        <span className="text-[10px] font-black uppercase tracking-widest">Bloquear Posição</span>
+                      </div>
+                    </Button>
+                    <Button className="w-full h-12 text-red-500/60 hover:text-red-500 hover:bg-red-500/10 gap-2 font-black text-[10px] uppercase tracking-widest rounded-2xl" variant="ghost" onClick={() => handleRemove(selectedItem.id)} disabled={selectedItem.is_locked}><Trash2 className="h-4 w-4" /> Remover Item</Button>
+                  </div>
                 </div>
-                <Button className="w-full" variant="destructive" onClick={() => handleRemove(selectedItem.id)}>Remover</Button>
-              </div>
+              </ScrollArea>
             </motion.aside>
           )}
         </AnimatePresence>
+
+        <DragOverlay dropAnimation={null}>
+          {activeId ? (
+            <div className="w-[180px] h-[240px] rounded-2xl border-2 border-primary bg-[#1A1A1E]/80 backdrop-blur-xl overflow-hidden flex flex-col shadow-glow scale-105 z-[100] pointer-events-none rotate-3">
+               <div className="h-[160px] w-full bg-primary/20 flex items-center justify-center relative"><Sparkles className="h-10 w-10 text-primary animate-pulse" /></div>
+            </div>
+          ) : null}
+        </DragOverlay>
       </DndContext>
     </div>
   );
