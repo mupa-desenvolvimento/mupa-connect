@@ -7,7 +7,15 @@ export type DeviceCommandKind =
   | "screenshot"
   | "reboot"
   | "clear_cache"
-  | "ping";
+  | "ping"
+  | "open_app"
+  | "reboot_device"
+  | "restart_player"
+  | "reload_page"
+  | "fullscreen"
+  | "update_apk"
+  | "start_service"
+  | "stop_service";
 
 export interface DeviceCommandPayload {
   playlist_id?: string;
