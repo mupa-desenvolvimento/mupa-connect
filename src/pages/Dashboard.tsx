@@ -135,7 +135,7 @@ export default function DashboardPage() {
         title="Dashboard"
         description="Visão geral da operação Mupa 3.0 — em tempo real."
         actions={
-          <Button asChild className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow h-9" size="sm">
+          <Button asChild variant="premium" size="sm" className="h-9">
             <Link to="/dispositivos">Gerenciar dispositivos <ArrowUpRight className="ml-1 h-4 w-4" /></Link>
           </Button>
         }
