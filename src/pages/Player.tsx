@@ -205,7 +205,10 @@ export default function Player() {
     reboot: () => window.location.reload(),
     playCampaign: (id) => console.log("Play campaign", id),
     screenshot: () => Promise.resolve(""),
+    tenantId: deviceInfo?.tenant_id,
+    companyId: deviceInfo?.company_id,
   });
+
 
   const handleMediaChange = useCallback((idx: number) => {
     setCurrentIndex(idx);
