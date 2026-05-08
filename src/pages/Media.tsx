@@ -465,8 +465,8 @@ export default function MediaPage() {
             ))}
 
             {filteredItems.map((m) => (
-              <Card key={m.id} className="overflow-hidden group hover:border-primary/40 hover:shadow-md transition-all border-border/60 bg-background/50 flex flex-col">
-                <div className="aspect-video bg-muted/30 relative overflow-hidden flex items-center justify-center border-b border-border/40">
+              <Card key={m.id} className="overflow-hidden group hover:border-primary/50 hover:shadow-glow transition-all border-white/5 bg-black/40 flex flex-col rounded-2xl shadow-premium">
+                <div className="aspect-video bg-black relative overflow-hidden flex items-center justify-center border-b border-white/5">
                   {m.type === "image" ? (
                     <img 
                       src={m.file_url} 
