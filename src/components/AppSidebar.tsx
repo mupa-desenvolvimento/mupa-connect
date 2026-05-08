@@ -103,7 +103,7 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="gap-6 py-4">
         {isSuperAdmin && (
           <SidebarGroup>
             <SidebarGroupLabel>Administração Global</SidebarGroupLabel>
