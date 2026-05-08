@@ -123,7 +123,7 @@ export function AddUserToCompanyModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="font-display">Vincular Usuário à Empresa</DialogTitle>
+          <DialogTitle className="font-bold">Vincular Usuário à Empresa</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4 py-4">

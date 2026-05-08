@@ -148,7 +148,7 @@ export default function DashboardPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">{s.label}</p>
-                  <p className="mt-2 font-display text-3xl font-bold">
+                  <p className="mt-2 font-bold text-3xl font-bold">
                     {s.value}
                     {s.total !== undefined && <span className="text-base text-muted-foreground font-normal"> / {s.total}</span>}
                   </p>
@@ -168,7 +168,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Consultas (Hoje)</p>
-                <p className="mt-1 font-display text-2xl font-bold">{todayTotal}</p>
+                <p className="mt-1 font-bold text-2xl font-bold">{todayTotal}</p>
               </div>
               <div className="h-8 w-8 rounded-lg bg-primary/10 border border-primary/20 grid place-items-center text-primary">
                 <Search className="h-4 w-4" />
@@ -191,7 +191,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Taxa de Erro EAN</p>
-                <p className={`mt-1 font-display text-2xl font-bold ${todayErrorRate > 10 ? 'text-destructive' : 'text-success'}`}>
+                <p className={`mt-1 font-bold text-2xl font-bold ${todayErrorRate > 10 ? 'text-destructive' : 'text-success'}`}>
                   {todayErrorRate.toFixed(1)}%
                 </p>
               </div>
@@ -207,7 +207,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div className="min-w-0">
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Dispositivo Ativo</p>
-                <p className="mt-1 font-display text-sm font-bold truncate text-foreground/80">{topDevice?.name || "—"}</p>
+                <p className="mt-1 font-bold text-sm font-bold truncate text-foreground/80">{topDevice?.name || "—"}</p>
                 <p className="text-[10px] text-muted-foreground font-mono">{topDevice?.count || 0} consultas</p>
               </div>
               <div className="h-8 w-8 rounded-lg bg-accent/10 border border-accent/20 grid place-items-center text-accent shrink-0">
@@ -222,7 +222,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div className="min-w-0">
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Top Produto</p>
-                <p className="mt-1 font-display text-sm font-bold truncate text-foreground/80">{topProduct?.desc || "—"}</p>
+                <p className="mt-1 font-bold text-sm font-bold truncate text-foreground/80">{topProduct?.desc || "—"}</p>
                 <p className="text-[10px] text-muted-foreground font-mono">{topProduct?.count || 0} consultas</p>
               </div>
               <div className="h-8 w-8 rounded-lg bg-warning/10 border border-warning/20 grid place-items-center text-warning shrink-0">
@@ -236,7 +236,7 @@ export default function DashboardPage() {
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 pb-4">
         <Card className="lg:col-span-2 border-border/60 bg-card/50">
           <CardHeader className="pb-2">
-            <CardTitle className="font-display text-lg font-bold">Status dos dispositivos</CardTitle>
+            <CardTitle className="font-bold text-lg font-bold">Status dos dispositivos</CardTitle>
           </CardHeader>
           <CardContent className="divide-y divide-border/40">
             {devicesList?.map((d: any) => (
@@ -271,7 +271,7 @@ export default function DashboardPage() {
 
         <Card className="border-border/60 bg-card/50">
           <CardHeader className="pb-2">
-            <CardTitle className="font-display text-lg font-bold">Atividade recente</CardTitle>
+            <CardTitle className="font-bold text-lg font-bold">Atividade recente</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-xs font-medium">
             <div className="flex items-start gap-3 p-3 rounded-lg bg-background/40 border border-border/40">

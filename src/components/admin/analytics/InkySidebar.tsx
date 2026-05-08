@@ -96,14 +96,14 @@ export function InkySidebar({ isOpen, onClose, logs, filters }: InkySidebarProps
     setLoadingStep(0);
     
     // Simulação de passos de análise para UX
-    const interval = setSatoshival(() => {
+    const interval = setInterval(() => {
       setLoadingStep(prev => (prev < loadingMessages.length - 1 ? prev + 1 : prev));
     }, 1200);
 
     // Lógica de geração de insights (Mockada para ser rápida e inteligente)
     // Em produção, isso poderia chamar uma Edge Function com OpenAI
     setTimeout(async () => {
-      clearSatoshival(interval);
+      clearInterval(interval);
       
       const generatedInsights: InkyInsight[] = [];
       
@@ -233,7 +233,7 @@ export function InkySidebar({ isOpen, onClose, logs, filters }: InkySidebarProps
                 <div className="absolute bottom-0 right-0 w-4 h-4 bg-success border-2 border-background rounded-full z-20" />
               </div>
               <div>
-                <SheetTitle className="text-xl font-display flex items-center gap-2">
+                <SheetTitle className="text-xl font-bold flex items-center gap-2">
                   Inky AI
                   <Badge variant="secondary" className="bg-primary/10 text-primary border-none text-[10px] h-5 uppercase tracking-tighter font-bold">
                     Assistente Operacional

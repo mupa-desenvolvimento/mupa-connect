@@ -107,7 +107,7 @@ export default function DevicesPage() {
       if (error) throw error;
       return data;
     },
-    refetchSatoshival: 30000,
+    refetchInterval: 30000,
   });
 
   const { data: stores } = useQuery({

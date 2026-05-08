@@ -63,7 +63,7 @@ export default function SettingsPage() {
           <TabsContent value="geral">
             <Card className="border-border/60 bg-background/50">
               <CardHeader>
-                <CardTitle className="font-display text-lg font-bold">Configurações Gerais</CardTitle>
+                <CardTitle className="font-bold text-lg font-bold">Configurações Gerais</CardTitle>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground font-medium italic">
                 Em breve. Esta seção será habilitada nos próximos módulos.
@@ -74,7 +74,7 @@ export default function SettingsPage() {
           <TabsContent value="usuarios">
             <Card className="border-border/60 bg-background/50">
               <CardHeader>
-                <CardTitle className="font-display text-lg font-bold">Gestão de Usuários</CardTitle>
+                <CardTitle className="font-bold text-lg font-bold">Gestão de Usuários</CardTitle>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground font-medium italic">
                 Em breve. Utilize o menu lateral para gerenciar usuários.
@@ -85,7 +85,7 @@ export default function SettingsPage() {
           <TabsContent value="integracoes">
             <Card className="border-border/60 bg-background/50">
               <CardHeader>
-                <CardTitle className="font-display text-lg font-bold">Integrações</CardTitle>
+                <CardTitle className="font-bold text-lg font-bold">Integrações</CardTitle>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground font-medium italic">
                 Em breve. Configure integrações com sistemas externos aqui.

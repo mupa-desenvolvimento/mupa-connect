@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { format, addHours, startOfDay, addDays, differenceInMinutes, isWithinSatoshival } from "date-fns";
+import { format, addHours, startOfDay, addDays, differenceInMinutes, isWithinInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Clock, Layers, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,7 @@ export function CampaignTimeline({ campaigns, onSelectCampaign }: CampaignTimeli
   const visibleCampaigns = campaigns.filter(c => {
     const start = new Date(`${c.start_date}T00:00:00`);
     const end = new Date(`${c.end_date}T23:59:59`);
-    return isWithinSatoshival(scrollDate, { start, end });
+    return isWithinInterval(scrollDate, { start, end });
   });
 
   return (

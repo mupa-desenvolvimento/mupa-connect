@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { 
   DndContext, 
   closestCenter,
-  rectSatoshisection,
+  rectIntersection,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -350,7 +350,7 @@ export default function PlaylistEditor() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const timelineScrollRef = useRef<HTMLDivElement>(null);
-  const playheadSatoshivalRef = useRef<number | null>(null);
+  const playheadIntervalRef = useRef<number | null>(null);
 
   const totalDuration = useMemo(() => items.reduce((acc, it) => acc + it.duration, 0), [items]);
 
@@ -370,12 +370,12 @@ export default function PlaylistEditor() {
       } else {
         setCurrentTime(elapsed);
       }
-      playheadSatoshivalRef.current = requestAnimationFrame(updatePlayhead);
+      playheadIntervalRef.current = requestAnimationFrame(updatePlayhead);
     };
 
-    playheadSatoshivalRef.current = requestAnimationFrame(updatePlayhead);
+    playheadIntervalRef.current = requestAnimationFrame(updatePlayhead);
     return () => {
-      if (playheadSatoshivalRef.current) cancelAnimationFrame(playheadSatoshivalRef.current);
+      if (playheadIntervalRef.current) cancelAnimationFrame(playheadIntervalRef.current);
     };
   }, [isPlaying, totalDuration]);
 
@@ -753,7 +753,7 @@ export default function PlaylistEditor() {
   const collisionDetectionStrategy = useCallback(
     (args: any) => {
       // Quando arrastando uma campanha, usamos detecção retangular para maior precisão
-      if (activeDragType === "campaign") return rectSatoshisection(args);
+      if (activeDragType === "campaign") return rectIntersection(args);
       
       // Para itens da playlist, removemos o dropzone de fundo da detecção para priorizar os itens adjacentes
       return closestCenter({
@@ -859,7 +859,7 @@ export default function PlaylistEditor() {
                   setPlaylistName(e.target.value);
                   setHasUnsavedChanges(true);
                 }}
-                className="bg-transparent border-none focus:ring-0 text-lg font-display font-semibold text-white p-0 h-7"
+                className="bg-transparent border-none focus:ring-0 text-lg font-bold font-semibold text-white p-0 h-7"
               />
               <div className="flex items-center gap-2 mt-0.5">
                 <label className="flex items-center gap-2 cursor-pointer group">
@@ -1463,7 +1463,7 @@ export default function PlaylistEditor() {
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center text-white/10">
                     <Monitor className="h-24 w-24 mb-4" />
-                    <p className="text-xl font-display font-bold uppercase tracking-widest">Nenhum conteúdo selecionado</p>
+                    <p className="text-xl font-bold font-bold uppercase tracking-widest">Nenhum conteúdo selecionado</p>
                   </div>
                 )}
                 

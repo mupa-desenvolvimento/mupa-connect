@@ -66,7 +66,7 @@ export default function PlayerPage() {
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const detectionSatoshivalRef = useRef<number | null>(null);
+  const detectionIntervalRef = useRef<number | null>(null);
 
   const appearance = useMemo(() => (manifest?.appearance_config || {}) as AppearanceConfig, [manifest]);
 
@@ -290,10 +290,10 @@ export default function PlayerPage() {
 
     // Initial check immediately, then every 60s
     backgroundSync();
-    const interval = setSatoshival(backgroundSync, 60000);
+    const interval = setInterval(backgroundSync, 60000);
     
     return () => {
-      clearSatoshival(interval);
+      clearInterval(interval);
     };
   }, [deviceCode, reloadKey]);
 
@@ -312,8 +312,8 @@ export default function PlayerPage() {
     };
 
     beat();
-    const interval = setSatoshival(beat, 30000);
-    return () => clearSatoshival(interval);
+    const interval = setInterval(beat, 30000);
+    return () => clearInterval(interval);
   }, [deviceInfo?.serial, deviceCode, activePlaylist, currentIndex]);
 
   // 6. Page-Level Watchdog (Anti-Stall)
@@ -346,8 +346,8 @@ export default function PlayerPage() {
 
   const [now, setNow] = useState(new Date());
   useEffect(() => {
-    const t = setSatoshival(() => setNow(new Date()), 1000);
-    return () => clearSatoshival(t);
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
   }, []);
 
   // Face Detection with Face-API
@@ -392,11 +392,11 @@ export default function PlayerPage() {
     };
 
     const startDetectionLoop = () => {
-      if (detectionSatoshivalRef.current) {
-        clearSatoshival(detectionSatoshivalRef.current);
+      if (detectionIntervalRef.current) {
+        clearInterval(detectionIntervalRef.current);
       }
       
-      detectionSatoshivalRef.current = window.setSatoshival(async () => {
+      detectionIntervalRef.current = window.setInterval(async () => {
         if (!videoRef.current || !canvasRef.current || !modelsLoaded) return;
         
         const options = new faceapi.TinyFaceDetectorOptions();
@@ -482,8 +482,8 @@ export default function PlayerPage() {
     };
 
     const cleanup = () => {
-      if (detectionSatoshivalRef.current) {
-        clearSatoshival(detectionSatoshivalRef.current);
+      if (detectionIntervalRef.current) {
+        clearInterval(detectionIntervalRef.current);
       }
       
       if (videoRef.current?.srcObject) {
@@ -584,9 +584,9 @@ export default function PlayerPage() {
           {/* Device Info */}
           {(appearance.show_device_name !== false && !isPreview) && (
             <div className="flex items-center gap-3 animate-fade-in bg-black/20 backdrop-blur-sm p-3 rounded-xl border border-white/5">
-              <div className="h-10 w-10 rounded-lg bg-gradient-primary grid place-items-center font-display font-bold text-primary-foreground shadow-lg shadow-primary/20">M</div>
+              <div className="h-10 w-10 rounded-lg bg-gradient-primary grid place-items-center font-bold font-bold text-primary-foreground shadow-lg shadow-primary/20">M</div>
               <div className="leading-tight">
-                <div className="font-display font-bold text-lg tracking-tight">
+                <div className="font-bold font-bold text-lg tracking-tight">
                   {deviceInfo?.apelido_interno || "Player Profissional"}
                 </div>
                 <div className="text-[11px] uppercase tracking-[0.2em] opacity-60 font-mono font-bold">
@@ -599,7 +599,7 @@ export default function PlayerPage() {
           {/* Date/Time */}
           {(appearance.show_datetime !== false && !isPreview) && (
             <div className="text-right animate-fade-in bg-black/20 backdrop-blur-sm p-3 rounded-xl border border-white/5">
-              <div className="font-display text-3xl font-bold tabular-nums tracking-tighter">
+              <div className="font-bold text-3xl font-bold tabular-nums tracking-tighter">
                 {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
               </div>
               <div className="text-[10px] uppercase opacity-50 font-mono tracking-widest">
@@ -652,7 +652,7 @@ export default function PlayerPage() {
             >
               <div className="flex flex-col items-center justify-center text-center leading-tight">
                 <div 
-                  className="font-display tracking-wide"
+                  className="font-bold tracking-wide"
                   style={{ 
                     fontFamily: "'Bebas Neue', sans-serif",
                     fontSize: "1.8rem",
@@ -674,7 +674,7 @@ export default function PlayerPage() {
             <div className="h-8 w-8 rounded-lg bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20">
               <Wrench className="h-4 w-4" />
             </div>
-            <div className="font-display font-bold text-sm uppercase tracking-wider">Modo Manutenção</div>
+            <div className="font-bold font-bold text-sm uppercase tracking-wider">Modo Manutenção</div>
           </div>
           <div className="space-y-2 font-mono text-[10px] uppercase tracking-wider">
             <div className="flex justify-between gap-4">
