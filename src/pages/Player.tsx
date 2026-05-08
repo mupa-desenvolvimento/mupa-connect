@@ -654,7 +654,7 @@ export default function PlayerPage() {
                 <div 
                   className="font-bold tracking-wide"
                   style={{ 
-                    fontFamily: "'Bebas Neue', sans-serif",
+                    fontFamily: "Satoshi, sans-serif",
                     fontSize: "1.8rem",
                     letterSpacing: "0.05em"
                   }}
