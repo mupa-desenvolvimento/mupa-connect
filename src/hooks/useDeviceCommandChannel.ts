@@ -52,7 +52,13 @@ export function useDeviceCommandChannel(
   }, [deviceId]);
 }
 
-async function runCommand(cmd: DeviceCommand, h: CommandHandlerContext) {
+async function runCommand(cmd: DeviceCommand, h: CommandHandlerContext, currentDeviceId: string) {
+  // Security validation: ignore commands not meant for this device
+  if (cmd.device_id !== currentDeviceId) {
+    console.warn("[CommandChannel] Received command for wrong device:", cmd.device_id);
+    return;
+  }
+
   const start = performance.now();
   // 1. acknowledge as soon as it arrives
   try {
