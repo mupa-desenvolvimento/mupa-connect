@@ -37,8 +37,8 @@ export function CampaignTimeline({ campaigns, onSelectCampaign }: CampaignTimeli
   });
 
   return (
-    <div className="flex flex-col h-full bg-card rounded-xl border border-border/60 overflow-hidden shadow-sm">
-      <div className="p-4 border-b border-border/40 flex items-center justify-between bg-muted/20">
+    <div className="flex flex-col h-full bg-[#0c0c0e]/40 rounded-2xl border border-white/5 overflow-hidden shadow-premium backdrop-blur-md">
+      <div className="p-4 md:p-6 border-b border-white/5 flex items-center justify-between bg-black/20">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-sm font-bold text-primary bg-primary/10 px-4 py-1.5 rounded-lg border border-primary/20">
             <Clock className="h-4 w-4" />
