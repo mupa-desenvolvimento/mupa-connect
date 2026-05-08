@@ -688,6 +688,10 @@ export default function PlaylistEditor() {
     setActiveDragType(null);
     setOverId(null);
     lastOverIdRef.current = null;
+    if (rafIdRef.current) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
     
     const activeData = active.data.current;
     
