@@ -118,286 +118,361 @@ export function CampaignForm({ initialData, onSubmit, isLoading }: CampaignFormP
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome da Campanha</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Promoção de Natal" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Detalhes sobre a campanha..." 
-                      className="resize-none h-24"
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="priority"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Prioridade (0-100)</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} />
-                    </FormControl>
-                    <FormDescription>Valores maiores têm preferência.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="color"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Identificação Visual</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 animate-in fade-in duration-500">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* COLUNA ESQUERDA - IDENTIDADE E CONFIGS */}
+          <div className="lg:col-span-7 space-y-8">
+            <Card className="bg-[#1a1a1e]/50 border-white/5 shadow-2xl overflow-hidden group">
+              <div className="h-1 w-full bg-gradient-to-r from-primary/50 to-transparent" />
+              <CardHeader className="pb-4">
+                <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-white/80">
+                  <Palette className="h-4 w-4 text-primary" /> Identidade da Campanha
+                </CardTitle>
+                <CardDescription className="text-[10px] uppercase tracking-wider text-white/40 font-medium">
+                  Defina o nome, descrição e a identidade visual desta campanha.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-white/40">Nome da Campanha</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione uma cor" />
-                        </SelectTrigger>
+                        <Input 
+                          placeholder="Ex: Promoção de Natal" 
+                          {...field} 
+                          className="bg-black/40 border-white/10 h-11 focus:border-primary/50 transition-all font-medium text-white" 
+                        />
                       </FormControl>
-                      <SelectContent>
-                        {PRESET_COLORS.map((color) => (
-                          <SelectItem key={color.value} value={color.value}>
-                            <div className="flex items-center gap-2">
-                              <div 
-                                className="h-4 w-4 rounded-full border border-white/20" 
-                                style={{ backgroundColor: color.value }} 
-                              />
-                              {color.name}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                      <FormMessage className="text-[10px]" />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={form.control}
-              name="is_active"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-muted/20">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Status da Campanha</FormLabel>
-                    <FormDescription>
-                      Campanhas inativas não serão exibidas nos players.
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="start_date"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Data de Início</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP", { locale: ptBR })
-                            ) : (
-                              <span>Selecione a data</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          initialFocus
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-white/40">Descrição</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Detalhes internos sobre esta campanha..." 
+                          className="resize-none h-24 bg-black/40 border-white/10 focus:border-primary/50 transition-all font-medium text-white"
+                          {...field} 
                         />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      </FormControl>
+                      <FormMessage className="text-[10px]" />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="end_date"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Data de Término</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="priority"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-white/40">Prioridade (0-100)</FormLabel>
                         <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP", { locale: ptBR })
-                            ) : (
-                              <span>Selecione a data</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
+                          <Input 
+                            type="number" 
+                            {...field} 
+                            className="bg-black/40 border-white/10 h-11 focus:border-primary/50 transition-all font-mono font-bold text-white" 
+                          />
                         </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                        <FormMessage className="text-[10px]" />
+                      </FormItem>
+                    )}
+                  />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="start_time"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Horário Início</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="end_time"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Horário Término</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-4 pt-4 border-t border-border/20">
-          <FormField
-            control={form.control}
-            name="playlist_ids"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-base">Vincular às Playlists</FormLabel>
-                <FormDescription>
-                  Selecione em quais playlists esta campanha deve ser exibida.
-                </FormDescription>
-                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  {playlists?.map((playlist) => (
-                    <div 
-                      key={playlist.id}
-                      className={cn(
-                        "flex items-center space-x-3 p-3 rounded-xl border transition-all cursor-pointer",
-                        field.value.includes(playlist.id) 
-                          ? "bg-primary/10 border-primary shadow-sm" 
-                          : "bg-muted/30 border-transparent hover:border-border/60"
-                      )}
-                      onClick={() => {
-                        const current = field.value;
-                        const next = current.includes(playlist.id)
-                          ? current.filter(id => id !== playlist.id)
-                          : [...current, playlist.id];
-                        field.onChange(next);
-                      }}
-                    >
-                      <div className={cn(
-                        "h-4 w-4 rounded-md border flex items-center justify-center transition-colors",
-                        field.value.includes(playlist.id)
-                          ? "bg-primary border-primary text-primary-foreground"
-                          : "border-muted-foreground/30"
-                      )}>
-                        {field.value.includes(playlist.id) && <Check className="h-3 w-3 stroke-[3]" />}
-                      </div>
-                      <span className="text-sm font-medium truncate">{playlist.name}</span>
-                    </div>
-                  ))}
+                  <FormField
+                    control={form.control}
+                    name="color"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-white/40">Cor de Identificação</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="bg-black/40 border-white/10 h-11 focus:border-primary/50 transition-all text-white">
+                              <SelectValue placeholder="Selecione uma cor" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="bg-[#1a1a1e] border-white/10 text-white">
+                            {PRESET_COLORS.map((color) => (
+                              <SelectItem key={color.value} value={color.value} className="focus:bg-white/5">
+                                <div className="flex items-center gap-2">
+                                  <div 
+                                    className="h-3 w-3 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.5)]" 
+                                    style={{ backgroundColor: color.value }} 
+                                  />
+                                  <span className="text-xs font-medium uppercase tracking-widest">{color.name}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="text-[10px]" />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-                {(!playlists || playlists.length === 0) && (
-                  <div className="text-sm text-muted-foreground bg-muted/20 p-4 rounded-lg border border-dashed text-center">
-                    Nenhuma playlist encontrada para este tenant.
+              </CardContent>
+            </Card>
+
+            <Card className="bg-[#1a1a1e]/50 border-white/5 shadow-2xl overflow-hidden">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-white/80">
+                  <Activity className="h-4 w-4 text-primary" /> Configurações Operacionais
+                </CardTitle>
+                <CardDescription className="text-[10px] uppercase tracking-wider text-white/40 font-medium">
+                  Controle a ativação e vinculação às playlists.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="is_active"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-xl border border-white/5 p-4 bg-black/20 group hover:bg-black/40 transition-colors">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-xs font-bold text-white/80">Campanha Ativa</FormLabel>
+                        <FormDescription className="text-[10px] uppercase tracking-widest text-white/20">
+                          Habilita ou desabilita a exibição nos players.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="data-[state=checked]:bg-green-500"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="playlist_ids"
+                  render={({ field }) => (
+                    <FormItem className="space-y-4">
+                      <div className="flex flex-col gap-1">
+                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-white/40">Vincular às Playlists</FormLabel>
+                        <FormDescription className="text-[10px] uppercase tracking-widest text-white/20">
+                          Selecione as playlists que carregarão esta campanha.
+                        </FormDescription>
+                      </div>
+                      <ScrollArea className="h-[180px] w-full pr-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {playlists?.map((playlist) => (
+                            <div 
+                              key={playlist.id}
+                              className={cn(
+                                "flex items-center space-x-3 p-3 rounded-xl border transition-all cursor-pointer group",
+                                field.value.includes(playlist.id) 
+                                  ? "bg-primary/10 border-primary/50" 
+                                  : "bg-black/20 border-transparent hover:bg-black/40"
+                              )}
+                              onClick={() => {
+                                const current = field.value;
+                                const next = current.includes(playlist.id)
+                                  ? current.filter(id => id !== playlist.id)
+                                  : [...current, playlist.id];
+                                field.onChange(next);
+                              }}
+                            >
+                              <div className={cn(
+                                "h-4 w-4 rounded-md border flex items-center justify-center transition-all",
+                                field.value.includes(playlist.id)
+                                  ? "bg-primary border-primary text-primary-foreground shadow-[0_0_10px_rgba(var(--primary),0.3)]"
+                                  : "border-white/10 group-hover:border-white/30"
+                              )}>
+                                {field.value.includes(playlist.id) && <Check className="h-3 w-3 stroke-[3]" />}
+                              </div>
+                              <span className="text-[10px] font-black uppercase tracking-widest text-white/60 group-hover:text-white transition-colors truncate">
+                                {playlist.name}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                      {(!playlists || playlists.length === 0) && (
+                        <div className="text-[10px] font-bold uppercase tracking-widest text-white/20 bg-black/20 p-6 rounded-xl border border-dashed border-white/5 text-center">
+                          Nenhuma playlist disponível
+                        </div>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* COLUNA DIREITA - AGENDAMENTO */}
+          <div className="lg:col-span-5 space-y-8">
+            <Card className="bg-[#1a1a1e]/50 border-white/5 shadow-2xl overflow-hidden h-full">
+              <div className="h-1 w-full bg-gradient-to-r from-blue-500/50 to-transparent" />
+              <CardHeader className="pb-4">
+                <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-white/80">
+                  <CalendarLucide className="h-4 w-4 text-blue-500" /> Agendamento Premium
+                </CardTitle>
+                <CardDescription className="text-[10px] uppercase tracking-wider text-white/40 font-medium">
+                  Defina o período e os horários de veiculação.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                <div className="space-y-6">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Período de Veiculação</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField
+                        control={form.control}
+                        name="start_date"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                      "w-full h-11 bg-black/40 border-white/10 text-left font-mono font-bold text-xs uppercase tracking-widest transition-all",
+                                      !field.value && "text-white/20"
+                                    )}
+                                  >
+                                    {field.value ? (
+                                      format(field.value, "dd/MM/yyyy")
+                                    ) : (
+                                      <span>Início</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 text-blue-500/60" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0 bg-[#1a1a1e] border-white/10 shadow-2xl" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={field.onChange}
+                                  initialFocus
+                                  className="bg-transparent text-white"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage className="text-[10px]" />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="end_date"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                      "w-full h-11 bg-black/40 border-white/10 text-left font-mono font-bold text-xs uppercase tracking-widest transition-all",
+                                      !field.value && "text-white/20"
+                                    )}
+                                  >
+                                    {field.value ? (
+                                      format(field.value, "dd/MM/yyyy")
+                                    ) : (
+                                      <span>Término</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 text-blue-500/60" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0 bg-[#1a1a1e] border-white/10 shadow-2xl" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={field.onChange}
+                                  initialFocus
+                                  className="bg-transparent text-white"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage className="text-[10px]" />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   </div>
-                )}
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Faixa de Horário</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField
+                        control={form.control}
+                        name="start_time"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <div className="relative">
+                                <Input 
+                                  type="time" 
+                                  {...field} 
+                                  className="bg-black/40 border-white/10 h-11 focus:border-blue-500/50 transition-all font-mono font-bold text-xs text-white pl-10" 
+                                />
+                                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-500/60" />
+                              </div>
+                            </FormControl>
+                            <FormMessage className="text-[10px]" />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="end_time"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <div className="relative">
+                                <Input 
+                                  type="time" 
+                                  {...field} 
+                                  className="bg-black/40 border-white/10 h-11 focus:border-blue-500/50 transition-all font-mono font-bold text-xs text-white pl-10" 
+                                />
+                                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-500/60" />
+                              </div>
+                            </FormControl>
+                            <FormMessage className="text-[10px]" />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl border border-white/5 bg-black/40 space-y-3">
+                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/40">
+                    <Info className="h-3 w-3 text-primary" /> Resumo do Agendamento
+                  </div>
+                  <p className="text-[10px] text-white/60 leading-relaxed font-medium">
+                    Esta campanha será exibida entre os dias <span className="text-white font-bold">{format(form.watch("start_date"), "dd/MM")}</span> e <span className="text-white font-bold">{format(form.watch("end_date"), "dd/MM")}</span>, no horário compreendido entre <span className="text-white font-bold">{form.watch("start_time")}</span> e <span className="text-white font-bold">{form.watch("end_time")}</span>.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-6 border-t border-border/20">
-          <Button 
-            type="submit" 
-            className="bg-gradient-primary text-primary-foreground min-w-[120px]"
-            disabled={isLoading}
-          >
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Salvar Campanha
-          </Button>
-        </div>
+        {/* HIDDEN SUBMIT - TRIGGERED BY PARENT HEADER */}
+        <button type="submit" className="hidden">Submit</button>
       </form>
     </Form>
+  );
+}
   );
 }
