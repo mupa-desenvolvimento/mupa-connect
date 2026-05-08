@@ -52,11 +52,9 @@ export function useDevices(tenantId: string | null, isSuperAdmin?: boolean) {
 
       if (error) throw error;
 
-      console.log(devices);
-
       return devices.map((d: any) => ({
         ...d,
-        nome: d.apelido_interno ?? "Dispositivo.",
+        nome: d.apelido_interno ?? "Dispositivo",
         group_id: d.group_devices?.[0]?.group_id,
         group_name: d.group_devices?.[0]?.groups?.name,
         internal_group_id: d.store_internal_group_devices?.[0]?.internal_group_id,

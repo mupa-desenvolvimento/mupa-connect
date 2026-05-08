@@ -187,6 +187,8 @@ const DraggableDevice = ({ gd }: { gd: any }) => {
       device: gd.device
     }
   });
+
+  console.log(gd.device);
   
   const style = {
     transform: CSS.Transform.toString(transform),
