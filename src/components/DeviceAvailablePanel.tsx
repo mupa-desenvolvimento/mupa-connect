@@ -235,15 +235,6 @@ export function DeviceAvailablePanel({
         .eq("tenant_id", tenantId);
       
 
-
-      // Fetch explicit group_devices links (New hierarchy system)
-      const { data: groupLinks } = await supabase
-        .from("group_devices")
-        .select("device_id, group_id")
-        .eq("tenant_id", tenantId);
-      
-      const linkMap = new Map(groupLinks?.map(l => [l.device_id, l.group_id]) || []);
-
       // Fetch group_stores links to resolve transitive vinculation (device -> store -> group)
       const { data: storeGroupLinks } = await supabase
         .from("group_stores")
@@ -256,8 +247,8 @@ export function DeviceAvailablePanel({
           let statusLabel = "Disponível";
           let vinculationType: Device['vinculation_type'] = 'none';
 
-          // Priority 1: Explicit group_devices table
-          let groupId = linkMap.get(d.device_uuid);
+          // Priority 1: Explicit vínculo direto no próprio dispositivo
+          let groupId = d.grupo_dispositivos;
           if (groupId) vinculationType = 'direct';
           
           // Priority 2: Transitive vinculation via store

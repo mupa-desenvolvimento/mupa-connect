@@ -25,9 +25,9 @@ export function useGroups(tenantId: string | null, isSuperAdmin?: boolean) {
           playlists (name)
         `);
       
-      let deviceLinksQuery = supabase
-        .from("group_devices")
-        .select("group_id, device_id");
+      let devicesQuery = supabase
+        .from("dispositivos")
+        .select("device_uuid, grupo_dispositivos, tenant_id");
 
       let storeLinksQuery = supabase
         .from("group_stores")
@@ -36,7 +36,7 @@ export function useGroups(tenantId: string | null, isSuperAdmin?: boolean) {
       if (!isSuperAdmin) {
         if (!tenantId) return [];
         groupsQuery = groupsQuery.eq("tenant_id", tenantId);
-        deviceLinksQuery = deviceLinksQuery.eq("tenant_id", tenantId);
+        devicesQuery = devicesQuery.eq("tenant_id", tenantId);
         storeLinksQuery = storeLinksQuery.eq("tenant_id", tenantId);
       }
 
@@ -44,17 +44,20 @@ export function useGroups(tenantId: string | null, isSuperAdmin?: boolean) {
       const { data: groups, error: groupsError } = await groupsQuery;
       if (groupsError) throw groupsError;
 
-      // Fetch device links per group
-      const { data: deviceLinks, error: devicesError } = await deviceLinksQuery;
+      // Fetch devices and derive "direct devices" by matching dispositivos.grupo_dispositivos to groups.id
+      const { data: devices, error: devicesError } = await devicesQuery;
       if (devicesError) throw devicesError;
 
       // Fetch store links per group
       const { data: storeLinks, error: storesError } = await storeLinksQuery;
       if (storesError) throw storesError;
 
-      const deviceMap = deviceLinks.reduce((acc: any, curr: any) => {
-        if (!acc[curr.group_id]) acc[curr.group_id] = [];
-        acc[curr.group_id].push(curr.device_id);
+      const deviceMap = (devices || []).reduce((acc: Record<string, string[]>, curr: any) => {
+        const groupId = curr.grupo_dispositivos;
+        const deviceUuid = curr.device_uuid;
+        if (!groupId || !deviceUuid) return acc;
+        if (!acc[groupId]) acc[groupId] = [];
+        acc[groupId].push(deviceUuid);
         return acc;
       }, {});
 

@@ -637,13 +637,15 @@ export default function GroupsPage() {
       const group = overData.group;
       
       try {
-        // Link device directly to group
-        await supabase.from('group_devices').delete().eq('device_id', device.device_uuid);
-        const { error } = await supabase.from('group_devices').insert({
-          group_id: group.id,
-          device_id: device.device_uuid,
-          tenant_id: tenantId
-        });
+        const targetTenantId = tenantId ?? group?.tenant_id ?? null;
+        let query = supabase
+          .from("dispositivos")
+          .update({ grupo_dispositivos: group.id } as any)
+          .eq("device_uuid", device.device_uuid);
+
+        if (targetTenantId) query = query.eq("tenant_id", targetTenantId);
+
+        const { error } = await query;
         
         if (error) throw error;
         toast.success(`${device.nome} vinculado ao grupo ${group.name}`);
@@ -763,12 +765,19 @@ export default function GroupsPage() {
         selectedStoreIds: (data || []).map(d => d.store_id) 
       });
     } else if (type === 'devices') {
-      const { data } = await supabase.from("group_devices").select("device_id").eq("group_id", group.id);
+      let query = supabase
+        .from("dispositivos")
+        .select("device_uuid")
+        .eq("grupo_dispositivos", group.id);
+
+      if (tenantId) query = query.eq("tenant_id", tenantId);
+
+      const { data } = await query;
       setDeviceSearchQuery("");
       setLinkDevicesModal({ 
         open: true, 
         group, 
-        selectedDeviceIds: (data || []).map(d => d.device_id) 
+        selectedDeviceIds: (data || []).map((d: any) => d.device_uuid) 
       });
     }
   };
@@ -807,16 +816,27 @@ export default function GroupsPage() {
   const handleSaveDeviceLinks = async () => {
     const groupId = linkDevicesModal.group.id;
     try {
-      await supabase.from("group_devices").delete().eq("group_id", groupId);
+      const targetTenantId = tenantId ?? linkDevicesModal.group?.tenant_id ?? null;
+      let clearQuery = supabase
+        .from("dispositivos")
+        .update({ grupo_dispositivos: null } as any)
+        .eq("grupo_dispositivos", groupId);
+      if (targetTenantId) clearQuery = clearQuery.eq("tenant_id", targetTenantId);
+
+      const { error: clearError } = await clearQuery;
+      if (clearError) throw clearError;
+
       if (linkDevicesModal.selectedDeviceIds.length > 0) {
-        const inserts = linkDevicesModal.selectedDeviceIds.map(deviceId => ({
-          group_id: groupId,
-          device_id: deviceId,
-          tenant_id: tenantId
-        }));
-        const { error } = await supabase.from("group_devices").insert(inserts as any);
-        if (error) throw error;
+        let linkQuery = supabase
+          .from("dispositivos")
+          .update({ grupo_dispositivos: groupId } as any)
+          .in("device_uuid", linkDevicesModal.selectedDeviceIds as any);
+        if (targetTenantId) linkQuery = linkQuery.eq("tenant_id", targetTenantId);
+
+        const { error: linkError } = await linkQuery;
+        if (linkError) throw linkError;
       }
+
       toast.success("Vínculo de dispositivos atualizado!");
       setLinkDevicesModal({ ...linkDevicesModal, open: false });
       
