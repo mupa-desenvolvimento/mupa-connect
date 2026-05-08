@@ -89,6 +89,7 @@ async function runCommand(cmd: DeviceCommand, h: CommandHandlerContext) {
       }
       case "clear_cache":
         await h.clearCache();
+        sendCommandToAndroid("CLEAR_CACHE", {}, cmd.device_id);
         break;
       case "reboot":
         await h.reboot();
