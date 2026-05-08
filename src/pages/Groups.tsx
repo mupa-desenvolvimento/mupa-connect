@@ -666,7 +666,7 @@ export default function GroupsPage() {
         const { error } = await query;
         
         if (error) throw error;
-        toast.success(`${device.nome} vinculado ao grupo ${group.name}`);
+        toast.success(`${deviceName} vinculado ao grupo ${group.name}`);
         
         // Comprehensive refetch to sync all views
         await Promise.all([
