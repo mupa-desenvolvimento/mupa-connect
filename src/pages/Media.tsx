@@ -287,37 +287,18 @@ export default function MediaPage() {
           <div className="flex gap-2">
             <Dialog open={isFolderDialogOpen} onOpenChange={setIsFolderDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="h-9">
+                <Button variant="secondary" size="sm" className="h-10 text-[10px] font-black uppercase tracking-widest px-6">
                   <FolderPlus className="h-4 w-4 mr-2" /> Nova Pasta
                 </Button>
               </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Criar Nova Pasta</DialogTitle>
-                </DialogHeader>
-                <div className="py-4">
-                  <Label htmlFor="folderName">Nome da Pasta</Label>
-                  <Input 
-                    id="folderName" 
-                    value={newFolderName} 
-                    onChange={(e) => setNewFolderName(e.target.value)}
-                    placeholder="Ex: Promoções de Maio"
-                    className="mt-2"
-                  />
-                </div>
-                <DialogFooter>
-                  <Button onClick={createFolder}>Criar</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-
-            <Button variant="outline" size="sm" className="h-9" onClick={() => navigate("/midias/lixeira")}>
+...
+            <Button variant="secondary" size="sm" className="h-10 text-[10px] font-black uppercase tracking-widest px-6" onClick={() => navigate("/midias/lixeira")}>
               <Recycle className="h-4 w-4 mr-2" /> Lixeira
             </Button>
 
             <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-gradient-primary text-primary-foreground shadow-glow h-9" size="sm">
+                <Button variant="premium" className="h-10 px-6" size="sm">
                   <Upload className="h-4 w-4 mr-2" /> Enviar mídias
                 </Button>
               </DialogTrigger>
