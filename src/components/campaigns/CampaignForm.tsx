@@ -474,5 +474,3 @@ export function CampaignForm({ initialData, onSubmit, isLoading }: CampaignFormP
     </Form>
   );
 }
-  );
-}
