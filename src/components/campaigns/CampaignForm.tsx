@@ -438,7 +438,7 @@ export function CampaignForm({ initialData, onSubmit, isLoading }: CampaignFormP
 
           {/* COLUNA LATERAL - PLAYLISTS */}
           <div className="lg:col-span-4 space-y-8 h-full">
-            <Card className="bg-[#1a1a1e]/50 border-white/5 shadow-2xl overflow-hidden backdrop-blur-sm h-full flex flex-col min-h-[500px]">
+            <Card className="bg-[#1a1a1e]/50 border-white/5 shadow-2xl overflow-hidden h-full flex flex-col min-h-[500px]">
               <div className="h-1 w-full bg-gradient-to-r from-emerald-500/50 to-transparent" />
               <CardHeader className="pb-4">
                 <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-white/80">
