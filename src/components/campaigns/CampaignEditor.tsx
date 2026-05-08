@@ -174,58 +174,101 @@ export function CampaignEditor({ campaignId, onClose }: CampaignEditorProps) {
     }
   };
 
+  const campaignColor = initialData?.color || "#9b87f5";
+
   return (
-    <div className="flex flex-col h-full bg-card rounded-xl border border-border/60 overflow-hidden">
-      <div className="p-6 border-b border-border/60 flex items-center justify-between bg-muted/20">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9">
+    <div className="flex flex-col h-full bg-[#0c0c0e] rounded-2xl border border-white/5 overflow-hidden shadow-2xl relative">
+      {/* HEADER FIXO PREMIUM */}
+      <header className="sticky top-0 z-50 bg-[#0c0c0e]/80 backdrop-blur-xl border-b border-white/5 p-4 md:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-5 w-full md:w-auto">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onClose} 
+            className="h-10 w-10 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white shrink-0"
+          >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div>
-            <h2 className="text-xl font-bold flex items-center gap-2">
-              {campaignId ? "Editar Campanha" : "Nova Campanha"}
-              {currentCampaignId && (
-                <Badge variant="outline" className="text-[10px] uppercase tracking-wider border-primary/30 text-primary">
-                  ID: {currentCampaignId.substring(0, 8)}
-                </Badge>
+          
+          <div className="flex flex-col min-w-0">
+            <div className="flex items-center gap-3">
+              <div 
+                className="w-3 h-3 rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)]" 
+                style={{ 
+                  backgroundColor: campaignColor,
+                  boxShadow: `0 0 15px ${campaignColor}60`
+                }} 
+              />
+              <h2 className="text-xl font-black text-white uppercase tracking-tight truncate max-w-[200px] md:max-w-md">
+                {initialData?.name || (campaignId ? "Carregando..." : "Nova Campanha")}
+              </h2>
+              {initialData?.is_active ? (
+                <Badge className="bg-green-500/10 text-green-500 border-green-500/20 text-[10px] font-bold uppercase tracking-widest px-2 py-0">ATIVA</Badge>
+              ) : (
+                <Badge className="bg-red-500/10 text-red-500 border-red-500/20 text-[10px] font-bold uppercase tracking-widest px-2 py-0">INATIVA</Badge>
               )}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {campaignId ? "Atualize as configurações e conteúdos da sua campanha." : "Crie uma nova campanha e defina seus conteúdos."}
-            </p>
+            </div>
+            
+            {initialData && (
+              <div className="flex items-center gap-4 mt-1 text-[10px] text-white/40 font-bold uppercase tracking-widest">
+                <div className="flex items-center gap-1.5 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
+                  <Calendar className="h-3 w-3 text-primary/60" />
+                  {format(initialData.start_date!, "dd/MM")} → {format(initialData.end_date!, "dd/MM")}
+                </div>
+                <div className="flex items-center gap-1.5 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
+                  <Clock className="h-3 w-3 text-primary/60" />
+                  {initialData.start_time} → {initialData.end_time}
+                </div>
+                <div className="flex items-center gap-1.5 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
+                  <Layers className="h-3 w-3 text-primary/60" />
+                  {campaignStats.contentCount} {campaignStats.contentCount === 1 ? 'Conteúdo' : 'Conteúdos'}
+                </div>
+              </div>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+
+        <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+          <Button 
+            variant="ghost" 
+            onClick={onClose}
+            className="text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white hover:bg-white/5"
+          >
+            Cancelar
+          </Button>
           <Button 
             onClick={() => (document.querySelector('form button[type="submit"]') as HTMLButtonElement)?.click()}
-            className="bg-gradient-primary text-primary-foreground gap-2"
+            className="bg-white text-black hover:bg-white/90 font-black text-xs uppercase tracking-widest h-10 px-6 shadow-[0_0_20px_rgba(255,255,255,0.1)] gap-2 rounded-xl"
             disabled={isLoading}
           >
-            <Save className="h-4 w-4" /> Salvar Alterações
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Salvar Alterações
           </Button>
         </div>
-      </div>
+      </header>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-        <div className="px-6 py-2 border-b border-border/60 bg-muted/10">
-          <TabsList className="bg-muted/30 h-10 p-1">
-            <TabsTrigger value="details" className="gap-2 text-xs px-4">
-              <Settings2 className="h-3.5 w-3.5" /> Configurações Gerais
+        <div className="px-8 py-2 bg-[#0c0c0e]/40 border-b border-white/5">
+          <TabsList className="bg-transparent h-12 p-0 gap-8">
+            <TabsTrigger 
+              value="details" 
+              className="data-[state=active]:bg-transparent data-[state=active]:text-white text-white/40 border-b-2 border-transparent data-[state=active]:border-white rounded-none h-full px-0 text-xs font-bold uppercase tracking-widest gap-2 transition-all"
+            >
+              <Settings2 className="h-4 w-4" /> Configurações Gerais
             </TabsTrigger>
             <TabsTrigger 
               value="content" 
-              className="gap-2 text-xs px-4"
+              className="data-[state=active]:bg-transparent data-[state=active]:text-white text-white/40 border-b-2 border-transparent data-[state=active]:border-white rounded-none h-full px-0 text-xs font-bold uppercase tracking-widest gap-2 transition-all"
               disabled={!currentCampaignId}
             >
-              <LayoutGrid className="h-3.5 w-3.5" /> Conteúdo da Campanha
+              <Megaphone className="h-4 w-4" /> Conteúdo da Campanha
             </TabsTrigger>
           </TabsList>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6">
-          <TabsContent value="details" className="m-0 focus-visible:ring-0">
-            <div className="max-w-4xl mx-auto">
+        <div className="flex-1 overflow-hidden">
+          <TabsContent value="details" className="m-0 h-full focus-visible:ring-0 overflow-y-auto custom-scrollbar">
+            <div className="max-w-5xl mx-auto py-8 px-6">
               <CampaignForm 
                 initialData={initialData} 
                 onSubmit={onSubmit} 
@@ -234,19 +277,27 @@ export function CampaignEditor({ campaignId, onClose }: CampaignEditorProps) {
             </div>
           </TabsContent>
           
-          <TabsContent value="content" className="m-0 h-full focus-visible:ring-0">
+          <TabsContent value="content" className="m-0 h-full focus-visible:ring-0 overflow-hidden">
             {currentCampaignId ? (
-              <CampaignContentManager campaignId={currentCampaignId} />
+              <CampaignContentManager campaignId={currentCampaignId} onContentChange={refreshStats} />
             ) : (
-              <div className="flex flex-col items-center justify-center py-24 text-center gap-4 bg-muted/5 rounded-2xl border-2 border-dashed">
-                <LayoutGrid className="h-16 w-16 text-muted-foreground/20" />
+              <div className="flex flex-col items-center justify-center h-full text-center gap-6 animate-in fade-in duration-700">
+                <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+                  <Megaphone className="h-10 w-10 text-white/10" />
+                </div>
                 <div className="space-y-2">
-                  <h3 className="text-lg font-bold">Conteúdo não disponível</h3>
-                  <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                    Salve as configurações básicas da campanha primeiro para habilitar o gerenciamento de conteúdo.
+                  <h3 className="text-xl font-bold uppercase tracking-tighter">Conteúdo bloqueado</h3>
+                  <p className="text-sm text-white/40 max-w-xs mx-auto">
+                    Salve as configurações básicas para habilitar o editor visual de conteúdos.
                   </p>
                 </div>
-                <Button variant="outline" onClick={() => setActiveTab("details")}>Ir para Configurações</Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setActiveTab("details")}
+                  className="border-white/10 bg-white/5 hover:bg-white/10 text-[10px] font-bold uppercase tracking-widest"
+                >
+                  Configurar Campanha
+                </Button>
               </div>
             )}
           </TabsContent>
