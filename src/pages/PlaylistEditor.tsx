@@ -728,7 +728,10 @@ export default function PlaylistEditor() {
 
   const collisionDetectionStrategy = useCallback(
     (args: any) => {
-      if (activeDragType === "campaign") return closestCenter(args);
+      // Quando arrastando uma campanha, usamos detecção retangular para maior precisão
+      if (activeDragType === "campaign") return rectIntersection(args);
+      
+      // Para itens da playlist, removemos o dropzone de fundo da detecção para priorizar os itens adjacentes
       return closestCenter({
         ...args,
         droppableContainers: args.droppableContainers.filter(
