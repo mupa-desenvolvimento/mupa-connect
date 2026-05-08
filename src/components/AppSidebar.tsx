@@ -81,7 +81,7 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-3">
+        <div className="flex items-center gap-3 px-4 py-6">
           {collapsed ? (
             <img 
               src="/Artboard 15.svg" 
