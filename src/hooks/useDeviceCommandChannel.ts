@@ -23,6 +23,9 @@ export interface CommandHandlerContext {
   updateApk?: (url: string) => Promise<void> | void;
   startService?: (serviceName: string) => Promise<void> | void;
   stopService?: (serviceName: string) => Promise<void> | void;
+  setBrightness?: (value: number) => Promise<void> | void;
+  ttsSpeak?: (text: string) => Promise<void> | void;
+  openUrl?: (url: string) => Promise<void> | void;
 }
 
 /**
