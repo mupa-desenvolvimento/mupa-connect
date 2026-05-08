@@ -339,6 +339,7 @@ export default function PlaylistEditor() {
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeDragType, setActiveDragType] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
   const [debugData, setDebugData] = useState<any>(null);
   const [showDebug, setShowDebug] = useState(false);
   const [mediaSearch, setMediaSearch] = useState("");
