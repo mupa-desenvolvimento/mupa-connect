@@ -84,7 +84,7 @@ export function AppSidebar() {
   );
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border/50">
       <SidebarHeader>
         <div className="flex items-center gap-3 px-4 py-6">
           {collapsed ? (
