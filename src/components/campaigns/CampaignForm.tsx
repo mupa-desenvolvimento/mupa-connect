@@ -116,6 +116,23 @@ export function CampaignForm({ initialData, onSubmit, isLoading }: CampaignFormP
     },
   });
 
+  useEffect(() => {
+    if (initialData) {
+      form.reset({
+        name: initialData.name || "",
+        description: initialData.description || "",
+        start_date: initialData.start_date ? new Date(initialData.start_date) : new Date(),
+        end_date: initialData.end_date ? new Date(initialData.end_date) : new Date(new Date().setDate(new Date().getDate() + 7)),
+        start_time: initialData.start_time || "00:00",
+        end_time: initialData.end_time || "23:59",
+        priority: initialData.priority || 0,
+        color: initialData.color || "#9b87f5",
+        is_active: initialData.is_active ?? true,
+        playlist_ids: initialData.playlist_ids || [],
+      });
+    }
+  }, [initialData, form]);
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 animate-in fade-in duration-500">
