@@ -651,6 +651,7 @@ export default function GroupsPage() {
     // 1. Device -> Group
     if (activeData.type === 'device' && overData.type === 'group') {
       const device = activeData.device;
+      const deviceName = device.apelido_interno || device.nome || "Dispositivo";
       const group = overData.group;
       
       try {
@@ -665,7 +666,7 @@ export default function GroupsPage() {
         const { error } = await query;
         
         if (error) throw error;
-        toast.success(`${device.nome} vinculado ao grupo ${group.name}`);
+        toast.success(`${deviceName} vinculado ao grupo ${group.name}`);
         
         // Comprehensive refetch to sync all views
         await Promise.all([
@@ -681,6 +682,7 @@ export default function GroupsPage() {
     // 2. Device -> Store
     else if (activeData.type === 'device' && overData.type === 'store') {
       const device = activeData.device;
+      const deviceName = device.apelido_interno || device.nome || "Dispositivo";
       const store = overData.store;
       
       try {
@@ -691,7 +693,7 @@ export default function GroupsPage() {
           .eq('device_uuid', device.device_uuid);
         
         if (error) throw error;
-        toast.success(`${device.nome} movido para ${store.name}`);
+        toast.success(`${deviceName} movido para ${store.name}`);
         
         await Promise.all([
           refetchDevices(),
