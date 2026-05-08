@@ -22,16 +22,21 @@ import {
   RefreshCw,
   Loader2,
   Settings2,
-  ArrowLeft
+  ArrowLeft,
+  Megaphone,
+  Sparkles,
+  ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { CampaignCalendar } from "@/components/campaigns/CampaignCalendar";
 import { CampaignTimeline } from "@/components/campaigns/CampaignTimeline";
 import { CampaignEditor } from "@/components/campaigns/CampaignEditor";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { StatusBadge } from "@/components/StatusBadge";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function CampaignsPage() {
   const { tenantId, companyId, isSuperAdmin, isMarketing } = useUserRole();
