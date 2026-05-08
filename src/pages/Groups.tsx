@@ -187,8 +187,6 @@ const DraggableDevice = ({ gd }: { gd: any }) => {
       device: gd.device
     }
   });
-
-  console.log(gd.device);
   
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -210,7 +208,7 @@ const DraggableDevice = ({ gd }: { gd: any }) => {
       <Monitor className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       <div className="min-w-0 flex-1">
         <p className="text-xs font-medium leading-tight truncate">
-          {gd.device?.apelido_interno || "Device."}
+          {gd.device?.apelido_interno || gd.device?.nome || "Dispositivo"}
         </p>
         <p className="text-[10px] text-muted-foreground leading-tight truncate">
           {gd.device?.num_filial || ""}
@@ -271,10 +269,12 @@ const GroupItem = ({
   }, [group.linked_store_ids, allStores]);
 
   const linkedDevices = useMemo(() => {
-    return (group.direct_device_ids || []).map((deviceId: string) => {
-      const device = allDevices.find(d => d.device_uuid === deviceId);
-      return { id: `${group.id}-${deviceId}`, device_id: deviceId, device };
-    });
+    return (group.direct_device_ids || [])
+      .map((deviceId: string) => {
+        const device = allDevices.find(d => d.device_uuid === deviceId);
+        return { id: `${group.id}-${deviceId}`, device_id: deviceId, device };
+      })
+      .filter((gd: any) => !!gd.device);
   }, [group.direct_device_ids, allDevices]);
 
   const getEffectivePlaylist = (g: any): { name: string; isInherited: boolean } => {
@@ -650,7 +650,7 @@ export default function GroupsPage() {
         const { error } = await query;
         
         if (error) throw error;
-        toast.success(`${device.nome} vinculado ao grupo ${group.name}`);
+        toast.success(`${device.apelido_interno || device.nome || "Dispositivo"} vinculado ao grupo ${group.name}`);
         
         // Comprehensive refetch to sync all views
         await Promise.all([
@@ -676,7 +676,7 @@ export default function GroupsPage() {
           .eq('device_uuid', device.device_uuid);
         
         if (error) throw error;
-        toast.success(`${device.nome} movido para ${store.name}`);
+        toast.success(`${device.apelido_interno || device.nome || "Dispositivo"} movido para ${store.name}`);
         
         await Promise.all([
           refetchDevices(),
@@ -1244,13 +1244,15 @@ export default function GroupsPage() {
             {activeDragItem.type === 'device' && (
               <div className="flex items-center gap-2">
                 <Monitor className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm font-medium">{activeDragItem.device.nome}</span>
+                <span className="text-sm font-medium">
+                  {activeDragItem.device?.apelido_interno || activeDragItem.device?.nome || "Dispositivo"}
+                </span>
               </div>
             )}
             {activeDragItem.type === 'store' && (
               <div className="flex items-center gap-2">
                 <Store className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm font-medium">{activeDragItem.store.name}</span>
+                <span className="text-sm font-medium">{activeDragItem.store?.name || "Loja"}</span>
               </div>
             )}
           </div>
