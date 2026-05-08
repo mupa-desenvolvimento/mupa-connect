@@ -26,7 +26,7 @@ export function useDevices(tenantId: string | null, isSuperAdmin?: boolean) {
         .select(`
           id,
           device_uuid,
-          nome,
+          apelido_interno,
           num_filial,
           store_id,
           tenant_id,
@@ -54,6 +54,7 @@ export function useDevices(tenantId: string | null, isSuperAdmin?: boolean) {
 
       return devices.map((d: any) => ({
         ...d,
+        nome: d.apelido_interno ?? "Dispositivo",
         group_id: d.group_devices?.[0]?.group_id,
         group_name: d.group_devices?.[0]?.groups?.name,
         internal_group_id: d.store_internal_group_devices?.[0]?.internal_group_id,
