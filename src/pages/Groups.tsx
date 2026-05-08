@@ -1039,33 +1039,15 @@ export default function GroupsPage() {
                 ) : filteredStores.length > 0 ? (
                   <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 pb-2">
                     {filteredStores.map(store => (
-                      <Card key={store.id} className="overflow-hidden">
-                        <div className="p-4 border-b bg-muted/30 flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Store className="w-5 h-5 text-primary" />
-                            <div>
-                              <span className="font-bold text-base">{store.name}</span>
-                              <span className="text-xs text-muted-foreground ml-2">({store.code})</span>
-                            </div>
-                          </div>
-                          <div className="flex gap-2 items-center">
-                            <Select 
-                              value={store.playlist_id || "none"} 
-                              onValueChange={(v) => {}}
-                            >
-                              <SelectTrigger className="h-8 w-[180px] text-xs">
-                                <SelectValue placeholder="Playlist da Loja" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="none">Sem playlist (Herança)</SelectItem>
-                                {playlists?.map(p => (
-                                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      </Card>
+                      <StoreCard 
+                        key={store.id} 
+                        store={store} 
+                        playlists={playlists || []}
+                        onRefresh={() => {
+                          refetchGroups();
+                          refetchStores();
+                        }}
+                      />
                     ))}
                   </div>
                 ) : (
