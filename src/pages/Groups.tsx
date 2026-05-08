@@ -208,7 +208,7 @@ const DraggableDevice = ({ gd }: { gd: any }) => {
       <Monitor className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       <div className="min-w-0 flex-1">
         <p className="text-xs font-medium leading-tight truncate">
-          {gd.device?.apelido_interno || gd.device?.nome || "Dispositivo"}
+          {gd.device?.apelido_interno || "Device."}
         </p>
         <p className="text-[10px] text-muted-foreground leading-tight truncate">
           {gd.device?.num_filial || ""}
