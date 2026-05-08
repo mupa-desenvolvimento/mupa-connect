@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { 
   DndContext, 
   closestCenter,
+  rectIntersection,
   KeyboardSensor,
   PointerSensor,
   useSensor,
