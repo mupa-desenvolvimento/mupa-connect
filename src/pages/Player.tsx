@@ -171,6 +171,28 @@ export default function Player() {
     return () => unsubscribe();
   }, [deviceCode]);
 
+  // 1.6 Realtime Commands via Firebase
+  useEffect(() => {
+    if (!deviceCode || isPreview) return;
+
+    const unsubscribe = FirebaseRealtimeService.subscribeToCommands(deviceCode, (payload) => {
+      if (payload.comando) {
+        // Envia diretamente para o Android Bridge
+        const { sendCommandToAndroid } = (window as any);
+        if (sendCommandToAndroid) {
+          sendCommandToAndroid(payload.comando, payload.payload || {}, {
+            deviceId: deviceInfo?.id,
+            tenantId: deviceInfo?.tenant_id,
+            companyId: deviceInfo?.company_id
+          });
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [deviceCode, deviceInfo]);
+
+
   // 1.8 Proactive Cache Management
   useEffect(() => {
     if (!manifest || !deviceCode || isPreview) return;
