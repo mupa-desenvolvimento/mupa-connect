@@ -69,9 +69,14 @@ export function AppSidebar() {
 
   const renderItem = (item: { title: string; url: string; icon: any }) => (
     <SidebarMenuItem key={item.title}>
-      <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
-        <NavLink to={item.url} end={item.url === "/"} className="flex items-center gap-3">
-          <item.icon className="h-4 w-4 shrink-0" />
+      <SidebarMenuButton 
+        asChild 
+        isActive={isActive(item.url)} 
+        tooltip={item.title}
+        className="transition-all duration-300"
+      >
+        <NavLink to={item.url} end={item.url === "/"} className="flex items-center gap-3.5">
+          <item.icon className="shrink-0" />
           {!collapsed && <span className="truncate">{item.title}</span>}
         </NavLink>
       </SidebarMenuButton>
@@ -79,7 +84,7 @@ export function AppSidebar() {
   );
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border/50">
       <SidebarHeader>
         <div className="flex items-center gap-3 px-4 py-6">
           {collapsed ? (
@@ -98,7 +103,7 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="gap-6 py-4">
         {isSuperAdmin && (
           <SidebarGroup>
             <SidebarGroupLabel>Administração Global</SidebarGroupLabel>
@@ -131,9 +136,12 @@ export function AppSidebar() {
 
       <SidebarFooter>
         {!collapsed && (
-          <div className="rounded-xl border border-sidebar-border bg-sidebar-accent/50 p-4 text-[9px] font-black uppercase tracking-widest text-sidebar-foreground/40 mb-4">
-            <div className="text-primary mb-1">Mupa Cloud</div>
-            <div className="opacity-50">Sistema Multitenant v3.0</div>
+          <div className="rounded-xl border border-sidebar-border/50 bg-sidebar-accent/30 p-4 text-[10px] font-medium uppercase tracking-[0.12em] text-sidebar-foreground/40 mb-6 mx-2 backdrop-blur-sm">
+            <div className="text-primary font-bold mb-1 flex items-center gap-2">
+              <div className="size-1.5 rounded-full bg-primary animate-pulse" />
+              Mupa Cloud
+            </div>
+            <div className="opacity-60">Sistema Multitenant v3.0</div>
           </div>
         )}
       </SidebarFooter>

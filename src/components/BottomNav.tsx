@@ -26,7 +26,7 @@ export function BottomNav() {
           )}
         >
           <item.icon className="h-5 w-5" />
-          <span className="text-[9px] font-black uppercase tracking-widest">{item.title}</span>
+          <span className="text-[10px] font-bold tracking-[0.02em]">{item.title}</span>
         </button>
       ))}
     </div>
