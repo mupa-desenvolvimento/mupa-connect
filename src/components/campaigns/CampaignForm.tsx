@@ -518,7 +518,7 @@ export function CampaignForm({ initialData, onSubmit, isLoading }: CampaignFormP
                 
                 <div className="pt-4 border-t border-white/5 flex items-center justify-between">
                   <div className="text-[9px] font-black uppercase tracking-widest text-white/20">
-                    {form.watch("playlist_ids").length} Selecionadas
+                    {form.watch("playlist_ids")?.length || 0} Selecionadas
                   </div>
                   <Button 
                     variant="ghost" 
