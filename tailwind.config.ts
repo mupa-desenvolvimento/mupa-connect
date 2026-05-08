@@ -72,6 +72,14 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
       },
+      backgroundImage: {
+        "gradient-mupa": "var(--gradient-mupa)",
+        "gradient-glow": "var(--gradient-glow)",
+      },
+      boxShadow: {
+        premium: "var(--shadow-premium)",
+        glow: "var(--shadow-glow)",
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
