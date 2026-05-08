@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/use-user-role";
@@ -7,9 +7,24 @@ import { CampaignForm, CampaignFormValues } from "./CampaignForm";
 import { CampaignContentManager } from "./CampaignContentManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
-import { LayoutGrid, Settings2, ArrowLeft, Save } from "lucide-react";
+import { ptBR } from "date-fns/locale";
+import { 
+  LayoutGrid, 
+  Settings2, 
+  ArrowLeft, 
+  Save, 
+  Calendar, 
+  Clock, 
+  Layers, 
+  CheckCircle2, 
+  AlertCircle,
+  Megaphone,
+  Trash2
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 interface CampaignEditorProps {
   campaignId?: string | null;
@@ -23,6 +38,7 @@ export function CampaignEditor({ campaignId, onClose }: CampaignEditorProps) {
   const [initialData, setInitialData] = useState<Partial<CampaignFormValues> | undefined>();
   const [activeTab, setActiveTab] = useState<string>("details");
   const [currentCampaignId, setCurrentCampaignId] = useState<string | null>(campaignId || null);
+  const [campaignStats, setCampaignStats] = useState({ contentCount: 0 });
 
   useEffect(() => {
     if (campaignId) {
