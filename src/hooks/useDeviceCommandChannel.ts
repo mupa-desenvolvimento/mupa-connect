@@ -6,6 +6,7 @@ import {
   subscribeToDeviceCommands,
   type DeviceCommand,
 } from "@/lib/device-commands";
+import { sendCommandToAndroid } from "@/lib/android-bridge";
 
 export interface CommandHandlerContext {
   reloadPlaylist: () => Promise<void> | void;
@@ -14,6 +15,14 @@ export interface CommandHandlerContext {
   screenshot: () => Promise<string | void>;
   clearCache: () => Promise<void> | void;
   reboot: () => Promise<void> | void;
+  openApp?: (packageName: string) => Promise<void> | void;
+  rebootDevice?: () => Promise<void> | void;
+  restartPlayer?: () => Promise<void> | void;
+  reloadPage?: () => Promise<void> | void;
+  fullscreen?: (enabled: boolean) => Promise<void> | void;
+  updateApk?: (url: string) => Promise<void> | void;
+  startService?: (serviceName: string) => Promise<void> | void;
+  stopService?: (serviceName: string) => Promise<void> | void;
 }
 
 /**
