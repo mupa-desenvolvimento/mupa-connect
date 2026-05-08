@@ -3,7 +3,7 @@ import {
   ChevronRight, 
   ChevronDown, 
   Store, 
-  Layers, 
+  Folder, 
   Monitor, 
   Edit2, 
   Plus, 
@@ -84,9 +84,9 @@ export const GroupCard = ({
 
   const getIcon = (type: NodeType) => {
     switch (type) {
-      case 'store_group': return <Layers className="w-4 h-4" />;
+      case 'store_group': return <Folder className="w-4 h-4" />;
       case 'store': return <Store className="w-4 h-4" />;
-      case 'device_group': return <LayoutGrid className="w-4 h-4" />;
+      case 'device_group': return <Folder className="w-4 h-4 opacity-70" />;
       default: return <Monitor className="w-4 h-4" />;
     }
   };
