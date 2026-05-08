@@ -32,15 +32,7 @@ export function useDevices(tenantId: string | null, isSuperAdmin?: boolean) {
           tenant_id,
           grupo_dispositivos,
           last_heartbeat_at,
-          last_proof_at,
-          group_devices (
-            group_id,
-            groups (name)
-          ),
-          store_internal_group_devices (
-            internal_group_id,
-            store_internal_groups (name)
-          )
+          last_proof_at
         `);
 
       if (!isSuperAdmin) {
@@ -52,13 +44,31 @@ export function useDevices(tenantId: string | null, isSuperAdmin?: boolean) {
 
       if (error) throw error;
 
-      return devices.map((d: any) => ({
+      const deviceIds = (devices || [])
+        .map((d: any) => d.device_uuid)
+        .filter(Boolean);
+
+      let internalGroupMap = new Map<string, string>();
+      if (deviceIds.length > 0) {
+        const { data: internalLinks, error: internalLinksError } = await supabase
+          .from("store_internal_group_devices")
+          .select("device_id, internal_group_id")
+          .in("device_id", deviceIds as any);
+
+        if (internalLinksError) throw internalLinksError;
+
+        internalGroupMap = new Map(
+          (internalLinks || [])
+            .filter((l: any) => !!l?.device_id && !!l?.internal_group_id)
+            .map((l: any) => [l.device_id, l.internal_group_id])
+        );
+      }
+
+      return (devices || []).map((d: any) => ({
         ...d,
         nome: d.apelido_interno ?? "Dispositivo",
-        group_id: d.group_devices?.[0]?.group_id,
-        group_name: d.group_devices?.[0]?.groups?.name,
-        internal_group_id: d.store_internal_group_devices?.[0]?.internal_group_id,
-        internal_group_name: d.store_internal_group_devices?.[0]?.store_internal_groups?.name
+        group_id: d.grupo_dispositivos ?? null,
+        internal_group_id: d.device_uuid ? internalGroupMap.get(d.device_uuid) : undefined
       })) as Device[];
     },
     enabled: !!tenantId || !!isSuperAdmin,
