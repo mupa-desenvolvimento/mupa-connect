@@ -138,7 +138,7 @@ const DraggableCampaign = ({ campaign, children }: { campaign: any; children: Re
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 1000 : 1,
     touchAction: "none",
-    userSelect: "none"
+    userSelect: "none" as const
   } : {};
 
   return (
