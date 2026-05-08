@@ -284,7 +284,7 @@ export function CampaignForm({ initialData, onSubmit, isLoading }: CampaignFormP
             </Card>
 
             {/* CARD 2: AGENDAMENTO PREMIUM */}
-            <Card className="bg-[#1a1a1e]/50 border-white/5 shadow-2xl overflow-hidden backdrop-blur-sm">
+            <Card className="bg-[#1a1a1e]/50 border-white/5 shadow-2xl overflow-hidden">
               <div className="h-1 w-full bg-gradient-to-r from-blue-500/50 via-blue-500/20 to-transparent" />
               <CardHeader className="pb-6">
                 <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-white/80">
