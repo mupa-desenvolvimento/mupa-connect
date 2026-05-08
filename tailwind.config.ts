@@ -16,7 +16,7 @@ export default {
       fontFamily: {
         sans: ["Satoshi", "ui-sans-serif", "system-ui", "sans-serif"],
         display: ["Satoshi", "sans-serif"],
-        mono: ["'JetBrains Mono'", "ui-monospace", "monospace"],
+        mono: ["Satoshi", "ui-monospace", "monospace"],
       },
       colors: {
         border: "hsl(var(--border))",
