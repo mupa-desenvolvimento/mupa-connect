@@ -77,11 +77,17 @@ async function runCommand(cmd: DeviceCommand, h: CommandHandlerContext, currentD
   let message: string | null = null;
   let resultPayload: Record<string, unknown> = {};
 
+  const context = { 
+    deviceId: cmd.device_id,
+    tenantId: h.tenantId,
+    companyId: h.companyId
+  };
+
   try {
     switch (cmd.command) {
       case "reload_playlist":
         await h.reloadPlaylist();
-        sendCommandToAndroid("RELOAD_PAGE", {}, cmd.device_id);
+        sendCommandToAndroid("reload_page", {}, context);
         break;
       case "play_campaign": {
         const id = cmd.payload?.campaign_id;
@@ -94,7 +100,7 @@ async function runCommand(cmd: DeviceCommand, h: CommandHandlerContext, currentD
         if (!Number.isFinite(v)) throw new Error("volume inválido");
         const volume = Math.max(0, Math.min(100, v));
         await h.setVolume(volume);
-        sendCommandToAndroid("CHANGE_VOLUME", { volume }, cmd.device_id);
+        sendCommandToAndroid("change_volume", { volume }, context);
         break;
       }
       case "screenshot": {
@@ -104,55 +110,56 @@ async function runCommand(cmd: DeviceCommand, h: CommandHandlerContext, currentD
       }
       case "clear_cache":
         await h.clearCache();
-        sendCommandToAndroid("CLEAR_CACHE", {}, cmd.device_id);
+        sendCommandToAndroid("clear_cache", {}, context);
         break;
       case "reboot":
         await h.reboot();
-        sendCommandToAndroid("RELOAD_PAGE", {}, cmd.device_id);
+        sendCommandToAndroid("reload_page", {}, context);
         break;
       case "reboot_device":
-        await sendCommandToAndroid("REBOOT", {}, cmd.device_id);
+        await sendCommandToAndroid("reboot", {}, context);
         break;
-      case "open_app": {
-        const pkg = cmd.payload?.package || cmd.payload?.packageName;
-        if (!pkg) throw new Error("package ausente");
+      case "open_app":
+      case "abrir_app": {
+        const pkg = cmd.payload?.package || cmd.payload?.packageName || cmd.payload?.pacote;
+        if (!pkg) throw new Error("pacote ausente");
         await h.openApp?.(String(pkg));
-        sendCommandToAndroid("OPEN_APP", { package: pkg }, cmd.device_id);
+        sendCommandToAndroid("abrir_app", { pacote: pkg }, context);
         break;
       }
       case "restart_player":
         await h.restartPlayer?.();
-        sendCommandToAndroid("RESTART_PLAYER", {}, cmd.device_id);
+        sendCommandToAndroid("restart_player", {}, context);
         break;
       case "reload_page":
         await h.reloadPage?.();
-        sendCommandToAndroid("RELOAD_PAGE", {}, cmd.device_id);
+        sendCommandToAndroid("reload_page", {}, context);
         break;
       case "fullscreen": {
         const enabled = cmd.payload?.enabled ?? true;
         await h.fullscreen?.(Boolean(enabled));
-        sendCommandToAndroid("FULLSCREEN", { enabled }, cmd.device_id);
+        sendCommandToAndroid("fullscreen", { enabled }, context);
         break;
       }
       case "update_apk": {
         const url = cmd.payload?.url;
         if (!url) throw new Error("URL do APK ausente");
         await h.updateApk?.(String(url));
-        sendCommandToAndroid("UPDATE_APK", { url }, cmd.device_id);
+        sendCommandToAndroid("update_apk", { url }, context);
         break;
       }
       case "start_service": {
         const service = cmd.payload?.service;
         if (!service) throw new Error("serviço ausente");
         await h.startService?.(String(service));
-        sendCommandToAndroid("START_SERVICE", { service }, cmd.device_id);
+        sendCommandToAndroid("start_service", { service }, context);
         break;
       }
       case "stop_service": {
         const service = cmd.payload?.service;
         if (!service) throw new Error("serviço ausente");
         await h.stopService?.(String(service));
-        sendCommandToAndroid("STOP_SERVICE", { service }, cmd.device_id);
+        sendCommandToAndroid("stop_service", { service }, context);
         break;
       }
       case "set_brightness": {
@@ -160,26 +167,51 @@ async function runCommand(cmd: DeviceCommand, h: CommandHandlerContext, currentD
         if (!Number.isFinite(v)) throw new Error("brilho inválido");
         const brightness = Math.max(0, Math.min(100, v));
         await h.setBrightness?.(brightness);
-        sendCommandToAndroid("SET_BRIGHTNESS", { brightness }, cmd.device_id);
+        sendCommandToAndroid("set_brightness", { brightness }, context);
         break;
       }
       case "tts_speak": {
         const text = cmd.payload?.text;
         if (!text) throw new Error("texto ausente");
         await h.ttsSpeak?.(String(text));
-        sendCommandToAndroid("TTS_SPEAK", { text }, cmd.device_id);
+        sendCommandToAndroid("tts_speak", { text }, context);
         break;
       }
       case "open_url": {
         const url = cmd.payload?.url;
         if (!url) throw new Error("URL ausente");
         await h.openUrl?.(String(url));
-        sendCommandToAndroid("OPEN_URL", { url }, cmd.device_id);
+        sendCommandToAndroid("open_url", { url }, context);
+        break;
+      }
+      case "consulta_ean": {
+        const codbar = cmd.payload?.codbar || cmd.payload?.barcode;
+        if (!codbar) throw new Error("código de barras ausente");
+        await h.consultaEan?.(String(codbar));
+        sendCommandToAndroid("consulta_ean", { codbar }, context);
+        break;
+      }
+      case "reset_app": {
+        await h.resetApp?.();
+        sendCommandToAndroid("reset_app", {}, context);
+        break;
+      }
+      case "fecha_app":
+      case "fecha_app_android": {
+        await h.fechaApp?.();
+        sendCommandToAndroid("fecha_app", {}, context);
+        break;
+      }
+      case "ip_server": {
+        const ip = cmd.payload?.ip_server || cmd.payload?.ip;
+        if (!ip) throw new Error("IP do servidor ausente");
+        await h.setIpServer?.(String(ip));
+        sendCommandToAndroid("ip_server", { ip_server: ip }, context);
         break;
       }
       case "ping":
         message = "pong";
-        sendCommandToAndroid("PING", {}, cmd.device_id);
+        sendCommandToAndroid("ping", {}, context);
         break;
       default:
         ok = false;
