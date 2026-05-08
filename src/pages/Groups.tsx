@@ -693,7 +693,7 @@ export default function GroupsPage() {
           .eq('device_uuid', device.device_uuid);
         
         if (error) throw error;
-        toast.success(`${device.nome} movido para ${store.name}`);
+        toast.success(`${deviceName} movido para ${store.name}`);
         
         await Promise.all([
           refetchDevices(),
