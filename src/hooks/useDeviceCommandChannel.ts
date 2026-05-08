@@ -26,13 +26,17 @@ export interface CommandHandlerContext {
   setBrightness?: (value: number) => Promise<void> | void;
   ttsSpeak?: (text: string) => Promise<void> | void;
   openUrl?: (url: string) => Promise<void> | void;
+  consultaEan?: (codbar: string) => Promise<void> | void;
+  resetApp?: () => Promise<void> | void;
+  fechaApp?: () => Promise<void> | void;
+  setIpServer?: (ip: string) => Promise<void> | void;
+  tenantId?: string;
+  companyId?: string;
 }
 
 /**
  * Hook used by the Player (/play/:deviceCode) to listen for remote commands
  * and report execution back to Supabase.
- *
- * Pass `deviceId` (UUID from public.devices.id) — not the device_code.
  */
 export function useDeviceCommandChannel(
   deviceId: string | undefined,
@@ -51,6 +55,7 @@ export function useDeviceCommandChannel(
     return unsubscribe;
   }, [deviceId]);
 }
+
 
 async function runCommand(cmd: DeviceCommand, h: CommandHandlerContext, currentDeviceId: string) {
   // Security validation: ignore commands not meant for this device
