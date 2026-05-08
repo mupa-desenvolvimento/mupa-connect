@@ -144,6 +144,28 @@ async function runCommand(cmd: DeviceCommand, h: CommandHandlerContext) {
         sendCommandToAndroid("STOP_SERVICE", { service }, cmd.device_id);
         break;
       }
+      case "set_brightness": {
+        const v = Number(cmd.payload?.brightness);
+        if (!Number.isFinite(v)) throw new Error("brilho inválido");
+        const brightness = Math.max(0, Math.min(100, v));
+        await h.setBrightness?.(brightness);
+        sendCommandToAndroid("SET_BRIGHTNESS", { brightness }, cmd.device_id);
+        break;
+      }
+      case "tts_speak": {
+        const text = cmd.payload?.text;
+        if (!text) throw new Error("texto ausente");
+        await h.ttsSpeak?.(String(text));
+        sendCommandToAndroid("TTS_SPEAK", { text }, cmd.device_id);
+        break;
+      }
+      case "open_url": {
+        const url = cmd.payload?.url;
+        if (!url) throw new Error("URL ausente");
+        await h.openUrl?.(String(url));
+        sendCommandToAndroid("OPEN_URL", { url }, cmd.device_id);
+        break;
+      }
       case "ping":
         message = "pong";
         sendCommandToAndroid("PING", {}, cmd.device_id);
