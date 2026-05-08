@@ -102,12 +102,12 @@ export function CampaignTimeline({ campaigns, onSelectCampaign }: CampaignTimeli
               const duration = ((endH * 60 + endM) - (startH * 60 + startM)) * (hourWidth / 60);
 
               return (
-                <div key={c.id} className="flex group hover:bg-muted/5 transition-colors">
-                  <div className="w-48 flex-shrink-0 border-r border-border/40 p-4 bg-muted/5 flex items-center gap-3">
-                    <div className="h-8 w-1.5 rounded-full flex-shrink-0 shadow-sm" style={{ backgroundColor: c.color }} />
+                <div key={c.id} className="flex group hover:bg-white/[0.02] transition-colors border-b border-white/5 last:border-0">
+                  <div className="w-56 flex-shrink-0 border-r border-white/5 p-6 bg-white/[0.01] flex items-center gap-4">
+                    <div className="h-10 w-1.5 rounded-full flex-shrink-0 shadow-[0_0_15px_currentColor]" style={{ backgroundColor: c.color, color: c.color }} />
                     <div className="min-w-0">
-                      <div className="font-bold text-xs truncate group-hover:text-primary transition-colors">{c.name}</div>
-                      <div className="text-[10px] text-muted-foreground font-mono">P{c.priority}</div>
+                      <div className="font-black text-[11px] uppercase tracking-tighter truncate text-white group-hover:text-primary transition-colors italic">{c.name}</div>
+                      <div className="text-[9px] font-black text-white/20 uppercase tracking-widest mt-0.5">Prioridade {c.priority}</div>
                     </div>
                   </div>
                   <div className="flex-1 relative h-20" style={{ width: 24 * hourWidth }}>
