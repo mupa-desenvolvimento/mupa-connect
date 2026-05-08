@@ -916,10 +916,11 @@ export default function PlaylistEditor() {
         </div>
       </header>
 
-      <DndContext 
+      <DndContext
         sensors={sensors}
         collisionDetection={collisionDetectionStrategy}
         onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
         modifiers={activeDragType === "playlist-item" ? [restrictToHorizontalAxis] : []}
       >
