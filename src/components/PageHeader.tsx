@@ -10,14 +10,17 @@ interface Props {
 
 export function PageHeader({ title, description, actions, className }: Props) {
   return (
-    <div className={cn("flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-4", className)}>
+    <div className={cn("flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10 mt-2", className)}>
       <div className="space-y-1">
-        <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
-          {title}
+        <h1 className="text-muted-foreground/50 text-xs md:text-sm font-black uppercase tracking-[0.3em] max-w-2xl leading-relaxed">
+          {title} {description && <span className="opacity-40 ml-2 font-medium normal-case tracking-normal">/ {description}</span>}
         </h1>
-        {description && <p className="text-muted-foreground text-sm leading-relaxed max-w-2xl">{description}</p>}
       </div>
-      {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
+      {actions && (
+        <div className="flex items-center gap-3 shrink-0">
+          {actions}
+        </div>
+      )}
     </div>
   );
 }

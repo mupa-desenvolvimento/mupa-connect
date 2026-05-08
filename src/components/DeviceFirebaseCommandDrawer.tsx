@@ -494,7 +494,7 @@ export function DeviceFirebaseCommandDrawer({
                 <Monitor className="h-5 w-5 text-primary" />
               </div>
               <div className="min-w-0">
-                <SheetTitle className="font-display text-lg truncate">
+                <SheetTitle className="font-bold text-lg truncate">
                   {deviceName || "Dispositivo"}
                 </SheetTitle>
                 <SheetDescription className="text-xs">

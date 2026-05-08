@@ -37,31 +37,31 @@ export function CampaignTimeline({ campaigns, onSelectCampaign }: CampaignTimeli
   });
 
   return (
-    <div className="flex flex-col h-full bg-card rounded-xl border border-border/60 overflow-hidden shadow-sm">
-      <div className="p-4 border-b border-border/40 flex items-center justify-between bg-muted/20">
+    <div className="flex flex-col h-full bg-[#0c0c0e]/40 rounded-2xl border border-white/5 overflow-hidden shadow-premium backdrop-blur-md">
+      <div className="p-4 md:p-6 border-b border-white/5 flex items-center justify-between bg-black/20">
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-sm font-bold text-primary bg-primary/10 px-4 py-1.5 rounded-lg border border-primary/20">
-            <Clock className="h-4 w-4" />
+          <div className="flex items-center gap-3 text-xs font-black text-primary bg-primary/10 px-5 py-2 rounded-xl border border-primary/20 uppercase tracking-[0.2em] italic">
+            <Clock className="h-4 w-4 text-primary" />
             {format(scrollDate, "dd 'de' MMMM", { locale: ptBR })}
           </div>
         </div>
         <div className="flex gap-2">
-          <div className="flex items-center bg-muted/30 rounded-lg p-1 border border-border/20 mr-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setZoom(Math.max(0.5, zoom - 0.2))}>
-              <ZoomOut className="h-4 w-4" />
+          <div className="flex items-center bg-white/5 rounded-xl p-1 border border-white/5 mr-4">
+            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10" onClick={() => setZoom(Math.max(0.5, zoom - 0.2))}>
+              <ZoomOut className="h-4 w-4 text-white/40" />
             </Button>
-            <div className="text-[10px] font-bold px-2 text-muted-foreground">{Math.round(zoom * 100)}%</div>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setZoom(Math.min(3, zoom + 0.2))}>
-              <ZoomIn className="h-4 w-4" />
+            <div className="text-[10px] font-black px-3 text-white/40 uppercase tracking-widest">{Math.round(zoom * 100)}%</div>
+            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10" onClick={() => setZoom(Math.min(3, zoom + 0.2))}>
+              <ZoomIn className="h-4 w-4 text-white/40" />
             </Button>
           </div>
-          <Button variant="outline" size="sm" className="h-9" onClick={() => setScrollDate(addDays(scrollDate, -1))}>
+          <Button variant="secondary" size="sm" className="h-10 text-[10px] font-black uppercase tracking-widest px-6" onClick={() => setScrollDate(addDays(scrollDate, -1))}>
             Anterior
           </Button>
-          <Button variant="outline" size="sm" className="h-9" onClick={() => setScrollDate(new Date())}>
+          <Button variant="secondary" size="sm" className="h-10 text-[10px] font-black uppercase tracking-widest px-6" onClick={() => setScrollDate(new Date())}>
             Hoje
           </Button>
-          <Button variant="outline" size="sm" className="h-9" onClick={() => setScrollDate(addDays(scrollDate, 1))}>
+          <Button variant="secondary" size="sm" className="h-10 text-[10px] font-black uppercase tracking-widest px-6" onClick={() => setScrollDate(addDays(scrollDate, 1))}>
             Próximo
           </Button>
         </div>
@@ -69,15 +69,15 @@ export function CampaignTimeline({ campaigns, onSelectCampaign }: CampaignTimeli
 
       <div className="flex-1 overflow-auto relative custom-scrollbar" ref={timelineRef}>
         {/* Time Labels Header */}
-        <div className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm border-b border-border/40 flex h-10">
-          <div className="w-48 flex-shrink-0 border-r border-border/40 bg-muted/30 flex items-center px-4 font-bold text-xs uppercase text-muted-foreground tracking-wider">
+        <div className="sticky top-0 z-20 bg-[#0c0c0e]/95 backdrop-blur-md border-b border-white/5 flex h-12">
+          <div className="w-56 flex-shrink-0 border-r border-white/5 bg-white/[0.02] flex items-center px-6 font-black text-[10px] uppercase text-white/40 tracking-[0.2em]">
             Campanha
           </div>
           <div className="flex" style={{ width: 24 * hourWidth }}>
             {hours.map(h => (
               <div 
                 key={h} 
-                className="border-r border-border/20 flex-shrink-0 text-[10px] font-bold text-muted-foreground/70 flex items-center justify-center"
+                className="border-r border-white/5 flex-shrink-0 text-[10px] font-black text-white/20 flex items-center justify-center uppercase tracking-widest"
                 style={{ width: hourWidth }}
               >
                 {h.toString().padStart(2, '0')}:00
@@ -102,12 +102,12 @@ export function CampaignTimeline({ campaigns, onSelectCampaign }: CampaignTimeli
               const duration = ((endH * 60 + endM) - (startH * 60 + startM)) * (hourWidth / 60);
 
               return (
-                <div key={c.id} className="flex group hover:bg-muted/5 transition-colors">
-                  <div className="w-48 flex-shrink-0 border-r border-border/40 p-4 bg-muted/5 flex items-center gap-3">
-                    <div className="h-8 w-1.5 rounded-full flex-shrink-0 shadow-sm" style={{ backgroundColor: c.color }} />
+                <div key={c.id} className="flex group hover:bg-white/[0.02] transition-colors border-b border-white/5 last:border-0">
+                  <div className="w-56 flex-shrink-0 border-r border-white/5 p-6 bg-white/[0.01] flex items-center gap-4">
+                    <div className="h-10 w-1.5 rounded-full flex-shrink-0 shadow-[0_0_15px_currentColor]" style={{ backgroundColor: c.color, color: c.color }} />
                     <div className="min-w-0">
-                      <div className="font-bold text-xs truncate group-hover:text-primary transition-colors">{c.name}</div>
-                      <div className="text-[10px] text-muted-foreground font-mono">P{c.priority}</div>
+                      <div className="font-black text-[11px] uppercase tracking-tighter truncate text-white group-hover:text-primary transition-colors italic">{c.name}</div>
+                      <div className="text-[9px] font-black text-white/20 uppercase tracking-widest mt-0.5">Prioridade {c.priority}</div>
                     </div>
                   </div>
                   <div className="flex-1 relative h-20" style={{ width: 24 * hourWidth }}>

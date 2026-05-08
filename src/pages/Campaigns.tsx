@@ -137,7 +137,7 @@ export default function CampaignsPage() {
               <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} /> Atualizar
             </Button>
             {isMarketing && (
-              <Button className="bg-gradient-primary text-primary-foreground shadow-glow h-9" size="sm" onClick={handleCreate}>
+              <Button variant="premium" size="sm" onClick={handleCreate}>
                 <Plus className="h-4 w-4 mr-2" /> Nova campanha
               </Button>
             )}
@@ -149,21 +149,21 @@ export default function CampaignsPage() {
         <div className="flex-1 flex items-center gap-4 w-full">
           <div className="relative flex-1 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20 group-focus-within:text-primary transition-colors" />
-            <Input 
-              placeholder="Pesquisar campanhas..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-11 bg-black/40 border-white/5 focus:border-primary/30 transition-all rounded-xl text-white font-medium"
-            />
+              <Input 
+                placeholder="Pesquisar campanhas..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 h-11 bg-black/40 border-white/5 focus:border-primary/50 transition-all rounded-xl text-white font-bold uppercase tracking-widest text-[10px]"
+              />
           </div>
         </div>
 
         <Tabs value={view} onValueChange={(v: any) => setView(v)} className="w-full md:w-auto">
-          <TabsList className="bg-black/40 h-11 p-1 border border-white/5 rounded-xl">
-            <TabsTrigger value="grid" className="h-9 text-[10px] font-black uppercase tracking-widest px-4 gap-2 data-[state=active]:bg-white data-[state=active]:text-black"><LayoutGrid className="h-3.5 w-3.5" /> Grid</TabsTrigger>
-            <TabsTrigger value="list" className="h-9 text-[10px] font-black uppercase tracking-widest px-4 gap-2 data-[state=active]:bg-white data-[state=active]:text-black"><List className="h-3.5 w-3.5" /> Lista</TabsTrigger>
-            <TabsTrigger value="calendar" className="h-9 text-[10px] font-black uppercase tracking-widest px-4 gap-2 data-[state=active]:bg-white data-[state=active]:text-black"><CalendarIcon className="h-3.5 w-3.5" /> Calendário</TabsTrigger>
-            <TabsTrigger value="timeline" className="h-9 text-[10px] font-black uppercase tracking-widest px-4 gap-2 data-[state=active]:bg-white data-[state=active]:text-black"><Clock className="h-3.5 w-3.5" /> Timeline</TabsTrigger>
+          <TabsList className="bg-black/40 h-11 p-1 border border-white/5 rounded-xl gap-1">
+            <TabsTrigger value="grid" className="h-9 text-[9px] font-black uppercase tracking-widest px-4 gap-2 data-[state=active]:bg-white data-[state=active]:text-black rounded-lg transition-all"><LayoutGrid className="h-3 w-3" /> Grid</TabsTrigger>
+            <TabsTrigger value="list" className="h-9 text-[9px] font-black uppercase tracking-widest px-4 gap-2 data-[state=active]:bg-white data-[state=active]:text-black rounded-lg transition-all"><List className="h-3 w-3" /> Lista</TabsTrigger>
+            <TabsTrigger value="calendar" className="h-9 text-[9px] font-black uppercase tracking-widest px-4 gap-2 data-[state=active]:bg-white data-[state=active]:text-black rounded-lg transition-all"><CalendarIcon className="h-3 w-3" /> Calendário</TabsTrigger>
+            <TabsTrigger value="timeline" className="h-9 text-[9px] font-black uppercase tracking-widest px-4 gap-2 data-[state=active]:bg-white data-[state=active]:text-black rounded-lg transition-all"><Clock className="h-3 w-3" /> Timeline</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -224,12 +224,12 @@ export default function CampaignsPage() {
                       transition={{ delay: index * 0.05 }}
                       whileHover={{ y: -4 }}
                     >
-                      <Card className="group relative border-white/5 bg-[#1a1a1e]/40 hover:bg-[#1a1a1e]/80 transition-all duration-500 h-[300px] flex flex-col overflow-hidden shadow-2xl">
+                      <Card className="group relative border border-white/5 bg-black/40 hover:bg-black/60 transition-all duration-500 h-[320px] flex flex-col overflow-hidden shadow-premium rounded-2xl">
                         {/* Indicador de Cor Premium */}
-                        <div className="absolute top-0 left-0 right-0 h-1 z-20" style={{ backgroundColor: campaignColor }} />
-                        <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black/20 to-transparent pointer-events-none" />
+                        <div className="absolute top-0 left-0 right-0 h-1.5 z-20" style={{ backgroundColor: campaignColor, boxShadow: `0 0 20px ${campaignColor}` }} />
+                        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
                         
-                        <CardContent className="p-6 flex flex-col flex-1 gap-5 relative z-10">
+                        <CardContent className="p-8 flex flex-col flex-1 gap-6 relative z-10">
                           <div className="flex items-start justify-between gap-4">
                             <div className="min-w-0 flex-1 space-y-1">
                               <div className="flex items-center gap-2">
@@ -278,14 +278,14 @@ export default function CampaignsPage() {
 
                           <div className="pt-4 mt-auto border-t border-white/5 flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <div className="flex -space-x-2">
+                              <div className="flex -space-x-2.5">
                                 {[1,2,3].map(i => (
-                                  <div key={i} className="w-6 h-6 rounded-full border-2 border-[#1a1a1e] bg-white/5 flex items-center justify-center overflow-hidden">
-                                    <ImageIcon className="w-3 h-3 text-white/20" />
+                                  <div key={i} className="w-7 h-7 rounded-full border-2 border-black bg-white/5 flex items-center justify-center overflow-hidden shadow-lg transition-transform group-hover:translate-x-1">
+                                    <ImageIcon className="w-3.5 h-3.5 text-white/20" />
                                   </div>
                                 ))}
                               </div>
-                              <span className="text-[9px] font-black uppercase tracking-widest text-white/20">Media Pool</span>
+                              <span className="text-[10px] font-black uppercase tracking-widest text-white/20 group-hover:text-primary transition-colors">Media Pool</span>
                             </div>
                             
                             <Button 

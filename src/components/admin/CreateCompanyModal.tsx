@@ -84,7 +84,7 @@ export function CreateCompanyModal({ isOpen, onClose, onSuccess }: CreateCompany
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="font-display">Cadastrar Nova Empresa</DialogTitle>
+          <DialogTitle className="font-bold">Cadastrar Nova Empresa</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">

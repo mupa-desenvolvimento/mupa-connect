@@ -15,18 +15,18 @@ export function BottomNav() {
   ];
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50 h-16 flex items-center justify-around px-2 pb-safe">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-lg border-t border-border z-50 h-16 flex items-center justify-around px-2 pb-safe shadow-premium">
       {items.map((item) => (
         <button
           key={item.title}
           onClick={() => navigate(item.url)}
           className={cn(
-            "flex flex-col items-center gap-1 p-2 rounded-lg transition-colors",
-            pathname === item.url ? "text-primary" : "text-muted-foreground"
+            "flex flex-col items-center gap-1 p-2 rounded-xl transition-all active:scale-90",
+            pathname === item.url ? "text-primary" : "text-muted-foreground/60"
           )}
         >
-          <item.icon className="h-6 w-6" />
-          <span className="text-[10px] font-medium">{item.title}</span>
+          <item.icon className="h-5 w-5" />
+          <span className="text-[9px] font-black uppercase tracking-widest">{item.title}</span>
         </button>
       ))}
     </div>

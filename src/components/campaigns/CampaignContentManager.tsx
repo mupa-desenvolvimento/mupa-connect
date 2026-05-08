@@ -114,10 +114,10 @@ const SortableCampaignItem = ({ item, index, isSelected, onSelect, onRemove }: a
       style={style} 
       onClick={() => onSelect(item)}
       className={cn(
-        "relative shrink-0 w-[180px] h-[240px] rounded-2xl border-2 bg-[#1A1A1E] overflow-hidden flex flex-col transition-all group cursor-pointer shadow-2xl",
-        isSelected ? "border-primary ring-4 ring-primary/10 scale-[1.02]" : "border-white/5 hover:border-white/10",
-        isDragging && "border-primary shadow-glow scale-95",
-        item.is_locked && "opacity-80"
+        "relative shrink-0 w-[200px] h-[260px] rounded-2xl border-2 bg-black/40 overflow-hidden flex flex-col transition-all group cursor-pointer shadow-premium",
+        isSelected ? "border-primary ring-4 ring-primary/10 scale-[1.02] bg-black/60" : "border-white/5 hover:border-white/20",
+        isDragging && "border-primary shadow-glow scale-95 opacity-50",
+        item.is_locked && "grayscale-[0.5]"
       )}
     >
       <div className="relative h-[160px] w-full overflow-hidden bg-black">
@@ -271,10 +271,13 @@ export function CampaignContentManager({ campaignId, onContentChange }: Campaign
   return (
     <div className="flex h-full bg-[#0c0c0e] overflow-hidden">
       <DndContext sensors={sensors} collisionDetection={rectIntersection} onDragStart={(e) => setActiveId(e.active.id)} onDragEnd={handleDragEnd}>
-        <aside className="w-[320px] border-r border-white/5 flex flex-col bg-[#0c0c0e]/60 z-30">
-          <div className="p-5 border-b border-white/5 space-y-5">
-            <h3 className="text-[10px] font-black uppercase text-white/40 tracking-widest">Media Pool</h3>
-            <Input className="bg-black/40 border-white/5 h-10 text-xs rounded-xl text-white" placeholder="Pesquisar..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+        <aside className="w-[340px] border-r border-white/5 flex flex-col bg-[#050816]/80 backdrop-blur-xl z-30">
+          <div className="p-6 border-b border-white/5 space-y-6">
+            <h3 className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em]">Biblioteca de Mídia</h3>
+            <div className="relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20 group-focus-within:text-primary transition-colors" />
+              <Input className="bg-black/60 border-white/10 h-11 pl-10 text-[10px] font-black uppercase tracking-widest rounded-xl text-white focus:border-primary/50" placeholder="Filtrar mídias..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+            </div>
           </div>
           <ScrollArea className="flex-1">
             <div className="p-5 grid grid-cols-2 gap-4">
@@ -310,10 +313,13 @@ export function CampaignContentManager({ campaignId, onContentChange }: Campaign
 
         <AnimatePresence>
           {selectedItem && (
-            <motion.aside initial={{ width: 0, opacity: 0 }} animate={{ width: 340, opacity: 1 }} exit={{ width: 0, opacity: 0 }} className="border-l border-white/5 bg-[#0c0c0e]/80 backdrop-blur-xl flex flex-col shrink-0 overflow-hidden">
-              <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                <h3 className="text-[10px] font-black uppercase text-white/40 tracking-widest">Propriedades</h3>
-                <Button variant="ghost" size="icon" onClick={() => setSelectedItem(null)} className="h-8 w-8 rounded-full bg-white/5 hover:bg-white/10 text-white/40"><X className="h-4 w-4" /></Button>
+            <motion.aside initial={{ width: 0, opacity: 0 }} animate={{ width: 360, opacity: 1 }} exit={{ width: 0, opacity: 0 }} className="border-l border-white/5 bg-[#081120]/90 backdrop-blur-2xl flex flex-col shrink-0 overflow-hidden shadow-2xl">
+              <div className="p-8 border-b border-white/5 flex items-center justify-between">
+                <div className="space-y-1">
+                  <h3 className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em]">Configurações do Item</h3>
+                  <p className="text-[11px] font-black text-white uppercase italic">Editor de Atributos</p>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => setSelectedItem(null)} className="h-10 w-10 rounded-full bg-white/5 hover:bg-white/10 text-white/40"><X className="h-5 w-5" /></Button>
               </div>
               <ScrollArea className="flex-1">
                 <div className="p-6 space-y-8">
@@ -323,23 +329,26 @@ export function CampaignContentManager({ campaignId, onContentChange }: Campaign
                   <div className="space-y-6">
                     <div className="space-y-3">
                       <label className="text-[10px] font-black uppercase text-white/40 tracking-widest">Duração</label>
-                      <div className="flex items-center gap-3 bg-black/40 p-4 rounded-2xl border border-white/5">
-                        <Clock className="h-4 w-4 text-primary" />
-                        <Input type="number" value={selectedItem.duration_override || 10} onChange={e => updateItemProperty(selectedItem.id, 'duration_override', parseInt(e.target.value))} className="bg-transparent border-none text-xl font-black text-white focus-visible:ring-0 p-0 h-auto" />
+                      <div className="flex items-center gap-4 bg-black/60 p-5 rounded-2xl border border-white/10 group focus-within:border-primary/50 transition-colors">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                          <Clock className="h-5 w-5 text-primary" />
+                        </div>
+                        <Input type="number" value={selectedItem.duration_override || 10} onChange={e => updateItemProperty(selectedItem.id, 'duration_override', parseInt(e.target.value))} className="bg-transparent border-none text-2xl font-black text-white focus-visible:ring-0 p-0 h-auto" />
+                        <span className="text-xs font-black text-white/20 uppercase">Segundos</span>
                       </div>
                     </div>
                     <div className="space-y-3">
                       <label className="text-[10px] font-black uppercase text-white/40 tracking-widest">Prioridade</label>
                       <div className="grid grid-cols-5 gap-2">
                         {[1,2,3,4,5].map(p => (
-                          <Button key={p} variant="ghost" onClick={() => updateItemProperty(selectedItem.id, 'priority_override', p)} className={cn("h-10 font-black text-xs rounded-xl border", selectedItem.priority_override === p ? "bg-primary border-primary text-white" : "bg-white/5 border-white/5 text-white/20")}>P{p}</Button>
+                          <Button key={p} variant="ghost" onClick={() => updateItemProperty(selectedItem.id, 'priority_override', p)} className={cn("h-12 font-black text-xs rounded-xl border transition-all", selectedItem.priority_override === p ? "bg-primary border-primary text-primary-foreground shadow-glow" : "bg-white/5 border-white/5 text-white/20 hover:text-white hover:bg-white/10")}>P{p}</Button>
                         ))}
                       </div>
                     </div>
-                    <Button variant="ghost" onClick={() => updateItemProperty(selectedItem.id, 'is_locked', !selectedItem.is_locked)} className={cn("w-full h-14 flex items-center justify-between px-4 rounded-2xl border", selectedItem.is_locked ? "bg-orange-500/10 border-orange-500/50 text-orange-500" : "bg-white/5 border-white/5 text-white/40")}>
-                      <div className="flex items-center gap-3">
-                        {selectedItem.is_locked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
-                        <span className="text-[10px] font-black uppercase tracking-widest">Bloquear Posição</span>
+                    <Button variant="ghost" onClick={() => updateItemProperty(selectedItem.id, 'is_locked', !selectedItem.is_locked)} className={cn("w-full h-16 flex items-center justify-between px-6 rounded-2xl border transition-all", selectedItem.is_locked ? "bg-orange-500/10 border-orange-500/30 text-orange-500" : "bg-white/5 border-white/5 text-white/40 hover:bg-white/10")}>
+                      <div className="flex items-center gap-4">
+                        {selectedItem.is_locked ? <Lock className="h-5 w-5" /> : <Unlock className="h-5 w-5" />}
+                        <span className="text-[11px] font-black uppercase tracking-[0.1em]">Bloquear Posição</span>
                       </div>
                     </Button>
                     <Button className="w-full h-12 text-red-500/60 hover:text-red-500 hover:bg-red-500/10 gap-2 font-black text-[10px] uppercase tracking-widest rounded-2xl" variant="ghost" onClick={() => handleRemove(selectedItem.id)} disabled={selectedItem.is_locked}><Trash2 className="h-4 w-4" /> Remover Item</Button>

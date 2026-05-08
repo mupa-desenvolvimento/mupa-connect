@@ -252,7 +252,7 @@ export default function FaceTrackDemoPage() {
       {/* Sidebar with Detected Faces */}
       <div className="w-80 bg-card/50 border-l border-white/5 p-6 overflow-y-auto">
         <div className="mb-6">
-          <h3 className="font-display font-bold text-lg mb-2 flex items-center gap-2">
+          <h3 className="font-bold font-bold text-lg mb-2 flex items-center gap-2">
             <User className="h-5 w-5 text-primary" />
             Rostos Detectados
           </h3>
@@ -279,7 +279,7 @@ export default function FaceTrackDemoPage() {
               <Card key={face.id} className="bg-card/40 border-white/5 overflow-hidden">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-display flex items-center gap-2">
+                    <CardTitle className="text-sm font-bold flex items-center gap-2">
                       {getEmotionIcon(face.emotion)}
                       <span>Rosto #{face.id.split('_')[2]}</span>
                     </CardTitle>

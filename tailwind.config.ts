@@ -14,9 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
-        display: ["'Space Grotesk'", "Inter", "sans-serif"],
-        mono: ["'JetBrains Mono'", "ui-monospace", "monospace"],
+        sans: ["Satoshi", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["Satoshi", "sans-serif"],
+        mono: ["Satoshi", "ui-monospace", "monospace"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -71,6 +71,14 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+      },
+      backgroundImage: {
+        "gradient-mupa": "var(--gradient-mupa)",
+        "gradient-glow": "var(--gradient-glow)",
+      },
+      boxShadow: {
+        premium: "var(--shadow-premium)",
+        glow: "var(--shadow-glow)",
       },
       borderRadius: {
         lg: "var(--radius)",

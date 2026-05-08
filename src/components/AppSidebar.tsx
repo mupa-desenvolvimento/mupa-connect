@@ -81,7 +81,7 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-3">
+        <div className="flex items-center gap-3 px-4 py-6">
           {collapsed ? (
             <img 
               src="/Artboard 15.svg" 
@@ -131,9 +131,9 @@ export function AppSidebar() {
 
       <SidebarFooter>
         {!collapsed && (
-          <div className="rounded-lg border border-sidebar-border bg-sidebar-accent/40 p-3 text-xs text-sidebar-foreground/80">
-            <div className="font-semibold text-sidebar-foreground">Mupa Cloud</div>
-            <div className="opacity-70">Sistema Multitenant</div>
+          <div className="rounded-xl border border-sidebar-border bg-sidebar-accent/50 p-4 text-[9px] font-black uppercase tracking-widest text-sidebar-foreground/40 mb-4">
+            <div className="text-primary mb-1">Mupa Cloud</div>
+            <div className="opacity-50">Sistema Multitenant v3.0</div>
           </div>
         )}
       </SidebarFooter>

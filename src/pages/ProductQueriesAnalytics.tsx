@@ -402,7 +402,7 @@ export default function ProductQueriesAnalytics() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-wider text-muted-foreground">Total Consultas</p>
-                <p className="mt-2 font-display text-3xl font-bold">{totalConsultas}</p>
+                <p className="mt-2 font-bold text-3xl font-bold">{totalConsultas}</p>
               </div>
               <div className="h-10 w-10 rounded-xl bg-primary/10 grid place-items-center text-primary">
                 <Search className="h-5 w-5" />
@@ -416,7 +416,7 @@ export default function ProductQueriesAnalytics() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-wider text-muted-foreground">Dispositivos Ativos</p>
-                <p className="mt-2 font-display text-3xl font-bold">{uniqueDevicesCount}</p>
+                <p className="mt-2 font-bold text-3xl font-bold">{uniqueDevicesCount}</p>
               </div>
               <div className="h-10 w-10 rounded-xl bg-accent/10 grid place-items-center text-accent">
                 <Monitor className="h-5 w-5" />
@@ -431,7 +431,7 @@ export default function ProductQueriesAnalytics() {
               <div>
                 <p className="text-xs uppercase tracking-wider text-muted-foreground">Taxa de Erro</p>
                 <div className="flex items-baseline gap-2">
-                  <p className="mt-2 font-display text-3xl font-bold">{erroRate.toFixed(1)}%</p>
+                  <p className="mt-2 font-bold text-3xl font-bold">{erroRate.toFixed(1)}%</p>
                   <span className="text-xs text-muted-foreground">({errorLogs.length})</span>
                 </div>
               </div>
@@ -447,7 +447,7 @@ export default function ProductQueriesAnalytics() {
             <div className="flex items-center justify-between">
               <div className="min-w-0">
                 <p className="text-xs uppercase tracking-wider text-muted-foreground">Top Produto</p>
-                <p className="mt-2 font-display text-lg font-bold truncate" title={topProduct?.desc}>
+                <p className="mt-2 font-bold text-lg font-bold truncate" title={topProduct?.desc}>
                   {topProduct?.desc || "—"}
                 </p>
                 <p className="text-xs text-muted-foreground">{topProduct?.count || 0} consultas</p>

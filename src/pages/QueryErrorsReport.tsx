@@ -517,7 +517,7 @@ export default function QueryErrorsReport() {
                 <Brain className="h-6 w-6" />
               </div>
               <div>
-                <SheetTitle className="text-xl font-display font-bold">Inky AI Analytics</SheetTitle>
+                <SheetTitle className="text-xl font-bold font-bold">Inky AI Analytics</SheetTitle>
                 <SheetDescription>
                   Análise inteligente de padrões e prevenção de falhas operacionais.
                 </SheetDescription>
@@ -588,7 +588,7 @@ export default function QueryErrorsReport() {
                   <div>
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{kpi.label}</p>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-2xl font-display font-bold">{kpi.value.toLocaleString()}</h3>
+                      <h3 className="text-2xl font-bold font-bold">{kpi.value.toLocaleString()}</h3>
                     </div>
                   </div>
                 </CardContent>
