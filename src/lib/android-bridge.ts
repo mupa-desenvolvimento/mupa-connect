@@ -1,6 +1,6 @@
 /**
  * Bridge for communication between the Web Player and the Android APK (Kodular).
- * Uses window.AppInventor.setWebViewString to send JSON commands.
+ * Migrated to LocalStorage for stability on older Android versions (Android 9).
  */
 
 export interface AndroidCommand {
@@ -13,7 +13,8 @@ export interface AndroidCommand {
 }
 
 /**
- * Helper global para envio de comandos ao APK Android via Kodular WebView.
+ * Helper global para envio de comandos ao APK Android via LocalStorage (preferencial) 
+ * ou Kodular WebView (fallback).
  * Extremamente leve, assíncrono e não bloqueante.
  */
 export const sendCommandToAndroid = (
@@ -31,7 +32,7 @@ export const sendCommandToAndroid = (
       command = {
         comando: comandoOrJson.toLowerCase(),
         payload: payload,
-        timestamp: Math.floor(Date.now() / 1000),
+        timestamp: Date.now(), // Usar timestamp em ms conforme solicitado
         device_id: context.deviceId,
         tenant_id: context.tenantId,
         company_id: context.companyId
@@ -42,60 +43,87 @@ export const sendCommandToAndroid = (
     command = {
       comando: comandoOrJson.toLowerCase(),
       payload: payload,
-      timestamp: Math.floor(Date.now() / 1000),
+      timestamp: Date.now(),
       device_id: context.deviceId,
       tenant_id: context.tenantId,
       company_id: context.companyId
     };
   }
 
+  console.log("[ANDROID BRIDGE] Sending command:", command);
 
-  // Log para depuração em desenvolvimento
-  console.log("[ANDROID COMMAND SENT]", command);
+  if (typeof window === "undefined") return false;
 
   try {
-    // Verifica se a interface AppInventor (Kodular) está disponível
+    // 1. MIGRATION: Save to LocalStorage (Main mechanism)
+    // Isso evita problemas de bridge instável no Android 9
+    localStorage.setItem("mupa_command", JSON.stringify(command));
+    console.log("[ANDROID BRIDGE] Command saved to LocalStorage (mupa_command)");
+
+    // 2. FALLBACK: Kodular WebViewString
     if (
-      typeof window !== "undefined" && 
       (window as any).AppInventor && 
       (window as any).AppInventor.setWebViewString
     ) {
-      // O Kodular recebe uma STRING, então usamos JSON.stringify
       (window as any).AppInventor.setWebViewString(JSON.stringify(command));
-      return true;
-    } else {
-      console.warn("Kodular bridge não encontrada (AppInventor.setWebViewString ausente)");
-      
-      // Para depuração no navegador, disparamos um evento customizado
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("androidCommand", { detail: command }));
-      }
-      return false;
+      console.log("[ANDROID BRIDGE] Command sent via AppInventor bridge");
     }
+
+    // Dispara evento interno para atualização de UI (Debug)
+    window.dispatchEvent(new CustomEvent("androidCommand", { detail: command }));
+    
+    return true;
   } catch (error) {
     console.error("Erro ao enviar comando para o Android:", error);
     return false;
   }
 };
 
-// Listener para confirmação (ACK) vindo do Android
-// O Android deve chamar: window.confirmAndroidExecution(JSON.stringify({ command_id: "...", status: "success", message: "..." }))
+/**
+ * Listener para confirmação (ACK) vindo do Android.
+ * Suporta tanto chamada direta quanto monitoramento de LocalStorage.
+ */
 if (typeof window !== "undefined") {
   (window as any).sendCommandToAndroid = sendCommandToAndroid;
   
-  (window as any).confirmAndroidExecution = (payloadJson: string) => {
+  // Função que processa o ACK (pode ser chamada via window ou via LocalStorage trigger)
+  const processAck = (payload: any) => {
     try {
-      const data = typeof payloadJson === 'string' ? JSON.parse(payloadJson) : payloadJson;
-      console.log("[ANDROID ACK RECEIVED]", data);
+      const data = typeof payload === 'string' ? JSON.parse(payload) : payload;
+      console.log("[ANDROID BRIDGE] ACK processed:", data);
       
       // Dispara evento para o sistema de logs e UI reagirem
       window.dispatchEvent(new CustomEvent("androidAck", { detail: data }));
-      
       return true;
     } catch (e) {
-      console.error("[ANDROID ACK ERROR]", e);
+      console.error("[ANDROID BRIDGE] ACK Error:", e);
       return false;
     }
   };
+
+  (window as any).confirmAndroidExecution = processAck;
+
+  // Monitorar LocalStorage para "mupa_ack" (Novo fluxo)
+  // Como o storage event não dispara no mesmo window, usamos um pequeno poller 
+  // para garantir compatibilidade com WebView instável
+  let lastAckValue = localStorage.getItem("mupa_ack");
+  
+  setInterval(() => {
+    const currentAck = localStorage.getItem("mupa_ack");
+    if (currentAck && currentAck !== lastAckValue) {
+      console.log("[ANDROID BRIDGE] New ACK detected in LocalStorage");
+      lastAckValue = currentAck;
+      processAck(currentAck);
+      // Opcional: APK deve limpar, mas se não limpar, o poller detecta mudança
+    }
+  }, 1000);
+
+  // Também ouvimos o evento padrão (caso venha de outro contexto)
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'mupa_ack' && event.newValue) {
+      processAck(event.newValue);
+    }
+  });
 }
+
 
