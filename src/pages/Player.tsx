@@ -375,7 +375,6 @@ export default function Player() {
   const [showDebug, setShowDebug] = useState(false);
 
   const testarBridge = () => {
-  const testarBridge = () => {
     const comando = {
       comando: "teste_conexao",
       payload: { 
