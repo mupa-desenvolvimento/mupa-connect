@@ -296,11 +296,11 @@ export default function FaceDemo() {
           autoPlay
           muted
           playsInline
-          className="w-full h-full object-cover scale-x-[-1]"
+          className="w-full h-full object-cover scale-x-[-1] will-change-transform"
         />
         <canvas
           ref={canvasRef}
-          className="absolute inset-0 w-full h-full z-20"
+          className="absolute inset-0 w-full h-full z-20 will-change-transform"
         />
       </div>
 
