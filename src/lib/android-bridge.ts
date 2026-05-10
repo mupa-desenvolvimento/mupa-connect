@@ -114,7 +114,9 @@ if (typeof window !== "undefined") {
       console.log("[ANDROID BRIDGE] New ACK detected in LocalStorage");
       lastAckValue = currentAck;
       processAck(currentAck);
-      // Opcional: APK deve limpar, mas se não limpar, o poller detecta mudança
+      // Limpamos para permitir o recebimento do mesmo payload futuramente
+      localStorage.removeItem("mupa_ack");
+      lastAckValue = null;
     }
   }, 1000);
 
