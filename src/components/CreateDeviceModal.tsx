@@ -63,6 +63,7 @@ export function CreateDeviceModal({ open, onOpenChange, onSuccess }: CreateDevic
         serial: values.serial.toUpperCase(),
         num_filial: values.num_filial,
         tenant_id: tenantId,
+        company_id: companyId,
       });
 
       if (error) throw error;
