@@ -378,46 +378,10 @@ export default function Player() {
   // UI Setup - Already handled in top-level useEffect
 
   const [now, setNow] = useState(new Date());
-  const [showDebug, setShowDebug] = useState(false);
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
-
-  const testarBridge = () => {
-    const comando = {
-      comando: "teste_conexao",
-      payload: { 
-        mensagem: "Teste de comunicação Lovable → Kodular",
-        versao: "1.0"
-      },
-      timestamp: Date.now(),
-      device_id: deviceInfo?.id || "N/A",
-      tenant_id: deviceInfo?.tenant_id || "N/A",
-      company_id: deviceInfo?.company_id || "N/A"
-    };
-
-    const win = (window as any);
-    if (win.sendCommandToAndroid) {
-      win.sendCommandToAndroid(JSON.stringify(comando), {}, {
-        deviceCode: deviceCode
-      });
-      console.log("✅ Comando enviado:", comando);
-      toast.success("Comando enviado! Verifique o app.");
-
-      // Simula um ACK para teste visual se não estiver no Android
-      if (!win.AppInventor) {
-        setTimeout(() => {
-          if (win.confirmAndroidExecution) {
-            win.confirmAndroidExecution(JSON.stringify({
-              status: "success",
-              message: "Simulação de ACK OK"
-            }));
-          }
-        }, 1500);
-      }
-    }
-  };
 
   // Face Detection with Face-API
   useEffect(() => {
@@ -785,103 +749,6 @@ export default function Player() {
         </div>
       )}
 
-      {/* Debug & Monitor Overlay */}
-      {!isPreview && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-2">
-          <button 
-            onClick={() => setShowDebug(!showDebug)}
-            className="bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/5 text-[10px] text-white/40 px-3 py-1 rounded-full transition-all uppercase tracking-widest font-bold"
-          >
-            {showDebug ? "Fechar Debug" : "Abrir Debug Realtime"}
-          </button>
-          
-          {showDebug && (
-            <div className="bg-zinc-900/95 backdrop-blur-xl border border-white/10 p-5 rounded-2xl shadow-2xl w-[320px] animate-in slide-in-from-top-4 duration-300">
-              <div className="flex justify-between items-center mb-4 pb-2 border-b border-white/5">
-                <span className="text-[10px] font-bold text-primary tracking-widest uppercase">Realtime Monitor</span>
-                <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-              </div>
-              
-              <div className="space-y-4 font-mono text-[11px]">
-                <div className="space-y-1">
-                  <div className="text-white/30 uppercase text-[9px]">Identidade Atual</div>
-                  <div className="bg-white/5 p-2 rounded border border-white/5 break-all">
-                    <div className="text-white/90">UUID: {deviceUuid || "---"}</div>
-                    <div className="text-white/90">Serial: {deviceInfo?.serial || deviceCode}</div>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="text-white/30 uppercase text-[9px]">Último Comando Recebido</div>
-                  <div className="bg-black/40 p-2 rounded border border-white/5 min-h-[60px]">
-                    {lastCommand ? (
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-green-400 font-bold">{lastCommand.command}</span>
-                          <span className="text-white/30 text-[9px]">
-                            {new Date(lastCommand.timestamp).toLocaleTimeString()}
-                          </span>
-                        </div>
-                        <div className="text-[10px] text-white/60 leading-relaxed overflow-hidden">
-                          {JSON.stringify(lastCommand.details)}
-                        </div>
-                        <div className="flex gap-1.5 flex-wrap">
-                          <div className="text-[9px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-500 inline-block">
-                            Target: {lastCommand.targetId} (MATCH)
-                          </div>
-                          {lastCommand.sentToAndroid && (
-                            <div className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-500 inline-block">
-                              ENVIADO PARA ANDROID
-                            </div>
-                          )}
-                          {lastCommand.androidAck && (
-                            <div className={cn(
-                              "text-[9px] px-1.5 py-0.5 rounded inline-block",
-                              lastCommand.androidAck.status === "success" 
-                                ? "bg-emerald-500/20 text-emerald-400" 
-                                : "bg-red-500/20 text-red-400"
-                            )}>
-                              ACK: {lastCommand.androidAck.status.toUpperCase()}
-                              {lastCommand.androidAck.message && ` (${lastCommand.androidAck.message})`}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-white/20 italic flex items-center justify-center h-full pt-4">Aguardando comando...</div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-[9px]">
-                  <div className="bg-white/5 p-2 rounded text-center">
-                    <div className="text-white/30 uppercase mb-1">Tenant ID</div>
-                    <div className="text-white/80 truncate">{deviceInfo?.tenant_id?.slice(0, 8) || "---"}</div>
-                  </div>
-                  <div className="bg-white/5 p-2 rounded text-center">
-                    <div className="text-white/30 uppercase mb-1">Company ID</div>
-                    <div className="text-white/80 truncate">{deviceInfo?.company_id?.slice(0, 8) || "---"}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Botão de Teste da Bridge (Kodular) */}
-      {!isPreview && (
-        <div className="fixed bottom-6 left-6 z-[100] pointer-events-auto">
-          <button 
-            onClick={testarBridge}
-            className="bg-zinc-900/80 hover:bg-zinc-800 backdrop-blur-md border border-white/10 text-white px-5 py-3 rounded-xl transition-all active:scale-95 flex items-center gap-2 font-medium shadow-2xl group"
-            style={{ fontFamily: 'Satoshi, sans-serif' }}
-          >
-            <span className="group-hover:rotate-180 transition-transform duration-500">🔄</span>
-            <span>Testar Comunicação com App</span>
-          </button>
-        </div>
-      )}
     </div>
   );
 }
