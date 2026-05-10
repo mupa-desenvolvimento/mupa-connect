@@ -455,7 +455,7 @@ export default function FaceDemo() {
                       <div className="flex items-start justify-between">
                         <div>
                           <p className="text-[10px] uppercase tracking-widest text-cyan-400 font-bold mb-1">Perfil Detectado</p>
-                          <h3 className="text-xl font-bold text-white tracking-tight">Visitante #01</h3>
+                          <h3 className="text-xl font-bold text-white tracking-tight">Visitante #{face.id.split('-')[1]}</h3>
                         </div>
                         <div className="p-2 rounded-xl bg-white/5 border border-white/10">
                           <Smile className="w-5 h-5 text-white/80" />
