@@ -210,5 +210,23 @@ export const FirebaseRealtimeService = {
 
     return unsubscribe;
   },
+
+  /**
+   * Send a command to a device via Firebase Realtime.
+   */
+  sendCommand: async (deviceCode: string, comando: string, payload: any = {}) => {
+    if (!deviceCode) return;
+    try {
+      const commandRef = ref(database, `devices/${deviceCode}/commands`);
+      await set(commandRef, {
+        comando: comando.toLowerCase(),
+        payload: payload,
+        ts: Date.now(),
+      });
+      console.log(`[Firebase] Command sent to ${deviceCode}: ${comando}`);
+    } catch (err) {
+      console.warn(`[Firebase] Failed to send command to ${deviceCode}`, err);
+    }
+  },
 };
 

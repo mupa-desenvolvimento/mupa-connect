@@ -1,6 +1,8 @@
+import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
+
 /**
  * Bridge for communication between the Web Player and the Android APK (Kodular).
- * Migrated to LocalStorage for stability on older Android versions (Android 9).
+ * Supports LocalStorage and Firebase Realtime for maximum reliability.
  */
 
 export interface AndroidCommand {
@@ -20,7 +22,7 @@ export interface AndroidCommand {
 export const sendCommandToAndroid = (
   comandoOrJson: string, 
   payload: any = {}, 
-  context: { deviceId?: string; tenantId?: string; companyId?: string } = {}
+  context: { deviceId?: string; tenantId?: string; companyId?: string; deviceCode?: string } = {}
 ) => {
   let command: AndroidCommand;
 
@@ -55,12 +57,21 @@ export const sendCommandToAndroid = (
   if (typeof window === "undefined") return false;
 
   try {
-    // 1. MIGRATION: Save to LocalStorage (Main mechanism)
-    // Isso evita problemas de bridge instável no Android 9
+    // 1. MIGRATION: Save to LocalStorage (Reliability mechanism)
     localStorage.setItem("mupa_command", JSON.stringify(command));
     console.log("[ANDROID BRIDGE] Command saved to LocalStorage (mupa_command)");
 
-    // 2. FALLBACK: Kodular WebViewString
+    // 2. FIREBASE REALTIME: Primary communication for APK
+    // Tenta extrair o deviceCode do contexto ou do window
+    const deviceCode = context.deviceCode || (window as any).mupa_device_code;
+    if (deviceCode) {
+      FirebaseRealtimeService.sendCommand(deviceCode, command.comando, command.payload);
+      console.log(`[ANDROID BRIDGE] Command sent via Firebase Realtime to: ${deviceCode}`);
+    } else {
+      console.warn("[ANDROID BRIDGE] No deviceCode found for Firebase communication");
+    }
+
+    // 3. FALLBACK: Kodular WebViewString
     if (
       (window as any).AppInventor && 
       (window as any).AppInventor.setWebViewString

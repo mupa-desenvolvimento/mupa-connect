@@ -154,6 +154,11 @@ export default function Player() {
     }
 
     initializePlayer();
+    
+    // Define deviceCode globalmente para uso na bridge Android
+    if (deviceCode) {
+      (window as any).mupa_device_code = deviceCode;
+    }
   }, [deviceCode]);
 
   // 1.5 Realtime Updates via Firebase
@@ -394,7 +399,9 @@ export default function Player() {
 
     const win = (window as any);
     if (win.sendCommandToAndroid) {
-      win.sendCommandToAndroid(JSON.stringify(comando));
+      win.sendCommandToAndroid(JSON.stringify(comando), {}, {
+        deviceCode: deviceCode
+      });
       console.log("✅ Comando enviado:", comando);
       toast.success("Comando enviado! Verifique o app.");
 
