@@ -340,7 +340,7 @@ export default function Player() {
       // Supabase heartbeat
       supabase.functions.invoke('device-api/heartbeat', { body: { serial: deviceInfo.serial } }).catch(() => {});
       
-      // Firebase heartbeat (every 30s)
+      // Firebase heartbeat (Throttled inside service to every 30s)
       FirebaseRealtimeService.sendHeartbeat(deviceCode, currentMedia?.id?.toString());
     };
 
