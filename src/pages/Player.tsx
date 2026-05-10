@@ -762,6 +762,20 @@ export default function Player() {
           {syncToast.msg}
         </div>
       )}
+
+      {/* Botão de Teste da Bridge (Kodular) */}
+      {!isPreview && (
+        <div className="fixed bottom-6 left-6 z-[100] pointer-events-auto">
+          <button 
+            onClick={testarBridge}
+            className="bg-zinc-900/80 hover:bg-zinc-800 backdrop-blur-md border border-white/10 text-white px-5 py-3 rounded-xl transition-all active:scale-95 flex items-center gap-2 font-medium shadow-2xl group"
+            style={{ fontFamily: 'Satoshi, sans-serif' }}
+          >
+            <span className="group-hover:rotate-180 transition-transform duration-500">🔄</span>
+            <span>Testar Comunicação com App</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
