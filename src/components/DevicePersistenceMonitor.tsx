@@ -35,6 +35,8 @@ export function DevicePersistenceMonitor() {
             time: `${Date.now()}`,
           };
 
+          /* 
+          // Desativado para evitar custos excessivos no Firebase
           try {
             await fetch(
               `https://comandos-1621d-default-rtdb.firebaseio.com/dispositivos/${encodeURIComponent(device.serial)}.json`,
@@ -47,6 +49,7 @@ export function DevicePersistenceMonitor() {
           } catch (e) {
             console.error(`[Persistence] Failed to notify ${device.serial}`, e);
           }
+          */
         }
       }
     };
