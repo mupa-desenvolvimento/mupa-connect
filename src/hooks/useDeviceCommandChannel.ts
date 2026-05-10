@@ -49,20 +49,38 @@ export interface CommandHandlerContext {
  */
 export function useDeviceCommandChannel(
   deviceId: string | undefined,
-  handlers: CommandHandlerContext
+  handlers: CommandHandlerContext & { serial?: string; externalId?: string }
 ) {
   const handlersRef = useRef(handlers);
   handlersRef.current = handlers;
+  
+  const [lastCommand, setLastCommand] = useState<LastCommandInfo | null>(null);
 
   useEffect(() => {
     if (!deviceId) return;
 
-    const unsubscribe = subscribeToDeviceCommands(deviceId, async (cmd) => {
-      await runCommand(cmd, handlersRef.current, deviceId);
-    });
+    const unsubscribe = subscribeToDeviceCommands(
+      deviceId, 
+      async (cmd) => {
+        setLastCommand({
+          command: cmd.command,
+          timestamp: Date.now(),
+          isMatch: true,
+          targetId: cmd.device_id,
+          details: cmd.payload
+        });
+        await runCommand(cmd, handlersRef.current, deviceId);
+      },
+      { 
+        serial: handlers.serial, 
+        externalId: handlers.externalId 
+      }
+    );
 
     return unsubscribe;
-  }, [deviceId]);
+  }, [deviceId, handlers.serial, handlers.externalId]);
+
+  return { lastCommand };
 }
 
 
