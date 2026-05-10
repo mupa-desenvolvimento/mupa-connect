@@ -99,6 +99,8 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
 
     onMediaChange?.(newIndex);
 
+    // Logging: FirebaseRealtimeService.logEvent now blocks 'media_transition' from Firebase
+    // and sends it to Android local storage instead.
     if (serial) {
       FirebaseRealtimeService.logEvent(serial, "media_transition", {
         from: playlistRef.current[prevIndex]?.name,

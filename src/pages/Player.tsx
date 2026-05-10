@@ -245,7 +245,7 @@ export default function Player() {
     
     const media = activePlaylist[idx];
     if (media && deviceInfo?.id && !isPreview) {
-      // 1. Firebase Realtime Heartbeat
+      // 1. Firebase Realtime Heartbeat (Throttled inside service)
       FirebaseRealtimeService.sendHeartbeat(deviceCode!, media.id?.toString(), "playing");
 
       // 2. Supabase Player Status Update
@@ -340,7 +340,7 @@ export default function Player() {
       // Supabase heartbeat
       supabase.functions.invoke('device-api/heartbeat', { body: { serial: deviceInfo.serial } }).catch(() => {});
       
-      // Firebase heartbeat (every 30s)
+      // Firebase heartbeat (Throttled inside service to every 30s)
       FirebaseRealtimeService.sendHeartbeat(deviceCode, currentMedia?.id?.toString());
     };
 
