@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, onValue, set } from "firebase/database";
+import { getDatabase, ref, onValue, set, push, serverTimestamp } from "firebase/database";
 import { supabase } from "@/integrations/supabase/client";
 
 const firebaseConfig = {
@@ -28,11 +28,15 @@ export type DeviceCommandPayload = {
   ts: number;
 };
 
+// Internal rate limiting state
+const lastWriteTimes: Record<string, number> = {};
+const MIN_WRITE_INTERVAL_MS = 10000; // 10 seconds between writes per device/path
+
 export const FirebaseRealtimeService = {
 
   /**
    * Subscribe a player to its update channel.
-   * Skips the very first snapshot (initial value) so reloads only happen on real changes.
+   * Path: dispositivos/{deviceCode}/last_update
    */
   subscribeToDeviceUpdates: (
     deviceCode: string,
@@ -77,15 +81,34 @@ export const FirebaseRealtimeService = {
 
   /**
    * Send heartbeat and status update to Firebase Realtime Database.
-   * Based on execution of player (/play).
+   * Path: dispositivos/{deviceCode}/status
    */
   sendHeartbeat: async (deviceCode: string, mediaId?: string | null, status: string = "playing") => {
-    // Desativado para reduzir custos no Firebase Realtime Database
-    return;
+    if (!deviceCode) return;
+    
+    const now = Date.now();
+    const path = `dispositivos/${deviceCode}/status`;
+    const lastWrite = lastWriteTimes[path] || 0;
+    
+    // Throttle heartbeats to avoid excessive writes
+    if (now - lastWrite < 30000) return; // 30s throttle
+
+    try {
+      const deviceRef = ref(database, path);
+      await set(deviceRef, {
+        last_heartbeat: serverTimestamp(),
+        current_media: mediaId || null,
+        player_status: status,
+        version: (window as any).APP_VERSION || "1.0.0"
+      });
+      lastWriteTimes[path] = now;
+    } catch (err) {
+      console.warn("[Firebase] Heartbeat failed", err);
+    }
   },
 
   /**
-   * Notify every device linked to a given playlist (by serial AND apelido_interno).
+   * Notify every device linked to a given playlist.
    */
   notifyPlaylistDevices: async (playlistId: string) => {
     if (!playlistId) return;
@@ -95,10 +118,7 @@ export const FirebaseRealtimeService = {
         .select("serial, apelido_interno")
         .eq("playlist_id", playlistId);
 
-      if (error || !devices?.length) {
-        console.log(`[Firebase] No devices to notify for playlist ${playlistId}`);
-        return;
-      }
+      if (error || !devices?.length) return;
 
       const codes = new Set<string>();
       devices.forEach((d: any) => {
@@ -114,54 +134,50 @@ export const FirebaseRealtimeService = {
           })
         )
       );
-      console.log(`[Firebase] Notified ${codes.size} device codes for playlist ${playlistId}`);
     } catch (err) {
       console.warn("[Firebase] notifyPlaylistDevices failed", err);
     }
   },
 
   /**
-   * Notify every device linked to a given company.
+   * Log CRITICAL events only. Media transitions are BLOCKED here.
+   * Path: dispositivos/{deviceCode}/logs
    */
-  notifyCompanyDevices: async (companyId: string) => {
-    if (!companyId) return;
+  logEvent: async (deviceCode: string, event: string, details: any = {}) => {
+    if (!deviceCode) return;
+    
+    // FILTER: Block media transitions and playback logs from Firebase
+    const blockedEvents = ['media_transition', 'playback_start', 'playback_end', 'playlist_index_change'];
+    if (blockedEvents.includes(event)) {
+      // Save locally to Android via Bridge instead
+      const win = window as any;
+      if (win.sendCommandToAndroid) {
+        win.sendCommandToAndroid("local_log", { event, ...details, ts: Date.now() });
+      }
+      return;
+    }
+
+    // MODE: Only send critical errors or manually triggered debug logs
+    const isCritical = event.includes('error') || event.includes('crash') || event.includes('fatal');
+    const isDebugMode = localStorage.getItem("mupa_debug_logging") === "true";
+
+    if (!isCritical && !isDebugMode) return;
+
     try {
-      const { data: devices, error } = await supabase
-        .from("dispositivos")
-        .select("serial, apelido_interno")
-        .eq("company_id", companyId);
-
-      if (error || !devices?.length) return;
-
-      const codes = new Set<string>();
-      devices.forEach((d: any) => {
-        if (d.serial) codes.add(d.serial);
-        if (d.apelido_interno) codes.add(d.apelido_interno);
+      const logRef = push(ref(database, `dispositivos/${deviceCode}/logs`));
+      await set(logRef, {
+        event,
+        ...details,
+        timestamp: serverTimestamp()
       });
-
-      await Promise.all(
-        Array.from(codes).map((code) =>
-          FirebaseRealtimeService.notifyDevice(code, {
-            reason: "company_settings_updated",
-          })
-        )
-      );
-      console.log(`[Firebase] Notified ${codes.size} device codes for company ${companyId}`);
     } catch (err) {
-      console.warn("[Firebase] notifyCompanyDevices failed", err);
+      console.warn("[Firebase] Log event failed", err);
     }
   },
 
   /**
-   * Log player events to Firebase for real-time monitoring.
-   */
-  logEvent: async (deviceCode: string, event: string, details: any = {}) => {
-    // Desativado para reduzir custos no Firebase Realtime Database
-    return;
-  },
-
-  /**
-   * Subscribe to real-time commands via Firebase.
+   * Subscribe to real-time commands.
+   * Path: dispositivos/{deviceCode}/commands
    */
   subscribeToCommands: (
     deviceCode: string,
@@ -169,7 +185,6 @@ export const FirebaseRealtimeService = {
   ) => {
     if (!deviceCode) return () => {};
 
-    console.log(`[Firebase] Subscribing to commands for device: ${deviceCode}`);
     const commandRef = ref(database, `dispositivos/${deviceCode}/commands`);
     let isFirst = true;
 
@@ -180,7 +195,6 @@ export const FirebaseRealtimeService = {
         return;
       }
       if (data) {
-        console.log(`[Firebase] Command received for ${deviceCode}:`, data);
         onCommand(data as DeviceCommandPayload);
       }
     });
@@ -189,7 +203,7 @@ export const FirebaseRealtimeService = {
   },
 
   /**
-   * Send a command to a device via Firebase Realtime.
+   * Send a command manually from Admin Panel.
    */
   sendCommand: async (deviceCode: string, comando: string, payload: any = {}) => {
     if (!deviceCode) return;
@@ -200,7 +214,6 @@ export const FirebaseRealtimeService = {
         payload: payload,
         ts: Date.now(),
       });
-      console.log(`[Firebase] Command sent to ${deviceCode}: ${comando}`);
     } catch (err) {
       console.warn(`[Firebase] Failed to send command to ${deviceCode}`, err);
     }
