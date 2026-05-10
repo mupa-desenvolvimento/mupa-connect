@@ -806,8 +806,15 @@ export default function Player() {
                         <div className="text-[10px] text-white/60 leading-relaxed overflow-hidden">
                           {JSON.stringify(lastCommand.details)}
                         </div>
-                        <div className="text-[9px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-500 inline-block">
-                          Target: {lastCommand.targetId} (MATCH)
+                        <div className="flex gap-1.5 flex-wrap">
+                          <div className="text-[9px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-500 inline-block">
+                            Target: {lastCommand.targetId} (MATCH)
+                          </div>
+                          {lastCommand.sentToAndroid && (
+                            <div className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-500 inline-block">
+                              ENVIADO PARA ANDROID
+                            </div>
+                          )}
                         </div>
                       </div>
                     ) : (

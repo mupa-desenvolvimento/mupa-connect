@@ -15,6 +15,7 @@ export interface LastCommandInfo {
   isMatch: boolean;
   targetId: string;
   details: any;
+  sentToAndroid?: boolean;
 }
 
 export interface CommandHandlerContext {
@@ -62,13 +63,33 @@ export function useDeviceCommandChannel(
     const unsubscribe = subscribeToDeviceCommands(
       deviceId, 
       async (cmd) => {
+        const androidPayload = {
+          comando: cmd.command,
+          payload: cmd.payload,
+          timestamp: Date.now(),
+          device_id: cmd.device_id,
+          tenant_id: cmd.tenant_id,
+          company_id: handlersRef.current.companyId
+        };
+
+        console.log("[REALTIME RECEIVED]", cmd);
+        console.log("[SENDING TO ANDROID]", androidPayload);
+
+        const win = (window as any);
+        let sent = false;
+        if (win.sendCommandToAndroid) {
+          sent = win.sendCommandToAndroid(JSON.stringify(androidPayload));
+        }
+
         setLastCommand({
           command: cmd.command,
           timestamp: Date.now(),
           isMatch: true,
           targetId: cmd.device_id,
-          details: cmd.payload
+          details: cmd.payload,
+          sentToAndroid: sent
         });
+
         await runCommand(cmd, handlersRef.current, deviceId);
       },
       { 
@@ -125,7 +146,6 @@ async function runCommand(cmd: DeviceCommand, h: CommandHandlerContext, currentD
     switch (cmd.command) {
       case "reload_playlist":
         await h.reloadPlaylist();
-        sendCommandToAndroid("reload_page", {}, context);
         break;
       case "play_campaign": {
         const id = cmd.payload?.campaign_id;
@@ -138,7 +158,6 @@ async function runCommand(cmd: DeviceCommand, h: CommandHandlerContext, currentD
         if (!Number.isFinite(v)) throw new Error("volume inválido");
         const volume = Math.max(0, Math.min(100, v));
         await h.setVolume(volume);
-        sendCommandToAndroid("change_volume", { volume }, context);
         break;
       }
       case "screenshot": {
@@ -148,56 +167,47 @@ async function runCommand(cmd: DeviceCommand, h: CommandHandlerContext, currentD
       }
       case "clear_cache":
         await h.clearCache();
-        sendCommandToAndroid("clear_cache", {}, context);
         break;
       case "reboot":
         await h.reboot();
-        sendCommandToAndroid("reload_page", {}, context);
         break;
       case "reboot_device":
-        await sendCommandToAndroid("reboot", {}, context);
+        // Already handled by immediate send
         break;
       case "open_app":
       case "abrir_app": {
         const pkg = cmd.payload?.package || cmd.payload?.packageName || cmd.payload?.pacote;
         if (!pkg) throw new Error("pacote ausente");
         await h.openApp?.(String(pkg));
-        sendCommandToAndroid("abrir_app", { pacote: pkg }, context);
         break;
       }
       case "restart_player":
         await h.restartPlayer?.();
-        sendCommandToAndroid("restart_player", {}, context);
         break;
       case "reload_page":
         await h.reloadPage?.();
-        sendCommandToAndroid("reload_page", {}, context);
         break;
       case "fullscreen": {
         const enabled = cmd.payload?.enabled ?? true;
         await h.fullscreen?.(Boolean(enabled));
-        sendCommandToAndroid("fullscreen", { enabled }, context);
         break;
       }
       case "update_apk": {
         const url = cmd.payload?.url;
         if (!url) throw new Error("URL do APK ausente");
         await h.updateApk?.(String(url));
-        sendCommandToAndroid("update_apk", { url }, context);
         break;
       }
       case "start_service": {
         const service = cmd.payload?.service;
         if (!service) throw new Error("serviço ausente");
         await h.startService?.(String(service));
-        sendCommandToAndroid("start_service", { service }, context);
         break;
       }
       case "stop_service": {
         const service = cmd.payload?.service;
         if (!service) throw new Error("serviço ausente");
         await h.stopService?.(String(service));
-        sendCommandToAndroid("stop_service", { service }, context);
         break;
       }
       case "set_brightness": {
@@ -205,51 +215,43 @@ async function runCommand(cmd: DeviceCommand, h: CommandHandlerContext, currentD
         if (!Number.isFinite(v)) throw new Error("brilho inválido");
         const brightness = Math.max(0, Math.min(100, v));
         await h.setBrightness?.(brightness);
-        sendCommandToAndroid("set_brightness", { brightness }, context);
         break;
       }
       case "tts_speak": {
         const text = cmd.payload?.text;
         if (!text) throw new Error("texto ausente");
         await h.ttsSpeak?.(String(text));
-        sendCommandToAndroid("tts_speak", { text }, context);
         break;
       }
       case "open_url": {
         const url = cmd.payload?.url;
         if (!url) throw new Error("URL ausente");
         await h.openUrl?.(String(url));
-        sendCommandToAndroid("open_url", { url }, context);
         break;
       }
       case "consulta_ean": {
         const codbar = cmd.payload?.codbar || cmd.payload?.barcode;
         if (!codbar) throw new Error("código de barras ausente");
         await h.consultaEan?.(String(codbar));
-        sendCommandToAndroid("consulta_ean", { codbar }, context);
         break;
       }
       case "reset_app": {
         await h.resetApp?.();
-        sendCommandToAndroid("reset_app", {}, context);
         break;
       }
       case "fecha_app":
       case "fecha_app_android": {
         await h.fechaApp?.();
-        sendCommandToAndroid("fecha_app", {}, context);
         break;
       }
       case "ip_server": {
         const ip = cmd.payload?.ip_server || cmd.payload?.ip;
         if (!ip) throw new Error("IP do servidor ausente");
         await h.setIpServer?.(String(ip));
-        sendCommandToAndroid("ip_server", { ip_server: ip }, context);
         break;
       }
       case "ping":
         message = "pong";
-        sendCommandToAndroid("ping", {}, context);
         break;
       default:
         ok = false;
