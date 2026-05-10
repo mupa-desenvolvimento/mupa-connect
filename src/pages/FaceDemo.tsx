@@ -63,6 +63,7 @@ export default function FaceDemo() {
   const [showHUD, setShowHUD] = useState(true);
   const [status, setStatus] = useState<"idle" | "analyzing" | "active">("idle");
   const [fps, setFps] = useState(0);
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -95,13 +96,14 @@ export default function FaceDemo() {
     };
   }, []);
 
-  const startCamera = async () => {
+  const startCamera = async (mode?: "user" | "environment") => {
     try {
+      const actualMode = mode || facingMode;
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { 
           width: { ideal: 1280 },
           height: { ideal: 720 },
-          facingMode: "user" 
+          facingMode: actualMode
         }
       });
       if (videoRef.current) {
@@ -128,7 +130,7 @@ export default function FaceDemo() {
 
   const startDetectionLoop = useCallback(() => {
     const detect = async () => {
-      if (!videoRef.current || !canvasRef.current || !modelsLoaded) {
+      if (!videoRef.current || !canvasRef.current || !modelsLoaded || !faceDetectionActive) {
         requestRef.current = requestAnimationFrame(detect);
         return;
       }
@@ -362,9 +364,10 @@ export default function FaceDemo() {
 
             <button 
               onClick={() => {
+                const newMode = facingMode === "user" ? "environment" : "user";
+                setFacingMode(newMode);
                 stopCamera();
-                startCamera(); // This should ideally toggle if multiple cameras exist, but for simplicity we re-start
-                // In a real mobile app, we would query devices and toggle facingMode
+                startCamera(newMode);
               }}
               className="p-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors backdrop-blur-md pointer-events-auto"
               title="Alternar Câmera"
