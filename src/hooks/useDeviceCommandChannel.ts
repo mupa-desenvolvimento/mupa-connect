@@ -86,8 +86,19 @@ export function useDeviceCommandChannel(
 
 async function runCommand(cmd: DeviceCommand, h: CommandHandlerContext, currentDeviceId: string) {
   // Security validation: ignore commands not meant for this device
-  if (cmd.device_id !== currentDeviceId) {
-    console.warn("[CommandChannel] Received command for wrong device:", cmd.device_id);
+  // We already filter in subscribeToDeviceCommands, but double check here
+  const currentSerial = (h as any).serial;
+  const currentExternal = (h as any).externalId;
+  
+  const isMatch = 
+    cmd.device_id === currentDeviceId || 
+    (currentSerial && cmd.device_id === currentSerial) ||
+    (currentExternal && cmd.device_id === currentExternal) ||
+    (cmd.metadata?.serial === currentSerial) ||
+    (cmd.metadata?.device_id === currentDeviceId);
+
+  if (!isMatch) {
+    console.warn("[CommandChannel] Received command for wrong device:", cmd.device_id, "Current:", currentDeviceId, currentSerial);
     return;
   }
 
