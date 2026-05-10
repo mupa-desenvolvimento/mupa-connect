@@ -17,8 +17,26 @@ import {
   Scan,
   Cpu,
   ShieldCheck,
-  ChevronRight
+  ChevronRight,
+  RefreshCw,
+  AlertCircle
 } from "lucide-react";
+
+// Detection for Android WebView
+const isAndroidWebView = () => {
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  return userAgent.includes('wv') || (userAgent.includes('android') && userAgent.includes('version/'));
+};
+
+const log = (tag: string, message: string, data?: any) => {
+  const timestamp = new Date().toISOString().split('T')[1].split('Z')[0];
+  const prefix = `[${timestamp}] [${tag}]`;
+  if (data) {
+    console.log(`${prefix} ${message}`, data);
+  } else {
+    console.log(`${prefix} ${message}`);
+  }
+};
 
 // --- Types ---
 interface DetectedFace {
@@ -61,15 +79,17 @@ export default function FaceDemo() {
   const [error, setError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showHUD, setShowHUD] = useState(true);
-  const [status, setStatus] = useState<"idle" | "analyzing" | "active">("idle");
+  const [status, setStatus] = useState<"idle" | "initializing" | "analyzing" | "active">("initializing");
   const [fps, setFps] = useState(0);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
+  const [retryCount, setRetryCount] = useState(0);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const requestRef = useRef<number>();
   const lastTimeRef = useRef<number>(Date.now());
   const framesRef = useRef<number>(0);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
 
   // Load models
   useEffect(() => {
@@ -97,35 +117,104 @@ export default function FaceDemo() {
   }, []);
 
   const startCamera = async (mode?: "user" | "environment") => {
+    log("CAMERA", "Iniciando processo de captura...");
+    setStatus("initializing");
+    setError(null);
+
+    const isWV = isAndroidWebView();
+    log("WEBVIEW", `Detectado Android WebView: ${isWV}`);
+
     try {
       const actualMode = mode || facingMode;
-      const stream = await navigator.mediaDevices.getUserMedia({
+      log("CAMERA", `Solicitando permissão para modo: ${actualMode}`);
+
+      // Basic constraints first for maximum compatibility
+      const constraints: MediaStreamConstraints = {
         video: { 
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: actualMode
-        }
-      });
+          facingMode: actualMode,
+          // Older Android WebView (like Android 9) may fail with high resolutions
+          width: isWV ? { ideal: 640 } : { ideal: 1280 },
+          height: isWV ? { ideal: 480 } : { ideal: 720 }
+        },
+        audio: false
+      };
+
+      log("GET USER MEDIA", "Chamando getUserMedia com constraints:", constraints);
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        log("MEDIA DEVICES", "navigator.mediaDevices.getUserMedia não suportado neste navegador");
+        throw new Error("API de Câmera não suportada");
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      log("CAMERA", "Stream obtido com sucesso");
+      
+      cameraStreamRef.current = stream;
+
       if (videoRef.current) {
+        log("CAMERA", "Vinculando stream ao elemento de vídeo");
         videoRef.current.srcObject = stream;
+        
+        // Manual play for WebView compatibility
+        try {
+          await videoRef.current.play();
+          log("CAMERA", "Vídeo iniciado (play)");
+        } catch (playErr) {
+          log("CAMERA", "Erro ao iniciar play() automático, aguardando metadados", playErr);
+        }
+
         videoRef.current.onloadedmetadata = () => {
+          log("CAMERA", "Metadados do vídeo carregados");
           setFaceDetectionActive(true);
           setStatus("analyzing");
           startDetectionLoop();
         };
       }
-    } catch (err) {
-      setError("Câmera não disponível.");
+    } catch (err: any) {
+      log("CAMERA", "Erro ao inicializar câmera", err);
+      
+      let errorMessage = "Câmera indisponível.";
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        errorMessage = "Acesso à câmera negado. Verifique as permissões do aplicativo.";
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        errorMessage = "Nenhuma câmera encontrada no dispositivo.";
+      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+        errorMessage = "Câmera está sendo usada por outro aplicativo.";
+      }
+      
+      setError(errorMessage);
+      setStatus("idle");
+
+      // Auto-retry once if it's not a permission error
+      if (retryCount < 1 && err.name !== 'NotAllowedError') {
+        setRetryCount(prev => prev + 1);
+        log("CAMERA", "Tentando reiniciar automaticamente em 2 segundos...");
+        setTimeout(() => startCamera(mode), 2000);
+      }
     }
   };
 
   const stopCamera = () => {
-    if (videoRef.current?.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach(track => track.stop());
+    log("CAMERA", "Parando câmera...");
+    if (cameraStreamRef.current) {
+      cameraStreamRef.current.getTracks().forEach(track => {
+        track.stop();
+        log("CAMERA", `Track ${track.kind} parado`);
+      });
+      cameraStreamRef.current = null;
     }
+    
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    
     setFaceDetectionActive(false);
     setStatus("idle");
+  };
+
+  const handleRetry = () => {
+    setRetryCount(0);
+    startCamera();
   };
 
   const startDetectionLoop = useCallback(() => {
@@ -380,7 +469,48 @@ export default function FaceDemo() {
         {/* Center Status */}
         <div className="flex-1 flex flex-col items-center justify-center">
           <AnimatePresence mode="wait">
-            {status === "idle" && (
+            {status === "initializing" && (
+              <motion.div 
+                key="initializing"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col items-center gap-6"
+              >
+                <RefreshCw className="w-16 h-16 text-cyan-400 animate-spin" />
+                <div className="text-center">
+                  <h2 className="text-xl font-light tracking-[0.2em] text-cyan-400 uppercase">Inicializando Hardware</h2>
+                  <p className="text-white/40 text-sm mt-2 font-light">Configurando sensores de visão e câmera...</p>
+                </div>
+              </motion.div>
+            )}
+
+            {status === "idle" && error && (
+              <motion.div 
+                key="error"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.1 }}
+                className="flex flex-col items-center gap-6 max-w-md pointer-events-auto"
+              >
+                <div className="p-6 rounded-full bg-red-500/10 border border-red-500/30">
+                  <AlertCircle className="w-16 h-16 text-red-500" />
+                </div>
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold text-white uppercase tracking-tighter">Câmera Indisponível</h2>
+                  <p className="text-white/60 text-sm mt-2">{error}</p>
+                </div>
+                <button 
+                  onClick={handleRetry}
+                  className="px-8 py-3 rounded-full bg-white text-black font-bold flex items-center gap-2 hover:bg-cyan-400 transition-colors"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Tentar Novamente
+                </button>
+              </motion.div>
+            )}
+
+            {status === "idle" && !error && (
               <motion.div 
                 key="idle"
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -504,26 +634,6 @@ export default function FaceDemo() {
         </div>
       </div>
 
-      {/* Error Message */}
-      <AnimatePresence>
-        {error && (
-          <motion.div 
-            initial={{ opacity: 0, y: 100 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] pointer-events-auto"
-          >
-            <div className="bg-red-500/20 backdrop-blur-xl border border-red-500/50 px-6 py-4 rounded-2xl flex items-center gap-4">
-              <div className="p-2 bg-red-500 rounded-lg">
-                <X className="w-5 h-5 text-white" onClick={() => setError(null)} />
-              </div>
-              <div>
-                <p className="text-white font-bold">Sistema Offline</p>
-                <p className="text-white/60 text-xs">{error}</p>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
