@@ -63,6 +63,28 @@ export function useDeviceCommandChannel(
   const [lastCommand, setLastCommand] = useState<LastCommandInfo | null>(null);
 
   useEffect(() => {
+    const handleAndroidAck = (event: any) => {
+      const data = event.detail;
+      setLastCommand(prev => {
+        if (!prev) return null;
+        // Se quisermos validar o command_id, o ideal seria que o Android retornasse o mesmo ID que enviamos
+        // Por enquanto, atualizamos o último comando recebido
+        return {
+          ...prev,
+          androidAck: {
+            status: data.status,
+            message: data.message,
+            timestamp: Date.now()
+          }
+        };
+      });
+    };
+
+    window.addEventListener("androidAck", handleAndroidAck);
+    return () => window.removeEventListener("androidAck", handleAndroidAck);
+  }, []);
+
+  useEffect(() => {
     if (!deviceId) return;
 
     const unsubscribe = subscribeToDeviceCommands(
