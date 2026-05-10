@@ -16,6 +16,11 @@ export interface LastCommandInfo {
   targetId: string;
   details: any;
   sentToAndroid?: boolean;
+  androidAck?: {
+    status: string;
+    message?: string;
+    timestamp: number;
+  };
 }
 
 export interface CommandHandlerContext {
