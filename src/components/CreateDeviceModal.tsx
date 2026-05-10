@@ -39,7 +39,7 @@ interface CreateDeviceModalProps {
 
 export function CreateDeviceModal({ open, onOpenChange, onSuccess }: CreateDeviceModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { tenantId } = useUserRole();
+  const { tenantId, companyId } = useUserRole();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -63,6 +63,7 @@ export function CreateDeviceModal({ open, onOpenChange, onSuccess }: CreateDevic
         serial: values.serial.toUpperCase(),
         num_filial: values.num_filial,
         tenant_id: tenantId,
+        company_id: companyId,
       });
 
       if (error) throw error;
