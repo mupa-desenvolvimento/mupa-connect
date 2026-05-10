@@ -30,7 +30,6 @@ export type DeviceCommandPayload = {
 
 // Internal rate limiting state
 const lastWriteTimes: Record<string, number> = {};
-const MIN_WRITE_INTERVAL_MS = 10000; // 10 seconds between writes per device/path
 
 export const FirebaseRealtimeService = {
 
@@ -90,8 +89,8 @@ export const FirebaseRealtimeService = {
     const path = `dispositivos/${deviceCode}/status`;
     const lastWrite = lastWriteTimes[path] || 0;
     
-    // Throttle heartbeats to avoid excessive writes
-    if (now - lastWrite < 30000) return; // 30s throttle
+    // Throttle heartbeats to avoid excessive writes (30s)
+    if (now - lastWrite < 30000) return;
 
     try {
       const deviceRef = ref(database, path);
@@ -136,6 +135,37 @@ export const FirebaseRealtimeService = {
       );
     } catch (err) {
       console.warn("[Firebase] notifyPlaylistDevices failed", err);
+    }
+  },
+
+  /**
+   * Notify every device linked to a given company.
+   */
+  notifyCompanyDevices: async (companyId: string) => {
+    if (!companyId) return;
+    try {
+      const { data: devices, error } = await supabase
+        .from("dispositivos")
+        .select("serial, apelido_interno")
+        .eq("company_id", companyId);
+
+      if (error || !devices?.length) return;
+
+      const codes = new Set<string>();
+      devices.forEach((d: any) => {
+        if (d.serial) codes.add(d.serial);
+        if (d.apelido_interno) codes.add(d.apelido_interno);
+      });
+
+      await Promise.all(
+        Array.from(codes).map((code) =>
+          FirebaseRealtimeService.notifyDevice(code, {
+            reason: "company_settings_updated",
+          })
+        )
+      );
+    } catch (err) {
+      console.warn("[Firebase] notifyCompanyDevices failed", err);
     }
   },
 
