@@ -39,7 +39,7 @@ interface CreateDeviceModalProps {
 
 export function CreateDeviceModal({ open, onOpenChange, onSuccess }: CreateDeviceModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { tenantId } = useUserRole();
+  const { tenantId, companyId } = useUserRole();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
