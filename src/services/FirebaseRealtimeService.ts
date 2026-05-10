@@ -41,7 +41,7 @@ export const FirebaseRealtimeService = {
     if (!deviceCode) return () => {};
 
     console.log(`[Firebase] Subscribing to updates for device: ${deviceCode}`);
-    const deviceRef = ref(database, `devices/${deviceCode}/last_update`);
+    const deviceRef = ref(database, `dispositivos/${deviceCode}/last_update`);
     let isFirst = true;
 
     const unsubscribe = onValue(deviceRef, (snapshot) => {
@@ -65,7 +65,7 @@ export const FirebaseRealtimeService = {
   notifyDevice: async (deviceCode: string, payload: Omit<DeviceUpdatePayload, "ts">) => {
     if (!deviceCode) return;
     try {
-      await set(ref(database, `devices/${deviceCode}/last_update`), {
+      await set(ref(database, `dispositivos/${deviceCode}/last_update`), {
         ...payload,
         ts: Date.now(),
       });
@@ -82,7 +82,7 @@ export const FirebaseRealtimeService = {
   sendHeartbeat: async (deviceCode: string, mediaId?: string | null, status: string = "playing") => {
     if (!deviceCode) return;
     try {
-      const deviceRef = ref(database, `devices/${deviceCode}/status`);
+      const deviceRef = ref(database, `dispositivos/${deviceCode}/status`);
       await set(deviceRef, {
         last_update: Date.now(),
         media_id: mediaId || null,
@@ -93,82 +93,14 @@ export const FirebaseRealtimeService = {
       console.warn("[Firebase] Heartbeat failed", err);
     }
   },
-
-  /**
-   * Notify every device linked to a given playlist (by serial AND apelido_interno).
-   */
-  notifyPlaylistDevices: async (playlistId: string) => {
-    if (!playlistId) return;
-    try {
-      const { data: devices, error } = await supabase
-        .from("dispositivos")
-        .select("serial, apelido_interno")
-        .eq("playlist_id", playlistId);
-
-      if (error || !devices?.length) {
-        console.log(`[Firebase] No devices to notify for playlist ${playlistId}`);
-        return;
-      }
-
-      const codes = new Set<string>();
-      devices.forEach((d: any) => {
-        if (d.serial) codes.add(d.serial);
-        if (d.apelido_interno) codes.add(d.apelido_interno);
-      });
-
-      await Promise.all(
-        Array.from(codes).map((code) =>
-          FirebaseRealtimeService.notifyDevice(code, {
-            reason: "playlist_updated",
-            playlist_id: playlistId,
-          })
-        )
-      );
-      console.log(`[Firebase] Notified ${codes.size} device codes for playlist ${playlistId}`);
-    } catch (err) {
-      console.warn("[Firebase] notifyPlaylistDevices failed", err);
-    }
-  },
-
-  /**
-   * Notify every device linked to a given company.
-   */
-  notifyCompanyDevices: async (companyId: string) => {
-    if (!companyId) return;
-    try {
-      const { data: devices, error } = await supabase
-        .from("dispositivos")
-        .select("serial, apelido_interno")
-        .eq("company_id", companyId);
-
-      if (error || !devices?.length) return;
-
-      const codes = new Set<string>();
-      devices.forEach((d: any) => {
-        if (d.serial) codes.add(d.serial);
-        if (d.apelido_interno) codes.add(d.apelido_interno);
-      });
-
-      await Promise.all(
-        Array.from(codes).map((code) =>
-          FirebaseRealtimeService.notifyDevice(code, {
-            reason: "company_settings_updated",
-          })
-        )
-      );
-      console.log(`[Firebase] Notified ${codes.size} device codes for company ${companyId}`);
-    } catch (err) {
-      console.warn("[Firebase] notifyCompanyDevices failed", err);
-    }
-  },
-
+...
   /**
    * Log player events to Firebase for real-time monitoring.
    */
   logEvent: async (deviceCode: string, event: string, details: any = {}) => {
     if (!deviceCode) return;
     try {
-      const logRef = ref(database, `devices/${deviceCode}/logs/${Date.now()}`);
+      const logRef = ref(database, `dispositivos/${deviceCode}/logs/${Date.now()}`);
       await set(logRef, {
         event,
         ...details,
@@ -193,7 +125,7 @@ export const FirebaseRealtimeService = {
     if (!deviceCode) return () => {};
 
     console.log(`[Firebase] Subscribing to commands for device: ${deviceCode}`);
-    const commandRef = ref(database, `devices/${deviceCode}/commands`);
+    const commandRef = ref(database, `dispositivos/${deviceCode}/commands`);
     let isFirst = true;
 
     const unsubscribe = onValue(commandRef, (snapshot) => {
@@ -217,7 +149,7 @@ export const FirebaseRealtimeService = {
   sendCommand: async (deviceCode: string, comando: string, payload: any = {}) => {
     if (!deviceCode) return;
     try {
-      const commandRef = ref(database, `devices/${deviceCode}/commands`);
+      const commandRef = ref(database, `dispositivos/${deviceCode}/commands`);
       await set(commandRef, {
         comando: comando.toLowerCase(),
         payload: payload,
