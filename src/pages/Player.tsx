@@ -394,7 +394,7 @@ export default function Player() {
     if (win.sendCommandToAndroid) {
       win.sendCommandToAndroid(JSON.stringify(comando));
       console.log("✅ Comando enviado:", comando);
-      // alert("Comando enviado! Verifique o app.");
+      toast.success("Comando enviado! Verifique o app.");
     }
   };
 
