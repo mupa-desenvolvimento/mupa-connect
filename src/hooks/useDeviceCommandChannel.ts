@@ -7,6 +7,15 @@ import {
   type DeviceCommand,
 } from "@/lib/device-commands";
 import { sendCommandToAndroid } from "@/lib/android-bridge";
+import { useState } from "react";
+
+export interface LastCommandInfo {
+  command: string;
+  timestamp: number;
+  isMatch: boolean;
+  targetId: string;
+  details: any;
+}
 
 export interface CommandHandlerContext {
   reloadPlaylist: () => Promise<void> | void;
@@ -40,27 +49,56 @@ export interface CommandHandlerContext {
  */
 export function useDeviceCommandChannel(
   deviceId: string | undefined,
-  handlers: CommandHandlerContext
+  handlers: CommandHandlerContext & { serial?: string; externalId?: string }
 ) {
   const handlersRef = useRef(handlers);
   handlersRef.current = handlers;
+  
+  const [lastCommand, setLastCommand] = useState<LastCommandInfo | null>(null);
 
   useEffect(() => {
     if (!deviceId) return;
 
-    const unsubscribe = subscribeToDeviceCommands(deviceId, async (cmd) => {
-      await runCommand(cmd, handlersRef.current, deviceId);
-    });
+    const unsubscribe = subscribeToDeviceCommands(
+      deviceId, 
+      async (cmd) => {
+        setLastCommand({
+          command: cmd.command,
+          timestamp: Date.now(),
+          isMatch: true,
+          targetId: cmd.device_id,
+          details: cmd.payload
+        });
+        await runCommand(cmd, handlersRef.current, deviceId);
+      },
+      { 
+        serial: handlers.serial, 
+        externalId: handlers.externalId 
+      }
+    );
 
     return unsubscribe;
-  }, [deviceId]);
+  }, [deviceId, handlers.serial, handlers.externalId]);
+
+  return { lastCommand };
 }
 
 
 async function runCommand(cmd: DeviceCommand, h: CommandHandlerContext, currentDeviceId: string) {
   // Security validation: ignore commands not meant for this device
-  if (cmd.device_id !== currentDeviceId) {
-    console.warn("[CommandChannel] Received command for wrong device:", cmd.device_id);
+  // We already filter in subscribeToDeviceCommands, but double check here
+  const currentSerial = (h as any).serial;
+  const currentExternal = (h as any).externalId;
+  
+  const isMatch = 
+    cmd.device_id === currentDeviceId || 
+    (currentSerial && cmd.device_id === currentSerial) ||
+    (currentExternal && cmd.device_id === currentExternal) ||
+    (cmd.metadata?.serial === currentSerial) ||
+    (cmd.metadata?.device_id === currentDeviceId);
+
+  if (!isMatch) {
+    console.warn("[CommandChannel] Received command for wrong device:", cmd.device_id, "Current:", currentDeviceId, currentSerial);
     return;
   }
 
