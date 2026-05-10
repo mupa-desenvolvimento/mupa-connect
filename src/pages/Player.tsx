@@ -221,7 +221,7 @@ export default function Player() {
   }, [manifest]);
 
   // 3. System Commands (Control Plane)
-  useDeviceCommandChannel(isPreview ? undefined : deviceUuid, {
+  const { lastCommand } = useDeviceCommandChannel(isPreview ? undefined : deviceUuid, {
     reloadPlaylist: () => setReloadKey(k => k + 1),
     setVolume: (v) => setVolume(v),
     clearCache: () => { caches.keys().then(ks => ks.map(k => caches.delete(k))); },
@@ -230,6 +230,7 @@ export default function Player() {
     screenshot: () => Promise.resolve(""),
     tenantId: deviceInfo?.tenant_id,
     companyId: deviceInfo?.company_id,
+    serial: deviceInfo?.serial || deviceCode,
   });
 
 
