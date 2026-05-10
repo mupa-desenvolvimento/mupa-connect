@@ -93,7 +93,75 @@ export const FirebaseRealtimeService = {
       console.warn("[Firebase] Heartbeat failed", err);
     }
   },
-...
+
+  /**
+   * Notify every device linked to a given playlist (by serial AND apelido_interno).
+   */
+  notifyPlaylistDevices: async (playlistId: string) => {
+    if (!playlistId) return;
+    try {
+      const { data: devices, error } = await supabase
+        .from("dispositivos")
+        .select("serial, apelido_interno")
+        .eq("playlist_id", playlistId);
+
+      if (error || !devices?.length) {
+        console.log(`[Firebase] No devices to notify for playlist ${playlistId}`);
+        return;
+      }
+
+      const codes = new Set<string>();
+      devices.forEach((d: any) => {
+        if (d.serial) codes.add(d.serial);
+        if (d.apelido_interno) codes.add(d.apelido_interno);
+      });
+
+      await Promise.all(
+        Array.from(codes).map((code) =>
+          FirebaseRealtimeService.notifyDevice(code, {
+            reason: "playlist_updated",
+            playlist_id: playlistId,
+          })
+        )
+      );
+      console.log(`[Firebase] Notified ${codes.size} device codes for playlist ${playlistId}`);
+    } catch (err) {
+      console.warn("[Firebase] notifyPlaylistDevices failed", err);
+    }
+  },
+
+  /**
+   * Notify every device linked to a given company.
+   */
+  notifyCompanyDevices: async (companyId: string) => {
+    if (!companyId) return;
+    try {
+      const { data: devices, error } = await supabase
+        .from("dispositivos")
+        .select("serial, apelido_interno")
+        .eq("company_id", companyId);
+
+      if (error || !devices?.length) return;
+
+      const codes = new Set<string>();
+      devices.forEach((d: any) => {
+        if (d.serial) codes.add(d.serial);
+        if (d.apelido_interno) codes.add(d.apelido_interno);
+      });
+
+      await Promise.all(
+        Array.from(codes).map((code) =>
+          FirebaseRealtimeService.notifyDevice(code, {
+            reason: "company_settings_updated",
+          })
+        )
+      );
+      console.log(`[Firebase] Notified ${codes.size} device codes for company ${companyId}`);
+    } catch (err) {
+      console.warn("[Firebase] notifyCompanyDevices failed", err);
+    }
+  },
+
   /**
    * Log player events to Firebase for real-time monitoring.
    */
@@ -161,4 +229,3 @@ export const FirebaseRealtimeService = {
     }
   },
 };
-
