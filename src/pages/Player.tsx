@@ -397,6 +397,18 @@ export default function Player() {
       win.sendCommandToAndroid(JSON.stringify(comando));
       console.log("✅ Comando enviado:", comando);
       toast.success("Comando enviado! Verifique o app.");
+
+      // Simula um ACK para teste visual se não estiver no Android
+      if (!win.AppInventor) {
+        setTimeout(() => {
+          if (win.confirmAndroidExecution) {
+            win.confirmAndroidExecution(JSON.stringify({
+              status: "success",
+              message: "Simulação de ACK OK"
+            }));
+          }
+        }, 1500);
+      }
     }
   };
 
@@ -813,6 +825,17 @@ export default function Player() {
                           {lastCommand.sentToAndroid && (
                             <div className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-500 inline-block">
                               ENVIADO PARA ANDROID
+                            </div>
+                          )}
+                          {lastCommand.androidAck && (
+                            <div className={cn(
+                              "text-[9px] px-1.5 py-0.5 rounded inline-block",
+                              lastCommand.androidAck.status === "success" 
+                                ? "bg-emerald-500/20 text-emerald-400" 
+                                : "bg-red-500/20 text-red-400"
+                            )}>
+                              ACK: {lastCommand.androidAck.status.toUpperCase()}
+                              {lastCommand.androidAck.message && ` (${lastCommand.androidAck.message})`}
                             </div>
                           )}
                         </div>
