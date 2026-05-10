@@ -80,18 +80,8 @@ export const FirebaseRealtimeService = {
    * Based on execution of player (/play).
    */
   sendHeartbeat: async (deviceCode: string, mediaId?: string | null, status: string = "playing") => {
-    if (!deviceCode) return;
-    try {
-      const deviceRef = ref(database, `dispositivos/${deviceCode}/status`);
-      await set(deviceRef, {
-        last_update: Date.now(),
-        media_id: mediaId || null,
-        status: status
-      });
-    } catch (err) {
-      // Silently fail to avoid crashing the player on connection issues
-      console.warn("[Firebase] Heartbeat failed", err);
-    }
+    // Desativado para reduzir custos no Firebase Realtime Database
+    return;
   },
 
   /**
@@ -166,21 +156,8 @@ export const FirebaseRealtimeService = {
    * Log player events to Firebase for real-time monitoring.
    */
   logEvent: async (deviceCode: string, event: string, details: any = {}) => {
-    if (!deviceCode) return;
-    try {
-      const logRef = ref(database, `dispositivos/${deviceCode}/logs/${Date.now()}`);
-      await set(logRef, {
-        event,
-        ...details,
-        timestamp: new Date().toISOString()
-      });
-      
-      // Manter apenas os últimos 50 logs para evitar sobrecarga no banco
-      // (Isso é um "set" em um path fixo baseado em tempo, o Firebase não remove automático, 
-      // mas podemos implementar uma limpeza periódica se necessário. Por ora apenas registramos).
-    } catch (err) {
-      console.warn("[Firebase] Log event failed", err);
-    }
+    // Desativado para reduzir custos no Firebase Realtime Database
+    return;
   },
 
   /**
