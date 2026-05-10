@@ -815,6 +815,17 @@ export default function Player() {
                               ENVIADO PARA ANDROID
                             </div>
                           )}
+                          {lastCommand.androidAck && (
+                            <div className={cn(
+                              "text-[9px] px-1.5 py-0.5 rounded inline-block",
+                              lastCommand.androidAck.status === "success" 
+                                ? "bg-emerald-500/20 text-emerald-400" 
+                                : "bg-red-500/20 text-red-400"
+                            )}>
+                              ACK: {lastCommand.androidAck.status.toUpperCase()}
+                              {lastCommand.androidAck.message && ` (${lastCommand.androidAck.message})`}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ) : (
