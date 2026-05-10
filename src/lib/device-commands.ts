@@ -142,26 +142,60 @@ export async function logDeviceExecution(input: {
 /**
  * Subscribe to commands targeted at a single device.
  * Used by the Player to receive remote orders in real time.
+ * Supports listening to commands by device_id (UUID) OR external_id/serial.
  */
 export function subscribeToDeviceCommands(
   deviceId: string,
-  onCommand: (cmd: DeviceCommand) => void
+  onCommand: (cmd: DeviceCommand) => void,
+  options: { serial?: string; externalId?: string } = {}
 ) {
+  const channelName = `device-commands:${deviceId}`;
+  console.log(`[REALTIME] Subscribing to channel: ${channelName}`, { deviceId, ...options });
+
   const channel = supabase
-    .channel(`device-commands:${deviceId}`)
+    .channel(channelName)
     .on(
       "postgres_changes",
       {
         event: "INSERT",
         schema: "public",
         table: "device_commands",
-        filter: `device_id=eq.${deviceId}`,
       },
-      (payload) => onCommand(payload.new as unknown as DeviceCommand)
+      (payload) => {
+        const cmd = payload.new as unknown as DeviceCommand;
+        
+        // Multi-identifier matching logic
+        const targetId = cmd.device_id;
+        const currentId = deviceId;
+        const currentSerial = options.serial;
+        const currentExternal = options.externalId;
+
+        const isMatch = 
+          targetId === currentId || 
+          (currentSerial && targetId === currentSerial) ||
+          (currentExternal && targetId === currentExternal) ||
+          (cmd.metadata?.serial === currentSerial) ||
+          (cmd.metadata?.device_id === currentId);
+
+        console.log("[REALTIME COMMAND RECEIVED]", {
+          command: cmd.command,
+          target_device_id: targetId,
+          current_device_id: currentId,
+          current_serial: currentSerial,
+          isMatch
+        });
+
+        if (isMatch) {
+          onCommand(cmd);
+        }
+      }
     )
-    .subscribe();
+    .subscribe((status) => {
+      console.log(`[REALTIME STATUS] ${channelName}: ${status}`);
+    });
 
   return () => {
+    console.log(`[REALTIME] Unsubscribing from: ${channelName}`);
     supabase.removeChannel(channel);
   };
 }
