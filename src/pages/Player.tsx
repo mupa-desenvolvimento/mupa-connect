@@ -376,6 +376,27 @@ export default function Player() {
     return () => clearInterval(t);
   }, []);
 
+  const testarBridge = () => {
+    const comando = {
+      comando: "teste_conexao",
+      payload: { 
+        mensagem: "Teste de comunicação Lovable → Kodular",
+        versao: "1.0"
+      },
+      timestamp: Date.now(),
+      device_id: deviceInfo?.id || "N/A",
+      tenant_id: deviceInfo?.tenant_id || "N/A",
+      company_id: deviceInfo?.company_id || "N/A"
+    };
+
+    const win = (window as any);
+    if (win.sendCommandToAndroid) {
+      win.sendCommandToAndroid(JSON.stringify(comando));
+      console.log("✅ Comando enviado:", comando);
+      // alert("Comando enviado! Verifique o app.");
+    }
+  };
+
   // Face Detection with Face-API
   useEffect(() => {
     const loadModels = async () => {
