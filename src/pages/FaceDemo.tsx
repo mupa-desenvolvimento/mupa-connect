@@ -298,7 +298,7 @@ export default function FaceDemo() {
           autoPlay
           muted
           playsInline
-          className="w-full h-full object-cover scale-x-[-1] will-change-transform"
+          className={`w-full h-full object-cover will-change-transform ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`}
         />
         <canvas
           ref={canvasRef}
