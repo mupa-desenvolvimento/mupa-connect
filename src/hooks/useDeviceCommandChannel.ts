@@ -171,6 +171,9 @@ async function runCommand(cmd: DeviceCommand, h: CommandHandlerContext, currentD
       case "reboot":
         await h.reboot();
         break;
+      case "reboot_device":
+        // Already handled by immediate send
+        break;
       case "open_app":
       case "abrir_app": {
         const pkg = cmd.payload?.package || cmd.payload?.packageName || cmd.payload?.pacote;
@@ -241,19 +244,14 @@ async function runCommand(cmd: DeviceCommand, h: CommandHandlerContext, currentD
         await h.fechaApp?.();
         break;
       }
-        sendCommandToAndroid("fecha_app", {}, context);
-        break;
-      }
       case "ip_server": {
         const ip = cmd.payload?.ip_server || cmd.payload?.ip;
         if (!ip) throw new Error("IP do servidor ausente");
         await h.setIpServer?.(String(ip));
-        sendCommandToAndroid("ip_server", { ip_server: ip }, context);
         break;
       }
       case "ping":
         message = "pong";
-        sendCommandToAndroid("ping", {}, context);
         break;
       default:
         ok = false;
