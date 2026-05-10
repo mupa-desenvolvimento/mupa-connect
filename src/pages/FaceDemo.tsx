@@ -79,15 +79,17 @@ export default function FaceDemo() {
   const [error, setError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showHUD, setShowHUD] = useState(true);
-  const [status, setStatus] = useState<"idle" | "analyzing" | "active">("idle");
+  const [status, setStatus] = useState<"idle" | "initializing" | "analyzing" | "active">("initializing");
   const [fps, setFps] = useState(0);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
+  const [retryCount, setRetryCount] = useState(0);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const requestRef = useRef<number>();
   const lastTimeRef = useRef<number>(Date.now());
   const framesRef = useRef<number>(0);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
 
   // Load models
   useEffect(() => {
