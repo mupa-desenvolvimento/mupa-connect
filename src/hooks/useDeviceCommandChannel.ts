@@ -15,6 +15,7 @@ export interface LastCommandInfo {
   isMatch: boolean;
   targetId: string;
   details: any;
+  sentToAndroid?: boolean;
 }
 
 export interface CommandHandlerContext {
@@ -62,13 +63,33 @@ export function useDeviceCommandChannel(
     const unsubscribe = subscribeToDeviceCommands(
       deviceId, 
       async (cmd) => {
+        const androidPayload = {
+          comando: cmd.command,
+          payload: cmd.payload,
+          timestamp: Date.now(),
+          device_id: cmd.device_id,
+          tenant_id: cmd.tenant_id,
+          company_id: handlersRef.current.companyId
+        };
+
+        console.log("[REALTIME RECEIVED]", cmd);
+        console.log("[SENDING TO ANDROID]", androidPayload);
+
+        const win = (window as any);
+        let sent = false;
+        if (win.sendCommandToAndroid) {
+          sent = win.sendCommandToAndroid(JSON.stringify(androidPayload));
+        }
+
         setLastCommand({
           command: cmd.command,
           timestamp: Date.now(),
           isMatch: true,
           targetId: cmd.device_id,
-          details: cmd.payload
+          details: cmd.payload,
+          sentToAndroid: sent
         });
+
         await runCommand(cmd, handlersRef.current, deviceId);
       },
       { 
