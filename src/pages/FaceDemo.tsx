@@ -343,17 +343,33 @@ export default function FaceDemo() {
                 <span className="text-[10px] font-mono text-white/60">{fps} FPS</span>
               </div>
               <div className="w-px h-3 bg-white/10" />
-              <div className="flex items-center gap-2">
-                <Timer className="w-3 h-3 text-cyan-400" />
-                <span className="text-[10px] font-mono text-white/60">LATENCY: 42ms</span>
-              </div>
+              <button 
+                onClick={() => setFaceDetectionActive(!faceDetectionActive)}
+                className="flex items-center gap-2 pointer-events-auto hover:text-cyan-400 transition-colors"
+              >
+                <Activity className={`w-3 h-3 ${faceDetectionActive ? 'text-green-400' : 'text-red-400'}`} />
+                <span className="text-[10px] font-mono text-white/60">{faceDetectionActive ? 'ACTIVE' : 'PAUSED'}</span>
+              </button>
             </GlassCard>
             
             <button 
               onClick={toggleFullscreen}
               className="p-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors backdrop-blur-md pointer-events-auto"
+              title="Tela Cheia"
             >
               {isFullscreen ? <Minimize className="w-6 h-6" /> : <Maximize className="w-6 h-6" />}
+            </button>
+
+            <button 
+              onClick={() => {
+                stopCamera();
+                startCamera(); // This should ideally toggle if multiple cameras exist, but for simplicity we re-start
+                // In a real mobile app, we would query devices and toggle facingMode
+              }}
+              className="p-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors backdrop-blur-md pointer-events-auto"
+              title="Alternar Câmera"
+            >
+              <Camera className="w-6 h-6" />
             </button>
           </div>
         </div>
