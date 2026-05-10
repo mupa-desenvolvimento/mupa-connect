@@ -634,26 +634,6 @@ export default function FaceDemo() {
         </div>
       </div>
 
-      {/* Error Message */}
-      <AnimatePresence>
-        {error && (
-          <motion.div 
-            initial={{ opacity: 0, y: 100 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] pointer-events-auto"
-          >
-            <div className="bg-red-500/20 backdrop-blur-xl border border-red-500/50 px-6 py-4 rounded-2xl flex items-center gap-4">
-              <div className="p-2 bg-red-500 rounded-lg">
-                <X className="w-5 h-5 text-white" onClick={() => setError(null)} />
-              </div>
-              <div>
-                <p className="text-white font-bold">Sistema Offline</p>
-                <p className="text-white/60 text-xs">{error}</p>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
