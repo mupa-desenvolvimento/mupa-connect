@@ -41,7 +41,7 @@ export const FirebaseRealtimeService = {
     if (!deviceCode) return () => {};
 
     console.log(`[Firebase] Subscribing to updates for device: ${deviceCode}`);
-    const deviceRef = ref(database, `devices/${deviceCode}/last_update`);
+    const deviceRef = ref(database, `dispositivos/${deviceCode}/last_update`);
     let isFirst = true;
 
     const unsubscribe = onValue(deviceRef, (snapshot) => {
@@ -65,7 +65,7 @@ export const FirebaseRealtimeService = {
   notifyDevice: async (deviceCode: string, payload: Omit<DeviceUpdatePayload, "ts">) => {
     if (!deviceCode) return;
     try {
-      await set(ref(database, `devices/${deviceCode}/last_update`), {
+      await set(ref(database, `dispositivos/${deviceCode}/last_update`), {
         ...payload,
         ts: Date.now(),
       });
@@ -82,7 +82,7 @@ export const FirebaseRealtimeService = {
   sendHeartbeat: async (deviceCode: string, mediaId?: string | null, status: string = "playing") => {
     if (!deviceCode) return;
     try {
-      const deviceRef = ref(database, `devices/${deviceCode}/status`);
+      const deviceRef = ref(database, `dispositivos/${deviceCode}/status`);
       await set(deviceRef, {
         last_update: Date.now(),
         media_id: mediaId || null,
@@ -168,7 +168,7 @@ export const FirebaseRealtimeService = {
   logEvent: async (deviceCode: string, event: string, details: any = {}) => {
     if (!deviceCode) return;
     try {
-      const logRef = ref(database, `devices/${deviceCode}/logs/${Date.now()}`);
+      const logRef = ref(database, `dispositivos/${deviceCode}/logs/${Date.now()}`);
       await set(logRef, {
         event,
         ...details,
@@ -193,7 +193,7 @@ export const FirebaseRealtimeService = {
     if (!deviceCode) return () => {};
 
     console.log(`[Firebase] Subscribing to commands for device: ${deviceCode}`);
-    const commandRef = ref(database, `devices/${deviceCode}/commands`);
+    const commandRef = ref(database, `dispositivos/${deviceCode}/commands`);
     let isFirst = true;
 
     const unsubscribe = onValue(commandRef, (snapshot) => {
@@ -217,7 +217,7 @@ export const FirebaseRealtimeService = {
   sendCommand: async (deviceCode: string, comando: string, payload: any = {}) => {
     if (!deviceCode) return;
     try {
-      const commandRef = ref(database, `devices/${deviceCode}/commands`);
+      const commandRef = ref(database, `dispositivos/${deviceCode}/commands`);
       await set(commandRef, {
         comando: comando.toLowerCase(),
         payload: payload,
@@ -229,4 +229,3 @@ export const FirebaseRealtimeService = {
     }
   },
 };
-
