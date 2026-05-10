@@ -78,8 +78,24 @@ export const sendCommandToAndroid = (
   }
 };
 
-// Expõe no window para acesso global conforme solicitado
+// Listener para confirmação (ACK) vindo do Android
+// O Android deve chamar: window.confirmAndroidExecution(JSON.stringify({ command_id: "...", status: "success", message: "..." }))
 if (typeof window !== "undefined") {
   (window as any).sendCommandToAndroid = sendCommandToAndroid;
+  
+  (window as any).confirmAndroidExecution = (payloadJson: string) => {
+    try {
+      const data = typeof payloadJson === 'string' ? JSON.parse(payloadJson) : payloadJson;
+      console.log("[ANDROID ACK RECEIVED]", data);
+      
+      // Dispara evento para o sistema de logs e UI reagirem
+      window.dispatchEvent(new CustomEvent("androidAck", { detail: data }));
+      
+      return true;
+    } catch (e) {
+      console.error("[ANDROID ACK ERROR]", e);
+      return false;
+    }
+  };
 }
 
