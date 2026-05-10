@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useDeviceCommandChannel } from "@/hooks/useDeviceCommandChannel";
 import { supabase } from "@/integrations/supabase/client";
 import { PlayerEngine } from "@/components/PlayerEngine";
@@ -9,7 +9,7 @@ import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { ManifestService } from "@/services/ManifestService";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Monitor, Wrench } from "lucide-react";
+import { AlertCircle, Monitor, Wrench, Scan } from "lucide-react";
 import * as faceapi from "face-api.js";
 
 interface AppearanceConfig {
@@ -47,6 +47,7 @@ export default function Player() {
     document.documentElement.classList.add("dark");
   }, []);
   const { deviceCode, "*": extraPath } = useParams();
+  const navigate = useNavigate();
   console.log("[Player] Initializing with deviceCode:", deviceCode, "extraPath:", extraPath);
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get("preview") === "true";
@@ -739,6 +740,17 @@ export default function Player() {
         <div className="absolute bottom-4 right-4 z-40 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 font-mono text-[10px] text-white/40 tracking-[0.2em] select-none pointer-events-none uppercase">
           Device ID: {deviceInfo?.serial || deviceCode}
         </div>
+      )}
+
+      {/* Face Demo Button - Discrete and Modern */}
+      {!isPreview && (
+        <button 
+          onClick={() => navigate('/face-demo')}
+          className="absolute bottom-16 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-xl bg-black/40 backdrop-blur-md border border-white/10 hover:bg-white/60 hover:border-cyan-500/50 transition-all duration-300 group shadow-2xl pointer-events-auto"
+        >
+          <Scan className="w-4 h-4 text-white/40 group-hover:text-cyan-400 transition-colors" />
+          <span className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] group-hover:text-white transition-colors">Face Demo</span>
+        </button>
       )}
 
       {/* Discreet sync notification */}

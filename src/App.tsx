@@ -35,6 +35,7 @@ import AppDownloadProxy from "./pages/AppDownloadProxy";
 import SharedMonitoringPage from "./pages/monitoring/SharedMonitoring";
 import TradeMarketingDashboard from "./pages/TradeMarketing";
 import FaceTrackDemo from "./pages/FaceTrackDemo";
+import FaceDemo from "./pages/FaceDemo";
 import CompanyManagement from "./pages/admin/CompanyManagement";
 import WhatsAppManagement from "./pages/admin/WhatsApp";
 import QueryErrorsReport from "./pages/QueryErrorsReport";
@@ -97,6 +98,9 @@ const App = () => {
               <Route path="/play" element={<Player />} />
               <Route path="/play/:deviceCode" element={<Player />} />
               <Route path="/play/:deviceCode/*" element={<Player />} />
+
+              {/* Face Demo fullscreen */}
+              <Route path="/face-demo" element={<FaceDemo />} />
 
               {/* Rotas Públicas */}
               <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <Landing />} />
