@@ -22,7 +22,7 @@ export interface AndroidCommand {
 export const sendCommandToAndroid = (
   comandoOrJson: string, 
   payload: any = {}, 
-  context: { deviceId?: string; tenantId?: string; companyId?: string } = {}
+  context: { deviceId?: string; tenantId?: string; companyId?: string; deviceCode?: string } = {}
 ) => {
   let command: AndroidCommand;
 
