@@ -469,7 +469,48 @@ export default function FaceDemo() {
         {/* Center Status */}
         <div className="flex-1 flex flex-col items-center justify-center">
           <AnimatePresence mode="wait">
-            {status === "idle" && (
+            {status === "initializing" && (
+              <motion.div 
+                key="initializing"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col items-center gap-6"
+              >
+                <RefreshCw className="w-16 h-16 text-cyan-400 animate-spin" />
+                <div className="text-center">
+                  <h2 className="text-xl font-light tracking-[0.2em] text-cyan-400 uppercase">Inicializando Hardware</h2>
+                  <p className="text-white/40 text-sm mt-2 font-light">Configurando sensores de visão e câmera...</p>
+                </div>
+              </motion.div>
+            )}
+
+            {status === "idle" && error && (
+              <motion.div 
+                key="error"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.1 }}
+                className="flex flex-col items-center gap-6 max-w-md pointer-events-auto"
+              >
+                <div className="p-6 rounded-full bg-red-500/10 border border-red-500/30">
+                  <AlertCircle className="w-16 h-16 text-red-500" />
+                </div>
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold text-white uppercase tracking-tighter">Câmera Indisponível</h2>
+                  <p className="text-white/60 text-sm mt-2">{error}</p>
+                </div>
+                <button 
+                  onClick={handleRetry}
+                  className="px-8 py-3 rounded-full bg-white text-black font-bold flex items-center gap-2 hover:bg-cyan-400 transition-colors"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Tentar Novamente
+                </button>
+              </motion.div>
+            )}
+
+            {status === "idle" && !error && (
               <motion.div 
                 key="idle"
                 initial={{ opacity: 0, scale: 0.9 }}
