@@ -745,10 +745,10 @@ export default function Player() {
       {!isPreview && (
         <button 
           onClick={() => navigate('/face-demo')}
-          className=\"absolute bottom-16 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-xl bg-black/40 backdrop-blur-md border border-white/10 hover:bg-white/60 hover:border-cyan-500/50 transition-all duration-300 group shadow-2xl\"
+          className="absolute bottom-16 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-xl bg-black/40 backdrop-blur-md border border-white/10 hover:bg-white/60 hover:border-cyan-500/50 transition-all duration-300 group shadow-2xl pointer-events-auto"
         >
-          <Scan className=\"w-4 h-4 text-white/40 group-hover:text-cyan-400 transition-colors\" />
-          <span className=\"text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] group-hover:text-white transition-colors\">Face Demo</span>
+          <Scan className="w-4 h-4 text-white/40 group-hover:text-cyan-400 transition-colors" />
+          <span className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] group-hover:text-white transition-colors">Face Demo</span>
         </button>
       )}
 
