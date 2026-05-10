@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useDeviceCommandChannel } from "@/hooks/useDeviceCommandChannel";
 import { supabase } from "@/integrations/supabase/client";
 import { PlayerEngine } from "@/components/PlayerEngine";
@@ -9,7 +9,7 @@ import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { ManifestService } from "@/services/ManifestService";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Monitor, Wrench } from "lucide-react";
+import { AlertCircle, Monitor, Wrench, Scan } from "lucide-react";
 import * as faceapi from "face-api.js";
 
 interface AppearanceConfig {
@@ -47,6 +47,7 @@ export default function Player() {
     document.documentElement.classList.add("dark");
   }, []);
   const { deviceCode, "*": extraPath } = useParams();
+  const navigate = useNavigate();
   console.log("[Player] Initializing with deviceCode:", deviceCode, "extraPath:", extraPath);
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get("preview") === "true";
