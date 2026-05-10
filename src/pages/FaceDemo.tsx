@@ -17,8 +17,26 @@ import {
   Scan,
   Cpu,
   ShieldCheck,
-  ChevronRight
+  ChevronRight,
+  RefreshCw,
+  AlertCircle
 } from "lucide-react";
+
+// Detection for Android WebView
+const isAndroidWebView = () => {
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  return userAgent.includes('wv') || (userAgent.includes('android') && userAgent.includes('version/'));
+};
+
+const log = (tag: string, message: string, data?: any) => {
+  const timestamp = new Date().toISOString().split('T')[1].split('Z')[0];
+  const prefix = `[${timestamp}] [${tag}]`;
+  if (data) {
+    console.log(`${prefix} ${message}`, data);
+  } else {
+    console.log(`${prefix} ${message}`);
+  }
+};
 
 // --- Types ---
 interface DetectedFace {
