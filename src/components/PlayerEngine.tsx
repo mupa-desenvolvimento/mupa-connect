@@ -23,16 +23,13 @@ interface PlayerEngineProps {
 }
 
 export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appearance }: PlayerEngineProps) {
-  // Buffers A e B para Double Buffering
   const [bufferA, setBufferA] = useState<MediaItem | null>(null);
   const [bufferB, setBufferB] = useState<MediaItem | null>(null);
   const [activeBuffer, setActiveBuffer] = useState<"A" | "B">("A");
   
-  // URL local (Blob) para evitar rede durante o play
   const [localUrlA, setLocalUrlA] = useState<string>("");
   const [localUrlB, setLocalUrlB] = useState<string>("");
   
-  // Refs para controle preciso sem re-render (essencial para performance Android 9)
   const currentIndexRef = useRef(0);
   const nextIndexRef = useRef(1);
   const isTransitioningRef = useRef(false);
@@ -44,21 +41,31 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const preloadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Sincronizar playlist e inicializar buffers com Blob URLs
+  // Safe Preload using Image objects as fallback for CORS issues
+  const visualPreload = useCallback((url: string) => {
+    if (!url) return;
+    console.log(`[PlayerEngine] [Preload] Visual warming: ${url.split('/').pop()}`);
+    const img = new Image();
+    img.src = url; // Browsers handle this even without CORS for display
+  }, []);
+
   useEffect(() => {
     playlistRef.current = playlist;
     if (playlist.length > 0 && !bufferA && !bufferB) {
       const init = async () => {
         const firstMedia = playlist[0];
+        console.log(`[PlayerEngine] [Playback] Initializing first media: ${firstMedia.name}`);
         const firstUrl = await MediaCacheService.getBlobUrl(firstMedia.url);
         setLocalUrlA(firstUrl);
         setBufferA(firstMedia);
 
         if (playlist.length > 1) {
           const secondMedia = playlist[1];
+          console.log(`[PlayerEngine] [Preload] Preparing second media: ${secondMedia.name}`);
           const secondUrl = await MediaCacheService.getBlobUrl(secondMedia.url);
           setLocalUrlB(secondUrl);
           setBufferB(secondMedia);
+          visualPreload(secondMedia.url);
         }
         
         currentIndexRef.current = 0;
@@ -66,16 +73,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
       };
       init();
     }
-  }, [playlist]);
-
-  const preloadImage = (src: string): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve();
-      img.onerror = reject;
-      img.src = src;
-    });
-  };
+  }, [playlist, visualPreload]);
 
   const getNextIndex = (current: number) => {
     if (!playlistRef.current.length) return 0;
@@ -90,21 +88,17 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
     const newIndex = nextIndexRef.current;
     const nextNextIndex = getNextIndex(newIndex);
 
-    console.log(`[PlayerEngine] Swapping buffers: ${prevIndex} -> ${newIndex}. Next will be ${nextNextIndex}`);
+    console.log(`[PlayerEngine] [Transition] ${prevIndex} -> ${newIndex}. Next will be ${nextNextIndex}`);
 
-    // Troca o buffer ativo
     const nextBuffer = activeBuffer === "A" ? "B" : "A";
     setActiveBuffer(nextBuffer);
     
-    // Atualiza referências
     currentIndexRef.current = newIndex;
     nextIndexRef.current = nextNextIndex;
     startTimeRef.current = Date.now();
 
-    // Callback de mudança
     onMediaChange?.(newIndex);
 
-    // Logs
     if (serial) {
       FirebaseRealtimeService.logEvent(serial, "media_transition", {
         from: playlistRef.current[prevIndex]?.name,
@@ -113,25 +107,30 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
       });
     }
 
-    // Prepara o próximo buffer em background após o fade usando Blob local
     if (preloadTimeoutRef.current) clearTimeout(preloadTimeoutRef.current);
     preloadTimeoutRef.current = setTimeout(async () => {
       const nextMedia = playlistRef.current[nextNextIndex];
+      if (!nextMedia) {
+        isTransitioningRef.current = false;
+        return;
+      }
+
+      console.log(`[PlayerEngine] [Preload] Buffering next: ${nextMedia.name}`);
       const nextLocalUrl = await MediaCacheService.getBlobUrl(nextMedia.url);
+      visualPreload(nextMedia.url);
       
       if (nextBuffer === "A") {
         setLocalUrlB(nextLocalUrl);
-        setBufferB(nextMedia); // Prepara B enquanto A está visível
+        setBufferB(nextMedia);
       } else {
         setLocalUrlA(nextLocalUrl);
-        setBufferA(nextMedia); // Prepara A enquanto B está visível
+        setBufferA(nextMedia);
       }
       isTransitioningRef.current = false;
-    }, 500);
+    }, 800);
 
-  }, [activeBuffer, onMediaChange, serial]);
+  }, [activeBuffer, onMediaChange, serial, visualPreload]);
 
-  // Controle de tempo de exibição
   useEffect(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
@@ -141,16 +140,14 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
     if (currentMedia.type === "image") {
       timeoutRef.current = setTimeout(() => {
         swapBuffers();
-      }, currentMedia.duration * 1000);
+      }, Math.max(2, currentMedia.duration) * 1000);
     }
-    // Vídeos são controlados pelo evento onEnded
 
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, [activeBuffer, swapBuffers]);
 
-  // Segurança: Watchdog (5s de timeout se a mídia não carregar ou travar)
   useEffect(() => {
     const watchdog = setInterval(() => {
       const now = Date.now();
@@ -158,13 +155,13 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
       if (!currentMedia) return;
 
       const elapsed = now - startTimeRef.current;
-      const maxDuration = (currentMedia.duration * 1000) + 5000; // 5s de margem
+      const maxDuration = (currentMedia.duration * 1000) + 8000; 
 
       if (elapsed > maxDuration) {
-        console.warn("[PlayerEngine] Watchdog triggered - media stuck or failed to load");
+        console.warn(`[PlayerEngine] [Watchdog] Stalled at ${currentMedia.name}. Forcing swap.`);
         swapBuffers();
       }
-    }, 2000);
+    }, 3000);
 
     return () => clearInterval(watchdog);
   }, [swapBuffers]);
@@ -190,18 +187,20 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
             ref={videoRef}
             src={localUrl}
             muted={volume === 0}
+            autoPlay={isActive}
             playsInline
             preload="auto"
             className="w-full h-full object-cover player-gpu-accel"
             onCanPlayThrough={() => {
-              if (isActive) {
-                videoRef.current?.play().catch(console.error);
+              if (isActive && videoRef.current && videoRef.current.paused) {
+                videoRef.current.play().catch(e => console.warn("[PlayerEngine] [Playback] Video play failed", e));
               }
             }}
             onEnded={() => {
               if (isActive) swapBuffers();
             }}
-            onError={() => {
+            onError={(e) => {
+              console.error("[PlayerEngine] [Playback] Video error", e);
               if (isActive) swapBuffers();
             }}
           />
@@ -210,7 +209,8 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
             src={localUrl}
             alt=""
             className="w-full h-full object-cover player-gpu-accel"
-            onError={() => {
+            onError={(e) => {
+              console.error("[PlayerEngine] [Playback] Image error", e);
               if (isActive) swapBuffers();
             }}
           />
@@ -219,13 +219,19 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
     );
   };
 
-  // Efeito para dar play no vídeo quando o buffer se torna ativo
   useEffect(() => {
-    if (activeBuffer === "A" && bufferA?.type === "video" && videoARef.current) {
-      videoARef.current.play().catch(console.error);
-    } else if (activeBuffer === "B" && bufferB?.type === "video" && videoBRef.current) {
-      videoBRef.current.play().catch(console.error);
-    }
+    const playActiveVideo = async () => {
+      try {
+        if (activeBuffer === "A" && bufferA?.type === "video" && videoARef.current) {
+          await videoARef.current.play();
+        } else if (activeBuffer === "B" && bufferB?.type === "video" && videoBRef.current) {
+          await videoBRef.current.play();
+        }
+      } catch (e) {
+        console.warn("[PlayerEngine] [Playback] Autoplay prevented or failed", e);
+      }
+    };
+    playActiveVideo();
   }, [activeBuffer, bufferA, bufferB]);
 
   return (
