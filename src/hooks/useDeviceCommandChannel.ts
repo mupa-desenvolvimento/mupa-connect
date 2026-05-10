@@ -105,7 +105,9 @@ export function useDeviceCommandChannel(
         const win = (window as any);
         let sent = false;
         if (win.sendCommandToAndroid) {
-          sent = win.sendCommandToAndroid(JSON.stringify(androidPayload));
+          sent = win.sendCommandToAndroid(JSON.stringify(androidPayload), {}, {
+            deviceCode: handlersRef.current.serial || deviceId
+          });
         }
 
         setLastCommand({
