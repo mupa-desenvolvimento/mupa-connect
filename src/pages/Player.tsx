@@ -245,7 +245,7 @@ export default function Player() {
     
     const media = activePlaylist[idx];
     if (media && deviceInfo?.id && !isPreview) {
-      // 1. Firebase Realtime Heartbeat
+      // 1. Firebase Realtime Heartbeat (Throttled inside service)
       FirebaseRealtimeService.sendHeartbeat(deviceCode!, media.id?.toString(), "playing");
 
       // 2. Supabase Player Status Update
