@@ -154,6 +154,11 @@ export default function Player() {
     }
 
     initializePlayer();
+    
+    // Define deviceCode globalmente para uso na bridge Android
+    if (deviceCode) {
+      (window as any).mupa_device_code = deviceCode;
+    }
   }, [deviceCode]);
 
   // 1.5 Realtime Updates via Firebase
