@@ -17,18 +17,38 @@ export interface AndroidCommand {
  * Extremamente leve, assíncrono e não bloqueante.
  */
 export const sendCommandToAndroid = (
-  comando: string, 
+  comandoOrJson: string, 
   payload: any = {}, 
   context: { deviceId?: string; tenantId?: string; companyId?: string } = {}
 ) => {
-  const command: AndroidCommand = {
-    comando: comando.toLowerCase(),
-    payload: payload,
-    timestamp: Math.floor(Date.now() / 1000),
-    device_id: context.deviceId,
-    tenant_id: context.tenantId,
-    company_id: context.companyId
-  };
+  let command: AndroidCommand;
+
+  try {
+    // Se for uma string JSON começando com {, assumimos que é o comando completo
+    if (typeof comandoOrJson === "string" && comandoOrJson.trim().startsWith("{")) {
+      command = JSON.parse(comandoOrJson);
+    } else {
+      command = {
+        comando: comandoOrJson.toLowerCase(),
+        payload: payload,
+        timestamp: Math.floor(Date.now() / 1000),
+        device_id: context.deviceId,
+        tenant_id: context.tenantId,
+        company_id: context.companyId
+      };
+    }
+  } catch (e) {
+    // Fallback caso o parse falhe
+    command = {
+      comando: comandoOrJson.toLowerCase(),
+      payload: payload,
+      timestamp: Math.floor(Date.now() / 1000),
+      device_id: context.deviceId,
+      tenant_id: context.tenantId,
+      company_id: context.companyId
+    };
+  }
+
 
   // Log para depuração em desenvolvimento
   console.log("[ANDROID COMMAND SENT]", command);

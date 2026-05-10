@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useDeviceCommandChannel } from "@/hooks/useDeviceCommandChannel";
 import { supabase } from "@/integrations/supabase/client";
@@ -376,6 +377,27 @@ export default function Player() {
     return () => clearInterval(t);
   }, []);
 
+  const testarBridge = () => {
+    const comando = {
+      comando: "teste_conexao",
+      payload: { 
+        mensagem: "Teste de comunicação Lovable → Kodular",
+        versao: "1.0"
+      },
+      timestamp: Date.now(),
+      device_id: deviceInfo?.id || "N/A",
+      tenant_id: deviceInfo?.tenant_id || "N/A",
+      company_id: deviceInfo?.company_id || "N/A"
+    };
+
+    const win = (window as any);
+    if (win.sendCommandToAndroid) {
+      win.sendCommandToAndroid(JSON.stringify(comando));
+      console.log("✅ Comando enviado:", comando);
+      toast.success("Comando enviado! Verifique o app.");
+    }
+  };
+
   // Face Detection with Face-API
   useEffect(() => {
     const loadModels = async () => {
@@ -739,6 +761,20 @@ export default function Player() {
         <div className="absolute bottom-20 left-6 z-40 flex items-center gap-3 px-4 py-2 rounded-xl bg-primary/20 backdrop-blur-xl border border-primary/20 font-mono text-xs text-primary-foreground tracking-wider select-none pointer-events-none animate-fade-in">
           <span className="h-2 w-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(var(--primary),0.5)]" />
           {syncToast.msg}
+        </div>
+      )}
+
+      {/* Botão de Teste da Bridge (Kodular) */}
+      {!isPreview && (
+        <div className="fixed bottom-6 left-6 z-[100] pointer-events-auto">
+          <button 
+            onClick={testarBridge}
+            className="bg-zinc-900/80 hover:bg-zinc-800 backdrop-blur-md border border-white/10 text-white px-5 py-3 rounded-xl transition-all active:scale-95 flex items-center gap-2 font-medium shadow-2xl group"
+            style={{ fontFamily: 'Satoshi, sans-serif' }}
+          >
+            <span className="group-hover:rotate-180 transition-transform duration-500">🔄</span>
+            <span>Testar Comunicação com App</span>
+          </button>
         </div>
       )}
     </div>
