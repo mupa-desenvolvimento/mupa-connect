@@ -7,6 +7,15 @@ import {
   type DeviceCommand,
 } from "@/lib/device-commands";
 import { sendCommandToAndroid } from "@/lib/android-bridge";
+import { useState } from "react";
+
+export interface LastCommandInfo {
+  command: string;
+  timestamp: number;
+  isMatch: boolean;
+  targetId: string;
+  details: any;
+}
 
 export interface CommandHandlerContext {
   reloadPlaylist: () => Promise<void> | void;
