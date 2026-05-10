@@ -397,6 +397,18 @@ export default function Player() {
       win.sendCommandToAndroid(JSON.stringify(comando));
       console.log("✅ Comando enviado:", comando);
       toast.success("Comando enviado! Verifique o app.");
+
+      // Simula um ACK para teste visual se não estiver no Android
+      if (!win.AppInventor) {
+        setTimeout(() => {
+          if (win.confirmAndroidExecution) {
+            win.confirmAndroidExecution(JSON.stringify({
+              status: "success",
+              message: "Simulação de ACK OK"
+            }));
+          }
+        }, 1500);
+      }
     }
   };
 
