@@ -741,6 +741,17 @@ export default function Player() {
         </div>
       )}
 
+      {/* Face Demo Button - Discrete and Modern */}
+      {!isPreview && (
+        <button 
+          onClick={() => navigate('/face-demo')}
+          className=\"absolute bottom-16 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-xl bg-black/40 backdrop-blur-md border border-white/10 hover:bg-white/60 hover:border-cyan-500/50 transition-all duration-300 group shadow-2xl\"
+        >
+          <Scan className=\"w-4 h-4 text-white/40 group-hover:text-cyan-400 transition-colors\" />
+          <span className=\"text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] group-hover:text-white transition-colors\">Face Demo</span>
+        </button>
+      )}
+
       {/* Discreet sync notification */}
       {syncToast && !isPreview && (
         <div className="absolute bottom-20 left-6 z-40 flex items-center gap-3 px-4 py-2 rounded-xl bg-primary/20 backdrop-blur-xl border border-primary/20 font-mono text-xs text-primary-foreground tracking-wider select-none pointer-events-none animate-fade-in">
