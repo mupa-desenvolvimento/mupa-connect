@@ -114,7 +114,7 @@ export default function QuickAccessPage() {
       };
 
       const res = await fetch(
-        `https://comandos-1621d-default-rtdb.firebaseio.com/${encodeURIComponent(device.serial)}.json`,
+        `https://comandos-1621d-default-rtdb.firebaseio.com/dispositivos/${encodeURIComponent(device.serial)}.json`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

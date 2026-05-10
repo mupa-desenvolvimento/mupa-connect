@@ -189,7 +189,7 @@ export function BulkCommandDialog({
       const results = await Promise.allSettled(
         validTargets.map((device) =>
           fetch(
-            `${FIREBASE_BASE}/${encodeURIComponent(device.serial!)}.json`,
+            `${FIREBASE_BASE}/dispositivos/${encodeURIComponent(device.serial!)}.json`,
             {
               method: "PUT",
               headers: { "Content-Type": "application/json" },

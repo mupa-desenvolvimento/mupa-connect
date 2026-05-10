@@ -295,7 +295,7 @@ export function DeviceFirebaseCommandDrawer({
     setSending(cfg.key);
     try {
       const res = await fetch(
-        `${FIREBASE_BASE}/${encodeURIComponent(device.serial)}.json`,
+        `${FIREBASE_BASE}/dispositivos/${encodeURIComponent(device.serial)}.json`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -355,7 +355,7 @@ export function DeviceFirebaseCommandDrawer({
     setSending(cfg.key);
     try {
       const res = await fetch(
-        `${FIREBASE_BASE}/${encodeURIComponent(device.serial)}.json`,
+        `${FIREBASE_BASE}/dispositivos/${encodeURIComponent(device.serial)}.json`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -445,7 +445,7 @@ export function DeviceFirebaseCommandDrawer({
 
     try {
       const res = await fetch(
-        `${FIREBASE_BASE}/${encodeURIComponent(device.serial)}.json`,
+        `${FIREBASE_BASE}/dispositivos/${encodeURIComponent(device.serial)}.json`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
