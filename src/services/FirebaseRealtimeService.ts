@@ -6,7 +6,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyC1RGJg54rTlsha1xyqMQKHvg5B7RFIiWc",
   authDomain: "update-group-38a2b.firebaseapp.com",
   databaseURL: "https://comandos-1621d-default-rtdb.firebaseio.com",
-  projectId: "update-group-38a2b",
+  projectId: "comandos-1621d",
   storageBucket: "update-group-38a2b.firebasestorage.app",
   messagingSenderId: "1061722413506",
   appId: "1:1061722413506:web:9f7500a08423db97445e5b",
