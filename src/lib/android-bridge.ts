@@ -1,6 +1,8 @@
+import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
+
 /**
  * Bridge for communication between the Web Player and the Android APK (Kodular).
- * Migrated to LocalStorage for stability on older Android versions (Android 9).
+ * Supports LocalStorage and Firebase Realtime for maximum reliability.
  */
 
 export interface AndroidCommand {
