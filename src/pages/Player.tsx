@@ -399,7 +399,9 @@ export default function Player() {
 
     const win = (window as any);
     if (win.sendCommandToAndroid) {
-      win.sendCommandToAndroid(JSON.stringify(comando));
+      win.sendCommandToAndroid(JSON.stringify(comando), {}, {
+        deviceCode: deviceCode
+      });
       console.log("✅ Comando enviado:", comando);
       toast.success("Comando enviado! Verifique o app.");
 
