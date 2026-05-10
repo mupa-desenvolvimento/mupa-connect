@@ -1949,6 +1949,66 @@ export type Database = {
           },
         ]
       }
+      device_sectors: {
+        Row: {
+          category: string | null
+          color: string | null
+          company_id: string | null
+          created_at: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          sort_order: number
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          color?: string | null
+          company_id?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          sort_order?: number
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          color?: string | null
+          company_id?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          sort_order?: number
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_sectors_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_sectors_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       device_status_logs: {
         Row: {
           created_at: string
@@ -2134,6 +2194,7 @@ export type Database = {
           pin: string | null
           player_status: string | null
           playlist_id: string | null
+          sector_id: string | null
           serial: string | null
           store_id: string | null
           tenant_id: string | null
@@ -2169,6 +2230,7 @@ export type Database = {
           pin?: string | null
           player_status?: string | null
           playlist_id?: string | null
+          sector_id?: string | null
           serial?: string | null
           store_id?: string | null
           tenant_id?: string | null
@@ -2204,6 +2266,7 @@ export type Database = {
           pin?: string | null
           player_status?: string | null
           playlist_id?: string | null
+          sector_id?: string | null
           serial?: string | null
           store_id?: string | null
           tenant_id?: string | null
@@ -2223,6 +2286,13 @@ export type Database = {
             columns: ["playlist_id"]
             isOneToOne: false
             referencedRelation: "playlists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispositivos_sector_id_fkey"
+            columns: ["sector_id"]
+            isOneToOne: false
+            referencedRelation: "device_sectors"
             referencedColumns: ["id"]
           },
           {
@@ -7379,6 +7449,7 @@ export type Database = {
           pin: string | null
           player_status: string | null
           playlist_id: string | null
+          sector_id: string | null
           serial: string | null
           store_id: string | null
           tenant_id: string | null
