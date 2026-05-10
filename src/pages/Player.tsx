@@ -372,7 +372,11 @@ export default function Player() {
 
   // UI Setup - Already handled in top-level useEffect
 
-  const [showDebug, setShowDebug] = useState(false);
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   const testarBridge = () => {
     const comando = {
