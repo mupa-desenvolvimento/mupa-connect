@@ -495,7 +495,7 @@ export default function DevicesPage() {
               </TableHeader>
               <TableBody>
                 {filteredDevices.map((d) => {
-                  const connStatus = getConnectionStatus(d.last_heartbeat_at);
+                const connStatus = getConnectionStatus(d.last_player_activity_at);
                   const playStatus = getPlayerStatus(d.player_status);
                   return (
                     <TableRow key={d.id} className={cn("hover:bg-muted/30 cursor-pointer transition-colors", selectedIds.has(d.id) && "bg-primary/5")} onClick={() => openDeviceDrawer({ ...d, status: connStatus })}>
