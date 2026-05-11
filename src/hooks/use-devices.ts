@@ -34,7 +34,7 @@ export function useDevices(companyId: string | null, tenantId: string | null, is
           tenant_id,
           company_id,
           grupo_dispositivos,
-          last_heartbeat_at,
+          last_player_activity_at,
           last_proof_at
         `);
 
