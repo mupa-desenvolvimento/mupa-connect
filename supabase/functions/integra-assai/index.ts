@@ -44,18 +44,18 @@ serve(async (req) => {
     const internalId = seqData.SEQPRODUTO
 
     // PASSO 2: Consultar preço no marketplace Assai
-    // Nota: O header x-basicauthorization deve ser configurado como segredo se necessário.
-    // Como não foi fornecido, usaremos um valor padrão se existir ou deixaremos em branco.
     const assaiResponse = await fetch(`https://marketplace.assai.com.br/stock?id_product=${internalId}&id_store=${store_id}`, {
       headers: {
         'accept': 'application/json',
-        'x-basicauthorization': Deno.env.get('ASSAI_BASIC_AUTH') || ''
+        'x-basicauthorization': Deno.env.get('ASSAI_BASIC_AUTH') || 'Basic QXNzYWlBcHA6QXNzYWlBcHA=' 
       }
     })
     
     let priceData = null
     if (assaiResponse.ok) {
-      priceData = await assaiResponse.json()
+      const fullPriceData = await assaiResponse.json()
+      // Pegar o primeiro item do array se existir
+      priceData = Array.isArray(fullPriceData) ? fullPriceData[0] : fullPriceData
     }
 
     // PASSO 3: Consultar imagem e cores
