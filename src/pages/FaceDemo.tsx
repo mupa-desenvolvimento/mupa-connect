@@ -93,24 +93,38 @@ export default function FaceDemo() {
 
   // Load models
   useEffect(() => {
+    let isMounted = true;
     const loadModels = async () => {
       try {
+        log("MODELS", "Iniciando carregamento dos modelos...");
         const MODEL_URL = '/models';
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-          faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
-          faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL)
-        ]);
-        setModelsLoaded(true);
-        startCamera();
+        
+        // Load one by one for better error tracking
+        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+        log("MODELS", "TinyFaceDetector carregado");
+        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+        log("MODELS", "FaceLandmark68 carregado");
+        await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+        log("MODELS", "FaceExpression carregado");
+        await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
+        log("MODELS", "AgeGender carregado");
+        
+        if (isMounted) {
+          log("MODELS", "Todos os modelos carregados com sucesso");
+          setModelsLoaded(true);
+          // Small delay before starting camera
+          setTimeout(() => startCamera(), 500);
+        }
       } catch (err) {
-        console.error("Error loading models:", err);
-        setError("Erro ao carregar inteligência artificial.");
+        log("MODELS", "Erro crítico ao carregar modelos", err);
+        if (isMounted) {
+          setError("Erro ao carregar inteligência artificial. Verifique a conexão.");
+        }
       }
     };
     loadModels();
     return () => {
+      isMounted = false;
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
       stopCamera();
     };
