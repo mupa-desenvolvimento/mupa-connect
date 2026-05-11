@@ -154,7 +154,7 @@ export default function NOCDashboard() {
       console.log("NOC: Loading all devices for SuperAdmin");
     }
 
-    const { data } = await query.order('last_heartbeat_at', { ascending: false });
+    const { data } = await query.order('last_player_activity_at', { ascending: false });
     if (data) {
       setDevices(data);
       setLastUpdate(new Date());
