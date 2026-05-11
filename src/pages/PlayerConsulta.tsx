@@ -44,6 +44,7 @@ export default function PlayerConsulta() {
   const [showOverlay, setShowOverlay] = useState(false);
   const [isConsulting, setIsConsulting] = useState(false);
   const [product, setProduct] = useState<ProductData | null>(null);
+  const [lastConsultedEan, setLastConsultedEan] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -200,6 +201,7 @@ export default function PlayerConsulta() {
     setShowOverlay(true);
     setError(null);
     setProduct(null); // Limpar produto anterior
+    setLastConsultedEan(cleanEan);
 
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
 
@@ -221,6 +223,11 @@ export default function PlayerConsulta() {
       const { data, error } = await supabase.functions.invoke("integra-assai", {
         body: { ean: cleanEan }
       });
+
+      // Se der erro 404 (não mapeado), tratamos de forma amigável
+      if (error && (error.status === 404 || error.message?.includes('404'))) {
+        throw new Error("Produto não cadastrado para consulta.");
+      }
 
       if (error) throw error;
       if (!data || data.error) throw new Error(data?.error || "Falha na resposta da API");
@@ -305,6 +312,9 @@ export default function PlayerConsulta() {
                 <AlertCircle className="h-24 w-24 text-red-500" />
                 <h2 className="text-4xl font-bold">Ops!</h2>
                 <p className="text-2xl text-white/80">{error}</p>
+                {lastConsultedEan && (
+                  <p className="text-sm text-white/30 font-mono mt-2">EAN: {lastConsultedEan}</p>
+                )}
                 <button 
                   onClick={() => setShowOverlay(false)}
                   className="mt-8 px-12 py-4 bg-white/10 hover:bg-white/20 text-white rounded-full text-xl transition-all"
