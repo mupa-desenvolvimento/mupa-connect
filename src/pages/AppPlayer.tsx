@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PlayerEngine } from "@/components/PlayerEngine";
 import { usePlaylists, useTenant } from "@/hooks/use-playlist-data";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +25,10 @@ function FaceDetectionPanel({ active }: { active: boolean }) {
   const [loadingModels, setLoadingModels] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [faces, setFaces] = useState<DetectedFace[]>([]);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [videoSize, setVideoSize] = useState<{ w: number; h: number } | null>(null);
+  const [lastRunAt, setLastRunAt] = useState<number | null>(null);
+  const [lastDetectionError, setLastDetectionError] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -36,6 +39,10 @@ function FaceDetectionPanel({ active }: { active: boolean }) {
     if (!active) {
       setError(null);
       setFaces([]);
+      setCameraReady(false);
+      setVideoSize(null);
+      setLastRunAt(null);
+      setLastDetectionError(null);
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
@@ -76,6 +83,15 @@ function FaceDetectionPanel({ active }: { active: boolean }) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          if (!videoRef.current) return;
+          setVideoSize({ w: videoRef.current.videoWidth, h: videoRef.current.videoHeight });
+        };
+        videoRef.current.onplaying = () => {
+          setCameraReady(true);
+          if (!videoRef.current) return;
+          setVideoSize({ w: videoRef.current.videoWidth, h: videoRef.current.videoHeight });
+        };
         await videoRef.current.play().catch(() => {});
       } catch (e: any) {
         if (!cancelled) setError("Erro ao acessar a câmera. Verifique as permissões do navegador.");
@@ -88,7 +104,8 @@ function FaceDetectionPanel({ active }: { active: boolean }) {
         if (!videoRef.current) return;
         if (videoRef.current.readyState < 2) return;
         try {
-          const options = new faceapi.TinyFaceDetectorOptions();
+          setLastRunAt(Date.now());
+          const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.4 });
           const result = await faceapi
             .detectAllFaces(videoRef.current, options)
             .withFaceLandmarks()
@@ -108,23 +125,38 @@ function FaceDetectionPanel({ active }: { active: boolean }) {
             };
           });
           setFaces(newFaces);
+          setLastDetectionError(null);
 
           if (overlayCanvasRef.current && videoRef.current) {
             const displaySize = {
               width: videoRef.current.videoWidth,
               height: videoRef.current.videoHeight,
             };
+            const ctx = overlayCanvasRef.current.getContext("2d");
+            if (!ctx) return;
+
+            if (!displaySize.width || !displaySize.height) {
+              ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
+              return;
+            }
+
             faceapi.matchDimensions(overlayCanvasRef.current, displaySize);
             const resized = faceapi.resizeResults(result, displaySize);
-            const ctx = overlayCanvasRef.current.getContext("2d");
-            if (ctx) {
-              ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
-              faceapi.draw.drawDetections(overlayCanvasRef.current, resized);
-            }
+
+            ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
+            resized.forEach((det: any, idx: number) => {
+              const face = newFaces[idx];
+              const label = face
+                ? `${face.age}a • ${face.gender} ${(face.genderProbability * 100).toFixed(0)}% • ${face.emotion}`
+                : "Rosto";
+              const drawBox = new faceapi.draw.DrawBox(det.detection.box, { label });
+              drawBox.draw(overlayCanvasRef.current!);
+            });
           }
-        } catch {
+        } catch (e: any) {
+          setLastDetectionError(e?.message || "Falha ao executar detecção");
         }
-      }, 900);
+      }, 300);
     };
 
     const start = async () => {
@@ -141,6 +173,16 @@ function FaceDetectionPanel({ active }: { active: boolean }) {
 
     return () => {
       cancelled = true;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      if (videoRef.current?.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach((t) => t.stop());
+        videoRef.current.srcObject = null;
+      }
+      setCameraReady(false);
     };
   }, [active, modelsLoaded]);
 
@@ -148,10 +190,19 @@ function FaceDetectionPanel({ active }: { active: boolean }) {
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
       <Card className="lg:col-span-3">
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-4 w-4 text-primary" />
-            Face Detection Demo
-          </CardTitle>
+          <div className="flex items-start justify-between gap-3">
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-4 w-4 text-primary" />
+              Face Detection Demo
+            </CardTitle>
+            <div className="flex flex-wrap items-center gap-2 justify-end">
+              <Badge variant="outline">{modelsLoaded ? "Modelos OK" : "Modelos..."}</Badge>
+              <Badge variant="outline">{cameraReady ? "Câmera OK" : "Câmera..."}</Badge>
+              <Badge variant="outline" className="font-mono">
+                {(videoSize?.w || 0) > 0 ? `${videoSize!.w}x${videoSize!.h}` : "—"}
+              </Badge>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {error ? (
@@ -168,7 +219,16 @@ function FaceDetectionPanel({ active }: { active: boolean }) {
                   </div>
                 </div>
               )}
+              {modelsLoaded && !cameraReady && !error && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+                  <div className="text-sm text-white/70">Aguardando permissão da câmera...</div>
+                </div>
+              )}
             </div>
+          )}
+          {lastDetectionError && <div className="mt-3 text-xs text-destructive">{lastDetectionError}</div>}
+          {!lastDetectionError && modelsLoaded && cameraReady && (lastRunAt === null || Date.now() - lastRunAt > 2000) && (
+            <div className="mt-3 text-xs text-muted-foreground">Detecção ainda não iniciou. Verifique permissões e iluminação.</div>
           )}
         </CardContent>
       </Card>
@@ -182,7 +242,9 @@ function FaceDetectionPanel({ active }: { active: boolean }) {
         </CardHeader>
         <CardContent className="space-y-3">
           {faces.length === 0 ? (
-            <div className="text-sm text-muted-foreground">Nenhum rosto detectado.</div>
+            <div className="text-sm text-muted-foreground">
+              Nenhum rosto detectado. Centralize o rosto e aumente a iluminação.
+            </div>
           ) : (
             faces.map((f) => (
               <div key={f.id} className="rounded-lg border border-white/10 bg-white/5 p-3 space-y-2">
