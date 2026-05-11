@@ -375,8 +375,8 @@ export default function PlayerMonitoring() {
                       <TableCell>
                         <div className="flex items-center gap-2 text-sm">
                           <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                          {device.last_heartbeat_at ? (
-                            formatDistanceToNow(new Date(device.last_heartbeat_at), { addSuffix: true, locale: ptBR })
+                          {device.last_player_activity_at ? (
+                            formatDistanceToNow(new Date(device.last_player_activity_at), { addSuffix: true, locale: ptBR })
                           ) : "Nunca"}
                         </div>
                       </TableCell>
