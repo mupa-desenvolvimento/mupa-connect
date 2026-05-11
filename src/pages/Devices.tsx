@@ -100,7 +100,7 @@ export default function DevicesPage() {
         else return [];
       }
       
-      const { data, error } = await query.order("apelido_interno");
+      const { data, error } = await query.order("last_player_activity_at", { ascending: false });
       if (error) throw error;
       return data;
     },
