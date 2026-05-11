@@ -193,19 +193,24 @@ export default function PlayerConsulta() {
   };
 
   const handleConsult = async (ean: string) => {
-    console.log("[Consulta] Iniciando para EAN:", ean);
+    // Limpar EAN para evitar problemas com espaços ou caracteres invisíveis
+    const cleanEan = ean.trim();
+    console.log("[Consulta] Iniciando para EAN:", cleanEan);
     setIsConsulting(true);
     setShowOverlay(true);
     setError(null);
+    setProduct(null); // Limpar produto anterior
 
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
 
     try {
-      const cachedKey = `product_${ean}`;
+      const cachedKey = `product_${cleanEan}`;
       const cached = localStorage.getItem(cachedKey);
       if (cached) {
         const parsed = JSON.parse(cached);
+        // Cache de 1 hora
         if (Date.now() - parsed.timestamp < 3600000 || !navigator.onLine) {
+          console.log("[Consulta] Usando cache para:", cleanEan);
           setProduct(parsed.data);
           setIsConsulting(false);
           startHideTimer();
@@ -214,11 +219,13 @@ export default function PlayerConsulta() {
       }
 
       const { data, error } = await supabase.functions.invoke("integra-assai", {
-        body: { ean }
+        body: { ean: cleanEan }
       });
 
       if (error) throw error;
+      if (!data || data.error) throw new Error(data?.error || "Falha na resposta da API");
 
+      console.log("[Consulta] Resultado API:", data);
       setProduct(data);
       
       localStorage.setItem(cachedKey, JSON.stringify({
