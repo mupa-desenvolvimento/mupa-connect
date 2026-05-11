@@ -373,10 +373,21 @@ export default function FaceDemo() {
     const ctx = canvasRef.current.getContext('2d');
     if (!ctx) return;
 
-    const displaySize = { width: videoRef.current.offsetWidth, height: videoRef.current.offsetHeight };
-    faceapi.matchDimensions(canvasRef.current, displaySize);
-    const resizedDetections = faceapi.resizeResults(detections, displaySize);
+    // Use video dimensions for better overlay mapping
+    const videoWidth = videoRef.current.videoWidth || videoRef.current.offsetWidth;
+    const videoHeight = videoRef.current.videoHeight || videoRef.current.offsetHeight;
+    
+    // Set canvas internal resolution to match display size
+    const displaySize = { 
+      width: videoRef.current.offsetWidth, 
+      height: videoRef.current.offsetHeight 
+    };
 
+    if (canvasRef.current.width !== displaySize.width || canvasRef.current.height !== displaySize.height) {
+      faceapi.matchDimensions(canvasRef.current, displaySize);
+    }
+    
+    const resizedDetections = faceapi.resizeResults(detections, displaySize);
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
     resizedDetections.forEach((d) => {
@@ -388,8 +399,7 @@ export default function FaceDemo() {
       ctx.shadowBlur = 15;
       ctx.shadowColor = '#22d3ee';
       
-      // Corner borders style
-      const cornerSize = 20;
+      const cornerSize = Math.min(width, height) * 0.2;
       
       // Top Left
       ctx.beginPath();
