@@ -372,13 +372,13 @@ export default function PlayerConsulta() {
                   <div className="space-y-8">
                     <div className="flex flex-wrap gap-4">
                       {product.price?.promo_text && (
-                        <div className="px-6 py-3 rounded-2xl bg-primary/20 border border-primary/30 text-primary text-2xl font-bold flex items-center gap-3">
-                          <div className="w-3 h-3 rounded-full bg-primary animate-pulse" />
+                        <div className="px-4 py-2 md:px-6 md:py-3 rounded-2xl bg-primary/20 border border-primary/30 text-primary text-xl md:text-2xl font-bold flex items-center gap-3">
+                          <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-primary animate-pulse" />
                           {product.price.promo_text}
                         </div>
                       )}
                       {product.price?.pack_quantity && (
-                        <div className="px-6 py-3 rounded-2xl bg-white/10 border border-white/10 text-white text-2xl font-medium">
+                        <div className="px-4 py-2 md:px-6 md:py-3 rounded-2xl bg-white/10 border border-white/10 text-white text-xl md:text-2xl font-medium">
                           Leve {product.price.pack_quantity} un
                         </div>
                       )}
