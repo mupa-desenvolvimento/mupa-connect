@@ -56,7 +56,7 @@ interface Device {
   apelido_interno: string;
   num_filial: string;
   grupo_dispositivos: string;
-  last_heartbeat_at: string | null;
+  last_player_activity_at: string | null;
   last_proof_at: string | null;
   current_playlist_id: string | null;
   current_media_id: string | null;
