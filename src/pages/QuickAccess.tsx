@@ -196,7 +196,7 @@ export default function QuickAccessPage() {
           </div>
         ) : (
           devices.map((device) => {
-            const status = getDeviceStatus(device.last_heartbeat_at, device.last_proof_at);
+            const status = getDeviceStatus(device.last_player_activity_at);
             return (
               <Card key={device.id} className="overflow-hidden border-none shadow-md">
                 <CardHeader className="p-4 pb-2">
