@@ -1,0 +1,365 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from \"react\";
+import { useParams, useSearchParams } from \"react-router-dom\";
+import { supabase } from \"@/integrations/supabase/client\";
+import { PlayerEngine } from \"@/components/PlayerEngine\";
+import { ManifestManager, ScheduleResolver, MediaCacheService } from \"@/components/PlayerServices\";
+import { ManifestService } from \"@/services/ManifestService\";
+import { FirebaseRealtimeService } from \"@/services/FirebaseRealtimeService\";
+import { cn } from \"@/lib/utils\";
+import { motion, AnimatePresence } from \"framer-motion\";
+import { Loader2, Package, AlertCircle } from \"lucide-react\";
+
+interface ProductData {
+  ean: string;
+  internal_id: string;
+  description: string;
+  price: {
+    price_pack: number;
+    price_unit: number;
+    promo_text?: string;
+    pack_quantity?: number;
+  } | null;
+  visual: {
+    imagem_url: string;
+    cor_assinatura_produto: string;
+    fundo_legibilidade: string;
+    cor_dominante_claro: string;
+    cor_dominante_escuro: string;
+  } | null;
+}
+
+export default function PlayerConsulta() {
+  const { deviceCode } = useParams();
+  const [searchParams] = useSearchParams();
+  const isPreview = searchParams.get(\"preview\") === \"true\";
+  const previewPlaylistId = searchParams.get(\"id\");
+
+  const [manifest, setManifest] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [deviceInfo, setDeviceInfo] = useState<any>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // MODO CONSULTA STATE
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [isConsulting, setIsConsulting] = useState(false);
+  const [product, setProduct] = useState<ProductData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [isVertical, setIsVertical] = useState(window.innerHeight > window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setIsVertical(window.innerHeight > window.innerWidth);
+    window.addEventListener(\"resize\", handleResize);
+    return () => window.removeEventListener(\"resize\", handleResize);
+  }, []);
+
+  // 1. CARREGAMENTO DO PLAYER (CLONE DO /PLAY)
+  useEffect(() => {
+    if (!deviceCode && !isPreview) return;
+
+    async function initialize() {
+      if (deviceCode) {
+        const cached = ManifestManager.getManifest(deviceCode);
+        if (cached && !isPreview) {
+          setManifest(cached);
+          setIsLoading(false);
+        }
+      }
+
+      try {
+        if (isPreview && previewPlaylistId) {
+          // Lógica simplificada de preview
+          const { data: playlist } = await supabase.from(\"playlists\").select(\"*\").eq(\"id\", previewPlaylistId).single();
+          const { data: items } = await supabase.from(\"playlist_items\").select(\"*, media_items(*)\").eq(\"playlist_id\", previewPlaylistId);
+          
+          if (playlist && items) {
+            const mappedItems = items.map(it => {
+              const media = Array.isArray(it.media_items) ? it.media_items[0] : it.media_items;
+              return {
+                id: it.media_id,
+                type: it.tipo || media?.type,
+                url: media?.optimized_url || media?.file_url,
+                duration: it.duracao || media?.duration || 10,
+                name: media?.name
+              };
+            }).filter(i => i.url);
+
+            setManifest({ items: mappedItems, updated_at: playlist.updated_at });
+          }
+          setIsLoading(false);
+          return;
+        }
+
+        if (deviceCode) {
+          const result = await ManifestService.fetchManifest(deviceCode);
+          setManifest(result.manifest);
+          setDeviceInfo(result.device);
+          setIsLoading(false);
+        }
+      } catch (err) {
+        console.error(\"Error initializing player:\", err);
+        setIsLoading(false);
+      }
+    }
+
+    initialize();
+  }, [deviceCode, isPreview, previewPlaylistId]);
+
+  const activePlaylist = useMemo(() => ScheduleResolver.getActivePlaylist(manifest), [manifest]);
+
+  // 2. LISTENER DE BARCODE
+  useEffect(() => {
+    let buffer = \"\";
+    let lastKeyTime = Date.now();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignora se for tecla de sistema
+      if (e.key === \"Shift\" || e.key === \"Control\" || e.key === \"Alt\") return;
+
+      const currentTime = Date.now();
+      if (currentTime - lastKeyTime > 150) {
+        buffer = \"\";
+      }
+
+      if (e.key === \"Enter\") {
+        if (buffer.length >= 3) {
+          handleConsult(buffer);
+        }
+        buffer = \"\";
+      } else if (e.key.length === 1) {
+        buffer += e.key;
+      }
+      lastKeyTime = currentTime;
+    };
+
+    window.addEventListener(\"keydown\", handleKeyDown);
+    return () => window.removeEventListener(\"keydown\", handleKeyDown);
+  }, []);
+
+  const handleConsult = async (ean: string) => {
+    console.log(\"[Consulta] Iniciando para EAN:\", ean);
+    setIsConsulting(true);
+    setShowOverlay(true);
+    setError(null);
+
+    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+
+    try {
+      // Tentar carregar do cache offline primeiro
+      const cached = localStorage.getItem(`product_${ean}`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        // Só usa cache se for recente (ex: 1 hora) ou se estiver offline
+        if (Date.now() - parsed.timestamp < 3600000 || !navigator.onLine) {
+          setProduct(parsed.data);
+          setIsConsulting(false);
+          startHideTimer();
+          return;
+        }
+      }
+
+      const { data, error } = await supabase.functions.invoke(\"integra-assai\", {
+        body: { ean }
+      });
+
+      if (error) throw error;
+
+      setProduct(data);
+      
+      // Salvar no cache offline
+      localStorage.setItem(`product_${ean}`, JSON.stringify({
+        data,
+        timestamp: Date.now()
+      }));
+
+    } catch (err: any) {
+      console.error(\"Erro na consulta:\", err);
+      setError(err.message || \"Produto não encontrado\");
+    } finally {
+      setIsConsulting(false);
+      startHideTimer();
+    }
+  };
+
+  const startHideTimer = () => {
+    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+    hideTimeoutRef.current = setTimeout(() => {
+      setShowOverlay(false);
+    }, 8000); // 8 segundos de exibição
+  };
+
+  const formatPrice = (value: number | undefined) => {
+    if (value === undefined || value === null) return \"--\";
+    return new Intl.NumberFormat(\"pt-BR\", {
+      style: \"currency\",
+      currency: \"BRL\",
+    }).format(value);
+  };
+
+  const getProductNameParts = (desc: string) => {
+    const words = desc.split(\" \");
+    const main = words.slice(0, 3).join(\" \");
+    const rest = words.slice(3).join(\" \");
+    return { main, rest };
+  };
+
+  if (isLoading) {
+    return (
+      <div className=\"fixed inset-0 bg-black flex items-center justify-center\">
+        <Loader2 className=\"h-12 w-12 animate-spin text-primary\" />
+      </div>
+    );
+  }
+
+  return (
+    <div className=\"fixed inset-0 bg-black overflow-hidden select-none\">
+      {/* BACKGROUND PLAYER */}
+      <div className={cn(\"w-full h-full transition-all duration-700\", showOverlay ? \"scale-95 blur-md opacity-50\" : \"scale-100 blur-0 opacity-100\")}>
+        <PlayerEngine 
+          playlist={activePlaylist} 
+          onMediaChange={setCurrentIndex}
+          serial={deviceInfo?.serial}
+        />
+      </div>
+
+      {/* OVERLAY CONSULTA */}
+      <AnimatePresence>
+        {showOverlay && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className=\"fixed inset-0 z-50 flex items-center justify-center p-6 md:p-12\"
+            style={{ 
+              backgroundColor: product?.visual?.fundo_legibilidade ? `${product.visual.fundo_legibilidade}CC` : 'rgba(0,0,0,0.85)',
+              backdropFilter: 'blur(20px)'
+            }}
+          >
+            {isConsulting ? (
+              <div className=\"flex flex-col items-center gap-6\">
+                <Loader2 className=\"h-16 w-16 animate-spin text-primary\" />
+                <h2 className=\"text-3xl font-bold text-white\">Consultando produto...</h2>
+              </div>
+            ) : error ? (
+              <div className=\"flex flex-col items-center gap-6 text-center max-w-lg\">
+                <AlertCircle className=\"h-24 w-24 text-red-500\" />
+                <h2 className=\"text-4xl font-bold text-white\">Ops!</h2>
+                <p className=\"text-2xl text-white/80\">{error}</p>
+                <button 
+                  onClick={() => setShowOverlay(false)}
+                  className=\"mt-8 px-12 py-4 bg-white/10 hover:bg-white/20 text-white rounded-full text-xl transition-all\"
+                >
+                  Voltar
+                </button>
+              </div>
+            ) : product && (
+              <div className={cn(
+                \"w-full h-full flex gap-12\",
+                isVertical ? \"flex-col\" : \"flex-row\"
+              )}>
+                {/* LADO IMAGEM (HORIZONTAL) OU TOPO (VERTICAL) */}
+                <div className={cn(
+                  \"flex items-center justify-center bg-white/5 rounded-3xl overflow-hidden shadow-2xl relative\",
+                  isVertical ? \"h-2/5 w-full\" : \"w-1/2 h-full order-2\"
+                )}>
+                  {product.visual?.imagem_url ? (
+                    <img 
+                      src={product.visual.imagem_url} 
+                      alt={product.description}
+                      className=\"max-w-full max-h-full object-contain p-8\"
+                    />
+                  ) : (
+                    <Package className=\"w-48 h-48 text-white/20\" />
+                  )}
+                  
+                  {/* GLOW DE FUNDO BASEADO NAS CORES */}
+                  <div 
+                    className=\"absolute inset-0 -z-10 opacity-30 blur-[100px]\"
+                    style={{ backgroundColor: product.visual?.cor_dominante_escuro || '#000' }}
+                  />
+                </div>
+
+                {/* LADO INFO (HORIZONTAL) OU BAIXO (VERTICAL) */}
+                <div className={cn(
+                  \"flex flex-col justify-between\",
+                  isVertical ? \"h-3/5 w-full\" : \"w-1/2 h-full order-1\"
+                )}>
+                  <div className=\"space-y-6\">
+                    <div className=\"inline-block px-6 py-2 rounded-full bg-white/10 text-white/60 text-xl font-medium\">
+                      Código: {product.internal_id}
+                    </div>
+                    
+                    <div className=\"space-y-2\">
+                      <h1 className=\"text-6xl md:text-8xl font-black text-white leading-tight\" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+                        {getProductNameParts(product.description).main}
+                      </h1>
+                      <p className=\"text-3xl md:text-4xl text-white/50 font-medium\">
+                        {getProductNameParts(product.description).rest}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className=\"space-y-8\">
+                    {/* CARDS INFORMATIVOS */}
+                    <div className=\"flex flex-wrap gap-4\">
+                      {product.price?.promo_text && (
+                        <div className=\"px-6 py-3 rounded-2xl bg-primary/20 border border-primary/30 text-primary text-2xl font-bold flex items-center gap-3\">
+                          <div className=\"w-3 h-3 rounded-full bg-primary animate-pulse\" />
+                          {product.price.promo_text}
+                        </div>
+                      )}
+                      {product.price?.pack_quantity && (
+                        <div className=\"px-6 py-3 rounded-2xl bg-white/10 border border-white/10 text-white text-2xl font-medium\">
+                          Leve {product.price.pack_quantity} un
+                        </div>
+                      )}
+                    </div>
+
+                    {/* PREÇO DESTAQUE */}
+                    <div 
+                      className=\"p-12 rounded-[40px] shadow-2xl relative overflow-hidden group\"
+                      style={{ 
+                        backgroundColor: product.visual?.cor_dominante_escuro || '#111',
+                        border: `1px solid ${product.visual?.cor_dominante_claro}33`
+                      }}
+                    >
+                      {/* Efeito Glow no Preço */}
+                      <div 
+                        className=\"absolute -right-20 -top-20 w-64 h-64 blur-[100px] opacity-40\"
+                        style={{ backgroundColor: product.visual?.cor_assinatura_produto || '#00C2FF' }}
+                      />
+
+                      <div className=\"relative z-10\">
+                        <span className=\"text-white/40 text-3xl font-bold uppercase tracking-wider block mb-2\">Preço Exclusivo</span>
+                        <div className=\"flex items-baseline gap-4\">
+                          <span className=\"text-5xl md:text-6xl text-white/40 font-bold\">R$</span>
+                          <span className=\"text-[140px] md:text-[200px] leading-none font-black text-white\" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+                            {formatPrice(product.price?.price_pack).replace('R$', '').trim()}
+                          </span>
+                        </div>
+                        
+                        {product.price?.price_unit && (
+                          <div className=\"mt-4 pt-6 border-t border-white/10 flex justify-between items-center\">
+                            <span className=\"text-white/40 text-2xl\">Preço Unitário</span>
+                            <span className=\"text-white/80 text-3xl font-bold\">{formatPrice(product.price.price_unit)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* FOOTER MUPA */}
+      <div className=\"absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 opacity-30 grayscale\">
+        <div className=\"w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center font-bold text-white\">M</div>
+        <span className=\"text-white font-medium tracking-[0.2em] text-sm uppercase\">Mupa Retail Media</span>
+      </div>
+    </div>
+  );
+}
