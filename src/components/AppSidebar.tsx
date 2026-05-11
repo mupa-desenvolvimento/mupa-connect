@@ -57,7 +57,6 @@ export function AppSidebar() {
     { title: "Painel NOC", url: "/admin/monitoring", icon: Activity, visible: isTecnico },
     { title: "Download de Apps", url: "/aplicativos", icon: MonitorPlay, visible: isTecnico },
     { title: "Face Track Demo", url: "/face-track-demo", icon: User, visible: true },
-    { title: "Player Demo", url: "/app-player", icon: Camera, visible: true },
   ].filter((i) => i.visible);
 
   const orgItems = [
