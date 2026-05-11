@@ -246,8 +246,8 @@ export default function Player() {
     
     const media = activePlaylist[idx];
     if (media && deviceInfo?.id && !isPreview) {
-      // 1. Firebase Realtime Heartbeat (Throttled inside service)
-      FirebaseRealtimeService.sendHeartbeat(deviceCode!, media.id?.toString(), "playing");
+      // Heartbeat removido conforme solicitação
+
 
       // 2. Supabase Player Status Update
       supabase
@@ -331,24 +331,8 @@ export default function Player() {
     };
   }, [deviceCode, reloadKey]);
 
-  // 5. Heartbeat (Supabase + Firebase)
-  useEffect(() => {
-    if (!deviceInfo?.serial || !deviceCode || isPreview) return;
-    
-    const currentMedia = activePlaylist[currentIndex];
-    
-    const beat = () => {
-      // Supabase heartbeat
-      supabase.functions.invoke('device-api/heartbeat', { body: { serial: deviceInfo.serial } }).catch(() => {});
-      
-      // Firebase heartbeat (Throttled inside service to every 30s)
-      FirebaseRealtimeService.sendHeartbeat(deviceCode, currentMedia?.id?.toString());
-    };
+  // Heartbeat removido conforme solicitação
 
-    beat();
-    const interval = setInterval(beat, 30000);
-    return () => clearInterval(interval);
-  }, [deviceInfo?.serial, deviceCode, activePlaylist, currentIndex]);
 
   // 6. Page-Level Watchdog (Anti-Stall)
   // Uses RequestAnimationFrame to detect if the entire engine is stuck
