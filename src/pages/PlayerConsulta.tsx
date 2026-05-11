@@ -623,21 +623,8 @@ export default function PlayerConsulta() {
         )}
       </AnimatePresence>
 
-      {/* Input Invisível para Scanner HID */}
-      <div className="fixed top-0 left-0 w-0 h-0 opacity-0 overflow-hidden pointer-events-none">
-        <Input
-          ref={inputRef}
-          type="text"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          readOnly
-          inputMode="none"
-          autoComplete="off"
-          autoCorrect="off"
-          spellCheck="false"
-        />
-      </div>
+      {/* Removido input invisível para evitar abertura de teclado em dispositivos móveis/terminais */}
+      {/* A captura de código agora é feita via listener global de keydown */}
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4">
         <div className="flex items-center gap-3 opacity-30 grayscale">
