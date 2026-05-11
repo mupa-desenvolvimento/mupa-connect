@@ -93,24 +93,38 @@ export default function FaceDemo() {
 
   // Load models
   useEffect(() => {
+    let isMounted = true;
     const loadModels = async () => {
       try {
+        log("MODELS", "Iniciando carregamento dos modelos...");
         const MODEL_URL = '/models';
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-          faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
-          faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL)
-        ]);
-        setModelsLoaded(true);
-        startCamera();
+        
+        // Load one by one for better error tracking
+        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+        log("MODELS", "TinyFaceDetector carregado");
+        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+        log("MODELS", "FaceLandmark68 carregado");
+        await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+        log("MODELS", "FaceExpression carregado");
+        await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
+        log("MODELS", "AgeGender carregado");
+        
+        if (isMounted) {
+          log("MODELS", "Todos os modelos carregados com sucesso");
+          setModelsLoaded(true);
+          // Small delay before starting camera
+          setTimeout(() => startCamera(), 500);
+        }
       } catch (err) {
-        console.error("Error loading models:", err);
-        setError("Erro ao carregar inteligência artificial.");
+        log("MODELS", "Erro crítico ao carregar modelos", err);
+        if (isMounted) {
+          setError("Erro ao carregar inteligência artificial. Verifique a conexão.");
+        }
       }
     };
     loadModels();
     return () => {
+      isMounted = false;
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
       stopCamera();
     };
@@ -153,22 +167,47 @@ export default function FaceDemo() {
 
       if (videoRef.current) {
         log("CAMERA", "Vinculando stream ao elemento de vídeo");
+        
+        // Use srcObject for modern browsers
         videoRef.current.srcObject = stream;
+        
+        // Add listeners for debugging
+        videoRef.current.onplaying = () => log("VIDEO", "Evento: playing");
+        videoRef.current.onpause = () => log("VIDEO", "Evento: pause");
+        videoRef.current.onerror = (e) => log("VIDEO", "Evento: error", e);
+
+        // Ensure crossOrigin is set for face-api
+        videoRef.current.setAttribute('crossorigin', 'anonymous');
         
         // Manual play for WebView compatibility
         try {
           await videoRef.current.play();
           log("CAMERA", "Vídeo iniciado (play)");
+          
+          // Force detection to start after short delay to ensure hardware is ready
+          setTimeout(() => {
+            log("DETECTION", "Ativando detecção facial...");
+            setFaceDetectionActive(true);
+            setStatus("analyzing");
+            startDetectionLoop();
+          }, 500);
         } catch (playErr) {
           log("CAMERA", "Erro ao iniciar play() automático, aguardando metadados", playErr);
+          
+          // Fallback: try playing on loadedmetadata
+          videoRef.current.onloadedmetadata = async () => {
+            log("CAMERA", "Metadados do vídeo carregados");
+            try {
+              await videoRef.current?.play();
+              log("CAMERA", "Vídeo iniciado via metadata");
+              setFaceDetectionActive(true);
+              setStatus("analyzing");
+              startDetectionLoop();
+            } catch (innerErr) {
+              log("CAMERA", "Falha crítica ao iniciar vídeo", innerErr);
+            }
+          };
         }
-
-        videoRef.current.onloadedmetadata = () => {
-          log("CAMERA", "Metadados do vídeo carregados");
-          setFaceDetectionActive(true);
-          setStatus("analyzing");
-          startDetectionLoop();
-        };
       }
     } catch (err: any) {
       log("CAMERA", "Erro ao inicializar câmera", err);
@@ -224,6 +263,12 @@ export default function FaceDemo() {
         return;
       }
 
+      // Check if video is actually playing and has valid dimensions
+      if (videoRef.current.paused || videoRef.current.ended || videoRef.current.readyState < 2) {
+        requestRef.current = requestAnimationFrame(detect);
+        return;
+      }
+
       // Performance monitoring
       framesRef.current++;
       const now = Date.now();
@@ -234,15 +279,22 @@ export default function FaceDemo() {
       }
 
       try {
+        // Log detection start once for debugging
+        if (framesRef.current === 1) {
+          log("DETECTION", "Iniciando detecção no frame atual");
+        }
+
         // Use TinyFaceDetector for performance on Android/WebView
-        const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.5 });
+        // Increased inputSize slightly for better accuracy if 160 is too low
+        const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
+        
         const detections = await faceapi
           .detectAllFaces(videoRef.current, options)
           .withFaceLandmarks()
           .withFaceExpressions()
           .withAgeAndGender();
 
-        if (detections.length > 0) {
+        if (detections && detections.length > 0) {
           setStatus("active");
           const newFaces: DetectedFace[] = detections.map((d, i) => {
             const expressions = d.expressions.asSortedArray();
@@ -261,13 +313,16 @@ export default function FaceDemo() {
           setDetectedFaces(newFaces);
           drawOverlay(detections);
         } else {
-          setStatus("analyzing");
+          // No faces detected but loop is running
+          if (status !== "analyzing") setStatus("analyzing");
           setDetectedFaces([]);
           const ctx = canvasRef.current.getContext('2d');
-          ctx?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          if (ctx) {
+            ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          }
         }
       } catch (err) {
-        console.error("Detection error:", err);
+        log("DETECTION", "Erro durante a detecção", err);
       }
 
       requestRef.current = requestAnimationFrame(detect);
