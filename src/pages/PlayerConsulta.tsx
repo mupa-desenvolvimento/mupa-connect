@@ -44,6 +44,7 @@ export default function PlayerConsulta() {
   const [showOverlay, setShowOverlay] = useState(false);
   const [isConsulting, setIsConsulting] = useState(false);
   const [product, setProduct] = useState<ProductData | null>(null);
+  const [lastConsultedEan, setLastConsultedEan] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
