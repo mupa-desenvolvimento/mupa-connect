@@ -349,35 +349,6 @@ export default function PlayerConsulta() {
     };
   }, []);
 
-  // 3. FOCO NO INPUT E LISTENER DE BARCODE
-  useEffect(() => {
-    const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      // Ignora se for tecla de controle (exceto Enter)
-      if (e.key.length > 1 && e.key !== "Enter") return;
-
-      if (e.key === "Enter") {
-        if (inputValue.length >= 3) {
-          handleConsult(inputValue);
-          setInputValue("");
-        }
-      } else {
-        setInputValue(prev => prev + e.key);
-      }
-    };
-
-    window.addEventListener("keydown", handleGlobalKeyDown);
-    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
-  }, [inputValue, handleConsult]);
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      if (inputValue.length >= 3) {
-        handleConsult(inputValue);
-        setInputValue("");
-      }
-    }
-  };
-
   const handleConsult = useCallback(async (ean: string) => {
     // Limpar EAN para evitar problemas com espaços ou caracteres invisíveis
     const cleanEan = ean.trim();
@@ -433,6 +404,35 @@ export default function PlayerConsulta() {
       startHideTimer();
     }
   }, [hideTimeoutRef]);
+
+  // 3. FOCO NO INPUT E LISTENER DE BARCODE
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Ignora se for tecla de controle (exceto Enter)
+      if (e.key.length > 1 && e.key !== "Enter") return;
+
+      if (e.key === "Enter") {
+        if (inputValue.length >= 3) {
+          handleConsult(inputValue);
+          setInputValue("");
+        }
+      } else {
+        setInputValue(prev => prev + e.key);
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [inputValue, handleConsult]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      if (inputValue.length >= 3) {
+        handleConsult(inputValue);
+        setInputValue("");
+      }
+    }
+  };
 
   const startHideTimer = () => {
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
