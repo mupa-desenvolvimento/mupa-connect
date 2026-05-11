@@ -220,7 +220,7 @@ export default function PlayerConsulta() {
         }
       }
 
-      const { data, error } = await supabase.functions.invoke("integra-assai", {
+      const { data, error } = await supabase.functions.invoke("consulta-seq-produto-assai", {
         body: { ean: cleanEan }
       });
 
