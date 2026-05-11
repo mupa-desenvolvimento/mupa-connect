@@ -12,8 +12,6 @@ import { Loader2, Monitor, Scan, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import * as faceapi from "face-api.js";
 
-type Mode = "playlist" | "product" | "face";
-
 interface DetectedFace {
   id: string;
   age: number;
@@ -221,7 +219,6 @@ export default function AppPlayerPage() {
   const { data: contextId, isSuperAdmin } = useTenant();
   const { data: playlistsData, isLoading: isLoadingPlaylists } = usePlaylists(contextId || undefined, isSuperAdmin);
 
-  const [mode, setMode] = useState<Mode>("playlist");
   const [playlistId, setPlaylistId] = useState<string>("");
   const [codbar, setCodbar] = useState("");
   const [queryLoading, setQueryLoading] = useState(false);
@@ -273,136 +270,116 @@ export default function AppPlayerPage() {
     <div className="p-6 space-y-6">
       <PageHeader title="AppPlayer (Demo)" description="Demonstração: playlist contínua, consulta de produto e face detection." />
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <Select value={mode} onValueChange={(v) => setMode(v as Mode)}>
-            <SelectTrigger className="w-[260px]">
-              <SelectValue placeholder="Selecione o modo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="playlist">Playlist</SelectItem>
-              <SelectItem value="product">Consulta de Produto</SelectItem>
-              <SelectItem value="face">Face Detection Demo</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2">
+              <Monitor className="h-4 w-4 text-primary" />
+              Playlist Runner
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="space-y-2">
+              <div className="text-xs font-medium text-muted-foreground">Playlist</div>
+              <Select value={playlistId} onValueChange={setPlaylistId}>
+                <SelectTrigger>
+                  <SelectValue placeholder={isLoadingPlaylists ? "Carregando..." : "Selecione uma playlist"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {playlists.map((p: any) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name || "Sem nome"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Badge variant="outline">{playbackItems.length} itens</Badge>
+              <Badge variant="secondary" className={cn(!selectedPlaylist?.is_active && "opacity-70")}>
+                {selectedPlaylist ? (selectedPlaylist.is_active ? "Ativa" : "Inativa") : "—"}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-3">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center justify-between">
+              <span>Preview</span>
+              <Badge variant="outline" className="font-mono">
+                {selectedPlaylist?.name || "Nenhuma"}
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="w-full aspect-video rounded-lg overflow-hidden border border-white/10 bg-black">
+              {playbackItems.length > 0 ? (
+                <PlayerEngine playlist={playbackItems as any} volume={0} serial="APPPLAYER" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-sm text-white/50">
+                  Selecione uma playlist com itens para iniciar.
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {mode === "playlist" && (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-          <Card className="lg:col-span-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2">
-                <Monitor className="h-4 w-4 text-primary" />
-                Playlist Runner
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-2">
-                <div className="text-xs font-medium text-muted-foreground">Playlist</div>
-                <Select value={playlistId} onValueChange={setPlaylistId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={isLoadingPlaylists ? "Carregando..." : "Selecione uma playlist"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {playlists.map((p: any) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name || "Sem nome"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+      <FaceDetectionPanel active={true} />
 
-              <div className="flex items-center justify-between">
-                <Badge variant="outline">{playbackItems.length} itens</Badge>
-                <Badge variant="secondary" className={cn(!selectedPlaylist?.is_active && "opacity-70")}>
-                  {selectedPlaylist ? (selectedPlaylist.is_active ? "Ativa" : "Inativa") : "—"}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2">
+              <Scan className="h-4 w-4 text-primary" />
+              Consulta de Produto
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Input value={codbar} onChange={(e) => setCodbar(e.target.value)} placeholder="Digite o código de barras (EAN)" />
+            <Button onClick={runProductQuery} disabled={queryLoading || !codbar.trim()} className="w-full">
+              {queryLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Consultar"}
+            </Button>
+            {queryError && <div className="text-sm text-destructive">{queryError}</div>}
+          </CardContent>
+        </Card>
 
-          <Card className="lg:col-span-3">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center justify-between">
-                <span>Preview</span>
-                <Badge variant="outline" className="font-mono">
-                  {selectedPlaylist?.name || "Nenhuma"}
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="w-full aspect-video rounded-lg overflow-hidden border border-white/10 bg-black">
-                {playbackItems.length > 0 ? (
-                  <PlayerEngine playlist={playbackItems as any} volume={0} serial="APPPLAYER" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-sm text-white/50">
-                    Selecione uma playlist com itens para iniciar.
+        <Card className="lg:col-span-3">
+          <CardHeader className="pb-3">
+            <CardTitle>Resultado</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {!queryResult ? (
+              <div className="text-sm text-muted-foreground">Faça uma consulta para ver o resultado.</div>
+            ) : queryResult.length === 0 ? (
+              <div className="text-sm text-muted-foreground">Nenhum resultado para este código.</div>
+            ) : (
+              queryResult.map((r: any, idx: number) => (
+                <div key={idx} className="rounded-lg border border-white/10 bg-white/5 p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold">EAN</span>
+                    <span className="text-xs font-mono text-muted-foreground">{r.codbar}</span>
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {mode === "product" && (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-          <Card className="lg:col-span-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2">
-                <Scan className="h-4 w-4 text-primary" />
-                Consulta de Produto
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Input value={codbar} onChange={(e) => setCodbar(e.target.value)} placeholder="Digite o código de barras (EAN)" />
-              <Button onClick={runProductQuery} disabled={queryLoading || !codbar.trim()} className="w-full">
-                {queryLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Consultar"}
-              </Button>
-              {queryError && <div className="text-sm text-destructive">{queryError}</div>}
-            </CardContent>
-          </Card>
-
-          <Card className="lg:col-span-3">
-            <CardHeader className="pb-3">
-              <CardTitle>Resultado</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {!queryResult ? (
-                <div className="text-sm text-muted-foreground">Faça uma consulta para ver o resultado.</div>
-              ) : queryResult.length === 0 ? (
-                <div className="text-sm text-muted-foreground">Nenhum resultado para este código.</div>
-              ) : (
-                queryResult.map((r: any, idx: number) => (
-                  <div key={idx} className="rounded-lg border border-white/10 bg-white/5 p-4 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold">EAN</span>
-                      <span className="text-xs font-mono text-muted-foreground">{r.codbar}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold">Descrição</span>
-                      <span className="text-xs text-muted-foreground text-right">{r.description}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold">Última atualização</span>
-                      <span className="text-xs text-muted-foreground">{r.last_update}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold">Consultas</span>
-                      <span className="text-xs text-muted-foreground">{r.num_consultas}</span>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold">Descrição</span>
+                    <span className="text-xs text-muted-foreground text-right">{r.description}</span>
                   </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {mode === "face" && <FaceDetectionPanel active={mode === "face"} />}
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold">Última atualização</span>
+                    <span className="text-xs text-muted-foreground">{r.last_update}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold">Consultas</span>
+                    <span className="text-xs text-muted-foreground">{r.num_consultas}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
-
