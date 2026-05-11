@@ -293,9 +293,11 @@ export default function FaceDemo() {
           log("DETECTION", "Iniciando detecção no frame atual");
         }
 
-        // Use TinyFaceDetector for performance on Android/WebView
-        // Increased inputSize slightly for better accuracy if 160 is too low
-        const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
+        // Dynamic fallback system for WebView/Android 9 compatibility
+        const options = new faceapi.TinyFaceDetectorOptions({ 
+          inputSize: detectionConfig.inputSize, 
+          scoreThreshold: detectionConfig.scoreThreshold 
+        });
         
         const detections = await faceapi
           .detectAllFaces(videoRef.current, options)
@@ -304,6 +306,7 @@ export default function FaceDemo() {
           .withAgeAndGender();
 
         if (detections && detections.length > 0) {
+          consecutiveEmptyFramesRef.current = 0;
           setStatus("active");
           const newFaces: DetectedFace[] = detections.map((d, i) => {
             const expressions = d.expressions.asSortedArray();
@@ -322,7 +325,20 @@ export default function FaceDemo() {
           setDetectedFaces(newFaces);
           drawOverlay(detections);
         } else {
-          // No faces detected but loop is running
+          // Fallback logic: if no faces for 60 frames (~2-4 seconds depending on hardware)
+          consecutiveEmptyFramesRef.current++;
+          
+          if (consecutiveEmptyFramesRef.current > 60) {
+            consecutiveEmptyFramesRef.current = 0;
+            const nextIdx = (currentConfigIdxRef.current + 1) % configs.length;
+            if (nextIdx !== currentConfigIdxRef.current) {
+              currentConfigIdxRef.current = nextIdx;
+              const nextConfig = configs[nextIdx];
+              log("FALLBACK", `Nenhum rosto detectado. Alternando para configuração: ${nextConfig.label}`);
+              setDetectionConfig(nextConfig);
+            }
+          }
+
           if (status !== "analyzing") setStatus("analyzing");
           setDetectedFaces([]);
           const ctx = canvasRef.current.getContext('2d');
@@ -332,12 +348,17 @@ export default function FaceDemo() {
         }
       } catch (err) {
         log("DETECTION", "Erro durante a detecção", err);
+        // On critical error, try next config immediately
+        consecutiveEmptyFramesRef.current = 0;
+        const nextIdx = (currentConfigIdxRef.current + 1) % configs.length;
+        currentConfigIdxRef.current = nextIdx;
+        setDetectionConfig(configs[nextIdx]);
       }
 
       requestRef.current = requestAnimationFrame(detect);
     };
     requestRef.current = requestAnimationFrame(detect);
-  }, [modelsLoaded]);
+  }, [modelsLoaded, faceDetectionActive, detectionConfig]);
 
   const drawOverlay = (detections: any[]) => {
     if (!canvasRef.current || !videoRef.current) return;
