@@ -11,6 +11,7 @@ import { RefreshCw, Plus, Search, ChevronLeft, ChevronRight, Smartphone, Externa
 import { useDebounce } from "@/hooks/use-debounce";
 import { useUserRole } from "@/hooks/use-user-role";
 import { QuickAccessModal } from "@/components/QuickAccessModal";
+import { StoreEditModal } from "@/components/StoreEditModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +26,7 @@ export default function StoresPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const debouncedSearch = useDebounce(search, 300);
   const [selectedStore, setSelectedStore] = useState<{ id: string; name: string } | null>(null);
+  const [editingStore, setEditingStore] = useState<{ id: string; name: string; code: string | null; is_active: boolean } | null>(null);
   
   const { companyId, tenantId, isSuperAdmin, isLoading: roleLoading } = useUserRole();
 
@@ -252,7 +254,10 @@ export default function StoresPage() {
                               <ExternalLink className="mr-2 h-4 w-4" />
                               Ver Detalhes
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer">
+                            <DropdownMenuItem 
+                              className="cursor-pointer"
+                              onClick={() => setEditingStore({ id: s.id, name: s.name, code: s.code, is_active: s.is_active })}
+                            >
                               Configurações
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -307,6 +312,13 @@ export default function StoresPage() {
         storeName={selectedStore?.name}
         companyId={companyId || undefined}
         tenantId={tenantId || undefined}
+      />
+
+      <StoreEditModal
+        isOpen={!!editingStore}
+        onClose={() => setEditingStore(null)}
+        store={editingStore}
+        onSuccess={() => refetch()}
       />
     </div>
   );
