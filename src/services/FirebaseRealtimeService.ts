@@ -78,33 +78,8 @@ export const FirebaseRealtimeService = {
     }
   },
 
-  /**
-   * Send heartbeat and status update to Firebase Realtime Database.
-   * Path: dispositivos/{deviceCode}/status
-   */
-  sendHeartbeat: async (deviceCode: string, mediaId?: string | null, status: string = "playing") => {
-    if (!deviceCode) return;
-    
-    const now = Date.now();
-    const path = `dispositivos/${deviceCode}/status`;
-    const lastWrite = lastWriteTimes[path] || 0;
-    
-    // Throttle heartbeats to avoid excessive writes (30s)
-    if (now - lastWrite < 30000) return;
+  // sendHeartbeat removido conforme solicitação
 
-    try {
-      const deviceRef = ref(database, path);
-      await set(deviceRef, {
-        last_heartbeat: serverTimestamp(),
-        current_media: mediaId || null,
-        player_status: status,
-        version: (window as any).APP_VERSION || "1.0.0"
-      });
-      lastWriteTimes[path] = now;
-    } catch (err) {
-      console.warn("[Firebase] Heartbeat failed", err);
-    }
-  },
 
   /**
    * Notify every device linked to a given playlist.
