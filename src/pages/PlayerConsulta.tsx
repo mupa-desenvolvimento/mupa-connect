@@ -121,6 +121,20 @@ export default function PlayerConsulta() {
     document.body.style.webkitUserSelect = 'none';
     document.body.style.touchAction = 'none';
     
+    // Prevenção agressiva de zoom
+    const preventZoom = (e: any) => {
+      if (e.touches && e.touches.length > 1) e.preventDefault();
+      if (e.ctrlKey && (e.key === '=' || e.key === '-' || e.key === '0')) e.preventDefault();
+    };
+    
+    const preventWheelZoom = (e: WheelEvent) => {
+      if (e.ctrlKey) e.preventDefault();
+    };
+
+    window.addEventListener('touchstart', preventZoom, { passive: false });
+    window.addEventListener('keydown', preventZoom);
+    window.addEventListener('wheel', preventWheelZoom, { passive: false });
+
     // Tentar entrar em fullscreen ao carregar (precisa de interação em alguns browsers)
     const enterFullscreen = () => {
       const doc = window.document.documentElement;
