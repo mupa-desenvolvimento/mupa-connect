@@ -230,13 +230,13 @@ export default function NOCDashboard() {
   };
 
   function getDeviceStatus(device: any) {
-    if (!device.last_heartbeat_at) return "offline";
+    if (!device.last_player_activity_at) return "offline";
     const now = new Date();
-    const lastHeartbeat = new Date(device.last_heartbeat_at);
-    const diffSeconds = (now.getTime() - lastHeartbeat.getTime()) / 1000;
+    const lastActivity = new Date(device.last_player_activity_at);
+    const diffSeconds = (now.getTime() - lastActivity.getTime()) / 1000;
     
-    if (diffSeconds > 120) return "offline";
-    if (diffSeconds > 60) return "unstable";
+    if (diffSeconds > 300) return "offline";
+    if (diffSeconds > 120) return "unstable";
     return "online";
   }
 
