@@ -7,7 +7,8 @@ import { ManifestService } from "@/services/ManifestService";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Package, AlertCircle } from "lucide-react";
+import { Loader2, Package, AlertCircle, Barcode } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 interface ProductData {
   ean: string;
@@ -45,6 +46,8 @@ export default function PlayerConsulta() {
   const [product, setProduct] = useState<ProductData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [inputValue, setInputValue] = useState("");
 
   const [isVertical, setIsVertical] = useState(window.innerHeight > window.innerWidth);
 
@@ -157,33 +160,37 @@ export default function PlayerConsulta() {
     };
   }, []);
 
-  // 3. LISTENER DE BARCODE
+  // 3. FOCO NO INPUT E LISTENER DE BARCODE
   useEffect(() => {
-    let buffer = "";
-    let lastKeyTime = Date.now();
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Shift" || e.key === "Control" || e.key === "Alt") return;
-
-      const currentTime = Date.now();
-      if (currentTime - lastKeyTime > 150) {
-        buffer = "";
-      }
-
-      if (e.key === "Enter") {
-        if (buffer.length >= 3) {
-          handleConsult(buffer);
-        }
-        buffer = "";
-      } else if (e.key.length === 1) {
-        buffer += e.key;
-      }
-      lastKeyTime = currentTime;
+    const focusInput = () => {
+      if (inputRef.current) inputRef.current.focus();
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    // Foca inicialmente
+    focusInput();
+
+    // Re-foca se perder o foco (importante para terminais)
+    const handleFocusLoss = () => {
+      setTimeout(focusInput, 100);
+    };
+
+    window.addEventListener("click", focusInput);
+    window.addEventListener("touchstart", focusInput);
+    
+    return () => {
+      window.removeEventListener("click", focusInput);
+      window.removeEventListener("touchstart", focusInput);
+    };
   }, []);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      if (inputValue.length >= 3) {
+        handleConsult(inputValue);
+        setInputValue("");
+      }
+    }
+  };
 
   const handleConsult = async (ean: string) => {
     console.log("[Consulta] Iniciando para EAN:", ean);
@@ -393,9 +400,37 @@ export default function PlayerConsulta() {
         )}
       </AnimatePresence>
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 opacity-30 grayscale">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center font-bold text-white">M</div>
-        <span className="text-white font-medium tracking-[0.2em] text-sm uppercase">Mupa Retail Media</span>
+      {/* Input Invisível para Scanner HID */}
+      <div className="fixed top-0 left-0 w-0 h-0 opacity-0 overflow-hidden pointer-events-none">
+        <Input
+          ref={inputRef}
+          type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          autoFocus
+        />
+      </div>
+
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4">
+        <div className="flex items-center gap-3 opacity-30 grayscale">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center font-bold text-white">M</div>
+          <span className="text-white font-medium tracking-[0.2em] text-sm uppercase">Mupa Retail Media</span>
+        </div>
+        
+        <AnimatePresence>
+          {!showOverlay && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="px-6 py-3 bg-white/5 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-3"
+            >
+              <Barcode className="w-5 h-5 text-primary animate-pulse" />
+              <span className="text-white/40 text-sm font-medium uppercase tracking-widest">Aguardando leitura de código</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
