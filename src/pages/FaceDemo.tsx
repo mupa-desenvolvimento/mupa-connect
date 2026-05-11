@@ -224,6 +224,12 @@ export default function FaceDemo() {
         return;
       }
 
+      // Check if video is actually playing and has valid dimensions
+      if (videoRef.current.paused || videoRef.current.ended || videoRef.current.readyState < 2) {
+        requestRef.current = requestAnimationFrame(detect);
+        return;
+      }
+
       // Performance monitoring
       framesRef.current++;
       const now = Date.now();
@@ -234,15 +240,22 @@ export default function FaceDemo() {
       }
 
       try {
+        // Log detection start once for debugging
+        if (framesRef.current === 1) {
+          log("DETECTION", "Iniciando detecção no frame atual");
+        }
+
         // Use TinyFaceDetector for performance on Android/WebView
-        const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.5 });
+        // Increased inputSize slightly for better accuracy if 160 is too low
+        const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
+        
         const detections = await faceapi
           .detectAllFaces(videoRef.current, options)
           .withFaceLandmarks()
           .withFaceExpressions()
           .withAgeAndGender();
 
-        if (detections.length > 0) {
+        if (detections && detections.length > 0) {
           setStatus("active");
           const newFaces: DetectedFace[] = detections.map((d, i) => {
             const expressions = d.expressions.asSortedArray();
@@ -261,13 +274,16 @@ export default function FaceDemo() {
           setDetectedFaces(newFaces);
           drawOverlay(detections);
         } else {
-          setStatus("analyzing");
+          // No faces detected but loop is running
+          if (status !== "analyzing") setStatus("analyzing");
           setDetectedFaces([]);
           const ctx = canvasRef.current.getContext('2d');
-          ctx?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          if (ctx) {
+            ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          }
         }
       } catch (err) {
-        console.error("Detection error:", err);
+        log("DETECTION", "Erro durante a detecção", err);
       }
 
       requestRef.current = requestAnimationFrame(detect);
