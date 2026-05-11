@@ -385,30 +385,30 @@ export default function PlayerConsulta() {
                     </div>
 
                     <div 
-                      className="p-12 rounded-[40px] shadow-2xl relative overflow-hidden"
+                      className="p-8 md:p-12 rounded-[30px] md:rounded-[40px] shadow-2xl relative overflow-hidden"
                       style={{ 
                         backgroundColor: product.visual?.cor_dominante_escuro || '#111',
                         border: `1px solid ${product.visual?.cor_dominante_claro}33`
                       }}
                     >
                       <div 
-                        className="absolute -right-20 -top-20 w-64 h-64 blur-[100px] opacity-40"
+                        className="absolute -right-20 -top-20 w-48 h-48 md:w-64 md:h-64 blur-[80px] md:blur-[100px] opacity-40"
                         style={{ backgroundColor: product.visual?.cor_assinatura_produto || '#00C2FF' }}
                       />
 
                       <div className="relative z-10">
-                        <span className="text-white/40 text-3xl font-bold uppercase tracking-wider block mb-2">Preço Exclusivo</span>
-                        <div className="flex items-baseline gap-4">
-                          <span className="text-5xl md:text-6xl text-white/40 font-bold">R$</span>
-                          <span className="text-[140px] md:text-[200px] leading-none font-black text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+                        <span className="text-white/40 text-xl md:text-3xl font-bold uppercase tracking-wider block mb-2">Preço Exclusivo</span>
+                        <div className="flex items-baseline gap-2 md:gap-4">
+                          <span className="text-3xl md:text-5xl lg:text-6xl text-white/40 font-bold">R$</span>
+                          <span className="text-[clamp(5rem,15vw,12.5rem)] leading-none font-black text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
                             {formatPrice(product.price?.price_pack || (product.price as any)?.price || (product.price as any)?.price_unit).replace('R$', '').trim()}
                           </span>
                         </div>
                         
                         {product.price?.price_unit && (
-                          <div className="mt-4 pt-6 border-t border-white/10 flex justify-between items-center">
-                            <span className="text-white/40 text-2xl">Preço Unitário</span>
-                            <span className="text-white/80 text-3xl font-bold">{formatPrice(product.price.price_unit)}</span>
+                          <div className="mt-4 pt-4 md:pt-6 border-t border-white/10 flex justify-between items-center">
+                            <span className="text-white/40 text-lg md:text-2xl">Preço Unitário</span>
+                            <span className="text-white/80 text-xl md:text-3xl font-bold">{formatPrice(product.price.price_unit)}</span>
                           </div>
                         )}
                       </div>
