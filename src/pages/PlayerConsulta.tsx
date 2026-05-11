@@ -37,6 +37,7 @@ const isValidUUID = (value: any): boolean => {
 };
 
 export default function PlayerConsulta() {
+  const navigate = useNavigate();
   const { deviceCode } = useParams();
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get("preview") === "true";
