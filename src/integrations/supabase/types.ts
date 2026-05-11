@@ -2196,7 +2196,6 @@ export type Database = {
           id: number
           ip_dispositivo: string | null
           is_maintenance: boolean | null
-          last_heartbeat_at: string | null
           last_player_activity_at: string | null
           last_proof_at: string | null
           num_filial: string | null
@@ -2232,7 +2231,6 @@ export type Database = {
           id?: number
           ip_dispositivo?: string | null
           is_maintenance?: boolean | null
-          last_heartbeat_at?: string | null
           last_player_activity_at?: string | null
           last_proof_at?: string | null
           num_filial?: string | null
@@ -2268,7 +2266,6 @@ export type Database = {
           id?: number
           ip_dispositivo?: string | null
           is_maintenance?: boolean | null
-          last_heartbeat_at?: string | null
           last_player_activity_at?: string | null
           last_proof_at?: string | null
           num_filial?: string | null
@@ -7316,7 +7313,6 @@ export type Database = {
           id: number
           ip_dispositivo: string | null
           is_maintenance: boolean | null
-          last_heartbeat_at: string | null
           last_player_activity_at: string | null
           last_proof_at: string | null
           num_filial: string | null
