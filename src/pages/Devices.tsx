@@ -196,9 +196,9 @@ export default function DevicesPage() {
     
     return {
       total: devices.length,
-      online: devices.filter(d => getConnectionStatus(d.last_heartbeat_at) === "online").length,
-      unstable: devices.filter(d => getConnectionStatus(d.last_heartbeat_at) === "unstable").length,
-      offline: devices.filter(d => getConnectionStatus(d.last_heartbeat_at) === "offline").length,
+      online: devices.filter(d => getConnectionStatus(d.last_player_activity_at) === "online").length,
+      unstable: devices.filter(d => getConnectionStatus(d.last_player_activity_at) === "unstable").length,
+      offline: devices.filter(d => getConnectionStatus(d.last_player_activity_at) === "offline").length,
       noPlaylist: devices.filter(d => !d.playlist_id).length,
       filtered: filteredDevices.length
     };
