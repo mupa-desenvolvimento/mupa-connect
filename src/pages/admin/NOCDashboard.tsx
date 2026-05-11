@@ -106,7 +106,7 @@ export default function NOCDashboard() {
         offline,
         unstable,
         status,
-        lastActivity: storeDevices.length > 0 ? storeDevices[0].last_heartbeat_at : null
+        lastActivity: storeDevices.length > 0 ? storeDevices[0].last_player_activity_at : null
       };
     });
   }, [stores, devices]);
