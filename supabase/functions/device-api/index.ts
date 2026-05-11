@@ -148,12 +148,7 @@ serve(async (req) => {
     let updateData: any = {}
     let eventType = ''
 
-    if (path === 'heartbeat') {
-      eventType = 'heartbeat'
-      updateData = { 
-        last_heartbeat_at: new Date().toISOString() 
-      }
-    } else if (path === 'proof') {
+    if (path === 'proof') {
       eventType = 'proof'
       updateData = { 
         last_proof_at: new Date().toISOString(),
