@@ -160,33 +160,37 @@ export default function PlayerConsulta() {
     };
   }, []);
 
-  // 3. LISTENER DE BARCODE
+  // 3. FOCO NO INPUT E LISTENER DE BARCODE
   useEffect(() => {
-    let buffer = "";
-    let lastKeyTime = Date.now();
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Shift" || e.key === "Control" || e.key === "Alt") return;
-
-      const currentTime = Date.now();
-      if (currentTime - lastKeyTime > 150) {
-        buffer = "";
-      }
-
-      if (e.key === "Enter") {
-        if (buffer.length >= 3) {
-          handleConsult(buffer);
-        }
-        buffer = "";
-      } else if (e.key.length === 1) {
-        buffer += e.key;
-      }
-      lastKeyTime = currentTime;
+    const focusInput = () => {
+      if (inputRef.current) inputRef.current.focus();
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    // Foca inicialmente
+    focusInput();
+
+    // Re-foca se perder o foco (importante para terminais)
+    const handleFocusLoss = () => {
+      setTimeout(focusInput, 100);
+    };
+
+    window.addEventListener("click", focusInput);
+    window.addEventListener("touchstart", focusInput);
+    
+    return () => {
+      window.removeEventListener("click", focusInput);
+      window.removeEventListener("touchstart", focusInput);
+    };
   }, []);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      if (inputValue.length >= 3) {
+        handleConsult(inputValue);
+        setInputValue("");
+      }
+    }
+  };
 
   const handleConsult = async (ean: string) => {
     console.log("[Consulta] Iniciando para EAN:", ean);
