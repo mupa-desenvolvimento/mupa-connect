@@ -90,7 +90,7 @@ export default function SharedMonitoringPage() {
       query = query.eq("company_id", vData.company_id);
     }
 
-    const { data } = await query.order('last_heartbeat_at', { ascending: false });
+    const { data } = await query.order('last_player_activity_at', { ascending: false });
     if (data) {
       setDevices(data);
       setLastUpdate(new Date());
