@@ -83,6 +83,15 @@ export default function FaceDemo() {
   const [fps, setFps] = useState(0);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [retryCount, setRetryCount] = useState(0);
+  const [detectionConfig, setDetectionConfig] = useState({ inputSize: 224, scoreThreshold: 0.5, label: "Premium (224px)" });
+  const consecutiveEmptyFramesRef = useRef(0);
+  const currentConfigIdxRef = useRef(0);
+  
+  const configs = [
+    { inputSize: 224, scoreThreshold: 0.5, label: "Premium (224px)" },
+    { inputSize: 160, scoreThreshold: 0.4, label: "Balanced (160px)" },
+    { inputSize: 128, scoreThreshold: 0.3, label: "Fast (128px)" }
+  ];
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -284,9 +293,11 @@ export default function FaceDemo() {
           log("DETECTION", "Iniciando detecção no frame atual");
         }
 
-        // Use TinyFaceDetector for performance on Android/WebView
-        // Increased inputSize slightly for better accuracy if 160 is too low
-        const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
+        // Dynamic fallback system for WebView/Android 9 compatibility
+        const options = new faceapi.TinyFaceDetectorOptions({ 
+          inputSize: detectionConfig.inputSize, 
+          scoreThreshold: detectionConfig.scoreThreshold 
+        });
         
         const detections = await faceapi
           .detectAllFaces(videoRef.current, options)
@@ -295,6 +306,7 @@ export default function FaceDemo() {
           .withAgeAndGender();
 
         if (detections && detections.length > 0) {
+          consecutiveEmptyFramesRef.current = 0;
           setStatus("active");
           const newFaces: DetectedFace[] = detections.map((d, i) => {
             const expressions = d.expressions.asSortedArray();
@@ -313,7 +325,20 @@ export default function FaceDemo() {
           setDetectedFaces(newFaces);
           drawOverlay(detections);
         } else {
-          // No faces detected but loop is running
+          // Fallback logic: if no faces for 60 frames (~2-4 seconds depending on hardware)
+          consecutiveEmptyFramesRef.current++;
+          
+          if (consecutiveEmptyFramesRef.current > 60) {
+            consecutiveEmptyFramesRef.current = 0;
+            const nextIdx = (currentConfigIdxRef.current + 1) % configs.length;
+            if (nextIdx !== currentConfigIdxRef.current) {
+              currentConfigIdxRef.current = nextIdx;
+              const nextConfig = configs[nextIdx];
+              log("FALLBACK", `Nenhum rosto detectado. Alternando para configuração: ${nextConfig.label}`);
+              setDetectionConfig(nextConfig);
+            }
+          }
+
           if (status !== "analyzing") setStatus("analyzing");
           setDetectedFaces([]);
           const ctx = canvasRef.current.getContext('2d');
@@ -323,12 +348,17 @@ export default function FaceDemo() {
         }
       } catch (err) {
         log("DETECTION", "Erro durante a detecção", err);
+        // On critical error, try next config immediately
+        consecutiveEmptyFramesRef.current = 0;
+        const nextIdx = (currentConfigIdxRef.current + 1) % configs.length;
+        currentConfigIdxRef.current = nextIdx;
+        setDetectionConfig(configs[nextIdx]);
       }
 
       requestRef.current = requestAnimationFrame(detect);
     };
     requestRef.current = requestAnimationFrame(detect);
-  }, [modelsLoaded]);
+  }, [modelsLoaded, faceDetectionActive, detectionConfig]);
 
   const drawOverlay = (detections: any[]) => {
     if (!canvasRef.current || !videoRef.current) return;
@@ -496,6 +526,11 @@ export default function FaceDemo() {
                 <Activity className={`w-3 h-3 ${faceDetectionActive ? 'text-green-400' : 'text-red-400'}`} />
                 <span className="text-[10px] font-mono text-white/60">{faceDetectionActive ? 'ACTIVE' : 'PAUSED'}</span>
               </button>
+            </GlassCard>
+
+            <GlassCard className="px-4 py-2 hidden md:flex items-center gap-2">
+              <Zap className="w-3 h-3 text-yellow-400" />
+              <span className="text-[10px] font-mono text-white/60 uppercase">{detectionConfig.label}</span>
             </GlassCard>
             
             <button 
