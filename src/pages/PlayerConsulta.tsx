@@ -246,7 +246,7 @@ export default function PlayerConsulta() {
   }
 
   return (
-    <div className="fixed inset-0 bg-black overflow-hidden select-none">
+    <div className="fixed inset-0 bg-black overflow-hidden select-none touch-none overscroll-none">
       <div className={cn("w-full h-full transition-all duration-700", showOverlay ? "scale-95 blur-md opacity-50" : "scale-100 blur-0 opacity-100")}>
         <PlayerEngine 
           playlist={activePlaylist} 
