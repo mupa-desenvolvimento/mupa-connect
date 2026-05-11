@@ -341,9 +341,13 @@ export default function FaceDemo() {
 
           if (status !== "analyzing") setStatus("analyzing");
           setDetectedFaces([]);
-          const ctx = canvasRef.current.getContext('2d');
-          if (ctx) {
-            ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          
+          // Use direct reference if possible to ensure we clear correctly
+          if (canvasRef.current) {
+            const ctx = canvasRef.current.getContext('2d');
+            if (ctx) {
+              ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+            }
           }
         }
       } catch (err) {
@@ -355,8 +359,12 @@ export default function FaceDemo() {
         setDetectionConfig(configs[nextIdx]);
       }
 
+      // Continue loop
       requestRef.current = requestAnimationFrame(detect);
     };
+
+    // Use a small delay for the first execution to ensure everything is ready
+    log("DETECTION", "Agendando início do loop de detecção");
     requestRef.current = requestAnimationFrame(detect);
   }, [modelsLoaded, faceDetectionActive, detectionConfig]);
 
