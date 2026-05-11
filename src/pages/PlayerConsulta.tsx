@@ -312,6 +312,9 @@ export default function PlayerConsulta() {
                 <AlertCircle className="h-24 w-24 text-red-500" />
                 <h2 className="text-4xl font-bold">Ops!</h2>
                 <p className="text-2xl text-white/80">{error}</p>
+                {lastConsultedEan && (
+                  <p className="text-sm text-white/30 font-mono mt-2">EAN: {lastConsultedEan}</p>
+                )}
                 <button 
                   onClick={() => setShowOverlay(false)}
                   className="mt-8 px-12 py-4 bg-white/10 hover:bg-white/20 text-white rounded-full text-xl transition-all"
