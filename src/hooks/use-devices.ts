@@ -10,7 +10,7 @@ export interface Device {
   grupo_dispositivos: string | null; // Legacy device group
   company_id?: string | null;
   tenant_id?: string | null;
-  last_heartbeat_at?: string;
+  last_player_activity_at?: string;
   last_proof_at?: string;
   status?: string;
   group_id?: string; // New hierarchy
