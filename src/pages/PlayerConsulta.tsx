@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { PlayerEngine } from "@/components/PlayerEngine";
 import { ManifestManager, ScheduleResolver, MediaCacheService } from "@/components/PlayerServices";
@@ -78,7 +78,10 @@ export default function PlayerConsulta() {
 
   // 1. CARREGAMENTO DO PLAYER
   useEffect(() => {
-    if (!deviceCode && !isPreview) return;
+    if (!deviceCode && !isPreview) {
+      navigate("/setup");
+      return;
+    }
 
     async function initialize() {
       if (deviceCode) {
