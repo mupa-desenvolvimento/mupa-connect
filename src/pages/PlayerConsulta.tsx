@@ -634,7 +634,11 @@ export default function PlayerConsulta() {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          autoFocus
+          readOnly
+          inputMode="none"
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck="false"
         />
       </div>
 
