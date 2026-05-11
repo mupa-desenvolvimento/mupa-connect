@@ -323,9 +323,13 @@ export default function PlayerConsulta() {
                 )}>
                   {product.visual?.imagem_url ? (
                     <img 
-                      src={product.visual.imagem_url} 
+                      src={product.visual.imagem_url.replace('http://', 'https://')} 
                       alt={product.description}
                       className="max-w-full max-h-full object-contain p-8"
+                      onError={(e) => {
+                        // Fallback caso HTTPS falhe (alguns domínios ddns podem não ter SSL)
+                        (e.target as HTMLImageElement).src = product.visual?.imagem_url || "";
+                      }}
                     />
                   ) : (
                     <Package className="w-48 h-48 text-white/20" />
