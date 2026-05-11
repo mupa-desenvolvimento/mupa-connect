@@ -448,7 +448,7 @@ export default function DevicesPage() {
                           <p className="text-muted-foreground text-[10px] uppercase font-bold mb-0.5">Último Acesso</p>
                           <div className="flex items-center gap-1.5">
                             <Activity className="h-3 w-3 text-muted-foreground" />
-                            <span>{formatDate(d.last_heartbeat_at)}</span>
+                            <span>{formatDate(d.last_player_activity_at)}</span>
                           </div>
                         </div>
                       </div>
