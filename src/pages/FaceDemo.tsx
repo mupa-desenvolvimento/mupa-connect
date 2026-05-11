@@ -153,22 +153,47 @@ export default function FaceDemo() {
 
       if (videoRef.current) {
         log("CAMERA", "Vinculando stream ao elemento de vídeo");
+        
+        // Use srcObject for modern browsers
         videoRef.current.srcObject = stream;
+        
+        // Add listeners for debugging
+        videoRef.current.onplaying = () => log("VIDEO", "Evento: playing");
+        videoRef.current.onpause = () => log("VIDEO", "Evento: pause");
+        videoRef.current.onerror = (e) => log("VIDEO", "Evento: error", e);
+
+        // Ensure crossOrigin is set for face-api
+        videoRef.current.setAttribute('crossorigin', 'anonymous');
         
         // Manual play for WebView compatibility
         try {
           await videoRef.current.play();
           log("CAMERA", "Vídeo iniciado (play)");
+          
+          // Force detection to start after short delay to ensure hardware is ready
+          setTimeout(() => {
+            log("DETECTION", "Ativando detecção facial...");
+            setFaceDetectionActive(true);
+            setStatus("analyzing");
+            startDetectionLoop();
+          }, 500);
         } catch (playErr) {
           log("CAMERA", "Erro ao iniciar play() automático, aguardando metadados", playErr);
+          
+          // Fallback: try playing on loadedmetadata
+          videoRef.current.onloadedmetadata = async () => {
+            log("CAMERA", "Metadados do vídeo carregados");
+            try {
+              await videoRef.current?.play();
+              log("CAMERA", "Vídeo iniciado via metadata");
+              setFaceDetectionActive(true);
+              setStatus("analyzing");
+              startDetectionLoop();
+            } catch (innerErr) {
+              log("CAMERA", "Falha crítica ao iniciar vídeo", innerErr);
+            }
+          };
         }
-
-        videoRef.current.onloadedmetadata = () => {
-          log("CAMERA", "Metadados do vídeo carregados");
-          setFaceDetectionActive(true);
-          setStatus("analyzing");
-          startDetectionLoop();
-        };
       }
     } catch (err: any) {
       log("CAMERA", "Erro ao inicializar câmera", err);
