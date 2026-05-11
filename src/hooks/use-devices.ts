@@ -8,6 +8,8 @@ export interface Device {
   num_filial: string | null;
   store_id: string | null;
   grupo_dispositivos: string | null; // Legacy device group
+  company_id?: string | null;
+  tenant_id?: string | null;
   last_heartbeat_at?: string;
   last_proof_at?: string;
   status?: string;
@@ -17,9 +19,9 @@ export interface Device {
   internal_group_name?: string;
 }
 
-export function useDevices(tenantId: string | null, isSuperAdmin?: boolean) {
+export function useDevices(companyId: string | null, tenantId: string | null, isSuperAdmin?: boolean) {
   return useQuery({
-    queryKey: ["devices", tenantId, isSuperAdmin],
+    queryKey: ["devices", companyId, tenantId, isSuperAdmin],
     queryFn: async () => {
       let query = supabase
         .from("dispositivos")
@@ -30,14 +32,16 @@ export function useDevices(tenantId: string | null, isSuperAdmin?: boolean) {
           num_filial,
           store_id,
           tenant_id,
+          company_id,
           grupo_dispositivos,
           last_heartbeat_at,
           last_proof_at
         `);
 
       if (!isSuperAdmin) {
-        if (!tenantId) return [];
-        query = query.eq('tenant_id', tenantId);
+        if (companyId) query = query.eq("company_id", companyId);
+        else if (tenantId) query = query.eq("tenant_id", tenantId);
+        else return [];
       }
 
       const { data: devices, error } = await query;
@@ -71,7 +75,7 @@ export function useDevices(tenantId: string | null, isSuperAdmin?: boolean) {
         internal_group_id: d.device_uuid ? internalGroupMap.get(d.device_uuid) : undefined
       })) as Device[];
     },
-    enabled: !!tenantId || !!isSuperAdmin,
+    enabled: !!companyId || !!tenantId || !!isSuperAdmin,
     refetchInterval: 30000,
     refetchIntervalInBackground: true,
     staleTime: 15000,

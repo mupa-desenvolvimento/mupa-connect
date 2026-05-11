@@ -37,6 +37,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useDroppable } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
+import { useTenant } from "@/hooks/use-playlist-data";
 
 interface StoreCardProps {
   store: {
@@ -53,8 +54,9 @@ interface StoreCardProps {
 }
 
 export function StoreCard({ store, playlists, onRefresh }: StoreCardProps) {
+  const { companyId, tenantId, isSuperAdmin } = useTenant();
   const { data: sectors, refetch: refetchSectors } = useStoreInternalGroups(store.id);
-  const { data: allDevices, refetch: refetchDevices } = useDevices(null);
+  const { data: allDevices, refetch: refetchDevices } = useDevices(companyId, tenantId, isSuperAdmin);
   const [isSectorDialogOpen, setIsSectorDialogOpen] = useState(false);
   const [newSectorName, setNewSectorName] = useState("");
   const [deleteSectorConfirm, setDeleteSectorConfirm] = useState<{ open: boolean, id: string, name: string }>({ open: false, id: "", name: "" });

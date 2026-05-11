@@ -574,13 +574,13 @@ const GroupItem = ({
 };
 
 export default function GroupsPage() {
-  const { tenantId, isSuperAdmin } = useTenant();
+  const { tenantId, companyId, isSuperAdmin } = useTenant();
   const queryClient = useQueryClient();
 
   const { data: playlists } = usePlaylists(tenantId || undefined, isSuperAdmin);
   const { data: groups, isLoading: loadingGroups, refetch: refetchGroups } = useGroups(tenantId, isSuperAdmin);
   const { data: stores, isLoading: loadingStores, refetch: refetchStores } = useStores(tenantId);
-  const { data: devices, refetch: refetchDevices } = useDevices(tenantId, isSuperAdmin);
+  const { data: devices, refetch: refetchDevices } = useDevices(companyId, tenantId, isSuperAdmin);
   
   const [activeTab, setActiveTab] = useState("groups");
   const [searchQuery, setSearchQuery] = useState("");

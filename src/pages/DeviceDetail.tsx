@@ -43,7 +43,7 @@ export default function DeviceDetailPage() {
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
   const [companies, setCompanies] = useState<any[]>([]);
 
-  const { data: tenantId, isSuperAdmin } = useTenant();
+  const { data: contextId, tenantId, companyId, isSuperAdmin } = useTenant();
   const { data: playlists } = usePlaylists(tenantId || undefined, isSuperAdmin);
 
   const fetchDevice = async () => {
@@ -56,11 +56,21 @@ export default function DeviceDetailPage() {
       if (cos) setCompanies(cos);
     }
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("dispositivos")
-      .select("id, apelido_interno, serial, online, num_filial, is_maintenance, playlist_id, last_heartbeat_at, company_id")
-      .eq("id", Number(id))
-      .maybeSingle();
+      .select("id, apelido_interno, serial, online, num_filial, is_maintenance, playlist_id, last_heartbeat_at, company_id, tenant_id")
+      .eq("id", Number(id));
+    
+    if (!isSuperAdmin) {
+      if (companyId) query = query.eq("company_id", companyId);
+      else if (tenantId) query = query.eq("tenant_id", tenantId);
+      else {
+        setLoading(false);
+        return;
+      }
+    }
+
+    const { data, error } = await query.maybeSingle();
 
     if (error) {
       toast.error("Erro ao carregar dispositivo");
@@ -140,10 +150,22 @@ export default function DeviceDetailPage() {
       updateData.company_id = selectedCompanyId;
     }
 
-    const { error } = await supabase
+    let updateQuery = supabase
       .from("dispositivos")
       .update(updateData)
       .eq("id", Number(id));
+
+    if (!isSuperAdmin) {
+      if (companyId) updateQuery = updateQuery.eq("company_id", companyId);
+      else if (tenantId) updateQuery = updateQuery.eq("tenant_id", tenantId);
+      else {
+        toast.error("Sem permissão para atualizar este dispositivo");
+        setSaving(false);
+        return;
+      }
+    }
+
+    const { error } = await updateQuery;
 
     if (error) {
       toast.error("Erro ao atualizar o dispositivo");

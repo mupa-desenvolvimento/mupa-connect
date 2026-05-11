@@ -30,11 +30,11 @@ interface PlaylistChangeModalProps {
 }
 
 export function PlaylistChangeModal({ open, onOpenChange, deviceIds, onSuccess }: PlaylistChangeModalProps) {
-  const { tenantId, isSuperAdmin } = useUserRole();
+  const { tenantId, companyId, isSuperAdmin } = useUserRole();
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { data: playlists, isLoading: isLoadingPlaylists } = usePlaylists(tenantId || undefined, isSuperAdmin);
+  const { data: playlists, isLoading: isLoadingPlaylists } = usePlaylists((companyId || tenantId) || undefined, isSuperAdmin);
 
   const handleSubmit = async () => {
     if (!selectedPlaylistId) {
@@ -46,10 +46,17 @@ export function PlaylistChangeModal({ open, onOpenChange, deviceIds, onSuccess }
     try {
       const playlistValue = selectedPlaylistId === "none" ? null : selectedPlaylistId;
       
-      const { error } = await supabase
+      let query = supabase
         .from("dispositivos")
         .update({ playlist_id: playlistValue })
         .in("id", deviceIds.map(id => Number(id)));
+
+      if (!isSuperAdmin) {
+        if (companyId) query = query.eq("company_id", companyId);
+        else if (tenantId) query = query.eq("tenant_id", tenantId);
+      }
+
+      const { error } = await query;
 
       if (error) throw error;
 

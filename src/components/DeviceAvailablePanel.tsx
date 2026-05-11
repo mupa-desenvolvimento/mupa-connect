@@ -198,10 +198,12 @@ export function DeviceAvailablePanel({
   const { tenantId, companyId } = useTenant();
 
   const { data: devices, isLoading } = useQuery({
-    queryKey: ["all-devices-panel", tenantId],
+    queryKey: ["all-devices-panel", companyId, tenantId],
     queryFn: async () => {
       // 1. Base query for devices
-      const { data: devicesData, error: devicesError } = await supabase
+      if (!companyId && !tenantId) return [];
+
+      let devicesQuery = supabase
         .from("dispositivos")
         .select(`
           id, 
@@ -214,9 +216,14 @@ export function DeviceAvailablePanel({
           num_filial, 
           store_id,
           grupo_dispositivos,
-          tenant_id
-        `)
-        .eq("tenant_id", tenantId);
+          tenant_id,
+          company_id
+        `);
+
+      if (companyId) devicesQuery = devicesQuery.eq("company_id", companyId);
+      else if (tenantId) devicesQuery = devicesQuery.eq("tenant_id", tenantId);
+
+      const { data: devicesData, error: devicesError } = await devicesQuery;
 
       if (devicesError) throw devicesError;
 
@@ -277,7 +284,7 @@ export function DeviceAvailablePanel({
           };
       }) as Device[];
     },
-    enabled: !!tenantId
+    enabled: !!tenantId || !!companyId
   });
 
   const { data: stores, isLoading: isLoadingStores } = useQuery({

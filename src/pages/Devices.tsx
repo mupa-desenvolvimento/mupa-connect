@@ -70,7 +70,7 @@ export default function DevicesPage() {
   const [playlistModalOpen, setPlaylistModalOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const isMobile = useIsMobile();
-  const { tenantId, isSuperAdmin, isTecnico, isAdmin } = useUserRole();
+  const { tenantId, companyId, isSuperAdmin, isTecnico, isAdmin } = useUserRole();
 
 
   const openDeviceDrawer = (device: any) => {
@@ -79,7 +79,7 @@ export default function DevicesPage() {
   };
 
   const { data: devices, isLoading, refetch } = useQuery({
-    queryKey: ["dispositivos-full", tenantId, isSuperAdmin],
+    queryKey: ["dispositivos-full", companyId, tenantId, isSuperAdmin],
     queryFn: async () => {
       let query = supabase.from("dispositivos").select(`
         *,
@@ -95,12 +95,9 @@ export default function DevicesPage() {
       
       // Se for super admin, não filtra por tenantId para ver tudo
       if (!isSuperAdmin) {
-        if (tenantId) {
-          query = query.eq("tenant_id", tenantId);
-        } else {
-          console.log("No tenantId found for non-superadmin");
-          return [];
-        }
+        if (companyId) query = query.eq("company_id", companyId);
+        else if (tenantId) query = query.eq("tenant_id", tenantId);
+        else return [];
       }
       
       const { data, error } = await query.order("apelido_interno");
@@ -111,17 +108,14 @@ export default function DevicesPage() {
   });
 
   const { data: stores } = useQuery({
-    queryKey: ["stores-list", tenantId, isSuperAdmin],
+    queryKey: ["stores-list", companyId, tenantId, isSuperAdmin],
     queryFn: async () => {
       let query = supabase.from("dispositivos").select("num_filial").not("num_filial", "is", null);
       
       if (!isSuperAdmin) {
-        if (tenantId) {
-          query = query.eq("tenant_id", tenantId);
-        } else {
-          console.log("No tenantId found for non-superadmin in stores list");
-          return [];
-        }
+        if (companyId) query = query.eq("company_id", companyId);
+        else if (tenantId) query = query.eq("tenant_id", tenantId);
+        else return [];
       }
       
       const { data, error } = await query;
