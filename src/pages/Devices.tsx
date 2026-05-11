@@ -133,14 +133,14 @@ export default function DevicesPage() {
     return Number.isNaN(t) ? 0 : t;
   };
 
-  const getConnectionStatus = (lastHeartbeat: string | null): ConnectionStatus => {
-    const heartbeatTime = parseTs(lastHeartbeat);
-    if (!heartbeatTime) return "offline";
+  const getConnectionStatus = (lastActivity: string | null): ConnectionStatus => {
+    const activityTime = parseTs(lastActivity);
+    if (!activityTime) return "offline";
     const now = Date.now();
-    const diff = (now - heartbeatTime) / 1000;
+    const diff = (now - activityTime) / 1000;
     
-    if (diff < 90) return "online";
-    if (diff < 180) return "unstable";
+    if (diff < 120) return "online";
+    if (diff < 240) return "unstable";
     return "offline";
   };
 
