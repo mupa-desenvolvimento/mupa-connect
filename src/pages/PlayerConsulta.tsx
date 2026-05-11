@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { PlayerEngine } from "@/components/PlayerEngine";
 import { ManifestManager, ScheduleResolver, MediaCacheService } from "@/components/PlayerServices";
@@ -37,6 +37,7 @@ const isValidUUID = (value: any): boolean => {
 };
 
 export default function PlayerConsulta() {
+  const navigate = useNavigate();
   const { deviceCode } = useParams();
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get("preview") === "true";
@@ -54,7 +55,7 @@ export default function PlayerConsulta() {
   const [lastConsultedEan, setLastConsultedEan] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  // Removido inputRef pois a captura agora é global via keydown
   const [inputValue, setInputValue] = useState("");
 
   const [isVertical, setIsVertical] = useState(window.innerHeight > window.innerWidth);
@@ -77,7 +78,10 @@ export default function PlayerConsulta() {
 
   // 1. CARREGAMENTO DO PLAYER
   useEffect(() => {
-    if (!deviceCode && !isPreview) return;
+    if (!deviceCode && !isPreview) {
+      navigate("/setup");
+      return;
+    }
 
     async function initialize() {
       if (deviceCode) {
@@ -349,39 +353,7 @@ export default function PlayerConsulta() {
     };
   }, []);
 
-  // 3. FOCO NO INPUT E LISTENER DE BARCODE
-  useEffect(() => {
-    const focusInput = () => {
-      if (inputRef.current) inputRef.current.focus();
-    };
-
-    // Foca inicialmente
-    focusInput();
-
-    // Re-foca se perder o foco (importante para terminais)
-    const handleFocusLoss = () => {
-      setTimeout(focusInput, 100);
-    };
-
-    window.addEventListener("click", focusInput);
-    window.addEventListener("touchstart", focusInput);
-    
-    return () => {
-      window.removeEventListener("click", focusInput);
-      window.removeEventListener("touchstart", focusInput);
-    };
-  }, []);
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      if (inputValue.length >= 3) {
-        handleConsult(inputValue);
-        setInputValue("");
-      }
-    }
-  };
-
-  const handleConsult = async (ean: string) => {
+  const handleConsult = useCallback(async (ean: string) => {
     // Limpar EAN para evitar problemas com espaços ou caracteres invisíveis
     const cleanEan = ean.trim();
     console.log("[Consulta] Iniciando para EAN:", cleanEan);
@@ -435,7 +407,32 @@ export default function PlayerConsulta() {
       setIsConsulting(false);
       startHideTimer();
     }
-  };
+  }, [hideTimeoutRef]);
+
+  // 3. FOCO NO INPUT E LISTENER DE BARCODE
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Ignora se for tecla de controle (exceto Enter)
+      if (e.key.length > 1 && e.key !== "Enter") return;
+
+      if (e.key === "Enter") {
+        // Usamos uma variável local para capturar o valor atual sem depender do estado assíncrono
+        setInputValue(current => {
+          if (current.length >= 3) {
+            handleConsult(current);
+          }
+          return "";
+        });
+      } else {
+        setInputValue(prev => prev + e.key);
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [handleConsult]);
+
+  // handleKeyDown removido pois a captura agora é global via window event listener
 
   const startHideTimer = () => {
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
@@ -626,17 +623,8 @@ export default function PlayerConsulta() {
         )}
       </AnimatePresence>
 
-      {/* Input Invisível para Scanner HID */}
-      <div className="fixed top-0 left-0 w-0 h-0 opacity-0 overflow-hidden pointer-events-none">
-        <Input
-          ref={inputRef}
-          type="text"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          autoFocus
-        />
-      </div>
+      {/* Removido input invisível para evitar abertura de teclado em dispositivos móveis/terminais */}
+      {/* A captura de código agora é feita via listener global de keydown */}
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4">
         <div className="flex items-center gap-3 opacity-30 grayscale">
