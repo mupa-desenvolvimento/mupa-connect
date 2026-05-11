@@ -153,7 +153,7 @@ export default function DevicesPage() {
   const filteredDevices = useMemo(() => {
     if (!devices) return [];
     return devices.filter(d => {
-      const connStatus = getConnectionStatus(d.last_heartbeat_at);
+      const connStatus = getConnectionStatus(d.last_player_activity_at);
       const matchesSearch = 
         (d.apelido_interno?.toLowerCase().includes(search.toLowerCase()) || 
          d.serial?.toLowerCase().includes(search.toLowerCase()) ||
