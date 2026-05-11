@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 
 interface ProductData {
   ean: string;
-  internal_id: string;
+  internal_id: string | number;
   description: string;
   price: {
     price_pack: number;
