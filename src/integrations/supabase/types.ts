@@ -256,6 +256,8 @@ export type Database = {
       audience_detections: {
         Row: {
           age: number | null
+          attention_seconds: number | null
+          company_id: string | null
           created_at: string
           detected_at: string
           device_id: string | null
@@ -265,11 +267,15 @@ export type Database = {
           gender_probability: number | null
           id: string
           metadata: Json | null
+          people_count: number | null
           session_id: string | null
+          store_id: string | null
           tenant_id: string | null
         }
         Insert: {
           age?: number | null
+          attention_seconds?: number | null
+          company_id?: string | null
           created_at?: string
           detected_at?: string
           device_id?: string | null
@@ -279,11 +285,15 @@ export type Database = {
           gender_probability?: number | null
           id?: string
           metadata?: Json | null
+          people_count?: number | null
           session_id?: string | null
+          store_id?: string | null
           tenant_id?: string | null
         }
         Update: {
           age?: number | null
+          attention_seconds?: number | null
+          company_id?: string | null
           created_at?: string
           detected_at?: string
           device_id?: string | null
@@ -293,10 +303,26 @@ export type Database = {
           gender_probability?: number | null
           id?: string
           metadata?: Json | null
+          people_count?: number | null
           session_id?: string | null
+          store_id?: string | null
           tenant_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "audience_detections_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audience_detections_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "audience_detections_tenant_id_fkey"
             columns: ["tenant_id"]
