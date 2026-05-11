@@ -193,19 +193,24 @@ export default function PlayerConsulta() {
   };
 
   const handleConsult = async (ean: string) => {
-    console.log("[Consulta] Iniciando para EAN:", ean);
+    // Limpar EAN para evitar problemas com espaços ou caracteres invisíveis
+    const cleanEan = ean.trim();
+    console.log("[Consulta] Iniciando para EAN:", cleanEan);
     setIsConsulting(true);
     setShowOverlay(true);
     setError(null);
+    setProduct(null); // Limpar produto anterior
 
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
 
     try {
-      const cachedKey = `product_${ean}`;
+      const cachedKey = `product_${cleanEan}`;
       const cached = localStorage.getItem(cachedKey);
       if (cached) {
         const parsed = JSON.parse(cached);
+        // Cache de 1 hora
         if (Date.now() - parsed.timestamp < 3600000 || !navigator.onLine) {
+          console.log("[Consulta] Usando cache para:", cleanEan);
           setProduct(parsed.data);
           setIsConsulting(false);
           startHideTimer();
@@ -214,11 +219,13 @@ export default function PlayerConsulta() {
       }
 
       const { data, error } = await supabase.functions.invoke("integra-assai", {
-        body: { ean }
+        body: { ean: cleanEan }
       });
 
       if (error) throw error;
+      if (!data || data.error) throw new Error(data?.error || "Falha na resposta da API");
 
+      console.log("[Consulta] Resultado API:", data);
       setProduct(data);
       
       localStorage.setItem(cachedKey, JSON.stringify({
@@ -316,9 +323,13 @@ export default function PlayerConsulta() {
                 )}>
                   {product.visual?.imagem_url ? (
                     <img 
-                      src={product.visual.imagem_url} 
+                      src={product.visual.imagem_url.replace('http://', 'https://')} 
                       alt={product.description}
                       className="max-w-full max-h-full object-contain p-8"
+                      onError={(e) => {
+                        // Fallback caso HTTPS falhe (alguns domínios ddns podem não ter SSL)
+                        (e.target as HTMLImageElement).src = product.visual?.imagem_url || "";
+                      }}
                     />
                   ) : (
                     <Package className="w-48 h-48 text-white/20" />
@@ -380,7 +391,7 @@ export default function PlayerConsulta() {
                         <div className="flex items-baseline gap-4">
                           <span className="text-5xl md:text-6xl text-white/40 font-bold">R$</span>
                           <span className="text-[140px] md:text-[200px] leading-none font-black text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
-                            {formatPrice(product.price?.price_pack).replace('R$', '').trim()}
+                            {formatPrice(product.price?.price_pack || (product.price as any)?.price || (product.price as any)?.price_unit).replace('R$', '').trim()}
                           </span>
                         </div>
                         
