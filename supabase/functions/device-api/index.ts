@@ -155,6 +155,12 @@ serve(async (req) => {
         current_playlist_id: playlist_id,
         current_media_id: media_id
       }
+    } else if (path === 'heartbeat') {
+      // Heartbeat desativado conforme solicitação
+      return new Response(JSON.stringify({ success: true, message: 'Heartbeat disabled' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
     } else {
       return new Response(JSON.stringify({ error: 'Invalid endpoint' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
