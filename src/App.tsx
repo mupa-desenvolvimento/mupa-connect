@@ -36,6 +36,7 @@ import SharedMonitoringPage from "./pages/monitoring/SharedMonitoring";
 import TradeMarketingDashboard from "./pages/TradeMarketing";
 import FaceTrackDemo from "./pages/FaceTrackDemo";
 import FaceDemo from "./pages/FaceDemo";
+import AppPlayerPage from "./pages/AppPlayer";
 import CompanyManagement from "./pages/admin/CompanyManagement";
 import WhatsAppManagement from "./pages/admin/WhatsApp";
 import QueryErrorsReport from "./pages/QueryErrorsReport";
@@ -241,6 +242,7 @@ const App = () => {
                   </ProtectedRoute>
                 } />
                 <Route path="/face-track-demo" element={<FaceTrackDemo />} />
+                <Route path="/app-player" element={<AppPlayerPage />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
