@@ -563,7 +563,7 @@ export default function DevicesPage() {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-xs">{formatDate(d.last_heartbeat_at)}</TableCell>
+                      <TableCell className="text-muted-foreground text-xs">{formatDate(d.last_player_activity_at)}</TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1">
                           <StatusBadge status={connStatus} />
