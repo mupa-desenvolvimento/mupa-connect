@@ -83,6 +83,15 @@ export default function FaceDemo() {
   const [fps, setFps] = useState(0);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [retryCount, setRetryCount] = useState(0);
+  const [detectionConfig, setDetectionConfig] = useState({ inputSize: 224, scoreThreshold: 0.5, label: "Premium (224px)" });
+  const consecutiveEmptyFramesRef = useRef(0);
+  const currentConfigIdxRef = useRef(0);
+  
+  const configs = [
+    { inputSize: 224, scoreThreshold: 0.5, label: "Premium (224px)" },
+    { inputSize: 160, scoreThreshold: 0.4, label: "Balanced (160px)" },
+    { inputSize: 128, scoreThreshold: 0.3, label: "Fast (128px)" }
+  ];
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
