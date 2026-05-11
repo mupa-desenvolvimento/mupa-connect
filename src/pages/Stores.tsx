@@ -26,7 +26,8 @@ export default function StoresPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const debouncedSearch = useDebounce(search, 300);
   const [selectedStore, setSelectedStore] = useState<{ id: string; name: string } | null>(null);
-  const [editingStore, setEditingStore] = useState<{ id: string; name: string; code: string | null; is_active: boolean } | null>(null);
+  const [editingStore, setEditingStore] = useState<any | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   
   const { companyId, tenantId, isSuperAdmin, isLoading: roleLoading } = useUserRole();
 
@@ -36,7 +37,7 @@ export default function StoresPage() {
     queryFn: async () => {
       let query = supabase
         .from("stores")
-        .select("id, name, code, is_active, tenant_id", { count: "exact" });
+        .select("id, name, code, is_active, tenant_id, address, phone, email, cep, bairro, cnpj, regional_responsavel", { count: "exact" });
 
       if (debouncedSearch) {
         query = query.ilike("name", `%${debouncedSearch}%`);
@@ -144,7 +145,11 @@ export default function StoresPage() {
               <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />
               Atualizar
             </Button>
-            <Button className="bg-gradient-primary shadow-glow" size="sm">
+            <Button 
+              className="bg-gradient-primary shadow-glow" 
+              size="sm"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
               <Plus className="h-4 w-4 mr-2" /> Nova Loja
             </Button>
           </div>
@@ -256,7 +261,7 @@ export default function StoresPage() {
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               className="cursor-pointer"
-                              onClick={() => setEditingStore({ id: s.id, name: s.name, code: s.code, is_active: s.is_active })}
+                              onClick={() => setEditingStore(s)}
                             >
                               Configurações
                             </DropdownMenuItem>
@@ -315,9 +320,13 @@ export default function StoresPage() {
       />
 
       <StoreEditModal
-        isOpen={!!editingStore}
-        onClose={() => setEditingStore(null)}
+        isOpen={!!editingStore || isCreateModalOpen}
+        onClose={() => {
+          setEditingStore(null);
+          setIsCreateModalOpen(false);
+        }}
         store={editingStore}
+        isCreate={isCreateModalOpen}
         onSuccess={() => refetch()}
       />
     </div>
