@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,80 +20,83 @@ serve(async (req) => {
       })
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    console.log(`[Consulta] Buscando mapping para EAN: ${ean}`);
 
-    // PASSO 1: Consultar código interno
-    const { data: seqData, error: seqError } = await supabase
-      .from('seq_produto_assai')
-      .select('SEQPRODUTO, DESCCOMPLETA')
-      .eq('CODACESSONUM', ean)
-      .maybeSingle()
-
-    if (seqError) throw seqError
-    if (!seqData) {
-      return new Response(JSON.stringify({ error: 'Produto não mapeado no Assai' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 404,
-      })
+    // PASSO 1: Consultar código interno no novo endpoint
+    let mappingData = null;
+    try {
+      const mappingResponse = await fetch(`http://srv-mupa.ddns.net:5050/api/ean/seqproduto?codbar=${ean}`);
+      if (mappingResponse.ok) {
+        mappingData = await mappingResponse.json();
+      } else {
+        console.error(`Erro no mapping API: ${mappingResponse.status}`);
+      }
+    } catch (e) {
+      console.error('Erro ao buscar mapping externo:', e);
     }
 
-    const internalId = seqData.SEQPRODUTO
+    if (!mappingData) {
+      return new Response(JSON.stringify({ error: 'Produto não encontrado na base de dados' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 404,
+      });
+    }
+
+    const internalId = mappingData.id_product;
+    const description = mappingData.descricao;
 
     // PASSO 2: Consultar preço no marketplace Assai
-    // Tentativa 1: Endpoint de estoque/preço do marketplace
-    let priceData = null
+    let priceData = null;
     try {
+      console.log(`[Consulta] Buscando preço para id_product: ${internalId}`);
       const assaiResponse = await fetch(`https://marketplace.assai.com.br/stock?id_product=${internalId}&id_store=${store_id}`, {
         headers: {
           'accept': 'application/json',
           'x-basicauthorization': Deno.env.get('ASSAI_BASIC_AUTH') || 'Basic QXNzYWlBcHA6QXNzYWlBcHA=' 
         }
-      })
+      });
       
       if (assaiResponse.ok) {
-        const fullPriceData = await assaiResponse.json()
-        priceData = Array.isArray(fullPriceData) ? fullPriceData[0] : fullPriceData
+        const fullPriceData = await assaiResponse.json();
+        priceData = Array.isArray(fullPriceData) ? fullPriceData[0] : fullPriceData;
+      } else {
+        console.warn(`Aviso: API de preço retornou status ${assaiResponse.status}`);
       }
     } catch (e) {
-      console.error('Erro ao buscar preço:', e)
+      console.error('Erro ao buscar preço:', e);
     }
 
     // PASSO 3: Consultar imagem e cores
-    let visualData = null
+    let visualData = null;
     try {
-      const imageResponse = await fetch(`http://srv-mupa.ddns.net:5050/produto-imagem/${ean}`)
+      console.log(`[Consulta] Buscando visual para EAN: ${ean}`);
+      const imageResponse = await fetch(`http://srv-mupa.ddns.net:5050/produto-imagem/${ean}`);
       if (imageResponse.ok) {
-        visualData = await imageResponse.json()
-        // Garantir que imagem_url use HTTPS ou pelo menos seja válido
-        if (visualData && visualData.imagem_url && visualData.imagem_url.startsWith('http://srv-mupa.ddns.net')) {
-          // Se o navegador bloquear mixed content, isso pode ser um problema, mas por ora mantemos o original
-          console.log('Visual data carregado:', visualData.imagem_url)
-        }
+        visualData = await imageResponse.json();
       }
     } catch (e) {
-      console.error('Erro ao buscar imagem:', e)
+      console.error('Erro ao buscar imagem:', e);
     }
 
     const result = {
       ean,
       internal_id: internalId,
-      description: seqData.DESCCOMPLETA,
+      description: description,
       price: priceData,
       visual: visualData
-    }
+    };
+
+    console.log('[Consulta] Sucesso:', result);
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
-    })
+    });
   } catch (error) {
-    console.error('Error in integra-assai:', error)
+    console.error('Error in integra-assai:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
-    })
+    });
   }
 })
