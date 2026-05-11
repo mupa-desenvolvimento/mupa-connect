@@ -154,16 +154,16 @@ export default function PlayerMonitoring() {
 
   const getStatus = (device: Device): DeviceStatus => {
     if (!device.company_id || device.company_id === 'fd55dbdd-63da-442e-aa99-5575c0496622') return "pending";
-    if (!device.last_heartbeat_at) return "offline";
+    if (!device.last_player_activity_at) return "offline";
     
     const now = new Date();
-    const lastHeartbeat = new Date(device.last_heartbeat_at);
-    const diffSeconds = (now.getTime() - lastHeartbeat.getTime()) / 1000;
+    const lastActivity = new Date(device.last_player_activity_at);
+    const diffSeconds = (now.getTime() - lastActivity.getTime()) / 1000;
 
-    // Regra: se está reproduzindo, não marca como instável imediatamente (até 180s)
+    // Regra: se está reproduzindo, não marca como instável imediatamente (até 300s)
     const isPlaying = (device as any).player_status === "playing";
-    const unstableThreshold = isPlaying ? 180 : 90;
-    const offlineThreshold = 180;
+    const unstableThreshold = isPlaying ? 300 : 120;
+    const offlineThreshold = 300;
 
     if (diffSeconds > offlineThreshold) return "offline";
     
