@@ -7,7 +7,8 @@ import { ManifestService } from "@/services/ManifestService";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Package, AlertCircle } from "lucide-react";
+import { Loader2, Package, AlertCircle, Barcode } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 interface ProductData {
   ean: string;
