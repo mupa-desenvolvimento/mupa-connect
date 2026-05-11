@@ -41,6 +41,7 @@ import CompanyManagement from "./pages/admin/CompanyManagement";
 import WhatsAppManagement from "./pages/admin/WhatsApp";
 import QueryErrorsReport from "./pages/QueryErrorsReport";
 import PlayerConsulta from "./pages/PlayerConsulta";
+import Setup from "./pages/Setup";
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -102,6 +103,7 @@ const App = () => {
               <Route path="/play/:deviceCode/*" element={<Player />} />
               <Route path="/player-consulta" element={<PlayerConsulta />} />
               <Route path="/player-consulta/:deviceCode" element={<PlayerConsulta />} />
+              <Route path="/setup" element={<Setup />} />
 
               {/* Face Demo fullscreen */}
               <Route path="/face-demo" element={<FaceDemo />} />

@@ -31,6 +31,80 @@ serve(async (req) => {
       })
     }
 
+    if (path === 'register' || body.action === 'register') {
+      const { company_id, tenant_id, apelido, num_filial } = body
+
+      if (!company_id) {
+        return new Response(JSON.stringify({ error: 'Company ID is required for registration' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        })
+      }
+
+      // Check if device already exists with this serial
+      const { data: existingDevice } = await supabaseClient
+        .from('dispositivos')
+        .select('id')
+        .eq('serial', serial)
+        .maybeSingle()
+
+      if (existingDevice) {
+        // Update existing device
+        const { error: updateError } = await supabaseClient
+          .from('dispositivos')
+          .update({
+            company_id,
+            tenant_id,
+            apelido_interno: apelido,
+            num_filial,
+            tipo_da_licenca: 'consulta',
+            device_type: 'player-consulta',
+            atualizado: new Date().toISOString()
+          })
+          .eq('id', existingDevice.id)
+
+        if (updateError) {
+          return new Response(JSON.stringify({ error: updateError.message }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500,
+          })
+        }
+
+        return new Response(JSON.stringify({ success: true, message: 'Device updated' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        })
+      }
+
+      // Insert new device
+      const { error: insertError } = await supabaseClient
+        .from('dispositivos')
+        .insert({
+          serial,
+          company_id,
+          tenant_id,
+          apelido_interno: apelido,
+          num_filial,
+          tipo_da_licenca: 'consulta',
+          device_type: 'player-consulta',
+          online: true,
+          created_at: new Date().toISOString(),
+          atualizado: new Date().toISOString()
+        })
+
+      if (insertError) {
+        return new Response(JSON.stringify({ error: insertError.message }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500,
+        })
+      }
+
+      return new Response(JSON.stringify({ success: true, message: 'Device registered' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
+    }
+
     if (path === 'manifest') {
       const { data: device, error: deviceError } = await supabaseClient
         .from('dispositivos')
