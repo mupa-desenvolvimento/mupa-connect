@@ -46,6 +46,8 @@ export default function PlayerConsulta() {
   const [product, setProduct] = useState<ProductData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [inputValue, setInputValue] = useState("");
 
   const [isVertical, setIsVertical] = useState(window.innerHeight > window.innerWidth);
 
