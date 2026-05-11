@@ -412,10 +412,13 @@ export default function PlayerConsulta() {
       if (e.key.length > 1 && e.key !== "Enter") return;
 
       if (e.key === "Enter") {
-        if (inputValue.length >= 3) {
-          handleConsult(inputValue);
-          setInputValue("");
-        }
+        // Usamos uma variável local para capturar o valor atual sem depender do estado assíncrono
+        setInputValue(current => {
+          if (current.length >= 3) {
+            handleConsult(current);
+          }
+          return "";
+        });
       } else {
         setInputValue(prev => prev + e.key);
       }
