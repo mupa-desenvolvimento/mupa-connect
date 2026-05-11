@@ -41,6 +41,28 @@ serve(async (req) => {
         })
       }
 
+      // 1. Verify if the company exists and has a valid 6-char code (3 numbers + 3 letters)
+      const { data: company, error: companyError } = await supabaseClient
+        .from('companies')
+        .select('code')
+        .eq('id', company_id)
+        .maybeSingle()
+
+      if (companyError || !company) {
+        return new Response(JSON.stringify({ error: 'Empresa não encontrada ou código inválido' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 403,
+        })
+      }
+
+      const codeRegex = /^[0-9]{3}[A-Z]{3}$/
+      if (!codeRegex.test(company.code)) {
+        return new Response(JSON.stringify({ error: 'A empresa informada não possui um código de ativação válido' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 403,
+        })
+      }
+
       // Check if device already exists with this serial
       const { data: existingDevice } = await supabaseClient
         .from('dispositivos')
