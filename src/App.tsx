@@ -47,7 +47,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { Loader2 } from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { DevicePersistenceMonitor } from "@/components/DevicePersistenceMonitor";
+// DevicePersistenceMonitor removido conforme solicitação
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -93,7 +93,7 @@ const App = () => {
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <DevicePersistenceMonitor />
+          {/* Monitor de persistência desativado */}
           <BrowserRouter>
             <Routes>
               {/* Player rota fullscreen, sem layout e sem auth obrigatória (usa deviceCode) */}
