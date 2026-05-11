@@ -201,6 +201,7 @@ export default function PlayerConsulta() {
     setShowOverlay(true);
     setError(null);
     setProduct(null); // Limpar produto anterior
+    setLastConsultedEan(cleanEan);
 
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
 
@@ -222,6 +223,11 @@ export default function PlayerConsulta() {
       const { data, error } = await supabase.functions.invoke("integra-assai", {
         body: { ean: cleanEan }
       });
+
+      // Se der erro 404 (não mapeado), tratamos de forma amigável
+      if (error && (error.status === 404 || error.message?.includes('404'))) {
+        throw new Error("Produto não cadastrado para consulta.");
+      }
 
       if (error) throw error;
       if (!data || data.error) throw new Error(data?.error || "Falha na resposta da API");
