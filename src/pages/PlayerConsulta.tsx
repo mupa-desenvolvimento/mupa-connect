@@ -107,7 +107,43 @@ export default function PlayerConsulta() {
 
   const activePlaylist = useMemo(() => ScheduleResolver.getActivePlaylist(manifest), [manifest]);
 
-  // 2. LISTENER DE BARCODE
+  // 2. CONFIGURAÇÕES NATIVAS (FULLSCREEN, ZOOM, SCROLL)
+  useEffect(() => {
+    // Bloquear Zoom e Scroll no nível do documento
+    const meta = document.createElement('meta');
+    meta.name = 'viewport';
+    meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+    document.getElementsByTagName('head')[0].appendChild(meta);
+
+    // Bloquear scroll e seleção
+    document.body.style.overflow = 'hidden';
+    document.body.style.userSelect = 'none';
+    document.body.style.webkitUserSelect = 'none';
+    document.body.style.touchAction = 'none';
+    
+    // Tentar entrar em fullscreen ao carregar (precisa de interação em alguns browsers)
+    const enterFullscreen = () => {
+      const doc = window.document.documentElement;
+      if (doc.requestFullscreen) doc.requestFullscreen();
+      else if ((doc as any).webkitRequestFullscreen) (doc as any).webkitRequestFullscreen();
+      else if ((doc as any).mozRequestFullScreen) (doc as any).mozRequestFullScreen();
+      else if ((doc as any).msRequestFullscreen) (doc as any).msRequestFullscreen();
+    };
+
+    // Adiciona listener para garantir fullscreen na primeira interação
+    window.addEventListener('click', enterFullscreen, { once: true });
+    window.addEventListener('touchstart', enterFullscreen, { once: true });
+
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.userSelect = '';
+      document.body.style.webkitUserSelect = '';
+      document.body.style.touchAction = '';
+      if (meta.parentNode) meta.parentNode.removeChild(meta);
+    };
+  }, []);
+
+  // 3. LISTENER DE BARCODE
   useEffect(() => {
     let buffer = "";
     let lastKeyTime = Date.now();
