@@ -413,7 +413,7 @@ export default function DevicesPage() {
           ) : isMobile ? (
             <div className="p-4 space-y-3">
               {filteredDevices.map(d => {
-                const connStatus = getConnectionStatus(d.last_heartbeat_at);
+                const connStatus = getConnectionStatus(d.last_player_activity_at);
                 const pStatus = getPlayerStatus(d.player_status);
                 return (
                   <Card key={d.id} className="border-border/60" onClick={() => openDeviceDrawer(d)}>
