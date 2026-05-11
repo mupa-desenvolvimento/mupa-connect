@@ -324,7 +324,7 @@ export default function PlayerConsulta() {
               </div>
             ) : product && (
               <div className={cn(
-                "w-full h-full flex gap-12",
+                "w-full h-full flex gap-6 md:gap-12",
                 isVertical ? "flex-col" : "flex-row"
               )}>
                 <div className={cn(
