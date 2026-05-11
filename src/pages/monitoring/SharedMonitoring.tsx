@@ -195,7 +195,7 @@ export default function SharedMonitoringPage() {
                       </div>
                     </div>
                     <span className="text-[10px] opacity-60">
-                      {d.last_heartbeat_at ? formatDistanceToNow(new Date(d.last_heartbeat_at), { addSuffix: true, locale: ptBR }) : 'Nunca'}
+                      {d.last_player_activity_at ? formatDistanceToNow(new Date(d.last_player_activity_at), { addSuffix: true, locale: ptBR }) : 'Nunca'}
                     </span>
                   </div>
                 );
