@@ -355,15 +355,15 @@ export default function PlayerConsulta() {
                   isVertical ? "h-3/5 w-full" : "w-1/2 h-full order-1 text-white"
                 )}>
                   <div className="space-y-6">
-                    <div className="inline-block px-6 py-2 rounded-full bg-white/10 text-white/60 text-xl font-medium">
+                    <div className="inline-block px-4 py-1.5 md:px-6 md:py-2 rounded-full bg-white/10 text-white/60 text-base md:text-xl font-medium">
                       Código: {product.internal_id}
                     </div>
                     
                     <div className="space-y-2">
-                      <h1 className="text-6xl md:text-8xl font-black leading-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+                      <h1 className="text-[clamp(2.5rem,8vw,6rem)] font-black leading-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
                         {getProductNameParts(product.description).main}
                       </h1>
-                      <p className="text-3xl md:text-4xl text-white/50 font-medium">
+                      <p className="text-[clamp(1.2rem,4vw,2.5rem)] text-white/50 font-medium">
                         {getProductNameParts(product.description).rest}
                       </p>
                     </div>
