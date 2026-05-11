@@ -351,26 +351,23 @@ export default function PlayerConsulta() {
 
   // 3. FOCO NO INPUT E LISTENER DE BARCODE
   useEffect(() => {
-    const focusInput = () => {
-      if (inputRef.current) inputRef.current.focus();
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Ignora se for tecla de controle (exceto Enter)
+      if (e.key.length > 1 && e.key !== "Enter") return;
+
+      if (e.key === "Enter") {
+        if (inputValue.length >= 3) {
+          handleConsult(inputValue);
+          setInputValue("");
+        }
+      } else {
+        setInputValue(prev => prev + e.key);
+      }
     };
 
-    // Foca inicialmente
-    focusInput();
-
-    // Re-foca se perder o foco (importante para terminais)
-    const handleFocusLoss = () => {
-      setTimeout(focusInput, 100);
-    };
-
-    window.addEventListener("click", focusInput);
-    window.addEventListener("touchstart", focusInput);
-    
-    return () => {
-      window.removeEventListener("click", focusInput);
-      window.removeEventListener("touchstart", focusInput);
-    };
-  }, []);
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [inputValue, handleConsult]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
