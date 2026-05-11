@@ -458,6 +458,14 @@ export default function DevicesPage() {
                           </div>
                         </div>
                       </div>
+                      <div className="flex gap-2 mt-4 pt-3 border-t border-border/40">
+                        <Button asChild size="sm" variant="ghost" className="flex-1 h-8 text-[10px] text-primary" onClick={e => e.stopPropagation()}>
+                          <Link to={`/play/${d.serial}`} target="_blank"><Play className="h-3 w-3 mr-1" /> Player</Link>
+                        </Button>
+                        <Button asChild size="sm" variant="outline" className="flex-1 h-8 text-[10px] border-primary/20 text-primary" onClick={e => e.stopPropagation()}>
+                          <Link to={`/player-consulta/${d.serial}`} target="_blank"><Search className="h-3 w-3 mr-1" /> Consulta</Link>
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 );
