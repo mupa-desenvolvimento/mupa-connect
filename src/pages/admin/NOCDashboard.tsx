@@ -556,7 +556,7 @@ function DeviceCard({ item, status }: any) {
         <div className="flex flex-col min-w-0 flex-1">
           <span className="text-[9px] uppercase font-black opacity-30 tracking-widest">Atividade</span>
           <span className="text-[10px] font-bold truncate text-white/80">
-            {item.last_heartbeat_at ? formatDistanceToNow(new Date(item.last_heartbeat_at), { addSuffix: true, locale: ptBR }) : 'Nunca'}
+            {item.last_player_activity_at ? formatDistanceToNow(new Date(item.last_player_activity_at), { addSuffix: true, locale: ptBR }) : 'Nunca'}
           </span>
         </div>
         <Badge variant="outline" className={cn("text-[8px] h-4 px-2 border-0 bg-background/50 uppercase font-black tracking-tighter", textColor)}>
