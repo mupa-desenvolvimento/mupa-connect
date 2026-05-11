@@ -256,6 +256,8 @@ export type Database = {
       audience_detections: {
         Row: {
           age: number | null
+          attention_seconds: number | null
+          company_id: string | null
           created_at: string
           detected_at: string
           device_id: string | null
@@ -265,11 +267,15 @@ export type Database = {
           gender_probability: number | null
           id: string
           metadata: Json | null
+          people_count: number | null
           session_id: string | null
+          store_id: string | null
           tenant_id: string | null
         }
         Insert: {
           age?: number | null
+          attention_seconds?: number | null
+          company_id?: string | null
           created_at?: string
           detected_at?: string
           device_id?: string | null
@@ -279,11 +285,15 @@ export type Database = {
           gender_probability?: number | null
           id?: string
           metadata?: Json | null
+          people_count?: number | null
           session_id?: string | null
+          store_id?: string | null
           tenant_id?: string | null
         }
         Update: {
           age?: number | null
+          attention_seconds?: number | null
+          company_id?: string | null
           created_at?: string
           detected_at?: string
           device_id?: string | null
@@ -293,10 +303,26 @@ export type Database = {
           gender_probability?: number | null
           id?: string
           metadata?: Json | null
+          people_count?: number | null
           session_id?: string | null
+          store_id?: string | null
           tenant_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "audience_detections_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audience_detections_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "audience_detections_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -337,15 +363,7 @@ export type Database = {
           old_value?: Json | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "audit_logs_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "vw_user_creation_status"
-            referencedColumns: ["auth_user_id"]
-          },
-        ]
+        Relationships: []
       }
       auditoria_correcoes_log: {
         Row: {
@@ -1927,13 +1945,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "device_quick_actions_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "vw_user_creation_status"
-            referencedColumns: ["auth_user_id"]
-          },
-          {
             foreignKeyName: "device_quick_actions_device_id_fkey"
             columns: ["device_id"]
             isOneToOne: false
@@ -2571,13 +2582,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "folders"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "folders_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "vw_user_creation_status"
-            referencedColumns: ["auth_user_id"]
           },
         ]
       }
@@ -3385,13 +3389,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "media_items_deleted_by_fkey"
-            columns: ["deleted_by"]
-            isOneToOne: false
-            referencedRelation: "vw_user_creation_status"
-            referencedColumns: ["auth_user_id"]
-          },
-          {
             foreignKeyName: "media_items_folder_id_fkey"
             columns: ["folder_id"]
             isOneToOne: false
@@ -3464,15 +3461,7 @@ export type Database = {
           media_id?: string
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "media_trash_logs_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "vw_user_creation_status"
-            referencedColumns: ["auth_user_id"]
-          },
-        ]
+        Relationships: []
       }
       medias_view: {
         Row: {
@@ -3569,13 +3558,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "monitoring_views_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "vw_user_creation_status"
-            referencedColumns: ["auth_user_id"]
           },
           {
             foreignKeyName: "monitoring_views_tenant_id_fkey"
@@ -5228,15 +5210,7 @@ export type Database = {
           id?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "vw_user_creation_status"
-            referencedColumns: ["auth_user_id"]
-          },
-        ]
+        Relationships: []
       }
       qrcode_campaigns: {
         Row: {
@@ -5916,13 +5890,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "tenant_admin_logs_actor_id_fkey"
-            columns: ["actor_id"]
-            isOneToOne: false
-            referencedRelation: "vw_user_creation_status"
-            referencedColumns: ["auth_user_id"]
-          },
-          {
             foreignKeyName: "tenant_admin_logs_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -6146,13 +6113,6 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "user_companies_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "vw_user_creation_status"
-            referencedColumns: ["auth_user_id"]
-          },
         ]
       }
       user_permissions: {
@@ -6177,15 +6137,7 @@ export type Database = {
           id?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_permissions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "vw_user_creation_status"
-            referencedColumns: ["auth_user_id"]
-          },
-        ]
+        Relationships: []
       }
       user_profiles: {
         Row: {
@@ -6221,13 +6173,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "user_profiles_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "vw_user_creation_status"
-            referencedColumns: ["auth_user_id"]
-          },
-          {
             foreignKeyName: "user_profiles_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -6255,15 +6200,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_roles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "vw_user_creation_status"
-            referencedColumns: ["auth_user_id"]
-          },
-        ]
+        Relationships: []
       }
       user_tenant_mappings: {
         Row: {
@@ -6295,13 +6232,6 @@ export type Database = {
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "user_tenant_mappings_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "vw_user_creation_status"
-            referencedColumns: ["auth_user_id"]
-          },
         ]
       }
       users: {
@@ -6332,15 +6262,7 @@ export type Database = {
           name?: string | null
           role?: Database["public"]["Enums"]["user_role_type"]
         }
-        Relationships: [
-          {
-            foreignKeyName: "users_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "vw_user_creation_status"
-            referencedColumns: ["auth_user_id"]
-          },
-        ]
+        Relationships: []
       }
       weather_locations: {
         Row: {
@@ -6938,42 +6860,6 @@ export type Database = {
         }
         Relationships: []
       }
-      vw_user_creation_status: {
-        Row: {
-          auth_created_at: string | null
-          auth_user_id: string | null
-          company_id: string | null
-          email: string | null
-          profile_created_at: string | null
-          profile_id: string | null
-          profile_role: string | null
-          status: string | null
-          tenant_id: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_profiles_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_profiles_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: true
-            referencedRelation: "vw_user_creation_status"
-            referencedColumns: ["auth_user_id"]
-          },
-          {
-            foreignKeyName: "user_profiles_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Functions: {
       add_playlist_item: {
@@ -7104,16 +6990,6 @@ export type Database = {
       delete_trade_marketing:
         | { Args: { _codbar: string }; Returns: Json }
         | { Args: { _codbar: string; _empresa: string }; Returns: Json }
-      device_heartbeat:
-        | { Args: { p_device_code: string }; Returns: undefined }
-        | {
-            Args: {
-              p_current_playlist_id?: string
-              p_device_token: string
-              p_status: string
-            }
-            Returns: Json
-          }
       drop_tenant_schema: {
         Args: { p_confirm: string; p_schema_name: string; p_tenant_id: string }
         Returns: undefined

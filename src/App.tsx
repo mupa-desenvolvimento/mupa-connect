@@ -40,13 +40,14 @@ import AppPlayerPage from "./pages/AppPlayer";
 import CompanyManagement from "./pages/admin/CompanyManagement";
 import WhatsAppManagement from "./pages/admin/WhatsApp";
 import QueryErrorsReport from "./pages/QueryErrorsReport";
+import PlayerConsulta from "./pages/PlayerConsulta";
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { Loader2 } from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { DevicePersistenceMonitor } from "@/components/DevicePersistenceMonitor";
+// DevicePersistenceMonitor removido conforme solicitação
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -92,13 +93,15 @@ const App = () => {
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <DevicePersistenceMonitor />
+          {/* Monitor de persistência desativado */}
           <BrowserRouter>
             <Routes>
               {/* Player rota fullscreen, sem layout e sem auth obrigatória (usa deviceCode) */}
               <Route path="/play" element={<Player />} />
               <Route path="/play/:deviceCode" element={<Player />} />
               <Route path="/play/:deviceCode/*" element={<Player />} />
+              <Route path="/player-consulta" element={<PlayerConsulta />} />
+              <Route path="/player-consulta/:deviceCode" element={<PlayerConsulta />} />
 
               {/* Face Demo fullscreen */}
               <Route path="/face-demo" element={<FaceDemo />} />
@@ -107,8 +110,7 @@ const App = () => {
               <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <Landing />} />
               <Route path="/landing" element={session ? <Navigate to="/dashboard" replace /> : <Landing />} />
               <Route path="/login" element={session ? <Navigate to="/dashboard" replace /> : <Login />} />
-              <Route path="/play/:deviceCode/*" element={<Player />} />
-
+              
               {/* Monitoramento Compartilhado - Sem login obrigatório (protegido por token) */}
               <Route path="/monitoring/view/:token" element={<SharedMonitoringPage />} />
 

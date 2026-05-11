@@ -458,6 +458,14 @@ export default function DevicesPage() {
                           </div>
                         </div>
                       </div>
+                      <div className="flex gap-2 mt-4 pt-3 border-t border-border/40">
+                        <Button asChild size="sm" variant="ghost" className="flex-1 h-8 text-[10px] text-primary" onClick={e => e.stopPropagation()}>
+                          <Link to={`/play/${d.serial}`} target="_blank"><Play className="h-3 w-3 mr-1" /> Player</Link>
+                        </Button>
+                        <Button asChild size="sm" variant="outline" className="flex-1 h-8 text-[10px] border-primary/20 text-primary" onClick={e => e.stopPropagation()}>
+                          <Link to={`/player-consulta/${d.serial}`} target="_blank"><Search className="h-3 w-3 mr-1" /> Consulta</Link>
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 );
@@ -581,7 +589,8 @@ export default function DevicesPage() {
                           {isTecnico && (
                             <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10" onClick={() => handleRebootDevice(d.id.toString(), d.apelido_interno)} title="Reiniciar"><RotateCcw className="h-4 w-4" /></Button>
                           )}
-                          <Button asChild size="sm" variant="ghost" className="h-8 text-primary hover:bg-primary/10"><Link to={`/play/${d.serial}`} target="_blank"><Play className="h-3.5 w-3.5 mr-1" /> Player</Link></Button>
+                          <Button asChild size="sm" variant="ghost" className="h-8 text-primary hover:bg-primary/10" title="Player de Mídia"><Link to={`/play/${d.serial}`} target="_blank"><Play className="h-3.5 w-3.5 mr-1" /> Player</Link></Button>
+                          <Button asChild size="sm" variant="outline" className="h-8 border-primary/30 text-primary hover:bg-primary/5" title="Terminal de Consulta"><Link to={`/player-consulta/${d.serial}`} target="_blank"><Search className="h-3.5 w-3.5 mr-1" /> Consulta</Link></Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -610,6 +619,14 @@ export default function DevicesPage() {
                         <span className="text-muted-foreground">Playlist:</span>
                         <span className="truncate max-w-[120px]">{d.playlists?.name || "N/A"}</span>
                       </div>
+                    </div>
+                    <div className="flex gap-2 mt-4 pt-3 border-t border-border/40">
+                      <Button asChild size="sm" variant="ghost" className="flex-1 h-8 text-[10px] text-primary" onClick={e => e.stopPropagation()}>
+                        <Link to={`/play/${d.serial}`} target="_blank"><Play className="h-3 w-3 mr-1" /> Player</Link>
+                      </Button>
+                      <Button asChild size="sm" variant="outline" className="flex-1 h-8 text-[10px] border-primary/20 text-primary" onClick={e => e.stopPropagation()}>
+                        <Link to={`/player-consulta/${d.serial}`} target="_blank"><Search className="h-3 w-3 mr-1" /> Consulta</Link>
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>

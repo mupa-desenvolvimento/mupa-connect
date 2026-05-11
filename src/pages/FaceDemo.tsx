@@ -83,6 +83,15 @@ export default function FaceDemo() {
   const [fps, setFps] = useState(0);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [retryCount, setRetryCount] = useState(0);
+  const [detectionConfig, setDetectionConfig] = useState({ inputSize: 224, scoreThreshold: 0.5, label: "Premium (224px)" });
+  const consecutiveEmptyFramesRef = useRef(0);
+  const currentConfigIdxRef = useRef(0);
+  
+  const configs = [
+    { inputSize: 224, scoreThreshold: 0.5, label: "Premium (224px)" },
+    { inputSize: 160, scoreThreshold: 0.4, label: "Balanced (160px)" },
+    { inputSize: 128, scoreThreshold: 0.3, label: "Fast (128px)" }
+  ];
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -93,24 +102,38 @@ export default function FaceDemo() {
 
   // Load models
   useEffect(() => {
+    let isMounted = true;
     const loadModels = async () => {
       try {
+        log("MODELS", "Iniciando carregamento dos modelos...");
         const MODEL_URL = '/models';
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-          faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
-          faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL)
-        ]);
-        setModelsLoaded(true);
-        startCamera();
+        
+        // Load one by one for better error tracking
+        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+        log("MODELS", "TinyFaceDetector carregado");
+        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+        log("MODELS", "FaceLandmark68 carregado");
+        await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+        log("MODELS", "FaceExpression carregado");
+        await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
+        log("MODELS", "AgeGender carregado");
+        
+        if (isMounted) {
+          log("MODELS", "Todos os modelos carregados com sucesso");
+          setModelsLoaded(true);
+          // Small delay before starting camera
+          setTimeout(() => startCamera(), 500);
+        }
       } catch (err) {
-        console.error("Error loading models:", err);
-        setError("Erro ao carregar inteligência artificial.");
+        log("MODELS", "Erro crítico ao carregar modelos", err);
+        if (isMounted) {
+          setError("Erro ao carregar inteligência artificial. Verifique a conexão.");
+        }
       }
     };
     loadModels();
     return () => {
+      isMounted = false;
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
       stopCamera();
     };
@@ -153,22 +176,52 @@ export default function FaceDemo() {
 
       if (videoRef.current) {
         log("CAMERA", "Vinculando stream ao elemento de vídeo");
+        
+        // Use srcObject for modern browsers
         videoRef.current.srcObject = stream;
+        
+        // Add listeners for debugging
+        videoRef.current.onplaying = () => log("VIDEO", "Evento: playing");
+        videoRef.current.onpause = () => log("VIDEO", "Evento: pause");
+        videoRef.current.onerror = (e) => log("VIDEO", "Evento: error", e);
+
+        // Ensure crossOrigin is set for face-api
+        videoRef.current.setAttribute('crossorigin', 'anonymous');
         
         // Manual play for WebView compatibility
         try {
           await videoRef.current.play();
           log("CAMERA", "Vídeo iniciado (play)");
+          
+          // Force detection to start after short delay to ensure hardware is ready
+          setTimeout(() => {
+            log("DETECTION", "Ativando detecção facial...");
+            setFaceDetectionActive(true);
+            setStatus("analyzing");
+            // Check models again
+            if (modelsLoaded) {
+              startDetectionLoop();
+            } else {
+              log("DETECTION", "Aguardando carregamento de modelos para iniciar loop");
+            }
+          }, 500);
         } catch (playErr) {
           log("CAMERA", "Erro ao iniciar play() automático, aguardando metadados", playErr);
+          
+          // Fallback: try playing on loadedmetadata
+          videoRef.current.onloadedmetadata = async () => {
+            log("CAMERA", "Metadados do vídeo carregados");
+            try {
+              await videoRef.current?.play();
+              log("CAMERA", "Vídeo iniciado via metadata");
+              setFaceDetectionActive(true);
+              setStatus("analyzing");
+              startDetectionLoop();
+            } catch (innerErr) {
+              log("CAMERA", "Falha crítica ao iniciar vídeo", innerErr);
+            }
+          };
         }
-
-        videoRef.current.onloadedmetadata = () => {
-          log("CAMERA", "Metadados do vídeo carregados");
-          setFaceDetectionActive(true);
-          setStatus("analyzing");
-          startDetectionLoop();
-        };
       }
     } catch (err: any) {
       log("CAMERA", "Erro ao inicializar câmera", err);
@@ -224,6 +277,12 @@ export default function FaceDemo() {
         return;
       }
 
+      // Check if video is actually playing and has valid dimensions
+      if (videoRef.current.paused || videoRef.current.ended || videoRef.current.readyState < 2) {
+        requestRef.current = requestAnimationFrame(detect);
+        return;
+      }
+
       // Performance monitoring
       framesRef.current++;
       const now = Date.now();
@@ -234,15 +293,25 @@ export default function FaceDemo() {
       }
 
       try {
-        // Use TinyFaceDetector for performance on Android/WebView
-        const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.5 });
+        // Log detection start once for debugging
+        if (framesRef.current === 1) {
+          log("DETECTION", "Iniciando detecção no frame atual");
+        }
+
+        // Dynamic fallback system for WebView/Android 9 compatibility
+        const options = new faceapi.TinyFaceDetectorOptions({ 
+          inputSize: detectionConfig.inputSize, 
+          scoreThreshold: detectionConfig.scoreThreshold 
+        });
+        
         const detections = await faceapi
           .detectAllFaces(videoRef.current, options)
           .withFaceLandmarks()
           .withFaceExpressions()
           .withAgeAndGender();
 
-        if (detections.length > 0) {
+        if (detections && detections.length > 0) {
+          consecutiveEmptyFramesRef.current = 0;
           setStatus("active");
           const newFaces: DetectedFace[] = detections.map((d, i) => {
             const expressions = d.expressions.asSortedArray();
@@ -261,29 +330,69 @@ export default function FaceDemo() {
           setDetectedFaces(newFaces);
           drawOverlay(detections);
         } else {
-          setStatus("analyzing");
+          // Fallback logic: if no faces for 60 frames (~2-4 seconds depending on hardware)
+          consecutiveEmptyFramesRef.current++;
+          
+          if (consecutiveEmptyFramesRef.current > 60) {
+            consecutiveEmptyFramesRef.current = 0;
+            const nextIdx = (currentConfigIdxRef.current + 1) % configs.length;
+            if (nextIdx !== currentConfigIdxRef.current) {
+              currentConfigIdxRef.current = nextIdx;
+              const nextConfig = configs[nextIdx];
+              log("FALLBACK", `Nenhum rosto detectado. Alternando para configuração: ${nextConfig.label}`);
+              setDetectionConfig(nextConfig);
+            }
+          }
+
+          if (status !== "analyzing") setStatus("analyzing");
           setDetectedFaces([]);
-          const ctx = canvasRef.current.getContext('2d');
-          ctx?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          
+          // Use direct reference if possible to ensure we clear correctly
+          if (canvasRef.current) {
+            const ctx = canvasRef.current.getContext('2d');
+            if (ctx) {
+              ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+            }
+          }
         }
       } catch (err) {
-        console.error("Detection error:", err);
+        log("DETECTION", "Erro durante a detecção", err);
+        // On critical error, try next config immediately
+        consecutiveEmptyFramesRef.current = 0;
+        const nextIdx = (currentConfigIdxRef.current + 1) % configs.length;
+        currentConfigIdxRef.current = nextIdx;
+        setDetectionConfig(configs[nextIdx]);
       }
 
+      // Continue loop
       requestRef.current = requestAnimationFrame(detect);
     };
+
+    // Use a small delay for the first execution to ensure everything is ready
+    log("DETECTION", "Agendando início do loop de detecção");
     requestRef.current = requestAnimationFrame(detect);
-  }, [modelsLoaded]);
+  }, [modelsLoaded, faceDetectionActive, detectionConfig]);
 
   const drawOverlay = (detections: any[]) => {
     if (!canvasRef.current || !videoRef.current) return;
     const ctx = canvasRef.current.getContext('2d');
     if (!ctx) return;
 
-    const displaySize = { width: videoRef.current.offsetWidth, height: videoRef.current.offsetHeight };
-    faceapi.matchDimensions(canvasRef.current, displaySize);
-    const resizedDetections = faceapi.resizeResults(detections, displaySize);
+    // Use video dimensions for better overlay mapping
+    const videoWidth = videoRef.current.videoWidth || videoRef.current.offsetWidth;
+    const videoHeight = videoRef.current.videoHeight || videoRef.current.offsetHeight;
+    
+    // Set canvas internal resolution to match display size
+    const displaySize = { 
+      width: videoRef.current.offsetWidth, 
+      height: videoRef.current.offsetHeight 
+    };
 
+    if (canvasRef.current.width !== displaySize.width || canvasRef.current.height !== displaySize.height) {
+      faceapi.matchDimensions(canvasRef.current, displaySize);
+    }
+    
+    const resizedDetections = faceapi.resizeResults(detections, displaySize);
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
     resizedDetections.forEach((d) => {
@@ -295,8 +404,7 @@ export default function FaceDemo() {
       ctx.shadowBlur = 15;
       ctx.shadowColor = '#22d3ee';
       
-      // Corner borders style
-      const cornerSize = 20;
+      const cornerSize = Math.min(width, height) * 0.2;
       
       // Top Left
       ctx.beginPath();
@@ -377,7 +485,7 @@ export default function FaceDemo() {
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-500/10 blur-[120px] rounded-full animate-pulse" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full animate-pulse" />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-50 contrast-150" />
+        <div className="absolute inset-0 bg-black opacity-40 brightness-50 contrast-150" />
       </div>
 
       {/* Camera Feed */}
@@ -441,6 +549,11 @@ export default function FaceDemo() {
                 <Activity className={`w-3 h-3 ${faceDetectionActive ? 'text-green-400' : 'text-red-400'}`} />
                 <span className="text-[10px] font-mono text-white/60">{faceDetectionActive ? 'ACTIVE' : 'PAUSED'}</span>
               </button>
+            </GlassCard>
+
+            <GlassCard className="px-4 py-2 hidden md:flex items-center gap-2">
+              <Zap className="w-3 h-3 text-yellow-400" />
+              <span className="text-[10px] font-mono text-white/60 uppercase">{detectionConfig.label}</span>
             </GlassCard>
             
             <button 
