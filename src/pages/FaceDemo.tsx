@@ -198,7 +198,12 @@ export default function FaceDemo() {
             log("DETECTION", "Ativando detecção facial...");
             setFaceDetectionActive(true);
             setStatus("analyzing");
-            startDetectionLoop();
+            // Check models again
+            if (modelsLoaded) {
+              startDetectionLoop();
+            } else {
+              log("DETECTION", "Aguardando carregamento de modelos para iniciar loop");
+            }
           }, 500);
         } catch (playErr) {
           log("CAMERA", "Erro ao iniciar play() automático, aguardando metadados", playErr);
@@ -341,9 +346,13 @@ export default function FaceDemo() {
 
           if (status !== "analyzing") setStatus("analyzing");
           setDetectedFaces([]);
-          const ctx = canvasRef.current.getContext('2d');
-          if (ctx) {
-            ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          
+          // Use direct reference if possible to ensure we clear correctly
+          if (canvasRef.current) {
+            const ctx = canvasRef.current.getContext('2d');
+            if (ctx) {
+              ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+            }
           }
         }
       } catch (err) {
@@ -355,8 +364,12 @@ export default function FaceDemo() {
         setDetectionConfig(configs[nextIdx]);
       }
 
+      // Continue loop
       requestRef.current = requestAnimationFrame(detect);
     };
+
+    // Use a small delay for the first execution to ensure everything is ready
+    log("DETECTION", "Agendando início do loop de detecção");
     requestRef.current = requestAnimationFrame(detect);
   }, [modelsLoaded, faceDetectionActive, detectionConfig]);
 
@@ -365,10 +378,21 @@ export default function FaceDemo() {
     const ctx = canvasRef.current.getContext('2d');
     if (!ctx) return;
 
-    const displaySize = { width: videoRef.current.offsetWidth, height: videoRef.current.offsetHeight };
-    faceapi.matchDimensions(canvasRef.current, displaySize);
-    const resizedDetections = faceapi.resizeResults(detections, displaySize);
+    // Use video dimensions for better overlay mapping
+    const videoWidth = videoRef.current.videoWidth || videoRef.current.offsetWidth;
+    const videoHeight = videoRef.current.videoHeight || videoRef.current.offsetHeight;
+    
+    // Set canvas internal resolution to match display size
+    const displaySize = { 
+      width: videoRef.current.offsetWidth, 
+      height: videoRef.current.offsetHeight 
+    };
 
+    if (canvasRef.current.width !== displaySize.width || canvasRef.current.height !== displaySize.height) {
+      faceapi.matchDimensions(canvasRef.current, displaySize);
+    }
+    
+    const resizedDetections = faceapi.resizeResults(detections, displaySize);
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
     resizedDetections.forEach((d) => {
@@ -380,8 +404,7 @@ export default function FaceDemo() {
       ctx.shadowBlur = 15;
       ctx.shadowColor = '#22d3ee';
       
-      // Corner borders style
-      const cornerSize = 20;
+      const cornerSize = Math.min(width, height) * 0.2;
       
       // Top Left
       ctx.beginPath();
@@ -462,7 +485,7 @@ export default function FaceDemo() {
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-500/10 blur-[120px] rounded-full animate-pulse" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full animate-pulse" />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-50 contrast-150" />
+        <div className="absolute inset-0 bg-black opacity-40 brightness-50 contrast-150" />
       </div>
 
       {/* Camera Feed */}
