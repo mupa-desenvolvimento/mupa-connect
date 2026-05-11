@@ -120,7 +120,7 @@ export function DeviceItem({ device, isSelected, onToggle, onClick }: DeviceItem
             </span>
             <div className={cn(
               "w-1.5 h-1.5 rounded-full",
-              (device as any).last_heartbeat_at && (new Date().getTime() - new Date((device as any).last_heartbeat_at).getTime() < 300000) ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" : "bg-red-500"
+              (device as any).last_player_activity_at && (new Date().getTime() - new Date((device as any).last_player_activity_at).getTime() < 300000) ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" : "bg-red-500"
             )} />
           </div>
           <div className="flex items-center gap-2 mt-0.5">
