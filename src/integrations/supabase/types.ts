@@ -6990,16 +6990,6 @@ export type Database = {
       delete_trade_marketing:
         | { Args: { _codbar: string }; Returns: Json }
         | { Args: { _codbar: string; _empresa: string }; Returns: Json }
-      device_heartbeat:
-        | { Args: { p_device_code: string }; Returns: undefined }
-        | {
-            Args: {
-              p_current_playlist_id?: string
-              p_device_token: string
-              p_status: string
-            }
-            Returns: Json
-          }
       drop_tenant_schema: {
         Args: { p_confirm: string; p_schema_name: string; p_tenant_id: string }
         Returns: undefined
