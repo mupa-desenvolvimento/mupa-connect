@@ -211,7 +211,7 @@ export function DeviceAvailablePanel({
           apelido_interno, 
           serial, 
           online,
-          last_heartbeat_at,
+          last_player_activity_at,
           last_proof_at,
           num_filial, 
           store_id,
