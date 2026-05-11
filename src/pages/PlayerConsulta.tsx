@@ -305,26 +305,26 @@ export default function PlayerConsulta() {
             {isConsulting ? (
               <div className="flex flex-col items-center gap-6 text-white">
                 <Loader2 className="h-16 w-16 animate-spin text-primary" />
-                <h2 className="text-3xl font-bold">Consultando produto...</h2>
+                <h2 className="text-[clamp(1.5rem,5vw,3rem)] font-bold">Consultando produto...</h2>
               </div>
             ) : error ? (
               <div className="flex flex-col items-center gap-6 text-center max-w-lg text-white">
-                <AlertCircle className="h-24 w-24 text-red-500" />
-                <h2 className="text-4xl font-bold">Ops!</h2>
-                <p className="text-2xl text-white/80">{error}</p>
+                <AlertCircle className="h-[clamp(4rem,10vw,6rem)] w-[clamp(4rem,10vw,6rem)] text-red-500" />
+                <h2 className="text-[clamp(2rem,6vw,4rem)] font-bold">Ops!</h2>
+                <p className="text-[clamp(1.2rem,4vw,2.5rem)] text-white/80">{error}</p>
                 {lastConsultedEan && (
-                  <p className="text-sm text-white/30 font-mono mt-2">EAN: {lastConsultedEan}</p>
+                  <p className="text-[clamp(0.8rem,2vw,1.2rem)] text-white/30 font-mono mt-2">EAN: {lastConsultedEan}</p>
                 )}
                 <button 
                   onClick={() => setShowOverlay(false)}
-                  className="mt-8 px-12 py-4 bg-white/10 hover:bg-white/20 text-white rounded-full text-xl transition-all"
+                  className="mt-8 px-8 py-3 md:px-12 md:py-4 bg-white/10 hover:bg-white/20 text-white rounded-full text-[clamp(1rem,3vw,1.5rem)] transition-all"
                 >
                   Voltar
                 </button>
               </div>
             ) : product && (
               <div className={cn(
-                "w-full h-full flex gap-12",
+                "w-full h-full flex gap-6 md:gap-12",
                 isVertical ? "flex-col" : "flex-row"
               )}>
                 <div className={cn(
@@ -355,15 +355,15 @@ export default function PlayerConsulta() {
                   isVertical ? "h-3/5 w-full" : "w-1/2 h-full order-1 text-white"
                 )}>
                   <div className="space-y-6">
-                    <div className="inline-block px-6 py-2 rounded-full bg-white/10 text-white/60 text-xl font-medium">
+                    <div className="inline-block px-4 py-1.5 md:px-6 md:py-2 rounded-full bg-white/10 text-white/60 text-base md:text-xl font-medium">
                       Código: {product.internal_id}
                     </div>
                     
                     <div className="space-y-2">
-                      <h1 className="text-6xl md:text-8xl font-black leading-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+                      <h1 className="text-[clamp(2.5rem,8vw,6rem)] font-black leading-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
                         {getProductNameParts(product.description).main}
                       </h1>
-                      <p className="text-3xl md:text-4xl text-white/50 font-medium">
+                      <p className="text-[clamp(1.2rem,4vw,2.5rem)] text-white/50 font-medium">
                         {getProductNameParts(product.description).rest}
                       </p>
                     </div>
@@ -372,43 +372,43 @@ export default function PlayerConsulta() {
                   <div className="space-y-8">
                     <div className="flex flex-wrap gap-4">
                       {product.price?.promo_text && (
-                        <div className="px-6 py-3 rounded-2xl bg-primary/20 border border-primary/30 text-primary text-2xl font-bold flex items-center gap-3">
-                          <div className="w-3 h-3 rounded-full bg-primary animate-pulse" />
+                        <div className="px-4 py-2 md:px-6 md:py-3 rounded-2xl bg-primary/20 border border-primary/30 text-primary text-xl md:text-2xl font-bold flex items-center gap-3">
+                          <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-primary animate-pulse" />
                           {product.price.promo_text}
                         </div>
                       )}
                       {product.price?.pack_quantity && (
-                        <div className="px-6 py-3 rounded-2xl bg-white/10 border border-white/10 text-white text-2xl font-medium">
+                        <div className="px-4 py-2 md:px-6 md:py-3 rounded-2xl bg-white/10 border border-white/10 text-white text-xl md:text-2xl font-medium">
                           Leve {product.price.pack_quantity} un
                         </div>
                       )}
                     </div>
 
                     <div 
-                      className="p-12 rounded-[40px] shadow-2xl relative overflow-hidden"
+                      className="p-8 md:p-12 rounded-[30px] md:rounded-[40px] shadow-2xl relative overflow-hidden"
                       style={{ 
                         backgroundColor: product.visual?.cor_dominante_escuro || '#111',
                         border: `1px solid ${product.visual?.cor_dominante_claro}33`
                       }}
                     >
                       <div 
-                        className="absolute -right-20 -top-20 w-64 h-64 blur-[100px] opacity-40"
+                        className="absolute -right-20 -top-20 w-48 h-48 md:w-64 md:h-64 blur-[80px] md:blur-[100px] opacity-40"
                         style={{ backgroundColor: product.visual?.cor_assinatura_produto || '#00C2FF' }}
                       />
 
                       <div className="relative z-10">
-                        <span className="text-white/40 text-3xl font-bold uppercase tracking-wider block mb-2">Preço Exclusivo</span>
-                        <div className="flex items-baseline gap-4">
-                          <span className="text-5xl md:text-6xl text-white/40 font-bold">R$</span>
-                          <span className="text-[140px] md:text-[200px] leading-none font-black text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+                        <span className="text-white/40 text-xl md:text-3xl font-bold uppercase tracking-wider block mb-2">Preço Exclusivo</span>
+                        <div className="flex items-baseline gap-2 md:gap-4">
+                          <span className="text-3xl md:text-5xl lg:text-6xl text-white/40 font-bold">R$</span>
+                          <span className="text-[clamp(5rem,15vw,12.5rem)] leading-none font-black text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
                             {formatPrice(product.price?.price_pack || (product.price as any)?.price || (product.price as any)?.price_unit).replace('R$', '').trim()}
                           </span>
                         </div>
                         
                         {product.price?.price_unit && (
-                          <div className="mt-4 pt-6 border-t border-white/10 flex justify-between items-center">
-                            <span className="text-white/40 text-2xl">Preço Unitário</span>
-                            <span className="text-white/80 text-3xl font-bold">{formatPrice(product.price.price_unit)}</span>
+                          <div className="mt-4 pt-4 md:pt-6 border-t border-white/10 flex justify-between items-center">
+                            <span className="text-white/40 text-lg md:text-2xl">Preço Unitário</span>
+                            <span className="text-white/80 text-xl md:text-3xl font-bold">{formatPrice(product.price.price_unit)}</span>
                           </div>
                         )}
                       </div>
@@ -436,7 +436,7 @@ export default function PlayerConsulta() {
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4">
         <div className="flex items-center gap-3 opacity-30 grayscale">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center font-bold text-white">M</div>
-          <span className="text-white font-medium tracking-[0.2em] text-sm uppercase">Mupa Retail Media</span>
+          <span className="text-white font-medium tracking-[0.2em] text-[10px] md:text-xs lg:text-sm uppercase">Mupa Retail Media</span>
         </div>
         
         <AnimatePresence>
@@ -445,10 +445,10 @@ export default function PlayerConsulta() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="px-6 py-3 bg-white/5 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-3"
+              className="px-4 py-2 md:px-6 md:py-3 bg-white/5 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-3"
             >
-              <Barcode className="w-5 h-5 text-primary animate-pulse" />
-              <span className="text-white/40 text-sm font-medium uppercase tracking-widest">Aguardando leitura de código</span>
+              <Barcode className="w-4 h-4 md:w-5 md:h-5 text-primary animate-pulse" />
+              <span className="text-white/40 text-[10px] md:text-xs lg:text-sm font-medium uppercase tracking-widest whitespace-nowrap">Aguardando leitura de código</span>
             </motion.div>
           )}
         </AnimatePresence>
