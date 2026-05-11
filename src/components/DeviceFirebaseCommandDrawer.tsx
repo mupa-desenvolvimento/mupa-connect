@@ -47,7 +47,7 @@ interface DeviceLike {
   apelido_interno?: string | null;
   num_filial?: string | null;
   grupo_dispositivos?: string | null;
-  last_heartbeat_at?: string | null;
+  last_player_activity_at?: string | null;
   last_proof_at?: string | null;
   is_maintenance?: boolean;
   autostart?: boolean;
@@ -646,7 +646,7 @@ export function DeviceFirebaseCommandDrawer({
                 <DetailRow
                   icon={Activity}
                   label="Última atividade"
-                  value={formatDate(device?.last_heartbeat_at)}
+                  value={formatDate(device?.last_player_activity_at)}
                 />
               </div>
             </section>

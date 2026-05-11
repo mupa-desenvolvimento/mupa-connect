@@ -67,13 +67,12 @@ export default function QuickAccessPage() {
     fetchData();
   }, [token]);
 
-  const getDeviceStatus = (lastHeartbeat: string | null, lastProof: string | null): DeviceStatus => {
-    if (!lastHeartbeat) return "offline";
+  const getDeviceStatus = (lastActivityAt: string | null): DeviceStatus => {
+    if (!lastActivityAt) return "offline";
     const now = new Date().getTime();
-    const heartbeatTime = new Date(lastHeartbeat).getTime();
-    // Aumentado para 5 minutos para ser mais tolerante a variações de conexão
-    const isHeartbeatRecent = (now - heartbeatTime) < 300000;
-    return isHeartbeatRecent ? "online" : "offline";
+    const activityTime = new Date(lastActivityAt).getTime();
+    const isActivityRecent = (now - activityTime) < 300000;
+    return isActivityRecent ? "online" : "offline";
   };
 
   const pollQueryLog = async (device: any, ean: string, sentAtIso: string) => {
@@ -197,7 +196,7 @@ export default function QuickAccessPage() {
           </div>
         ) : (
           devices.map((device) => {
-            const status = getDeviceStatus(device.last_heartbeat_at, device.last_proof_at);
+            const status = getDeviceStatus(device.last_player_activity_at);
             return (
               <Card key={device.id} className="overflow-hidden border-none shadow-md">
                 <CardHeader className="p-4 pb-2">

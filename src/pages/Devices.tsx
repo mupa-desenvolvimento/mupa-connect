@@ -100,7 +100,7 @@ export default function DevicesPage() {
         else return [];
       }
       
-      const { data, error } = await query.order("apelido_interno");
+      const { data, error } = await query.order("last_player_activity_at", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -133,14 +133,14 @@ export default function DevicesPage() {
     return Number.isNaN(t) ? 0 : t;
   };
 
-  const getConnectionStatus = (lastHeartbeat: string | null): ConnectionStatus => {
-    const heartbeatTime = parseTs(lastHeartbeat);
-    if (!heartbeatTime) return "offline";
+  const getConnectionStatus = (lastActivity: string | null): ConnectionStatus => {
+    const activityTime = parseTs(lastActivity);
+    if (!activityTime) return "offline";
     const now = Date.now();
-    const diff = (now - heartbeatTime) / 1000;
+    const diff = (now - activityTime) / 1000;
     
-    if (diff < 90) return "online";
-    if (diff < 180) return "unstable";
+    if (diff < 120) return "online";
+    if (diff < 240) return "unstable";
     return "offline";
   };
 
@@ -153,7 +153,7 @@ export default function DevicesPage() {
   const filteredDevices = useMemo(() => {
     if (!devices) return [];
     return devices.filter(d => {
-      const connStatus = getConnectionStatus(d.last_heartbeat_at);
+      const connStatus = getConnectionStatus(d.last_player_activity_at);
       const matchesSearch = 
         (d.apelido_interno?.toLowerCase().includes(search.toLowerCase()) || 
          d.serial?.toLowerCase().includes(search.toLowerCase()) ||
@@ -196,9 +196,9 @@ export default function DevicesPage() {
     
     return {
       total: devices.length,
-      online: devices.filter(d => getConnectionStatus(d.last_heartbeat_at) === "online").length,
-      unstable: devices.filter(d => getConnectionStatus(d.last_heartbeat_at) === "unstable").length,
-      offline: devices.filter(d => getConnectionStatus(d.last_heartbeat_at) === "offline").length,
+      online: devices.filter(d => getConnectionStatus(d.last_player_activity_at) === "online").length,
+      unstable: devices.filter(d => getConnectionStatus(d.last_player_activity_at) === "unstable").length,
+      offline: devices.filter(d => getConnectionStatus(d.last_player_activity_at) === "offline").length,
       noPlaylist: devices.filter(d => !d.playlist_id).length,
       filtered: filteredDevices.length
     };
@@ -413,7 +413,7 @@ export default function DevicesPage() {
           ) : isMobile ? (
             <div className="p-4 space-y-3">
               {filteredDevices.map(d => {
-                const connStatus = getConnectionStatus(d.last_heartbeat_at);
+                const connStatus = getConnectionStatus(d.last_player_activity_at);
                 const pStatus = getPlayerStatus(d.player_status);
                 return (
                   <Card key={d.id} className="border-border/60" onClick={() => openDeviceDrawer(d)}>
@@ -448,7 +448,7 @@ export default function DevicesPage() {
                           <p className="text-muted-foreground text-[10px] uppercase font-bold mb-0.5">Último Acesso</p>
                           <div className="flex items-center gap-1.5">
                             <Activity className="h-3 w-3 text-muted-foreground" />
-                            <span>{formatDate(d.last_heartbeat_at)}</span>
+                            <span>{formatDate(d.last_player_activity_at)}</span>
                           </div>
                         </div>
                       </div>
@@ -495,7 +495,7 @@ export default function DevicesPage() {
               </TableHeader>
               <TableBody>
                 {filteredDevices.map((d) => {
-                  const connStatus = getConnectionStatus(d.last_heartbeat_at);
+                const connStatus = getConnectionStatus(d.last_player_activity_at);
                   const playStatus = getPlayerStatus(d.player_status);
                   return (
                     <TableRow key={d.id} className={cn("hover:bg-muted/30 cursor-pointer transition-colors", selectedIds.has(d.id) && "bg-primary/5")} onClick={() => openDeviceDrawer({ ...d, status: connStatus })}>
@@ -563,7 +563,7 @@ export default function DevicesPage() {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-xs">{formatDate(d.last_heartbeat_at)}</TableCell>
+                      <TableCell className="text-muted-foreground text-xs">{formatDate(d.last_player_activity_at)}</TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1">
                           <StatusBadge status={connStatus} />

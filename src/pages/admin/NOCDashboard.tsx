@@ -106,7 +106,7 @@ export default function NOCDashboard() {
         offline,
         unstable,
         status,
-        lastActivity: storeDevices.length > 0 ? storeDevices[0].last_heartbeat_at : null
+        lastActivity: storeDevices.length > 0 ? storeDevices[0].last_player_activity_at : null
       };
     });
   }, [stores, devices]);
@@ -154,7 +154,7 @@ export default function NOCDashboard() {
       console.log("NOC: Loading all devices for SuperAdmin");
     }
 
-    const { data } = await query.order('last_heartbeat_at', { ascending: false });
+    const { data } = await query.order('last_player_activity_at', { ascending: false });
     if (data) {
       setDevices(data);
       setLastUpdate(new Date());
@@ -230,13 +230,13 @@ export default function NOCDashboard() {
   };
 
   function getDeviceStatus(device: any) {
-    if (!device.last_heartbeat_at) return "offline";
+    if (!device.last_player_activity_at) return "offline";
     const now = new Date();
-    const lastHeartbeat = new Date(device.last_heartbeat_at);
-    const diffSeconds = (now.getTime() - lastHeartbeat.getTime()) / 1000;
+    const lastActivity = new Date(device.last_player_activity_at);
+    const diffSeconds = (now.getTime() - lastActivity.getTime()) / 1000;
     
-    if (diffSeconds > 120) return "offline";
-    if (diffSeconds > 60) return "unstable";
+    if (diffSeconds > 300) return "offline";
+    if (diffSeconds > 120) return "unstable";
     return "online";
   }
 
@@ -556,7 +556,7 @@ function DeviceCard({ item, status }: any) {
         <div className="flex flex-col min-w-0 flex-1">
           <span className="text-[9px] uppercase font-black opacity-30 tracking-widest">Atividade</span>
           <span className="text-[10px] font-bold truncate text-white/80">
-            {item.last_heartbeat_at ? formatDistanceToNow(new Date(item.last_heartbeat_at), { addSuffix: true, locale: ptBR }) : 'Nunca'}
+            {item.last_player_activity_at ? formatDistanceToNow(new Date(item.last_player_activity_at), { addSuffix: true, locale: ptBR }) : 'Nunca'}
           </span>
         </div>
         <Badge variant="outline" className={cn("text-[8px] h-4 px-2 border-0 bg-background/50 uppercase font-black tracking-tighter", textColor)}>

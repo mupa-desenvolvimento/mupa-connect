@@ -56,7 +56,7 @@ interface Device {
   apelido_interno: string;
   num_filial: string;
   grupo_dispositivos: string;
-  last_heartbeat_at: string | null;
+  last_player_activity_at: string | null;
   last_proof_at: string | null;
   current_playlist_id: string | null;
   current_media_id: string | null;
@@ -143,8 +143,8 @@ export default function PlayerMonitoring() {
   async function fetchDevices() {
     const { data, error } = await supabase
       .from("dispositivos")
-      .select("id, serial, apelido_interno, num_filial, grupo_dispositivos, last_heartbeat_at, last_proof_at, current_playlist_id, current_media_id, player_status, company_id")
-      .order('last_heartbeat_at', { ascending: false });
+      .select("id, serial, apelido_interno, num_filial, grupo_dispositivos, last_player_activity_at, last_proof_at, current_playlist_id, current_media_id, player_status, company_id")
+      .order('last_player_activity_at', { ascending: false });
 
     if (!error && data) {
       setDevices(data);
@@ -154,16 +154,16 @@ export default function PlayerMonitoring() {
 
   const getStatus = (device: Device): DeviceStatus => {
     if (!device.company_id || device.company_id === 'fd55dbdd-63da-442e-aa99-5575c0496622') return "pending";
-    if (!device.last_heartbeat_at) return "offline";
+    if (!device.last_player_activity_at) return "offline";
     
     const now = new Date();
-    const lastHeartbeat = new Date(device.last_heartbeat_at);
-    const diffSeconds = (now.getTime() - lastHeartbeat.getTime()) / 1000;
+    const lastActivity = new Date(device.last_player_activity_at);
+    const diffSeconds = (now.getTime() - lastActivity.getTime()) / 1000;
 
-    // Regra: se está reproduzindo, não marca como instável imediatamente (até 180s)
+    // Regra: se está reproduzindo, não marca como instável imediatamente (até 300s)
     const isPlaying = (device as any).player_status === "playing";
-    const unstableThreshold = isPlaying ? 180 : 90;
-    const offlineThreshold = 180;
+    const unstableThreshold = isPlaying ? 300 : 120;
+    const offlineThreshold = 300;
 
     if (diffSeconds > offlineThreshold) return "offline";
     
@@ -375,8 +375,8 @@ export default function PlayerMonitoring() {
                       <TableCell>
                         <div className="flex items-center gap-2 text-sm">
                           <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                          {device.last_heartbeat_at ? (
-                            formatDistanceToNow(new Date(device.last_heartbeat_at), { addSuffix: true, locale: ptBR })
+                          {device.last_player_activity_at ? (
+                            formatDistanceToNow(new Date(device.last_player_activity_at), { addSuffix: true, locale: ptBR })
                           ) : "Nunca"}
                         </div>
                       </TableCell>

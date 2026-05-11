@@ -58,7 +58,7 @@ export default function DeviceDetailPage() {
 
     let query = supabase
       .from("dispositivos")
-      .select("id, apelido_interno, serial, online, num_filial, is_maintenance, playlist_id, last_heartbeat_at, company_id, tenant_id")
+      .select("id, apelido_interno, serial, online, num_filial, is_maintenance, playlist_id, last_player_activity_at, company_id, tenant_id")
       .eq("id", Number(id));
     
     if (!isSuperAdmin) {
@@ -83,7 +83,7 @@ export default function DeviceDetailPage() {
         id: String(data.id),
         name: data.apelido_interno ?? "Dispositivo",
         device_code: data.serial ?? null,
-        status: (data.last_heartbeat_at && (new Date().getTime() - new Date(data.last_heartbeat_at).getTime() < 300000)) ? "online" : "offline",
+        status: (data.last_player_activity_at && (new Date().getTime() - new Date(data.last_player_activity_at).getTime() < 300000)) ? "online" : "offline",
         resolution: null,
         num_filial: data.num_filial ?? "",
         is_maintenance: !!data.is_maintenance,

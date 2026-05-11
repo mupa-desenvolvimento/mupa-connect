@@ -252,7 +252,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   <span className="text-[10px] text-muted-foreground hidden sm:inline font-mono">
-                    {d.last_heartbeat_at ? format(new Date(d.last_heartbeat_at), "HH:mm") : "N/A"}
+                    {d.last_player_activity_at ? format(new Date(d.last_player_activity_at), "HH:mm") : "N/A"}
                   </span>
                   <StatusBadge status={d.online ? "online" : "offline"} />
                   <Button asChild size="sm" variant="ghost" className="h-8 text-xs font-bold text-primary hover:bg-primary/10">

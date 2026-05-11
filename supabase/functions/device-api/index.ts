@@ -252,10 +252,9 @@ serve(async (req) => {
         current_media_id: media_id
       }
     } else if (path === 'heartbeat') {
-      // Heartbeat desativado conforme solicitação
-      return new Response(JSON.stringify({ success: true, message: 'Heartbeat disabled' }), {
+      return new Response(JSON.stringify({ error: 'Endpoint heartbeat desativado' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
+        status: 410, // Gone
       })
     } else {
       return new Response(JSON.stringify({ error: 'Invalid endpoint' }), {

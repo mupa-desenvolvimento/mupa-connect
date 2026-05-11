@@ -90,7 +90,7 @@ export default function SharedMonitoringPage() {
       query = query.eq("company_id", vData.company_id);
     }
 
-    const { data } = await query.order('last_heartbeat_at', { ascending: false });
+    const { data } = await query.order('last_player_activity_at', { ascending: false });
     if (data) {
       setDevices(data);
       setLastUpdate(new Date());
@@ -107,13 +107,13 @@ export default function SharedMonitoringPage() {
   }
 
   const getDeviceStatus = (device: any) => {
-    if (!device.last_heartbeat_at) return "offline";
+    if (!device.last_player_activity_at) return "offline";
     const now = new Date();
-    const lastHeartbeat = new Date(device.last_heartbeat_at);
-    const diffSeconds = (now.getTime() - lastHeartbeat.getTime()) / 1000;
+    const lastActivity = new Date(device.last_player_activity_at);
+    const diffSeconds = (now.getTime() - lastActivity.getTime()) / 1000;
     
-    if (diffSeconds > 120) return "offline";
-    if (diffSeconds > 60) return "unstable";
+    if (diffSeconds > 180) return "offline";
+    if (diffSeconds > 90) return "unstable";
     return "online";
   };
 
@@ -195,7 +195,7 @@ export default function SharedMonitoringPage() {
                       </div>
                     </div>
                     <span className="text-[10px] opacity-60">
-                      {d.last_heartbeat_at ? formatDistanceToNow(new Date(d.last_heartbeat_at), { addSuffix: true, locale: ptBR }) : 'Nunca'}
+                      {d.last_player_activity_at ? formatDistanceToNow(new Date(d.last_player_activity_at), { addSuffix: true, locale: ptBR }) : 'Nunca'}
                     </span>
                   </div>
                 );
