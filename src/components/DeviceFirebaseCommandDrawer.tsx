@@ -646,7 +646,7 @@ export function DeviceFirebaseCommandDrawer({
                 <DetailRow
                   icon={Activity}
                   label="Última atividade"
-                  value={formatDate(device?.last_heartbeat_at)}
+                  value={formatDate(device?.last_player_activity_at)}
                 />
               </div>
             </section>
