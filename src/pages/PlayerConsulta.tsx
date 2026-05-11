@@ -400,9 +400,37 @@ export default function PlayerConsulta() {
         )}
       </AnimatePresence>
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 opacity-30 grayscale">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center font-bold text-white">M</div>
-        <span className="text-white font-medium tracking-[0.2em] text-sm uppercase">Mupa Retail Media</span>
+      {/* Input Invisível para Scanner HID */}
+      <div className="fixed top-0 left-0 w-0 h-0 opacity-0 overflow-hidden pointer-events-none">
+        <Input
+          ref={inputRef}
+          type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          autoFocus
+        />
+      </div>
+
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4">
+        <div className="flex items-center gap-3 opacity-30 grayscale">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center font-bold text-white">M</div>
+          <span className="text-white font-medium tracking-[0.2em] text-sm uppercase">Mupa Retail Media</span>
+        </div>
+        
+        <AnimatePresence>
+          {!showOverlay && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="px-6 py-3 bg-white/5 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-3"
+            >
+              <Barcode className="w-5 h-5 text-primary animate-pulse" />
+              <span className="text-white/40 text-sm font-medium uppercase tracking-widest">Aguardando leitura de código</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
