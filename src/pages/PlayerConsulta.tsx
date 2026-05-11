@@ -7,8 +7,9 @@ import { ManifestService } from "@/services/ManifestService";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Package, AlertCircle, Barcode } from "lucide-react";
+import { Loader2, Package, AlertCircle, Barcode, User, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import * as faceapi from "face-api.js";
 
 interface ProductData {
   ean: string;
@@ -28,6 +29,12 @@ interface ProductData {
     cor_dominante_escuro: string;
   } | null;
 }
+
+const isValidUUID = (value: any): boolean => {
+  if (typeof value !== 'string') return false;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(value);
+};
 
 export default function PlayerConsulta() {
   const { deviceCode } = useParams();
@@ -51,6 +58,16 @@ export default function PlayerConsulta() {
   const [inputValue, setInputValue] = useState("");
 
   const [isVertical, setIsVertical] = useState(window.innerHeight > window.innerWidth);
+
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+  const [faceDetectionActive, setFaceDetectionActive] = useState(false);
+  const [showFaceDetections, setShowFaceDetections] = useState(false);
+  const [currentFaceDetections, setCurrentFaceDetections] = useState<any[]>([]);
+  const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+  const lastDetectionsRef = useRef<{ [key: number]: number }>({});
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const detectionIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
     const handleResize = () => setIsVertical(window.innerHeight > window.innerWidth);
@@ -110,6 +127,177 @@ export default function PlayerConsulta() {
   }, [deviceCode, isPreview, previewPlaylistId]);
 
   const activePlaylist = useMemo(() => ScheduleResolver.getActivePlaylist(manifest), [manifest]);
+
+  // Face Detection with Face-API
+  useEffect(() => {
+    const loadModels = async () => {
+      try {
+        const MODEL_URL = '/models';
+        console.log("[Face Detection] Loading models from:", MODEL_URL);
+        
+        await Promise.all([
+          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+          faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
+          faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL)
+        ]);
+        
+        console.log("[Face Detection] All models loaded successfully!");
+        setModelsLoaded(true);
+        startCamera();
+      } catch (error) {
+        console.error("[Face Detection] Error loading models:", error);
+      }
+    };
+
+    const startCamera = async () => {
+      if (!videoRef.current) return;
+      
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true
+        });
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          console.log("[Face Detection] Camera started!");
+          setFaceDetectionActive(true);
+          startDetectionLoop();
+        };
+      } catch (error) {
+        console.error("[Face Detection] Error accessing camera:", error);
+      }
+    };
+
+    const startDetectionLoop = () => {
+      if (detectionIntervalRef.current) {
+        clearInterval(detectionIntervalRef.current);
+      }
+      
+      detectionIntervalRef.current = window.setInterval(async () => {
+        if (!videoRef.current || !canvasRef.current || !modelsLoaded) return;
+        
+        const options = new faceapi.TinyFaceDetectorOptions();
+        const result = await faceapi
+          .detectAllFaces(videoRef.current, options)
+          .withFaceLandmarks()
+          .withFaceExpressions()
+          .withAgeAndGender();
+
+        const debugDetections = result.map((face, index) => {
+          const expressions = face.expressions.asSortedArray();
+          const mostProbableExpression = expressions[0];
+
+          return {
+            timestamp: new Date().toISOString(),
+            faceIndex: index,
+            age: Math.round(face.age),
+            gender: face.gender,
+            genderProbability: face.genderProbability,
+            expressions: expressions.map((exp: any) => ({
+              expression: exp.expression,
+              probability: exp.probability
+            })),
+            mostProbableExpression: {
+              expression: mostProbableExpression.expression,
+              probability: mostProbableExpression.probability
+            }
+          };
+        });
+        setCurrentFaceDetections(debugDetections);
+        
+        if (result.length > 0) {
+          result.forEach(async (face, index) => {
+            // Get the most probable expression
+            const expressions = face.expressions.asSortedArray();
+            const mostProbableExpression = expressions[0];
+            
+            const faceData = {
+              timestamp: new Date().toISOString(),
+              faceIndex: index,
+              age: Math.round(face.age),
+              gender: face.gender,
+              genderProbability: face.genderProbability,
+              expressions: expressions.map((exp: any) => ({
+                expression: exp.expression,
+                probability: exp.probability
+              })),
+              mostProbableExpression: {
+                expression: mostProbableExpression.expression,
+                probability: mostProbableExpression.probability
+              }
+            };
+            
+            console.log("[Face Detection] Face detected:", faceData);
+            
+            // Only send detection to database every 5 seconds per face to avoid duplicates
+            const now = Date.now();
+            const lastSent = lastDetectionsRef.current[index] || 0;
+            const timeSinceLastSent = now - lastSent;
+            
+            if (timeSinceLastSent >= 5000) { // 5 seconds cooldown
+              // Send data to audience_detections table
+              try {
+                const validDeviceId = isValidUUID(deviceInfo?.id) ? deviceInfo.id : null;
+                const validTenantId = isValidUUID(deviceInfo?.tenant_id) ? deviceInfo.tenant_id : 
+                                      isValidUUID(manifest?.tenant_id) ? manifest.tenant_id : null;
+                
+                const detectionData = {
+                  detected_at: new Date().toISOString(),
+                  age: Math.round(face.age),
+                  gender: face.gender,
+                  emotion: mostProbableExpression.expression,
+                  emotion_confidence: null,
+                  gender_probability: null,
+                  device_id: validDeviceId,
+                  tenant_id: validTenantId,
+                  session_id: `${sessionId}_person_${index}`,
+                  metadata: {
+                    is_looking: true,
+                    duration_ms: 0,
+                    long_session: false,
+                    face_index: index
+                  }
+                };
+                
+                const { error } = await supabase
+                  .from("audience_detections")
+                  .insert(detectionData);
+                
+                if (error) {
+                  console.error("[Face Detection] Error sending detection to database:", error);
+                } else {
+                  console.log("[Face Detection] Detection sent to database successfully");
+                  lastDetectionsRef.current[index] = now; // Update last sent time
+                }
+              } catch (dbError) {
+                console.error("[Face Detection] Error sending to database:", dbError);
+              }
+            } else {
+              console.log(`[Face Detection] Skipping duplicate detection for face ${index} (last sent ${timeSinceLastSent}ms ago)`);
+            }
+          });
+        }
+      }, 1000); // Detect every 1 second
+    };
+
+    const cleanup = () => {
+      if (detectionIntervalRef.current) {
+        clearInterval(detectionIntervalRef.current);
+      }
+      
+      if (videoRef.current?.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+
+    if (!isPreview) {
+      loadModels();
+    }
+
+    return cleanup;
+  }, [modelsLoaded, isPreview]);
 
   // 2. CONFIGURAÇÕES NATIVAS (FULLSCREEN, ZOOM, SCROLL)
   useEffect(() => {
@@ -282,6 +470,23 @@ export default function PlayerConsulta() {
 
   return (
     <div className="fixed inset-0 bg-black overflow-hidden select-none touch-none overscroll-none">
+      {/* Hidden camera and canvas for face detection */}
+      {!isPreview && (
+        <>
+          <video 
+            ref={videoRef} 
+            autoPlay 
+            muted 
+            playsInline 
+            className="fixed top-0 left-0 w-0 h-0 object-cover"
+          />
+          <canvas 
+            ref={canvasRef} 
+            className="fixed top-0 left-0 w-0 h-0"
+          />
+        </>
+      )}
+
       <div className={cn("w-full h-full transition-all duration-700", showOverlay ? "scale-95 blur-md opacity-50" : "scale-100 blur-0 opacity-100")}>
         <PlayerEngine 
           playlist={activePlaylist} 
@@ -453,6 +658,74 @@ export default function PlayerConsulta() {
           )}
         </AnimatePresence>
       </div>
+
+      <button
+        type="button"
+        onClick={() => setShowFaceDetections(v => !v)}
+        className={cn(
+          "absolute bottom-4 right-4 z-[70] rounded-full border border-white/10 bg-black/30 backdrop-blur-md p-2 text-white/40 transition-all",
+          "hover:bg-black/50 hover:text-white/80",
+          showFaceDetections && "bg-black/60 text-white/80 border-white/20"
+        )}
+        aria-label="Detecções da câmera"
+      >
+        <User className="h-4 w-4" />
+      </button>
+
+      <AnimatePresence>
+        {showFaceDetections && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="absolute bottom-16 right-4 z-[70] w-[320px] max-w-[calc(100vw-2rem)] rounded-xl border border-white/10 bg-black/60 backdrop-blur-md p-3 text-white"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-white/70" />
+                <div className="text-xs font-semibold uppercase tracking-widest text-white/70">Detecções</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowFaceDetections(false)}
+                className="p-1 rounded hover:bg-white/10 text-white/60 hover:text-white"
+                aria-label="Fechar"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-3 flex items-center justify-between text-[10px] text-white/50">
+              <span>{modelsLoaded ? "Modelos OK" : "Modelos..."}</span>
+              <span>{faceDetectionActive ? "Câmera OK" : "Câmera..."}</span>
+              <span className="font-mono">{currentFaceDetections.length} rosto(s)</span>
+            </div>
+
+            <div className="mt-3 space-y-2 max-h-56 overflow-auto">
+              {currentFaceDetections.length === 0 ? (
+                <div className="text-xs text-white/40">Nenhuma detecção no momento.</div>
+              ) : (
+                currentFaceDetections.map((d: any) => (
+                  <div key={`${d.faceIndex}-${d.timestamp}`} className="rounded-lg border border-white/10 bg-white/5 p-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-white/50 font-mono">#{d.faceIndex}</span>
+                      <span className="text-[10px] text-white/30 font-mono">{new Date(d.timestamp).toLocaleTimeString("pt-BR")}</span>
+                    </div>
+                    <div className="mt-1 grid grid-cols-2 gap-2 text-xs">
+                      <div className="text-white/70">Idade: <span className="text-white/90 font-semibold">{d.age}</span></div>
+                      <div className="text-white/70">Gênero: <span className="text-white/90 font-semibold">{d.gender}</span></div>
+                      <div className="text-white/70 col-span-2">
+                        Emoção: <span className="text-white/90 font-semibold">{d.mostProbableExpression?.expression}</span>{" "}
+                        <span className="text-white/40">({Math.round((d.mostProbableExpression?.probability || 0) * 100)}%)</span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
