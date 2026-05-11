@@ -198,7 +198,12 @@ export default function FaceDemo() {
             log("DETECTION", "Ativando detecção facial...");
             setFaceDetectionActive(true);
             setStatus("analyzing");
-            startDetectionLoop();
+            // Check models again
+            if (modelsLoaded) {
+              startDetectionLoop();
+            } else {
+              log("DETECTION", "Aguardando carregamento de modelos para iniciar loop");
+            }
           }, 500);
         } catch (playErr) {
           log("CAMERA", "Erro ao iniciar play() automático, aguardando metadados", playErr);
