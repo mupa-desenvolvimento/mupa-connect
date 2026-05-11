@@ -378,7 +378,7 @@ export default function PlayerConsulta() {
     }
   };
 
-  const handleConsult = async (ean: string) => {
+  const handleConsult = useCallback(async (ean: string) => {
     // Limpar EAN para evitar problemas com espaços ou caracteres invisíveis
     const cleanEan = ean.trim();
     console.log("[Consulta] Iniciando para EAN:", cleanEan);
