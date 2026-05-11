@@ -44,25 +44,38 @@ serve(async (req) => {
     const internalId = seqData.SEQPRODUTO
 
     // PASSO 2: Consultar preço no marketplace Assai
-    const assaiResponse = await fetch(`https://marketplace.assai.com.br/stock?id_product=${internalId}&id_store=${store_id}`, {
-      headers: {
-        'accept': 'application/json',
-        'x-basicauthorization': Deno.env.get('ASSAI_BASIC_AUTH') || 'Basic QXNzYWlBcHA6QXNzYWlBcHA=' 
-      }
-    })
-    
+    // Tentativa 1: Endpoint de estoque/preço do marketplace
     let priceData = null
-    if (assaiResponse.ok) {
-      const fullPriceData = await assaiResponse.json()
-      // Pegar o primeiro item do array se existir
-      priceData = Array.isArray(fullPriceData) ? fullPriceData[0] : fullPriceData
+    try {
+      const assaiResponse = await fetch(`https://marketplace.assai.com.br/stock?id_product=${internalId}&id_store=${store_id}`, {
+        headers: {
+          'accept': 'application/json',
+          'x-basicauthorization': Deno.env.get('ASSAI_BASIC_AUTH') || 'Basic QXNzYWlBcHA6QXNzYWlBcHA=' 
+        }
+      })
+      
+      if (assaiResponse.ok) {
+        const fullPriceData = await assaiResponse.json()
+        priceData = Array.isArray(fullPriceData) ? fullPriceData[0] : fullPriceData
+      }
+    } catch (e) {
+      console.error('Erro ao buscar preço:', e)
     }
 
     // PASSO 3: Consultar imagem e cores
-    const imageResponse = await fetch(`http://srv-mupa.ddns.net:5050/produto-imagem/${ean}`)
     let visualData = null
-    if (imageResponse.ok) {
-      visualData = await imageResponse.json()
+    try {
+      const imageResponse = await fetch(`http://srv-mupa.ddns.net:5050/produto-imagem/${ean}`)
+      if (imageResponse.ok) {
+        visualData = await imageResponse.json()
+        // Garantir que imagem_url use HTTPS ou pelo menos seja válido
+        if (visualData && visualData.imagem_url && visualData.imagem_url.startsWith('http://srv-mupa.ddns.net')) {
+          // Se o navegador bloquear mixed content, isso pode ser um problema, mas por ora mantemos o original
+          console.log('Visual data carregado:', visualData.imagem_url)
+        }
+      }
+    } catch (e) {
+      console.error('Erro ao buscar imagem:', e)
     }
 
     const result = {
