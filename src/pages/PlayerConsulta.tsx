@@ -426,16 +426,9 @@ export default function PlayerConsulta() {
 
     window.addEventListener("keydown", handleGlobalKeyDown);
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
-  }, [inputValue, handleConsult]);
+  }, [handleConsult]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      if (inputValue.length >= 3) {
-        handleConsult(inputValue);
-        setInputValue("");
-      }
-    }
-  };
+  // handleKeyDown removido pois a captura agora é global via window event listener
 
   const startHideTimer = () => {
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
