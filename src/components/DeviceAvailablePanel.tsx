@@ -87,7 +87,7 @@ export function DeviceItem({ device, isSelected, onToggle, onClick }: DeviceItem
         "group relative flex items-center gap-3 p-3 rounded-2xl border transition-all duration-300 cursor-pointer overflow-hidden backdrop-blur-md",
         isSelected 
           ? "bg-[#085CF0]/10 border-[#085CF0]/40 shadow-glow shadow-[#085CF0]/20 scale-[1.02]" 
-          : "bg-white/5 border-white/5 hover:border-[#085CF0]/30 hover:bg-white/[0.08] hover:scale-[1.01]",
+          : "bg-white/[0.03] border-white/10 hover:border-primary/40 hover:bg-white/[0.08] hover:scale-[1.01]",
         isDragging && "opacity-0"
       )}
       onClick={() => device.group_id && onClick?.(device.group_id)}
@@ -410,8 +410,9 @@ export function DeviceAvailablePanel({
     <div 
       ref={setNodeRef}
       className={cn(
-        "flex flex-1 flex-col bg-card/50 backdrop-blur-xl border border-border/60 transition-all duration-300 rounded-xl overflow-hidden shadow-sm relative",
-        isOver ? "border-primary ring-4 ring-primary/10 bg-primary/5" : "border-white/5"
+        "flex flex-1 flex-col bg-card/60 backdrop-blur-xl border border-white/10 transition-all duration-300 rounded-xl overflow-hidden shadow-sm relative",
+        isOver ? "border-primary ring-4 ring-primary/10 bg-primary/5" : "hover:border-white/20"
+
       )}
     >
       <div className="p-4 border-b border-border/40 bg-gradient-to-b from-white/[0.03] to-transparent">

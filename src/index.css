@@ -72,55 +72,58 @@
   }
 
   .dark {
-    /* Backgrounds: #050816 (deep navy) */
-    --background: 229 64% 5%;
+    /* Backgrounds: #02040a (darker for more contrast) */
+    --background: 222 64% 2%;
     --foreground: 210 20% 98%;
 
-    --card: 222 53% 8%;
+    /* Cards: more visible border and clearer separation */
+    --card: 222 47% 6%;
     --card-foreground: 210 20% 98%;
 
-    --popover: 222 53% 6%;
+    --popover: 222 47% 5%;
     --popover-foreground: 210 20% 98%;
 
     --primary: 191 100% 50%;
-    --primary-foreground: 229 64% 5%;
+    --primary-foreground: 222 64% 2%;
     --primary-glow: 188 100% 70%;
 
-    --secondary: 222 30% 12%;
+    --secondary: 222 25% 12%;
     --secondary-foreground: 210 20% 98%;
 
     --muted: 222 25% 15%;
-    --muted-foreground: 210 10% 70%;
+    --muted-foreground: 215 20% 75%; /* Brighter muted for legibility */
 
     --accent: 191 100% 50%;
-    --accent-foreground: 229 64% 5%;
+    --accent-foreground: 222 64% 2%;
 
-    --success: 150 80% 45%;
+    --success: 150 80% 50%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 45 90% 55%;
+    --warning: 45 90% 60%;
     --warning-foreground: 224 50% 10%;
 
-    --destructive: 0 70% 55%;
+    --destructive: 0 80% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 222 25% 14%;
-    --input: 222 25% 14%;
+    /* Borders: MUCH more visible in idle state */
+    --border: 222 25% 18%; 
+    --input: 222 25% 18%;
     --ring: 191 100% 50%;
 
-    --shadow-premium: 0 20px 50px -12px rgba(0, 0, 0, 0.8);
+    --shadow-premium: 0 20px 50px -12px rgba(0, 0, 0, 0.9);
     --shadow-glow: 0 0 30px rgba(0, 194, 255, 0.4);
 
     /* Sidebar Tokens (Dark) */
-    --sidebar-background: 229 64% 4%;
-    --sidebar-foreground: 210 15% 85%;
+    --sidebar-background: 222 64% 3%;
+    --sidebar-foreground: 210 15% 90%;
     --sidebar-primary: 191 100% 50%;
-    --sidebar-primary-foreground: 229 64% 5%;
-    --sidebar-accent: 222 30% 10%;
+    --sidebar-primary-foreground: 222 64% 2%;
+    --sidebar-accent: 222 30% 12%;
     --sidebar-accent-foreground: 191 100% 50%;
-    --sidebar-border: 222 25% 10%;
+    --sidebar-border: 222 25% 16%;
     --sidebar-ring: 191 100% 50%;
   }
+
 }
 
 @layer base {

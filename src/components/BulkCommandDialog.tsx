@@ -298,8 +298,9 @@ export function BulkCommandDialog({
                         <label
                           key={id}
                           className={cn(
-                            "flex items-center gap-3 p-2 px-3 border-b last:border-b-0 cursor-pointer hover:bg-muted/40",
-                            checked && "bg-primary/5"
+                            "flex items-center gap-3 p-3 px-4 border-b border-white/5 last:border-b-0 cursor-pointer hover:bg-white/5 transition-colors",
+                            checked && "bg-primary/15 border-primary/30"
+
                           )}
                         >
                           <Checkbox checked={checked} onCheckedChange={() => toggleManual(id)} />
@@ -367,10 +368,11 @@ export function BulkCommandDialog({
                       type="button"
                       onClick={() => { setCommandKey(c.key); setInputValue(""); }}
                       className={cn(
-                        "flex items-center gap-2 p-2.5 rounded-lg border text-left text-sm transition-colors",
+                        "flex items-center gap-3 p-4 rounded-xl border-2 text-left text-sm transition-all shadow-sm font-bold",
                         active
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "hover:bg-muted/40",
+                          ? "border-primary bg-primary/20 text-primary shadow-glow shadow-primary/10"
+                          : "border-white/10 hover:border-white/20 hover:bg-white/5",
+
                         c.destructive && active && "border-destructive bg-destructive/10 text-destructive"
                       )}
                     >

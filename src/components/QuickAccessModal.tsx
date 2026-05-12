@@ -116,7 +116,7 @@ export function QuickAccessModal({
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           ) : token ? (
             <>
-              <div className="bg-white p-4 rounded-2xl shadow-sm border border-border">
+              <div className="bg-white p-6 rounded-[2rem] shadow-[0_0_50px_rgba(0,194,255,0.15)] border-4 border-primary/20">
                 <QRCodeSVG value={accessUrl} size={200} />
               </div>
               
