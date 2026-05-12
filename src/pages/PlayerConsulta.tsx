@@ -1074,8 +1074,8 @@ export default function PlayerConsulta() {
 
 
                 <div className={cn(
-                  "flex flex-col justify-between",
-                  isVertical ? "h-3/5 w-full" : "w-1/2 h-full order-1 text-slate-900"
+                  "flex flex-col justify-between text-slate-900",
+                  isVertical ? "h-3/5 w-full" : "w-1/2 h-full order-1"
                 )}>
                   <div className="space-y-6">
                     <div className="inline-block px-4 py-1.5 md:px-6 md:py-2 rounded-full bg-slate-200 text-slate-700 text-base md:text-xl font-bold border border-slate-300">
@@ -1129,9 +1129,7 @@ export default function PlayerConsulta() {
                                 {formatPrice(mainPriceItem.price_prom_pack && mainPriceItem.price_prom_pack > 0 ? mainPriceItem.price_prom_pack : mainPriceItem.price_pack).replace('R$', '').trim()}
                               </span>
                             </div>
-                            {mainPriceItem.stock_avaliable <= 0 && (
-                              <div className="absolute top-4 right-4 bg-red-500 text-white text-[10px] md:text-xs font-bold px-3 py-1 rounded-full uppercase">Indisponível</div>
-                            )}
+                            {/* Removida tag indisponível a pedido do usuário */}
                           </div>
 
                           {/* Preços de Atacado / Packs */}
