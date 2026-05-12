@@ -877,6 +877,9 @@ export default function PlayerConsulta() {
             </motion.div>
           )}
         </AnimatePresence>
+        <div className="text-white/20 text-[8px] uppercase tracking-tighter text-center opacity-30 hover:opacity-100 transition-opacity">
+          Mupa Desenvolvimento de Solucoes Tecnologicas LTDA - 50.667.125/0001-48
+        </div>
       </div>
 
 
