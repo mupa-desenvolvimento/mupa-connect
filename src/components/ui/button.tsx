@@ -13,8 +13,9 @@ const buttonVariants = cva(
         premium: "bg-gradient-mupa text-primary-foreground font-black uppercase tracking-widest hover:opacity-90 shadow-[0_0_25px_rgba(0,194,255,0.4)]",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-md",
         outline: "border-2 border-primary bg-primary/10 text-primary hover:bg-primary/20 shadow-[0_0_10px_rgba(0,194,255,0.1)]",
-        secondary: "bg-white/20 text-white hover:bg-white/30 border-2 border-white/20 shadow-md backdrop-blur-sm",
-        ghost: "text-white hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.05)]",
+        secondary: "bg-white/20 text-white hover:bg-white/35 border-2 border-white/40 shadow-md backdrop-blur-sm",
+        ghost: "text-white/70 hover:bg-white/10 hover:text-white hover:shadow-[0_0_15px_rgba(255,255,255,0.05)]",
+
 
 
         link: "text-primary underline-offset-4 hover:underline font-bold",
