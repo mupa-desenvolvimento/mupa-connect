@@ -110,8 +110,8 @@ serve(async (req) => {
       const assaiResponse = await fetch(assaiUrl, {
         headers: {
           'accept': 'application/json',
-          'x-basicauthorization': 'Basic QXNzYWlBcHA6QXNzYWlBcHA=',
-          'Authorization': 'Basic QXNzYWlBcHA6QXNzYWlBcHA=',
+          'x-basicauthorization': 'Basic b3V0Ym91bmRAc3NhaUNvbXBhc3M6MWY1NzZjZGRkZWU3MzcwZTQwZWFkOWM2ZGZmMzM4NzY1MWIxN2FiMg==',
+          'Authorization': 'Basic b3V0Ym91bmRAc3NhaUNvbXBhc3M6MWY1NzZjZGRkZWU3MzcwZTQwZWFkOWM2ZGZmMzM4NzY1MWIxN2FiMg==',
           'User-Agent': 'AssaiApp/1.0.0 (iPhone; iOS 15.0; Scale/3.00)',
           'x-app-version': '2.1.0'
         }
