@@ -138,17 +138,19 @@ serve(async (req) => {
     // PASSO 3: Consultar imagem e cores
     let visualData = null;
     try {
-      const visualUrl = `${imageBaseUrl.replace(/\/$/, '')}/${ean}`;
-      const imageResponse = await fetch(visualUrl);
-      if (imageResponse.ok) {
-        visualData = await imageResponse.json();
+      if (actualEan) {
+        const visualUrl = `${imageBaseUrl.replace(/\/$/, '')}/${actualEan}`;
+        const imageResponse = await fetch(visualUrl);
+        if (imageResponse.ok) {
+          visualData = await imageResponse.json();
+        }
       }
     } catch (e) {
       console.error('[ASSAI_ERROR] Erro ao buscar visual:', e);
     }
 
     const result = {
-      ean,
+      ean: actualEan || ean,
       internal_id: internalId,
       description: description,
       stock_prices: stockPrices,
