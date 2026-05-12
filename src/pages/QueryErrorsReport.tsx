@@ -474,17 +474,17 @@ export default function QueryErrorsReport() {
             </Button>
             
             <Button 
-              variant="outline" 
-              className="h-9 gap-2 border-primary/30 hover:bg-primary/5 text-primary"
+              variant="secondary" 
+              className="h-9 gap-2"
               onClick={handleAnalyzeWithAI}
             >
-              <Sparkles className="h-4 w-4" />
+              <Sparkles className="h-4 w-4 text-primary" />
               Analisar com IA
             </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="bg-gradient-primary shadow-glow h-9 gap-2">
+                <Button variant="premium" size="sm" className="gap-2">
                   <Download className="h-4 w-4" />
                   Exportar
                 </Button>

@@ -87,11 +87,11 @@
     --primary-foreground: 222 64% 2%;
     --primary-glow: 188 100% 70%;
 
-    --secondary: 222 25% 12%;
+    --secondary: 222 25% 16%;
     --secondary-foreground: 210 20% 98%;
 
-    --muted: 222 25% 15%;
-    --muted-foreground: 215 20% 75%; /* Brighter muted for legibility */
+    --muted: 222 25% 20%;
+    --muted-foreground: 215 20% 80%;
 
     --accent: 191 100% 50%;
     --accent-foreground: 222 64% 2%;
@@ -105,9 +105,8 @@
     --destructive: 0 80% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders: MUCH more visible in idle state */
-    --border: 222 25% 25%; 
-    --input: 222 25% 25%;
+    --border: 222 25% 30%;
+    --input: 222 25% 30%;
     --ring: 191 100% 50%;
 
 

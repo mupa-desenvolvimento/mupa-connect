@@ -106,10 +106,10 @@ export default function SuperAdminDashboard() {
         description="Gestão global de infraestrutura, empresas e usuários"
         actions={
           <div className="flex gap-2">
-            <Button variant="outline" className="flex gap-2" onClick={() => setIsUserModalOpen(true)}>
+            <Button variant="secondary" className="flex gap-2" onClick={() => setIsUserModalOpen(true)}>
               <UserPlus className="h-4 w-4" /> Novo Usuário
             </Button>
-            <Button className="bg-gradient-primary text-primary-foreground flex gap-2" onClick={() => setIsCompanyModalOpen(true)}>
+            <Button variant="premium" className="flex gap-2" onClick={() => setIsCompanyModalOpen(true)}>
               <Plus className="h-4 w-4" /> Nova Empresa
             </Button>
           </div>

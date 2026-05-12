@@ -287,7 +287,7 @@ export default function MediaPage() {
           <div className="flex gap-2">
             <Dialog open={isFolderDialogOpen} onOpenChange={setIsFolderDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="secondary" size="sm" className="h-10 text-[10px] font-black uppercase tracking-widest px-6">
+                <Button variant="secondary" size="sm" className="h-10">
                   <FolderPlus className="h-4 w-4 mr-2" /> Nova Pasta
                 </Button>
               </DialogTrigger>
@@ -311,13 +311,13 @@ export default function MediaPage() {
               </DialogContent>
             </Dialog>
 
-            <Button variant="secondary" size="sm" className="h-10 text-[10px] font-black uppercase tracking-widest px-6" onClick={() => navigate("/midias/lixeira")}>
+            <Button variant="secondary" size="sm" className="h-10" onClick={() => navigate("/midias/lixeira")}>
               <Recycle className="h-4 w-4 mr-2" /> Lixeira
             </Button>
 
             <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="premium" className="h-10 px-6" size="sm">
+                <Button variant="premium" className="h-10" size="sm">
                   <Upload className="h-4 w-4 mr-2" /> Enviar mídias
                 </Button>
               </DialogTrigger>

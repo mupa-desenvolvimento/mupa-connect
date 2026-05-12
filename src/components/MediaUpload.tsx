@@ -257,7 +257,7 @@ export function MediaUpload({ tenantId, companyId, currentFolderId, onUploadComp
         <Button 
           onClick={startUploads} 
           disabled={isProcessing || uploads.length === 0 || uploads.every(u => u.status === 'completed')}
-          className="bg-gradient-primary"
+          variant="premium"
         >
           {isProcessing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
           Começar Upload
