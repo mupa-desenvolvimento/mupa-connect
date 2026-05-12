@@ -37,7 +37,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 flex flex-col items-center">
           <div className="h-16 flex items-center justify-center mb-4">
@@ -106,8 +106,13 @@ const Login = () => {
 
         </div>
       </Card>
+      
+      <div className="absolute bottom-4 left-0 right-0 text-center pointer-events-none">
+        <p className="text-[10px] text-muted-foreground/50 uppercase tracking-widest leading-relaxed">
+          Mupa Desenvolvimento de Solucoes Tecnologicas LTDA - 50.667.125/0001-48
+        </p>
+      </div>
     </div>
-
   );
 };
 

@@ -210,8 +210,8 @@ export default function Setup() {
         />
       )}
       
-      <div className="absolute bottom-8 text-slate-600 text-xs uppercase tracking-widest pointer-events-none">
-        MUPA Digital Signage &copy; 2026
+      <div className="absolute bottom-8 text-slate-600 text-[10px] uppercase tracking-widest pointer-events-none text-center px-4 leading-relaxed">
+        Mupa Desenvolvimento de Solucoes Tecnologicas LTDA - 50.667.125/0001-48
       </div>
     </div>
   );

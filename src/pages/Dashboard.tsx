@@ -133,7 +133,7 @@ export default function DashboardPage() {
     <div className={cn("flex flex-col gap-4 overflow-y-auto pr-2", !isMobile && "h-[calc(100vh-8rem)]")}>
       <PageHeader
         title="Dashboard"
-        description="Visão geral da operação Mupa 3.0 — em tempo real."
+        description="Visão geral da operação Mupa — em tempo real."
         actions={
           <Button asChild variant="premium" size="sm" className="h-9">
             <Link to="/dispositivos">Gerenciar dispositivos <ArrowUpRight className="ml-1 h-4 w-4" /></Link>
