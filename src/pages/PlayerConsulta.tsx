@@ -29,6 +29,7 @@ interface ProductData {
     cor_dominante_claro: string;
     cor_dominante_escuro: string;
   } | null;
+  is_cached?: boolean;
 }
 
 const isValidUUID = (value: any): boolean => {
