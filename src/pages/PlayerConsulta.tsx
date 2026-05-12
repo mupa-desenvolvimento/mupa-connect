@@ -458,86 +458,77 @@ export default function PlayerConsulta() {
     }
   }, [hideTimeoutRef]);
 
-  const handleManualConsult = useCallback(async (productId: string) => {
-    const cleanId = productId.trim();
-    if (!cleanId) return;
-    
-    console.log("[SEQPRODUTO]", cleanId);
-    setIsConsulting(true);
-    setShowOverlay(true);
-    setError(null);
-    setProduct(null);
-    setLastConsultedEan(null);
-
-    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
-
-    try {
-      const { data, error: functionError } = await supabase.functions.invoke('integra-assai', {
-        body: { product_id: cleanId }
-      });
-
-      if (functionError) throw functionError;
-      if (data.error) throw new Error(data.error);
-
-      console.log("[ASSAI_PRICE]", data.stock_prices);
-      setProduct(data);
-    } catch (err: any) {
-      console.error("Erro na consulta manual:", err);
-      setError(err.message || "Produto não encontrado ou não cadastrado na loja.");
-    } finally {
-      setIsConsulting(false);
-      startHideTimer();
-    }
-  }, [hideTimeoutRef]);
-
-  // 3. FOCO AUTOMÁTICO NO INPUT PARA LEITORES DE CÓDIGO DE BARRAS (EMULAÇÃO DE TECLADO)
-  const inputRef = useRef<HTMLInputElement>(null);
-
+  // AUTO DEMO LOGIC
   useEffect(() => {
-    // Manter o foco no input o tempo todo para capturar o leitor
-    const focusInput = () => {
-      if (inputRef.current) {
-        inputRef.current.focus();
+    if (!isAutoDemoActive || !isDevMode) return;
+
+    const demoInterval = setInterval(() => {
+      const actions = ["consult", "face", "media"];
+      const randomAction = actions[Math.floor(Math.random() * actions.length)];
+
+      if (randomAction === "consult" && !showOverlay) {
+        const demoEans = ["789100000001", "789100000002", "789100000003"];
+        const randomEan = demoEans[Math.floor(Math.random() * demoEans.length)];
+        
+        // Simular consulta com dados mockados para o demo
+        setShowOverlay(true);
+        setIsConsulting(true);
+        setTimeout(() => {
+          setIsConsulting(false);
+          setProduct({
+            ean: randomEan,
+            internal_id: Math.floor(Math.random() * 10000),
+            description: `PRODUTO DEMONSTRAÇÃO MUPA ${Math.floor(Math.random() * 100)}`,
+            stock_prices: [
+              { unit_pack: 1, price_pack: 29.90, stock_avaliable: 50 },
+              { unit_pack: 6, price_pack: 159.90, stock_avaliable: 20 }
+            ],
+            visual: {
+              imagem_url: "",
+              cor_assinatura_produto: "#06b6d4",
+              fundo_legibilidade: "#000000",
+              cor_dominante_claro: "#06b6d4",
+              cor_dominante_escuro: "#083344"
+            }
+          });
+          startHideTimer();
+        }, 1000);
+      } else if (randomAction === "face") {
+        const mockFace = {
+          faceIndex: Math.floor(Math.random() * 3),
+          age: 25 + Math.floor(Math.random() * 20),
+          gender: Math.random() > 0.5 ? "male" : "female",
+          mostProbableExpression: {
+            expression: ["happy", "neutral", "surprised"][Math.floor(Math.random() * 3)],
+            probability: 0.9
+          }
+        };
+        setCurrentFaceDetections(prev => [mockFace, ...prev.slice(0, 2)]);
+        setTimeout(() => setCurrentFaceDetections([]), 3000);
       }
-    };
+    }, 12000);
 
-    focusInput();
-    const interval = setInterval(focusInput, 1000); // Reforça o foco periodicamente
+    return () => clearInterval(demoInterval);
+  }, [isAutoDemoActive, isDevMode, showOverlay]);
 
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      if (inputValue.length >= 3) {
-        handleConsult(inputValue);
+  const handleHiddenShortcut = () => {
+    const now = Date.now();
+    if (now - lastClickTime.current < 500) {
+      const newCount = clickCount + 1;
+      setClickCount(newCount);
+      if (newCount >= 5) {
+        setIsDevMode(!isDevMode);
+        setClickCount(0);
+        console.log("DEV MODE TOGGLED:", !isDevMode);
       }
-      setInputValue("");
+    } else {
+      setClickCount(1);
     }
+    lastClickTime.current = now;
   };
 
-  // handleKeyDown removido pois a captura agora é global via window event listener
-
-  const startHideTimer = () => {
-    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
-    hideTimeoutRef.current = setTimeout(() => {
-      setShowOverlay(false);
-    }, 8000);
-  };
-
-  const formatPrice = (value: number | undefined | null) => {
-    if (value === undefined || value === null) return "--";
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
-
-  const getProductNameParts = (desc: string) => {
-    if (!desc) return { main: "", rest: "" };
-    const words = desc.split(" ");
-    const main = words.slice(0, 3).join(" ");
-    const rest = words.slice(3).join(" ");
+  const handleManualConsult = useCallback(async (productId: string) => {
+...
     return { main, rest };
   };
 
