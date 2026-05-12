@@ -1115,16 +1115,17 @@ export default function PlayerConsulta() {
                           <div 
                             className="p-6 md:p-8 rounded-[30px] shadow-xl relative overflow-hidden flex flex-col justify-center"
                             style={{ 
-                              backgroundColor: product.visual?.cor_dominante_escuro || '#111',
-                              border: `2px solid ${product.visual?.cor_dominante_claro || '#333'}66`
+                              backgroundColor: '#fff',
+                              border: `1px solid ${product.visual?.cor_dominante_claro || '#e2e8f0'}`,
+                              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)'
                             }}
                           >
-                            <span className="text-white/40 text-sm md:text-xl font-bold uppercase tracking-wider block mb-1">
+                            <span className="text-slate-400 text-sm md:text-xl font-bold uppercase tracking-wider block mb-1">
                               {mainPriceItem.unit_pack === 1 ? 'Unidade' : `Pack com ${mainPriceItem.unit_pack}`}
                             </span>
                             <div className="flex items-baseline gap-2">
-                              <span className="text-2xl md:text-4xl text-white/40 font-bold">R$</span>
-                              <span className="text-[clamp(3.5rem,10vw,8rem)] leading-none font-black text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+                              <span className="text-2xl md:text-4xl text-slate-400 font-bold">R$</span>
+                              <span className="text-[clamp(3.5rem,10vw,8rem)] leading-none font-black text-slate-900" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
                                 {formatPrice(mainPriceItem.price_prom_pack && mainPriceItem.price_prom_pack > 0 ? mainPriceItem.price_prom_pack : mainPriceItem.price_pack).replace('R$', '').trim()}
                               </span>
                             </div>
