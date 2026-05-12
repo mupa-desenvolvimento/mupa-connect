@@ -65,7 +65,7 @@ serve(async (req) => {
       .single();
 
     if (mappingError || !mappingData) {
-      console.warn(`Produto ${ean} não encontrado no Supabase mapping. Tentando API legado...`);
+      console.warn(`[Consulta] Produto ${ean} não encontrado no Supabase mapping (Error: ${mappingError?.message}). Tentando API legado...`);
       // Fallback para API legado se necessário (opcional, mas mantido por segurança por enquanto)
       try {
         const legacyResponse = await fetch(`http://srv-mupa.ddns.net:5050/api/ean/seqproduto?codbar=${ean}`);
