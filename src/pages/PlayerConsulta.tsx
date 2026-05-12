@@ -409,28 +409,31 @@ export default function PlayerConsulta() {
     }
   }, [hideTimeoutRef]);
 
-  // 3. FOCO NO INPUT E LISTENER DE BARCODE
-  useEffect(() => {
-    const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      // Ignora se for tecla de controle (exceto Enter)
-      if (e.key.length > 1 && e.key !== "Enter") return;
+  // 3. FOCO AUTOMÁTICO NO INPUT PARA LEITORES DE CÓDIGO DE BARRAS (EMULAÇÃO DE TECLADO)
+  const inputRef = useRef<HTMLInputElement>(null);
 
-      if (e.key === "Enter") {
-        // Usamos uma variável local para capturar o valor atual sem depender do estado assíncrono
-        setInputValue(current => {
-          if (current.length >= 3) {
-            handleConsult(current);
-          }
-          return "";
-        });
-      } else {
-        setInputValue(prev => prev + e.key);
+  useEffect(() => {
+    // Manter o foco no input o tempo todo para capturar o leitor
+    const focusInput = () => {
+      if (inputRef.current) {
+        inputRef.current.focus();
       }
     };
 
-    window.addEventListener("keydown", handleGlobalKeyDown);
-    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
-  }, [handleConsult]);
+    focusInput();
+    const interval = setInterval(focusInput, 1000); // Reforça o foco periodicamente
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      if (inputValue.length >= 3) {
+        handleConsult(inputValue);
+      }
+      setInputValue("");
+    }
+  };
 
   // handleKeyDown removido pois a captura agora é global via window event listener
 
