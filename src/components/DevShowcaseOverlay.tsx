@@ -77,14 +77,43 @@ export const DevShowcaseOverlay: React.FC<DevShowcaseOverlayProps> = ({
   }, []);
 
   // Monitor face detections for events
+  const lastFaceCountRef = useRef(0);
+  const faceCooldownRef = useRef<{ [key: string]: number }>({});
+
   useEffect(() => {
-    if (!isDevMode) return;
+    if (!isDevMode || currentFaceDetections.length === 0) {
+      lastFaceCountRef.current = 0;
+      return;
+    }
     
-    currentFaceDetections.forEach((face, index) => {
-      // Logic to only trigger once per person in a window of time
-      // For demo purposes, we can be more liberal
+    currentFaceDetections.forEach((face) => {
+      const faceKey = `${face.gender}-${face.age}`;
+      const now = Date.now();
+      
+      // Only trigger if this specific demographic hasn't been toasted in 10s
+      if (!faceCooldownRef.current[faceKey] || now - faceCooldownRef.current[faceKey] > 10000) {
+        faceCooldownRef.current[faceKey] = now;
+        
+        addEvent({
+          type: "face",
+          title: "Pessoa Detectada",
+          subtitle: `${face.gender === 'male' ? 'Masculino' : 'Feminino'} • ${face.age} anos`,
+          details: [
+            `Atenção: ${Math.floor(Math.random() * 5 + 5)}s`,
+            `Humor: ${face.mostProbableExpression?.expression || 'Neutral'}`,
+            `Confiança: ${Math.round((face.mostProbableExpression?.probability || 0.9) * 100)}%`
+          ],
+          icon: <User className="w-5 h-5" />,
+          color: "from-cyan-400 to-cyan-600"
+        });
+        
+        setStats(prev => ({ ...prev, totalDetections: prev.totalDetections + 1 }));
+      }
     });
-  }, [currentFaceDetections, isDevMode]);
+    
+    lastFaceCountRef.current = currentFaceDetections.length;
+  }, [currentFaceDetections, isDevMode, addEvent]);
+
 
   // Monitor products
   useEffect(() => {
