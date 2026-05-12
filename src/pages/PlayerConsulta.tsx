@@ -1157,7 +1157,7 @@ export default function PlayerConsulta() {
                                   >
                                     <div>
                                       <div className="flex justify-between items-start mb-2">
-                                        <span className="text-slate-400 text-[10px] md:text-xs font-bold uppercase tracking-wider">
+                                        <span className="text-slate-600 text-[10px] md:text-xs font-black uppercase tracking-wider">
                                           {label}
                                         </span>
                                         {economyPercent > 0 && (
