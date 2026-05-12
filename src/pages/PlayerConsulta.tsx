@@ -610,8 +610,9 @@ export default function PlayerConsulta() {
                         const originalUnitPrice = unitPrice ? (unitPrice.price_prom_pack && unitPrice.price_prom_pack > 0 ? unitPrice.price_prom_pack : unitPrice.price_pack) : currentUnitPrice;
                         const economyPercent = originalUnitPrice > currentUnitPrice ? Math.round(((originalUnitPrice - currentUnitPrice) / originalUnitPrice) * 100) : 0;
                         
-                        const isWholesale = price.whole_sale && Number(price.whole_sale) > 1;
+                        const isWholesale = price.whole_sale && Number(price.whole_sale) > 1 && Number(price.whole_sale) <= price.unit_pack;
                         const isBox = price.unit_pack >= 12;
+                        const label = isWholesale ? `Atacado a partir de ${price.whole_sale} un` : (isBox ? `Caixa com ${price.unit_pack}` : `Pack com ${price.unit_pack}`);
 
                         return (
                           <div 
@@ -621,7 +622,7 @@ export default function PlayerConsulta() {
                             <div>
                               <div className="flex justify-between items-start mb-2">
                                 <span className="text-white/40 text-[10px] md:text-xs font-bold uppercase tracking-wider">
-                                  {isWholesale ? `Atacado a partir de ${price.whole_sale} un` : (isBox ? `Caixa com ${price.unit_pack}` : `Pack com ${price.unit_pack}`)}
+                                  {label}
                                 </span>
                                 {economyPercent > 0 && (
                                   <span className="bg-primary/20 text-primary text-[10px] md:text-[12px] font-bold px-2 py-0.5 rounded-md border border-primary/30">
