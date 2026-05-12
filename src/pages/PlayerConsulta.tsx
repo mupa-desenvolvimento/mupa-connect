@@ -618,7 +618,10 @@ export default function PlayerConsulta() {
 
       const result: any = await Promise.race([
         supabase.functions.invoke('integra-assai', {
-          body: { ean: cleanEan }
+          body: { 
+            ean: cleanEan,
+            store_id: deviceInfo?.num_filial || deviceInfo?.store_id 
+          }
         }),
         timeoutPromise
       ]);
@@ -834,7 +837,10 @@ export default function PlayerConsulta() {
     try {
       const result: any = await Promise.race([
         supabase.functions.invoke('integra-assai', {
-          body: { product_id: cleanId }
+          body: { 
+            product_id: cleanId,
+            store_id: deviceInfo?.num_filial || deviceInfo?.store_id 
+          }
         }),
         timeoutPromise
       ]);
