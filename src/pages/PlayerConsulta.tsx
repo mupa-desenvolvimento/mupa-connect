@@ -1212,7 +1212,7 @@ export default function PlayerConsulta() {
             </div>
             <Input 
               ref={inputRef}
-              className="w-64 md:w-80 bg-transparent border-none text-slate-900 placeholder:text-slate-300 focus-visible:ring-0 focus-visible:ring-offset-0 text-lg font-mono tracking-widest"
+              className="w-64 md:w-80 bg-transparent border-none text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0 text-lg font-mono tracking-widest font-bold"
               placeholder="AGUARDANDO LEITURA..."
               autoFocus
               inputMode="none"
