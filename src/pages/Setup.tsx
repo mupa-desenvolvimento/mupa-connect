@@ -202,6 +202,7 @@ export default function Setup() {
           inputName={activeInput || ""}
           initialValue={activeInput ? (formData as any)[activeInput] : ""}
           onChange={handleKeyboardChange}
+          onKeyPress={handleKeyPress}
           onClose={() => setShowKeyboard(false)}
         />
       )}
