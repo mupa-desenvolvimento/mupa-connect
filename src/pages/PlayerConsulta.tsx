@@ -690,73 +690,54 @@ export default function PlayerConsulta() {
     lastClickTime.current = now;
   };
 
-  // Scanner Wedge global — captura keydown e mantém foco no input oculto
-  // sem abrir o teclado virtual (IME) no Android/Zebra.
+  // Scanner Wedge global — mantém foco no input de consulta
+  // sem abrir o teclado virtual (IME) no Android/Zebra usando inputMode="none".
   useEffect(() => {
     const handleGlobalKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       
-      // Se estiver em um campo de texto real (como busca manual ou teclado na tela), ignora a captura global
-      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA") && !target.classList.contains('hidden-scanner-input')) {
+      // Se for Enter, processa a consulta (independente de onde o foco está, se o buffer tiver algo)
+      if (e.key === "Enter") {
+        const code = inputRef.current?.value.trim();
+        console.log("[Scanner] Enter detectado. Valor no input:", code);
+        
+        if (code && code.length >= 3) {
+          handleConsult(code);
+          if (inputRef.current) inputRef.current.value = "";
+        }
         return;
       }
 
-      // Se for uma tecla que faz parte de um código EAN (números) ou Enter
-      const isScannerKey = /^[0-9]$/.test(e.key) || e.key === "Enter";
-      
-      if (isScannerKey) {
-        // Bloqueia a ação padrão para evitar que o Android tente abrir o teclado ou preencher o campo
-        e.preventDefault();
-        
-        const now = Date.now();
-        // Reset buffer se passar muito tempo entre teclas (ex: 500ms)
-        if (now - lastKeyTimeRef.current > 500) {
-          scanBufferRef.current = "";
-        }
-        lastKeyTimeRef.current = now;
-
-        if (e.key === "Enter") {
-          const code = scanBufferRef.current.trim();
-          console.log("[Scanner Global] Enter detectado. Código acumulado:", code);
-          scanBufferRef.current = "";
-          if (code.length >= 3) {
-            handleConsult(code);
-          }
-          // Limpa o input oculto também para manter consistência
-          if (inputRef.current) inputRef.current.value = "";
-        } else {
-          scanBufferRef.current += e.key;
-          // Sincroniza o input oculto para equipamentos que monitoram o valor do campo
-          if (inputRef.current) {
-            inputRef.current.value = scanBufferRef.current;
-          }
-        }
-      } else {
-        // Se não estiver em modo edição real, garante que o input oculto receba o foco
-        if (target && target.tagName !== "INPUT" && target.tagName !== "TEXTAREA" && !target.isContentEditable) {
-          inputRef.current?.focus({ preventScroll: true });
+      // Se não estiver em um campo de texto, redireciona o foco para o input principal
+      // e garante que a tecla seja processada pelo input
+      if (target && target.tagName !== "INPUT" && target.tagName !== "TEXTAREA" && !target.isContentEditable) {
+        if (/^[0-9]$/.test(e.key)) {
+          inputRef.current?.focus();
+          // Não fazemos e.preventDefault() para deixar o caractere entrar no input focado
         }
       }
     };
 
     const keepFocus = () => {
-      if (document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") {
+      // Só força o foco se não estivermos em um campo de entrada manual ou outras áreas de texto
+      const active = document.activeElement;
+      if (active?.tagName !== "INPUT" && active?.tagName !== "TEXTAREA" && !showManualInput) {
         inputRef.current?.focus({ preventScroll: true });
       }
     };
 
-    window.addEventListener("keydown", handleGlobalKey, true);
+    window.addEventListener("keydown", handleGlobalKey);
     window.addEventListener("click", keepFocus);
     
     // Foco inicial
     const timer = setTimeout(keepFocus, 1000);
 
     return () => {
-      window.removeEventListener("keydown", handleGlobalKey, true);
+      window.removeEventListener("keydown", handleGlobalKey);
       window.removeEventListener("click", keepFocus);
       clearTimeout(timer);
     };
-  }, [handleConsult]);
+  }, [handleConsult, showManualInput]);
 
   // Bloquear long-press, context menu, seleção e copy/paste no kiosk
   useEffect(() => {
@@ -1160,16 +1141,27 @@ export default function PlayerConsulta() {
     )}
   </AnimatePresence>
 
-      {/* Input oculto para compatibilidade com equipamentos que exigem foco */}
-      <div className="fixed opacity-0 pointer-events-none overflow-hidden h-0 w-0">
-        <Input 
-          ref={inputRef}
-          className="hidden-scanner-input"
-          autoFocus
-          inputMode="none"
-          tabIndex={-1}
-          autoComplete="off"
-        />
+      {/* Input visível mas estilizado para integração com o layout */}
+      <div className={cn(
+        "fixed bottom-24 left-1/2 -translate-x-1/2 z-50 transition-all duration-500",
+        showOverlay ? "opacity-0 pointer-events-none translate-y-4" : "opacity-100 translate-y-0"
+      )}>
+        <div className="relative group">
+          <div className="absolute -inset-1 bg-gradient-to-r from-primary/50 to-blue-600/50 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+          <div className="relative flex items-center bg-black/40 backdrop-blur-xl rounded-xl border border-white/10 p-1 pr-4 shadow-2xl">
+            <div className="p-3 text-primary/60">
+              <Barcode className="w-5 h-5" />
+            </div>
+            <Input 
+              ref={inputRef}
+              className="w-64 md:w-80 bg-transparent border-none text-white placeholder:text-white/20 focus-visible:ring-0 focus-visible:ring-offset-0 text-lg font-mono tracking-widest"
+              placeholder="AGUARDANDO LEITURA..."
+              autoFocus
+              inputMode="none"
+              autoComplete="off"
+            />
+          </div>
+        </div>
       </div>
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4">
