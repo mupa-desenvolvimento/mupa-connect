@@ -1232,7 +1232,7 @@ export default function PlayerConsulta() {
               className="px-4 py-2 md:px-6 md:py-3 bg-white/60 backdrop-blur-md rounded-full border border-slate-200 flex items-center gap-3 shadow-sm"
             >
               <Barcode className="w-4 h-4 md:w-5 md:h-5 text-primary animate-pulse" />
-              <span className="text-slate-500 text-[10px] md:text-xs lg:text-sm font-medium uppercase tracking-widest whitespace-nowrap">Aguardando leitura de código</span>
+              <span className="text-slate-700 text-[10px] md:text-xs lg:text-sm font-bold uppercase tracking-widest whitespace-nowrap">Aguardando leitura de código</span>
             </motion.div>
           )}
         </AnimatePresence>
