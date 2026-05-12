@@ -144,8 +144,9 @@ export default function Setup() {
                 id="code_empresa"
                 placeholder="000AAA"
                 value={formData.code_empresa}
-                 onChange={(e) => setFormData({ ...formData, code_empresa: e.target.value.toUpperCase() })}
-                 onFocus={() => handleInputFocus("code_empresa")}
+                onChange={(e) => setFormData({ ...formData, code_empresa: e.target.value.toUpperCase() })}
+                onFocus={() => handleInputFocus("code_empresa")}
+                inputMode="none"
                 required
                 maxLength={6}
                 className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-600 uppercase text-lg h-12 tracking-widest focus:ring-blue-500 focus:border-blue-500"
@@ -161,6 +162,7 @@ export default function Setup() {
                 value={formData.apelido}
                 onChange={(e) => setFormData({ ...formData, apelido: e.target.value })}
                 onFocus={() => handleInputFocus("apelido")}
+                inputMode="none"
                 required
                 className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-600 h-12 focus:ring-blue-500 focus:border-blue-500"
               />
@@ -174,6 +176,7 @@ export default function Setup() {
                 value={formData.numero_loja}
                 onChange={(e) => setFormData({ ...formData, numero_loja: e.target.value })}
                 onFocus={() => handleInputFocus("numero_loja")}
+                inputMode="none"
                 required
                 className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-600 h-12 focus:ring-blue-500 focus:border-blue-500"
               />
