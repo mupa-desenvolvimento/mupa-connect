@@ -567,6 +567,9 @@ export default function PlayerConsulta() {
                   <div className="space-y-6">
                     <div className="inline-block px-4 py-1.5 md:px-6 md:py-2 rounded-full bg-white/10 text-white/60 text-base md:text-xl font-medium">
                       Código: {product.internal_id}
+                      {product.is_cached && (
+                        <span className="ml-3 text-[10px] bg-white/10 px-2 py-0.5 rounded uppercase tracking-widest font-bold">Modo Offline</span>
+                      )}
                     </div>
                     
                     <div className="space-y-2">
