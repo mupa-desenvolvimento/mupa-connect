@@ -565,7 +565,15 @@ export default function PlayerConsulta() {
 
   const handleConsult = useCallback(async (ean: string) => {
     const cleanEan = ean.trim();
-    console.log("[EAN]", cleanEan);
+    if (!cleanEan || cleanEan.length < 3) return;
+    
+    // Evitar consultas duplicadas se já estiver consultando
+    if (isConsulting) {
+      console.log("[Scanner] Consulta em andamento, ignorando:", cleanEan);
+      return;
+    }
+
+    console.log("[EAN] Iniciando consulta:", cleanEan);
     setIsConsulting(true);
     setShowOverlay(true);
     setError(null);
@@ -574,11 +582,18 @@ export default function PlayerConsulta() {
 
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
 
+    // Timeout de segurança para a consulta (15 segundos)
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("Tempo esgotado ao consultar produto.")), 15000)
+    );
+
     try {
       const cachedKey = `product_${cleanEan}`;
       const cached = localStorage.getItem(cachedKey);
+      
       if (cached) {
         const parsed = JSON.parse(cached);
+        // Cache válido por 1 hora ou se estiver offline
         if (Date.now() - parsed.timestamp < 3600000 || !navigator.onLine) {
           console.log("[Consulta] Usando cache para:", cleanEan);
           setProduct({ ...parsed.data, is_cached: true });
@@ -588,16 +603,21 @@ export default function PlayerConsulta() {
         }
       }
 
-      const { data, error: functionError } = await supabase.functions.invoke('integra-assai', {
-        body: { ean: cleanEan }
-      });
+      // Corrida entre a consulta e o timeout
+      const result: any = await Promise.race([
+        supabase.functions.invoke('integra-assai', {
+          body: { ean: cleanEan }
+        }),
+        timeoutPromise
+      ]);
+
+      const { data, error: functionError } = result;
 
       if (functionError) throw functionError;
-      if (data.error) throw new Error(data.error);
+      if (data?.error) throw new Error(data.error);
+      if (!data) throw new Error("Produto não encontrado");
 
       console.log("[SEQPRODUTO]", data.internal_id);
-      console.log("[ASSAI_PRICE]", data.stock_prices);
-      
       setProduct(data);
       
       localStorage.setItem(cachedKey, JSON.stringify({
@@ -612,7 +632,7 @@ export default function PlayerConsulta() {
       setIsConsulting(false);
       startHideTimer();
     }
-  }, [hideTimeoutRef]);
+  }, [isConsulting, startHideTimer]);
 
   // AUTO DEMO LOGIC
   useEffect(() => {
