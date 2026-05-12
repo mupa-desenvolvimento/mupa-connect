@@ -298,8 +298,9 @@ export function BulkCommandDialog({
                         <label
                           key={id}
                           className={cn(
-                            "flex items-center gap-3 p-2 px-3 border-b last:border-b-0 cursor-pointer hover:bg-muted/40",
-                            checked && "bg-primary/5"
+                            "flex items-center gap-3 p-3 px-4 border-b border-white/5 last:border-b-0 cursor-pointer hover:bg-white/5 transition-colors",
+                            checked && "bg-primary/15 border-primary/30"
+
                           )}
                         >
                           <Checkbox checked={checked} onCheckedChange={() => toggleManual(id)} />
