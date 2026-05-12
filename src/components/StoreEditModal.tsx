@@ -131,15 +131,18 @@ export function StoreEditModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Store className="h-5 w-5 text-primary" />
-            {isCreate ? "Nova Loja" : "Editar Loja"}
+      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto p-0 border-white/5 bg-[#02040a]">
+        <DialogHeader className="p-6 border-b border-white/5 bg-white/[0.02]">
+          <DialogTitle className="flex items-center gap-3 text-xl font-bold text-white">
+            <div className="h-10 w-10 rounded-xl bg-primary/10 grid place-items-center text-primary shadow-[0_0_20px_rgba(0,194,255,0.15)]">
+              <Store className="h-6 w-6" />
+            </div>
+            {isCreate ? "Nova Unidade" : "Editar Loja"}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="grid gap-2">
             <Label htmlFor="name" className="flex items-center gap-1.5">
               <Store className="h-3.5 w-3.5 text-muted-foreground" />
@@ -276,8 +279,9 @@ export function StoreEditModal({
             </div>
           </div>
         </div>
+      </div>
 
-        <DialogFooter className="gap-2 sm:gap-0 mt-4">
+        <DialogFooter className="p-6 border-t border-white/5 bg-white/[0.02] gap-3">
           <Button variant="ghost" onClick={onClose} disabled={loading}>
             Cancelar
           </Button>

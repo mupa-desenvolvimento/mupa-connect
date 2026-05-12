@@ -12,6 +12,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { useUserRole } from "@/hooks/use-user-role";
 import { QuickAccessModal } from "@/components/QuickAccessModal";
 import { StoreEditModal } from "@/components/StoreEditModal";
+import { StoreDetailsSheet } from "@/components/StoreDetailsSheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +28,8 @@ export default function StoresPage() {
   const debouncedSearch = useDebounce(search, 300);
   const [selectedStore, setSelectedStore] = useState<{ id: string; name: string } | null>(null);
   const [editingStore, setEditingStore] = useState<any | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [selectedDetailsStore, setSelectedDetailsStore] = useState<any | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   
   const { companyId, tenantId, isSuperAdmin, isLoading: roleLoading } = useUserRole();
@@ -255,7 +258,13 @@ export default function StoresPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem className="cursor-pointer">
+                            <DropdownMenuItem 
+                              className="cursor-pointer"
+                              onClick={() => {
+                                setSelectedDetailsStore(s);
+                                setIsDetailsOpen(true);
+                              }}
+                            >
                               <ExternalLink className="mr-2 h-4 w-4" />
                               Ver Detalhes
                             </DropdownMenuItem>
@@ -327,6 +336,16 @@ export default function StoresPage() {
         }}
         store={editingStore}
         isCreate={isCreateModalOpen}
+        onSuccess={() => refetch()}
+      />
+
+      <StoreDetailsSheet
+        isOpen={isDetailsOpen}
+        onClose={() => {
+          setIsDetailsOpen(false);
+          setSelectedDetailsStore(null);
+        }}
+        store={selectedDetailsStore}
         onSuccess={() => refetch()}
       />
     </div>
