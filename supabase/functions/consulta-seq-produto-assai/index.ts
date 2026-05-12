@@ -11,7 +11,9 @@ serve(async (req) => {
   }
 
   try {
-    const { ean, store_id = '53' } = await req.json()
+    const body = await req.json();
+    console.log(`[Consulta] Payload recebido:`, JSON.stringify(body));
+    const { ean, store_id = '53' } = body;
 
     if (!ean) {
       return new Response(JSON.stringify({ error: 'EAN is required' }), {
