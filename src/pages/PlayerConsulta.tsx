@@ -527,10 +527,17 @@ export default function PlayerConsulta() {
           faceIndex: Math.floor(Math.random() * 3),
           age: 25 + Math.floor(Math.random() * 20),
           gender: Math.random() > 0.5 ? "male" : "female",
+          box: {
+            x: 100 + Math.random() * 300,
+            y: 100 + Math.random() * 200,
+            width: 150,
+            height: 150
+          },
           mostProbableExpression: {
             expression: ["happy", "neutral", "surprised"][Math.floor(Math.random() * 3)],
             probability: 0.9
           }
+
         };
         setCurrentFaceDetections(prev => [mockFace, ...prev.slice(0, 2)]);
         setTimeout(() => setCurrentFaceDetections([]), 3000);
