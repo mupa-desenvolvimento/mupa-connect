@@ -668,11 +668,10 @@ export default function PlayerConsulta() {
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </motion.div>
-  )}
-</AnimatePresence>
+        )}
+      </motion.div>
+    )}
+  </AnimatePresence>
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4">
         {/* Input visível para debug e captura do leitor de teclado */}
