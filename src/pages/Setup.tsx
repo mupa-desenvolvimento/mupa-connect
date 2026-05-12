@@ -20,6 +20,20 @@ export default function Setup() {
   });
   const navigate = useNavigate();
 
+  const handleKeyboardChange = (value: string) => {
+    if (activeInput) {
+      setFormData(prev => ({
+        ...prev,
+        [activeInput]: activeInput === "code_empresa" ? value.toUpperCase() : value
+      }));
+    }
+  };
+
+  const handleInputFocus = (inputName: string) => {
+    setActiveInput(inputName);
+    setShowKeyboard(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
