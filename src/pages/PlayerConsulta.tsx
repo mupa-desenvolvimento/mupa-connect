@@ -115,6 +115,16 @@ export default function PlayerConsulta() {
   const [currentFaceDetections, setCurrentFaceDetections] = useState<any[]>([]);
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   const lastDetectionsRef = useRef<{ [key: number]: number }>({});
+  const faceSessionsRef = useRef<Record<number, {
+    startedAt: number;
+    lastSeenAt: number;
+    sessionKey: string;
+    age: number;
+    gender: string;
+    genderProbability: number;
+    emotion: string;
+    emotionProbability: number;
+  }>>({});
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const detectionIntervalRef = useRef<number | null>(null);
@@ -292,6 +302,8 @@ export default function PlayerConsulta() {
       
       detectionIntervalRef.current = window.setInterval(async () => {
         if (!videoRef.current || !canvasRef.current || !modelsLoaded) return;
+        const now = Date.now();
+        const activeIndices = new Set<number>();
         
         const options = new faceapi.TinyFaceDetectorOptions();
         const result = await faceapi
@@ -325,17 +337,38 @@ export default function PlayerConsulta() {
 
         
         if (result.length > 0) {
+            activeIndices.add(index);
           result.forEach(async (face, index) => {
             // Get the most probable expression
             const expressions = face.expressions.asSortedArray();
             const mostProbableExpression = expressions[0];
+            const existingSession = faceSessionsRef.current[index];
+            if (!existingSession) {
+              faceSessionsRef.current[index] = {
+                startedAt: now,
+                lastSeenAt: now,
+                sessionKey: `${sessionId}_person_${index}_${now}`,
+                age: Math.round(face.age),
+                gender: face.gender,
+                genderProbability: face.genderProbability,
+                emotion: mostProbableExpression.expression,
+                emotionProbability: mostProbableExpression.probability,
+              };
+            } else {
+              existingSession.lastSeenAt = now;
+              existingSession.age = Math.round(face.age);
+              existingSession.gender = face.gender;
+              existingSession.genderProbability = face.genderProbability;
+              existingSession.emotion = mostProbableExpression.expression;
+              existingSession.emotionProbability = mostProbableExpression.probability;
+            }
+
             
             const faceData = {
               timestamp: new Date().toISOString(),
               faceIndex: index,
               age: Math.round(face.age),
               gender: face.gender,
-              genderProbability: face.genderProbability,
               expressions: expressions.map((exp: any) => ({
                 expression: exp.expression,
                 probability: exp.probability
@@ -349,7 +382,6 @@ export default function PlayerConsulta() {
             console.log("[Face Detection] Face detected:", faceData);
             
             // Only send detection to database every 5 seconds per face to avoid duplicates
-            const now = Date.now();
             const lastSent = lastDetectionsRef.current[index] || 0;
             const timeSinceLastSent = now - lastSent;
             
@@ -360,6 +392,8 @@ export default function PlayerConsulta() {
                 const validDeviceId = Number.isFinite(parsedDeviceId) ? parsedDeviceId : null;
                 const validTenantId = isValidUUID(deviceInfo?.tenant_id) ? deviceInfo.tenant_id : 
                                       isValidUUID(manifest?.tenant_id) ? manifest.tenant_id : null;
+                const session = faceSessionsRef.current[index];
+                const durationMs = session ? Math.max(0, now - session.startedAt) : 0;
                 
                 const detectionData = {
                   detected_at: new Date().toISOString(),
@@ -370,11 +404,11 @@ export default function PlayerConsulta() {
                   gender_probability: null,
                   device_id: validDeviceId,
                   tenant_id: validTenantId,
-                  session_id: `${sessionId}_person_${index}`,
+                  session_id: session?.sessionKey || `${sessionId}_person_${index}`,
                   metadata: {
                     is_looking: true,
-                    duration_ms: 0,
-                    long_session: false,
+                    duration_ms: durationMs,
+                    long_session: durationMs >= 60000,
                     face_index: index
                   }
                 };
@@ -397,6 +431,55 @@ export default function PlayerConsulta() {
             }
           });
         }
+
+        Object.keys(faceSessionsRef.current).forEach((k) => {
+          const index = Number(k);
+          if (!Number.isFinite(index)) return;
+          if (activeIndices.has(index)) return;
+          const session = faceSessionsRef.current[index];
+          if (!session) return;
+          if (now - session.lastSeenAt < 1500) return;
+
+          const parsedDeviceId = Number((deviceInfo as any)?.id);
+          const validDeviceId = Number.isFinite(parsedDeviceId) ? parsedDeviceId : null;
+          const validTenantId = isValidUUID(deviceInfo?.tenant_id) ? deviceInfo.tenant_id :
+                                isValidUUID(manifest?.tenant_id) ? manifest.tenant_id : null;
+          const durationMs = Math.max(0, session.lastSeenAt - session.startedAt);
+
+          console.log("[Face Detection] Face session ended:", {
+            faceIndex: index,
+            durationMs,
+            session_id: session.sessionKey,
+          });
+
+          if (durationMs > 0) {
+            supabase
+              .from("audience_detections")
+              .insert({
+                detected_at: new Date(session.lastSeenAt).toISOString(),
+                age: session.age,
+                gender: session.gender,
+                emotion: session.emotion,
+                emotion_confidence: null,
+                gender_probability: null,
+                device_id: validDeviceId,
+                tenant_id: validTenantId,
+                session_id: session.sessionKey,
+                metadata: {
+                  is_looking: false,
+                  duration_ms: durationMs,
+                  long_session: durationMs >= 60000,
+                  face_index: index
+                }
+              })
+              .then(({ error }) => {
+                if (error) console.error("[Face Detection] Error sending end-of-session to database:", error);
+              });
+          }
+
+          delete faceSessionsRef.current[index];
+          delete lastDetectionsRef.current[index];
+        });
       }, 1000); // Detect every 1 second
     };
 
@@ -404,6 +487,8 @@ export default function PlayerConsulta() {
       if (detectionIntervalRef.current) {
         clearInterval(detectionIntervalRef.current);
       }
+      faceSessionsRef.current = {};
+      lastDetectionsRef.current = {};
       
       if (videoRef.current?.srcObject) {
         const stream = videoRef.current.srcObject as MediaStream;
