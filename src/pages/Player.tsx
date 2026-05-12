@@ -86,7 +86,13 @@ export default function Player() {
 
   // 1. Core Loader: Resolve Identity & Manifest (Offline-First)
   useEffect(() => {
-    if (!deviceCode) return;
+    const persistentId = DevicePersistenceService.getOrCreatePersistentId();
+
+    if (!deviceCode && !isPreview) {
+      console.log("[Player] No deviceCode in URL, redirecting to auto-load with:", persistentId);
+      navigate(`/play/${persistentId}`, { replace: true });
+      return;
+    }
 
     async function initializePlayer() {
       // Step A: Load Local Cache Immediately
