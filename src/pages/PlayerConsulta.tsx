@@ -59,6 +59,8 @@ export default function PlayerConsulta() {
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   // Removido inputRef pois a captura agora é global via keydown
   const [inputValue, setInputValue] = useState("");
+  const [manualProductId, setManualProductId] = useState("");
+  const [showManualInput, setShowManualInput] = useState(false);
 
   const [isVertical, setIsVertical] = useState(window.innerHeight > window.innerWidth);
 
