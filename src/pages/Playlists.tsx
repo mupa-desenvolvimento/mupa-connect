@@ -203,7 +203,8 @@ export default function PlaylistsPage() {
         description="Gerencie as sequências de conteúdo que serão exibidas em seus dispositivos."
         actions={
           <Button 
-            className="bg-gradient-primary shadow-glow h-9"
+            variant="premium"
+            size="sm"
             onClick={() => navigate("/playlists/new")}
           >
             <Plus className="h-4 w-4 mr-2" /> Nova Playlist
