@@ -409,28 +409,31 @@ export default function PlayerConsulta() {
     }
   }, [hideTimeoutRef]);
 
-  // 3. FOCO NO INPUT E LISTENER DE BARCODE
-  useEffect(() => {
-    const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      // Ignora se for tecla de controle (exceto Enter)
-      if (e.key.length > 1 && e.key !== "Enter") return;
+  // 3. FOCO AUTOMÁTICO NO INPUT PARA LEITORES DE CÓDIGO DE BARRAS (EMULAÇÃO DE TECLADO)
+  const inputRef = useRef<HTMLInputElement>(null);
 
-      if (e.key === "Enter") {
-        // Usamos uma variável local para capturar o valor atual sem depender do estado assíncrono
-        setInputValue(current => {
-          if (current.length >= 3) {
-            handleConsult(current);
-          }
-          return "";
-        });
-      } else {
-        setInputValue(prev => prev + e.key);
+  useEffect(() => {
+    // Manter o foco no input o tempo todo para capturar o leitor
+    const focusInput = () => {
+      if (inputRef.current) {
+        inputRef.current.focus();
       }
     };
 
-    window.addEventListener("keydown", handleGlobalKeyDown);
-    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
-  }, [handleConsult]);
+    focusInput();
+    const interval = setInterval(focusInput, 1000); // Reforça o foco periodicamente
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      if (inputValue.length >= 3) {
+        handleConsult(inputValue);
+      }
+      setInputValue("");
+    }
+  };
 
   // handleKeyDown removido pois a captura agora é global via window event listener
 
@@ -624,17 +627,20 @@ export default function PlayerConsulta() {
       </AnimatePresence>
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4">
-        {/* Input visível para debug conforme solicitado pelo usuário */}
+        {/* Input visível para debug e captura do leitor de teclado */}
         <div className="flex flex-col items-center gap-2 mb-4 bg-black/40 backdrop-blur-md p-3 rounded-xl border border-white/10">
-          <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Debug de Leitura</span>
+          <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Leitor Ativo (Foco Automático)</span>
           <Input 
+            ref={inputRef}
             value={inputValue}
-            readOnly
-            className="w-64 h-10 bg-white/5 border-white/20 text-white text-center font-mono text-lg focus:ring-0 cursor-default"
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="w-64 h-10 bg-white/5 border-white/20 text-white text-center font-mono text-lg focus:ring-1 focus:ring-primary/50"
             placeholder="Aguardando scanner..."
+            autoFocus
           />
           <div className="flex gap-2 text-[9px] text-white/30 uppercase font-medium">
-            <span>Enter confirma leitura</span>
+            <span>O leitor envia Enter automaticamente</span>
             <span>•</span>
             <span>{inputValue.length} dígitos</span>
           </div>
