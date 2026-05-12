@@ -23,9 +23,18 @@ const VirtualKeyboard = ({
   const keyboard = useRef<any>(null);
   const [layout, setLayout] = useState("default");
 
+  useEffect(() => {
+    if (keyboard.current) {
+      keyboard.current.setInput(initialValue);
+    }
+  }, [initialValue, inputName]);
+
   const handleKeyPress = (button: string) => {
     if (button === "{shift}" || button === "{lock}") {
       setLayout(layout === "default" ? "shift" : "default");
+    }
+    if (button === "{numbers}" || button === "{abc}") {
+      setLayout(layout === "numbers" ? "default" : "numbers");
     }
     if (onKeyPress) {
       onKeyPress(button);
@@ -34,29 +43,27 @@ const VirtualKeyboard = ({
 
   return (
     <Draggable handle=".keyboard-header">
-      <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-[800px] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden touch-none">
-        <div className="keyboard-header flex items-center justify-between p-2 bg-slate-800 cursor-move border-b border-slate-700">
-          <div className="flex items-center gap-2 text-slate-400">
+      <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-[800px] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden touch-none select-none">
+        <div className="keyboard-header flex items-center justify-between p-3 bg-slate-800 cursor-move border-b border-slate-700">
+          <div className="flex items-center gap-3 text-slate-300">
             <GripHorizontal className="h-5 w-5" />
-            <span className="text-xs font-medium uppercase tracking-wider">Teclado Virtual</span>
+            <span className="text-sm font-bold uppercase tracking-widest">Teclado Virtual</span>
           </div>
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={onClose}
-            className="h-8 w-8 text-slate-400 hover:text-white hover:bg-slate-700"
+            className="h-10 w-10 text-slate-400 hover:text-white hover:bg-slate-700 rounded-full"
           >
-            <X className="h-4 w-4" />
+            <X className="h-6 w-6" />
           </Button>
         </div>
-        <div className="p-2 bg-slate-900">
+        <div className="p-3 bg-slate-900">
           <Keyboard
             keyboardRef={(r) => (keyboard.current = r)}
             layoutName={layout}
             onChange={onChange}
             onKeyPress={handleKeyPress}
-            inputName={inputName}
-            defaultValue={initialValue}
             theme="hg-theme-default hg-layout-default dark-keyboard"
             layout={{
               default: [
@@ -79,14 +86,9 @@ const VirtualKeyboard = ({
               ]
             }}
             display={{
-              "{bksp}": "apagar",
               "{backspace}": "⌫",
-              "{enter}": "entrar",
-              "{ent}": "entrar",
+              "{ent}": "ok",
               "{shift}": "⇧",
-              "{tab}": "tab",
-              "{lock}": "caps",
-              "{accept}": "feito",
               "{space}": "espaço",
               "{numbers}": "123",
               "{abc}": "ABC"
@@ -100,33 +102,42 @@ const VirtualKeyboard = ({
           .hg-theme-default .hg-button {
             background: #1e293b !important;
             color: white !important;
-            border-bottom: 2px solid #0f172a !important;
-            height: 45px !important;
-            font-size: 1rem !important;
-            border-radius: 6px !important;
+            border-bottom: 3px solid #0f172a !important;
+            height: 50px !important;
+            font-size: 1.1rem !important;
+            border-radius: 8px !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
+            margin: 3px !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
           }
           @media (min-width: 640px) {
             .hg-theme-default .hg-button {
-              height: 55px !important;
-              font-size: 1.2rem !important;
+              height: 60px !important;
+              font-size: 1.3rem !important;
             }
           }
           .hg-theme-default .hg-button:active {
             background: #334155 !important;
+            transform: translateY(2px) !important;
+            border-bottom-width: 1px !important;
           }
           .hg-theme-default .hg-button.hg-standardBtn {
-            width: calc(10% - 4px) !important;
+            width: calc(10% - 6px) !important;
           }
           .hg-theme-default .hg-button.hg-functionBtn {
             background: #334155 !important;
-            font-size: 0.9rem !important;
+            font-size: 1rem !important;
+            min-width: 60px !important;
           }
           .hg-theme-default {
             padding: 5px !important;
             background-color: transparent !important;
+          }
+          .hg-row {
+            display: flex !important;
+            justify-content: center !important;
           }
         `}</style>
       </div>
