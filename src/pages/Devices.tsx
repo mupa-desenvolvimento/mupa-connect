@@ -280,14 +280,15 @@ export default function DevicesPage() {
               <Button variant={viewMode === "grid" ? "secondary" : "ghost"} size="sm" className="h-7 w-7 p-0" onClick={() => setViewMode("grid")}><LayoutGrid className="h-4 w-4" /></Button>
             </div>
             {isTecnico && (
-              <Button variant="outline" size="sm" onClick={() => setBulkOpen(true)} className="h-9 border-primary/40 text-primary hover:bg-primary/10">
+              <Button variant="secondary" size="sm" onClick={() => setBulkOpen(true)} className="h-9">
                 <Megaphone className="h-4 w-4 mr-2" /> Comandos
               </Button>
             )}
             <Button variant="outline" size="sm" onClick={() => {refetch(); setSelectedIds(new Set());}} className="h-9"><RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} /> Atualizar</Button>
             {isAdmin && (
               <Button 
-                className="bg-gradient-primary text-primary-foreground shadow-glow h-9"
+                variant="premium"
+                className="h-9"
                 onClick={() => setCreateModalOpen(true)}
               >
                 <Plus className="h-4 w-4 mr-2" /> Novo
