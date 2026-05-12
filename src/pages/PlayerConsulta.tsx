@@ -565,11 +565,22 @@ export default function PlayerConsulta() {
     };
   }, []);
 
+  const fetchMupaData = async (ean: string) => {
+    try {
+      const response = await fetch(`http://srv-mupa.ddns.net:5050/produto-imagem/${ean}`);
+      if (!response.ok) throw new Error("Mupa API error");
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      console.error("Error fetching from Mupa:", err);
+      return null;
+    }
+  };
+
   const handleConsult = useCallback(async (ean: string) => {
     const cleanEan = ean.trim();
     if (!cleanEan || cleanEan.length < 3) return;
     
-    // Evitar consultas duplicadas se já estiver consultando
     if (isConsulting) {
       console.log("[Scanner] Consulta em andamento, ignorando:", cleanEan);
       return;
@@ -584,7 +595,6 @@ export default function PlayerConsulta() {
 
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
 
-    // Timeout de segurança para a consulta (15 segundos)
     const timeoutPromise = new Promise((_, reject) => 
       setTimeout(() => reject(new Error("Tempo esgotado ao consultar produto.")), 15000)
     );
@@ -595,7 +605,6 @@ export default function PlayerConsulta() {
       
       if (cached) {
         const parsed = JSON.parse(cached);
-        // Cache válido por 1 hora ou se estiver offline
         if (Date.now() - parsed.timestamp < 3600000 || !navigator.onLine) {
           console.log("[Consulta] Usando cache para:", cleanEan);
           setProduct({ ...parsed.data, is_cached: true });
@@ -605,7 +614,6 @@ export default function PlayerConsulta() {
         }
       }
 
-      // Corrida entre a consulta e o timeout
       const result: any = await Promise.race([
         supabase.functions.invoke('integra-assai', {
           body: { ean: cleanEan }
@@ -620,10 +628,31 @@ export default function PlayerConsulta() {
       if (!data) throw new Error("Produto não encontrado");
 
       console.log("[SEQPRODUTO]", data.internal_id);
-      setProduct(data);
+      
+      // Fetch visual data from Mupa
+      const mupaData = await fetchMupaData(cleanEan);
+      
+      const finalProduct = {
+        ...data,
+        visual: mupaData ? {
+          imagem_url: mupaData.imagem_url || data.visual?.imagem_url || DEFAULT_PRODUCT_IMAGE,
+          cor_assinatura_produto: mupaData.cor_assinatura_produto || data.visual?.cor_assinatura_produto || "#000000",
+          fundo_legibilidade: mupaData.fundo_legibilidade || data.visual?.fundo_legibilidade || "#000000",
+          cor_dominante_claro: mupaData.cor_dominante_claro || data.visual?.cor_dominante_claro || "#FFFFFF",
+          cor_dominante_escuro: mupaData.cor_dominante_escuro || data.visual?.cor_dominante_escuro || "#000000",
+        } : (data.visual || {
+          imagem_url: DEFAULT_PRODUCT_IMAGE,
+          cor_assinatura_produto: "#000000",
+          fundo_legibilidade: "#000000",
+          cor_dominante_claro: "#FFFFFF",
+          cor_dominante_escuro: "#000000",
+        })
+      };
+
+      setProduct(finalProduct);
       
       localStorage.setItem(cachedKey, JSON.stringify({
-        data,
+        data: finalProduct,
         timestamp: Date.now()
       }));
 
