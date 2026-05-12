@@ -1031,7 +1031,7 @@ export default function PlayerConsulta() {
                 isVertical ? "flex-col" : "flex-row"
               )}>
                 <div className={cn(
-                  "flex items-center justify-center bg-white/5 rounded-3xl overflow-hidden shadow-2xl relative",
+                  "flex items-center justify-center bg-slate-100 rounded-3xl overflow-hidden shadow-sm relative border border-slate-200",
                   isVertical ? "h-2/5 w-full" : "w-1/2 h-full order-2"
                 )}>
                   {!imageError && (product.visual?.imagem_url || fallbackImageUrl) ? (
