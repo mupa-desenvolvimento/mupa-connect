@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
+import { CompanySettings } from "@/components/CompanySettings";
 
 export default function SettingsPage() {
   const { companyId, isLoading: isLoadingRole } = useUserRole();
@@ -61,14 +62,8 @@ export default function SettingsPage() {
 
         <div className="mt-6">
           <TabsContent value="geral">
-            <Card className="border-border/60 bg-background/50">
-              <CardHeader>
-                <CardTitle className="font-bold text-lg font-bold">Configurações Gerais</CardTitle>
-              </CardHeader>
-              <CardContent className="text-xs text-muted-foreground font-medium italic">
-                Em breve. Esta seção será habilitada nos próximos módulos.
-              </CardContent>
-            </Card>
+            <CompanySettings />
+
           </TabsContent>
 
           <TabsContent value="usuarios">

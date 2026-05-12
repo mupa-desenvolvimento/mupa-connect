@@ -102,6 +102,10 @@ export default function PlayerConsulta() {
   const [inputValue, setInputValue] = useState("");
   const [manualProductId, setManualProductId] = useState("");
   const [showManualInput, setShowManualInput] = useState(false);
+  const [fallbackImageUrl, setFallbackImageUrl] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
+
+
 
   const [isVertical, setIsVertical] = useState(window.innerHeight > window.innerWidth);
 
@@ -120,6 +124,33 @@ export default function PlayerConsulta() {
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [product]);
+
+  useEffect(() => {
+
+    if (manifest?.tenant_id) {
+      const fetchFallback = async () => {
+        try {
+          const { data } = await supabase
+            .from("tenants")
+            .select("product_fallback_image_url")
+            .eq("id", manifest.tenant_id)
+            .single();
+          
+          if (data?.product_fallback_image_url) {
+            setFallbackImageUrl(data.product_fallback_image_url);
+          }
+        } catch (err) {
+          console.error("Error fetching fallback image:", err);
+        }
+      };
+      fetchFallback();
+    }
+  }, [manifest?.tenant_id]);
+
 
   const appearance = useMemo(() => (manifest?.appearance_config || {}) as AppearanceConfig, [manifest]);
 
@@ -783,14 +814,33 @@ export default function PlayerConsulta() {
                   "flex items-center justify-center bg-white/5 rounded-3xl overflow-hidden shadow-2xl relative",
                   isVertical ? "h-2/5 w-full" : "w-1/2 h-full order-2"
                 )}>
-                  {product.visual?.imagem_url ? (
+                  {!imageError && (product.visual?.imagem_url || fallbackImageUrl) ? (
                     <img 
-                      src={product.visual.imagem_url.replace('http://', 'https://')} 
+                      src={(product.visual?.imagem_url || fallbackImageUrl)?.replace('http://', 'https://')} 
                       alt={product.description}
-                      className="max-w-full max-h-full object-contain p-8"
+                      className={cn(
+                        "max-w-full max-h-full object-contain p-8 transition-opacity duration-300",
+                        !product.visual?.imagem_url && "opacity-40"
+                      )}
                       onError={(e) => {
-                        // Fallback caso HTTPS falhe (alguns domínios ddns podem não ter SSL)
-                        (e.target as HTMLImageElement).src = product.visual?.imagem_url || "";
+                        const target = e.target as HTMLImageElement;
+                        const originalUrl = product.visual?.imagem_url;
+                        
+                        // 1. Try HTTP if HTTPS failed (for ddns domains without SSL)
+                        if (target.src.startsWith('https://') && originalUrl?.startsWith('http://')) {
+                          target.src = originalUrl;
+                          return;
+                        }
+                        
+                        // 2. Try Company Fallback Image if product image failed
+                        if (fallbackImageUrl && target.src !== fallbackImageUrl) {
+                          target.src = fallbackImageUrl;
+                          target.classList.add('opacity-40');
+                          return;
+                        }
+                        
+                        // 3. Final fallback to icon
+                        setImageError(true);
                       }}
                     />
                   ) : (
@@ -801,6 +851,7 @@ export default function PlayerConsulta() {
                     style={{ backgroundColor: product.visual?.cor_dominante_escuro || '#000' }}
                   />
                 </div>
+
 
                 <div className={cn(
                   "flex flex-col justify-between",
