@@ -123,6 +123,28 @@ export default function PlayerConsulta() {
     return () => clearInterval(t);
   }, []);
 
+  useEffect(() => {
+    if (manifest?.tenant_id) {
+      const fetchFallback = async () => {
+        try {
+          const { data } = await supabase
+            .from("tenants")
+            .select("product_fallback_image_url")
+            .eq("id", manifest.tenant_id)
+            .single();
+          
+          if (data?.product_fallback_image_url) {
+            setFallbackImageUrl(data.product_fallback_image_url);
+          }
+        } catch (err) {
+          console.error("Error fetching fallback image:", err);
+        }
+      };
+      fetchFallback();
+    }
+  }, [manifest?.tenant_id]);
+
+
   const appearance = useMemo(() => (manifest?.appearance_config || {}) as AppearanceConfig, [manifest]);
 
   const startHideTimer = useCallback(() => {
