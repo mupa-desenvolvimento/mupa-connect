@@ -1174,8 +1174,8 @@ export default function PlayerConsulta() {
                                       </div>
                                     </div>
                                     <div className="mt-2 pt-2 border-t border-slate-50 flex justify-between items-center">
-                                      <span className="text-slate-400 text-[10px] md:text-xs">Sai por unidade:</span>
-                                      <span className="text-slate-600 text-xs md:text-sm font-bold">{formatPrice(currentUnitPrice)}</span>
+                                      <span className="text-slate-500 text-[10px] md:text-xs font-bold">Sai por unidade:</span>
+                                      <span className="text-slate-800 text-xs md:text-sm font-black">{formatPrice(currentUnitPrice)}</span>
                                     </div>
 
                                     {price.stock_avaliable <= 0 && (
