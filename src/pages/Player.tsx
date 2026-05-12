@@ -153,19 +153,21 @@ export default function Player() {
         if (!deviceCode) return;
 
         const result = await ManifestService.fetchManifest(deviceCode);
-        setManifest(result.manifest);
-        if (result.device) {
-          setDeviceUuid(result.device.id?.toString());
-          setDeviceInfo(result.device);
+        if (result && result.manifest) {
+          setManifest(result.manifest);
+          if (result.device) {
+            setDeviceUuid(result.device.id?.toString());
+            setDeviceInfo(result.device);
+            DevicePersistenceService.saveDeviceConfig(result.device);
+          }
+          setIsLoading(false);
+        } else {
+          throw new Error("Manifest result invalid");
         }
-        setIsLoading(false);
       } catch (err: any) {
         console.error("[Player] Initial resolve error:", err);
-        if (err.message?.includes("empresa (company_id) é obrigatório") || err.code === "P0001") {
-          setErrorInfo({ 
-            message: "O parâmetro empresa (company_id) é obrigatório para novos dispositivos.", 
-            code: "P0001" 
-          });
+        if (!isPreview && deviceCode) {
+          navigate("/setup", { state: { error: "Dispositivo não encontrado ou não configurado." } });
         }
         setIsLoading(false);
       }
