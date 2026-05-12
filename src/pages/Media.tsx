@@ -317,7 +317,7 @@ export default function MediaPage() {
 
             <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="premium" className="h-10 px-6" size="sm">
+                <Button variant="premium" className="h-10" size="sm">
                   <Upload className="h-4 w-4 mr-2" /> Enviar mídias
                 </Button>
               </DialogTrigger>
