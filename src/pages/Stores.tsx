@@ -12,6 +12,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { useUserRole } from "@/hooks/use-user-role";
 import { QuickAccessModal } from "@/components/QuickAccessModal";
 import { StoreEditModal } from "@/components/StoreEditModal";
+import { StoreDetailsSheet } from "@/components/StoreDetailsSheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
