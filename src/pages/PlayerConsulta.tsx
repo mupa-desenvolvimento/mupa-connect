@@ -382,7 +382,7 @@ export default function PlayerConsulta() {
         }
       }
 
-      const { data, error } = await supabase.functions.invoke("consulta-seq-produto-assai", {
+      const { data, error } = await supabase.functions.invoke("integra-assai", {
         body: { 
           ean: cleanEan,
           device_serial: deviceCode 
