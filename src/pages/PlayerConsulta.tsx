@@ -1078,10 +1078,10 @@ export default function PlayerConsulta() {
                   isVertical ? "h-3/5 w-full" : "w-1/2 h-full order-1 text-slate-900"
                 )}>
                   <div className="space-y-6">
-                    <div className="inline-block px-4 py-1.5 md:px-6 md:py-2 rounded-full bg-slate-100 text-slate-500 text-base md:text-xl font-medium border border-slate-200">
+                    <div className="inline-block px-4 py-1.5 md:px-6 md:py-2 rounded-full bg-slate-200 text-slate-700 text-base md:text-xl font-bold border border-slate-300">
                       Código: {product.internal_id}
                       {product.is_cached && (
-                        <span className="ml-3 text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded uppercase tracking-widest font-bold">Modo Offline</span>
+                        <span className="ml-3 text-[10px] bg-slate-300 text-slate-800 px-2 py-0.5 rounded uppercase tracking-widest font-black">Modo Offline</span>
                       )}
                     </div>
                     
@@ -1089,7 +1089,7 @@ export default function PlayerConsulta() {
                       <h1 className="text-[clamp(2.5rem,8vw,6rem)] font-black leading-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
                         {getProductNameParts(product.description).main}
                       </h1>
-                      <p className="text-[clamp(1.2rem,4vw,2.5rem)] text-slate-400 font-medium leading-tight">
+                      <p className="text-[clamp(1.2rem,4vw,2.5rem)] text-slate-600 font-bold leading-tight">
                         {getProductNameParts(product.description).rest}
                       </p>
                     </div>
@@ -1116,15 +1116,15 @@ export default function PlayerConsulta() {
                             className="p-6 md:p-8 rounded-[30px] shadow-xl relative overflow-hidden flex flex-col justify-center"
                             style={{ 
                               backgroundColor: '#fff',
-                              border: `1px solid ${product.visual?.cor_dominante_claro || '#e2e8f0'}`,
+                              border: `1px solid ${product.visual?.cor_dominante_claro || '#cbd5e1'}`,
                               boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)'
                             }}
                           >
-                            <span className="text-slate-400 text-sm md:text-xl font-bold uppercase tracking-wider block mb-1">
+                            <span className="text-slate-600 text-sm md:text-xl font-black uppercase tracking-wider block mb-1">
                               {mainPriceItem.unit_pack === 1 ? 'Unidade' : `Pack com ${mainPriceItem.unit_pack}`}
                             </span>
                             <div className="flex items-baseline gap-2">
-                              <span className="text-2xl md:text-4xl text-slate-400 font-bold">R$</span>
+                              <span className="text-2xl md:text-4xl text-slate-500 font-black">R$</span>
                               <span className="text-[clamp(3.5rem,10vw,8rem)] leading-none font-black text-slate-900" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
                                 {formatPrice(mainPriceItem.price_prom_pack && mainPriceItem.price_prom_pack > 0 ? mainPriceItem.price_prom_pack : mainPriceItem.price_pack).replace('R$', '').trim()}
                               </span>
@@ -1153,11 +1153,11 @@ export default function PlayerConsulta() {
                                 return (
                                   <div 
                                     key={`pack-${idx}`}
-                                    className="p-5 md:p-6 rounded-[24px] bg-white border border-slate-100 shadow-sm flex flex-col justify-between relative"
+                                    className="p-5 md:p-6 rounded-[24px] bg-white border border-slate-200 shadow-sm flex flex-col justify-between relative"
                                   >
                                     <div>
                                       <div className="flex justify-between items-start mb-2">
-                                        <span className="text-slate-400 text-[10px] md:text-xs font-bold uppercase tracking-wider">
+                                        <span className="text-slate-600 text-[10px] md:text-xs font-black uppercase tracking-wider">
                                           {label}
                                         </span>
                                         {economyPercent > 0 && (
@@ -1167,15 +1167,15 @@ export default function PlayerConsulta() {
                                         )}
                                       </div>
                                       <div className="flex items-baseline gap-1">
-                                        <span className="text-sm md:text-lg text-slate-400 font-bold">R$</span>
+                                        <span className="text-sm md:text-lg text-slate-600 font-black">R$</span>
                                         <span className="text-2xl md:text-4xl font-black text-slate-900" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
                                           {formatPrice(finalPrice).replace('R$', '').trim()}
                                         </span>
                                       </div>
                                     </div>
                                     <div className="mt-2 pt-2 border-t border-slate-50 flex justify-between items-center">
-                                      <span className="text-slate-400 text-[10px] md:text-xs">Sai por unidade:</span>
-                                      <span className="text-slate-600 text-xs md:text-sm font-bold">{formatPrice(currentUnitPrice)}</span>
+                                      <span className="text-slate-500 text-[10px] md:text-xs font-bold">Sai por unidade:</span>
+                                      <span className="text-slate-800 text-xs md:text-sm font-black">{formatPrice(currentUnitPrice)}</span>
                                     </div>
 
                                     {price.stock_avaliable <= 0 && (
@@ -1212,7 +1212,7 @@ export default function PlayerConsulta() {
             </div>
             <Input 
               ref={inputRef}
-              className="w-64 md:w-80 bg-transparent border-none text-slate-900 placeholder:text-slate-300 focus-visible:ring-0 focus-visible:ring-offset-0 text-lg font-mono tracking-widest"
+              className="w-64 md:w-80 bg-transparent border-none text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0 text-lg font-mono tracking-widest font-bold"
               placeholder="AGUARDANDO LEITURA..."
               autoFocus
               inputMode="none"
@@ -1232,11 +1232,11 @@ export default function PlayerConsulta() {
               className="px-4 py-2 md:px-6 md:py-3 bg-white/60 backdrop-blur-md rounded-full border border-slate-200 flex items-center gap-3 shadow-sm"
             >
               <Barcode className="w-4 h-4 md:w-5 md:h-5 text-primary animate-pulse" />
-              <span className="text-slate-500 text-[10px] md:text-xs lg:text-sm font-medium uppercase tracking-widest whitespace-nowrap">Aguardando leitura de código</span>
+              <span className="text-slate-700 text-[10px] md:text-xs lg:text-sm font-bold uppercase tracking-widest whitespace-nowrap">Aguardando leitura de código</span>
             </motion.div>
           )}
         </AnimatePresence>
-        <div className="text-slate-400 text-[8px] uppercase tracking-tighter text-center opacity-40 hover:opacity-100 transition-opacity">
+        <div className="text-slate-600 text-[8px] uppercase tracking-tighter text-center opacity-60 hover:opacity-100 transition-opacity font-bold">
           Mupa Desenvolvimento de Solucoes Tecnologicas LTDA - 50.667.125/0001-48
         </div>
       </div>
