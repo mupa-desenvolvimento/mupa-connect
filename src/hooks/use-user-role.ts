@@ -21,7 +21,9 @@ export function useUserRole() {
           return;
         }
 
-        setUserEmail(session.user.email || null);
+        const email = session.user.email || null;
+        setUserEmail(email);
+        const isSupportEmail = email === "support@mupa.app";
 
         const { data: profile } = await supabase
           .from("user_profiles")
@@ -31,10 +33,17 @@ export function useUserRole() {
 
         if (profile) {
           setRole(profile.role);
-          // Only overwrite if we don't have a support override in localStorage
-          if (!localStorage.getItem("mupa_support_company_id")) {
+          const isSuperAdminRole = profile.role === "admin_global";
+          if (!isSupportEmail && !isSuperAdminRole) {
+            localStorage.removeItem("mupa_support_company_id");
+            localStorage.removeItem("mupa_support_tenant_id");
             setCompanyId(profile.company_id);
             setTenantId(profile.tenant_id);
+          } else {
+            if (!localStorage.getItem("mupa_support_company_id")) {
+              setCompanyId(profile.company_id);
+              setTenantId(profile.tenant_id);
+            }
           }
         } else {
           const { data: roleData } = await supabase
@@ -45,6 +54,13 @@ export function useUserRole() {
           
           if (roleData) {
             setRole(roleData.role);
+          }
+
+          if (!isSupportEmail && roleData?.role !== "admin_global") {
+            localStorage.removeItem("mupa_support_company_id");
+            localStorage.removeItem("mupa_support_tenant_id");
+            setCompanyId(null);
+            setTenantId(null);
           }
         }
       } catch (error) {
