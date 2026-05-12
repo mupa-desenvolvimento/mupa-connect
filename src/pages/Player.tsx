@@ -7,7 +7,6 @@ import { PlayerEngine } from "@/components/PlayerEngine";
 import { ManifestManager, ScheduleResolver, MediaCacheService } from "@/components/PlayerServices";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { ManifestService } from "@/services/ManifestService";
-import { DevicePersistenceService } from "@/services/DevicePersistenceService";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Monitor, Wrench, Scan } from "lucide-react";
@@ -86,11 +85,8 @@ export default function Player() {
 
   // 1. Core Loader: Resolve Identity & Manifest (Offline-First)
   useEffect(() => {
-    const persistentId = DevicePersistenceService.getOrCreatePersistentId();
-
     if (!deviceCode && !isPreview) {
-      console.log("[Player] No deviceCode in URL, redirecting to auto-load with:", persistentId);
-      navigate(`/play/${persistentId}`, { replace: true });
+      navigate("/setup");
       return;
     }
 
@@ -153,21 +149,19 @@ export default function Player() {
         if (!deviceCode) return;
 
         const result = await ManifestService.fetchManifest(deviceCode);
-        if (result && result.manifest) {
-          setManifest(result.manifest);
-          if (result.device) {
-            setDeviceUuid(result.device.id?.toString());
-            setDeviceInfo(result.device);
-            DevicePersistenceService.saveDeviceConfig(result.device);
-          }
-          setIsLoading(false);
-        } else {
-          throw new Error("Manifest result invalid");
+        setManifest(result.manifest);
+        if (result.device) {
+          setDeviceUuid(result.device.id?.toString());
+          setDeviceInfo(result.device);
         }
+        setIsLoading(false);
       } catch (err: any) {
         console.error("[Player] Initial resolve error:", err);
-        if (!isPreview && deviceCode) {
-          navigate("/setup", { state: { error: "Dispositivo não encontrado ou não configurado." } });
+        if (err.message?.includes("empresa (company_id) é obrigatório") || err.code === "P0001") {
+          setErrorInfo({ 
+            message: "O parâmetro empresa (company_id) é obrigatório para novos dispositivos.", 
+            code: "P0001" 
+          });
         }
         setIsLoading(false);
       }
