@@ -848,7 +848,7 @@ export default function PlayerConsulta() {
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
+      <div className="fixed inset-0 bg-slate-50 flex items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
