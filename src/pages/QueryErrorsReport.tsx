@@ -484,7 +484,7 @@ export default function QueryErrorsReport() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="bg-gradient-primary shadow-glow h-9 gap-2">
+                <Button variant="premium" size="sm" className="gap-2">
                   <Download className="h-4 w-4" />
                   Exportar
                 </Button>
