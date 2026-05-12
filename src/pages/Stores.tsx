@@ -28,6 +28,8 @@ export default function StoresPage() {
   const debouncedSearch = useDebounce(search, 300);
   const [selectedStore, setSelectedStore] = useState<{ id: string; name: string } | null>(null);
   const [editingStore, setEditingStore] = useState<any | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [selectedDetailsStore, setSelectedDetailsStore] = useState<any | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   
   const { companyId, tenantId, isSuperAdmin, isLoading: roleLoading } = useUserRole();
