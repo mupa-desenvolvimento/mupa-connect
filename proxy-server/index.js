@@ -82,25 +82,55 @@ app.get('/proxy-assai', async (req, res) => {
         }
     }
 
-    // PASSO 2: Consultar Marketplace Assaí
-    const assaiUrl = `https://marketplace.assai.com.br/stock?id_product=${seqProduto}&id_store=${STORE_ID}`;
-    const assaiRes = await fetch(assaiUrl, {
-      headers: {
-        'accept': 'application/json',
-        'x-basicauthorization': 'b3V0Ym91bmRAc3NhaUNvbXBhc3M6MWY1NzZjZGRkZWU3MzcwZTQwZWFkOWM2ZGZmMzM4NzY1MWIxN2FiMg==',
-        'Authorization': 'Basic b3V0Ym91bmRAc3NhaUNvbXBhc3M6MWY1NzZjZGRkZWU3MzcwZTQwZWFkOWM2ZGZmMzM4NzY1MWIxN2FiMg==',
-        'User-Agent': 'AssaiApp/1.0.0 (iPhone; iOS 15.0; Scale/3.00)',
-        'x-app-version': '2.1.0'
-      },
-      timeout: 10000
-    });
+    // PASSO 2: Consultar Marketplace Assaí com Retry
+    let assaiData = null;
+    let retries = 3;
+    let delay = 1000;
 
-    if (!assaiRes.ok) {
-      throw new Error(`Erro Marketplace Assaí: ${assaiRes.status}`);
+    while (retries > 0) {
+      try {
+        const assaiUrl = `https://marketplace.assai.com.br/stock?id_product=${seqProduto}&id_store=${STORE_ID}`;
+        console.log(`[Proxy] [Tentativa ${4 - retries}] Consultando Assaí: ${assaiUrl}`);
+        
+        const assaiRes = await fetch(assaiUrl, {
+          headers: {
+            'accept': 'application/json',
+            'x-basicauthorization': 'b3V0Ym91bmRAc3NhaUNvbXBhc3M6MWY1NzZjZGRkZWU3MzcwZTQwZWFkOWM2ZGZmMzM4NzY1MWIxN2FiMg==',
+            'Authorization': 'Basic b3V0Ym91bmRAc3NhaUNvbXBhc3M6MWY1NzZjZGRkZWU3MzcwZTQwZWFkOWM2ZGZmMzM4NzY1MWIxN2FiMg==',
+            'User-Agent': 'AssaiApp/1.0.0 (iPhone; iOS 15.0; Scale/3.00)',
+            'x-app-version': '2.1.0'
+          },
+          timeout: 8000
+        });
+
+        if (assaiRes.ok) {
+          assaiData = await assaiRes.json();
+          break; // Sucesso!
+        } else {
+          const errText = await assaiRes.text();
+          console.warn(`[Proxy] Erro Assaí (Status ${assaiRes.status}): ${errText.substring(0, 100)}...`);
+          if (assaiRes.status === 403 || assaiRes.status === 401) {
+             // Se for erro de auth ou bloqueio, talvez não adiante o retry imediato, mas vamos tentar mesmo assim
+          }
+        }
+      } catch (e) {
+        console.error(`[Proxy] Falha na tentativa ${4 - retries}: ${e.message}`);
+      }
+      
+      retries--;
+      if (retries > 0) {
+        console.log(`[Proxy] Aguardando ${delay}ms para próxima tentativa...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= 2; // Exponential backoff
+      }
     }
 
-    const assaiData = await assaiRes.json();
+    if (!assaiData) {
+      throw new Error(`Não foi possível obter dados do Assaí após várias tentativas.`);
+    }
+
     const stockPrices = assaiData.stock_price || [];
+
 
     // PASSO 3: Extrair Preço e Packs
     // O preço unitário é onde unit_pack = 1
