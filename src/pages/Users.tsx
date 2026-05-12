@@ -100,7 +100,7 @@ export default function UsersPage() {
         title="Gestão de Usuários"
         description="Controle quem acessa o painel da sua empresa e quais permissões eles possuem."
         actions={
-          <Button onClick={() => setIsModalOpen(true)} className="bg-gradient-primary shadow-glow h-9">
+          <Button onClick={() => setIsModalOpen(true)} variant="premium" size="sm">
             <Plus className="h-4 w-4 mr-2" /> Novo Usuário
           </Button>
         }
