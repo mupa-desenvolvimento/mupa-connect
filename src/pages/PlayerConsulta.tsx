@@ -1038,6 +1038,16 @@ export default function PlayerConsulta() {
           setShowInstallModal(false);
         }}
       />
+      <DevShowcaseOverlay 
+        isDevMode={isDevMode}
+        deviceInfo={deviceInfo}
+        currentFaceDetections={currentFaceDetections}
+        lastProduct={product}
+        currentMedia={manifest?.items?.[currentIndex]}
+        onToggleAutoDemo={setIsAutoDemoActive}
+        isAutoDemoActive={isAutoDemoActive}
+      />
     </div>
   );
 }
+
