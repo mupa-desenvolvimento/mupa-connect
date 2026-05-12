@@ -1164,20 +1164,11 @@ export default function PlayerConsulta() {
       <div className="fixed opacity-0 pointer-events-none overflow-hidden h-0 w-0">
         <Input 
           ref={inputRef}
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              if (inputValue.length >= 3) {
-                handleConsult(inputValue);
-              }
-              setInputValue("");
-            }
-          }}
+          className="hidden-scanner-input"
           autoFocus
-          readOnly
           inputMode="none"
           tabIndex={-1}
+          autoComplete="off"
         />
       </div>
 
