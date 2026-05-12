@@ -1098,9 +1098,9 @@ export default function PlayerConsulta() {
                   <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-4 scrollbar-hide">
                     {/* Preço Unitário Principal */}
                     {(!product.stock_prices || product.stock_prices.filter(p => p.price_pack > 0).length === 0) ? (
-                      <div className="p-12 rounded-[30px] bg-white/5 border border-white/10 flex flex-col items-center justify-center text-center gap-4">
-                        <Package className="w-16 h-16 text-white/20" />
-                        <span className="text-white/40 text-xl font-bold uppercase tracking-widest">Preço não disponível</span>
+                      <div className="p-12 rounded-[30px] bg-white border border-slate-100 flex flex-col items-center justify-center text-center gap-4">
+                        <Package className="w-16 h-16 text-slate-200" />
+                        <span className="text-slate-400 text-xl font-bold uppercase tracking-widest">Preço não disponível</span>
                       </div>
                     ) : (() => {
                       const validPrices = product.stock_prices.filter(p => p.price_pack > 0);
