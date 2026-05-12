@@ -997,7 +997,7 @@ export default function PlayerConsulta() {
             }}
           >
             {isConsulting ? (
-              <div className="flex flex-col items-center gap-6 text-white">
+              <div className="flex flex-col items-center gap-6 text-slate-900">
                 <Loader2 className="h-16 w-16 animate-spin text-primary" />
                 <h2 className="text-[clamp(1.5rem,5vw,3rem)] font-bold">Consultando produto...</h2>
                 <button 
