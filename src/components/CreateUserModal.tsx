@@ -199,7 +199,7 @@ export function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalP
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
               Cancelar
             </Button>
-            <Button type="submit" className="bg-gradient-primary" disabled={loading}>
+            <Button type="submit" variant="premium" disabled={loading}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
