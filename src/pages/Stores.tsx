@@ -338,6 +338,16 @@ export default function StoresPage() {
         isCreate={isCreateModalOpen}
         onSuccess={() => refetch()}
       />
+
+      <StoreDetailsSheet
+        isOpen={isDetailsOpen}
+        onClose={() => {
+          setIsDetailsOpen(false);
+          setSelectedDetailsStore(null);
+        }}
+        store={selectedDetailsStore}
+        onSuccess={() => refetch()}
+      />
     </div>
   );
 }
