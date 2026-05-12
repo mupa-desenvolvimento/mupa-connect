@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,16 +6,39 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, Monitor } from "lucide-react";
+import { Loader2, Monitor, Keyboard as KeyboardIcon } from "lucide-react";
+import VirtualKeyboard from "@/components/VirtualKeyboard";
 
 export default function Setup() {
   const [loading, setLoading] = useState(false);
+  const [showKeyboard, setShowKeyboard] = useState(false);
+  const [activeInput, setActiveInput] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     code_empresa: "",
     apelido: "teste dev",
     numero_loja: "",
   });
   const navigate = useNavigate();
+
+  const handleKeyboardChange = (value: string) => {
+    if (activeInput) {
+      setFormData(prev => ({
+        ...prev,
+        [activeInput]: activeInput === "code_empresa" ? value.toUpperCase() : value
+      }));
+    }
+  };
+
+  const handleKeyPress = (button: string) => {
+    if (button === "{ent}") {
+      setShowKeyboard(false);
+    }
+  };
+
+  const handleInputFocus = (inputName: string) => {
+    setActiveInput(inputName);
+    setShowKeyboard(true);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,7 +127,16 @@ export default function Setup() {
             Configure as informações do seu ponto de consulta
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setShowKeyboard(!showKeyboard)}
+            className="absolute top-0 right-6 text-slate-500 hover:text-white"
+            title="Abrir teclado"
+          >
+            <KeyboardIcon className="h-5 w-5" />
+          </Button>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="code_empresa" className="text-slate-300 font-medium">Código da Empresa</Label>
@@ -113,6 +145,8 @@ export default function Setup() {
                 placeholder="000AAA"
                 value={formData.code_empresa}
                 onChange={(e) => setFormData({ ...formData, code_empresa: e.target.value.toUpperCase() })}
+                onFocus={() => handleInputFocus("code_empresa")}
+                inputMode="none"
                 required
                 maxLength={6}
                 className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-600 uppercase text-lg h-12 tracking-widest focus:ring-blue-500 focus:border-blue-500"
@@ -127,6 +161,8 @@ export default function Setup() {
                 placeholder="Ex: Consulta Corredor 05"
                 value={formData.apelido}
                 onChange={(e) => setFormData({ ...formData, apelido: e.target.value })}
+                onFocus={() => handleInputFocus("apelido")}
+                inputMode="none"
                 required
                 className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-600 h-12 focus:ring-blue-500 focus:border-blue-500"
               />
@@ -139,6 +175,8 @@ export default function Setup() {
                 placeholder="Ex: 123"
                 value={formData.numero_loja}
                 onChange={(e) => setFormData({ ...formData, numero_loja: e.target.value })}
+                onFocus={() => handleInputFocus("numero_loja")}
+                inputMode="none"
                 required
                 className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-600 h-12 focus:ring-blue-500 focus:border-blue-500"
               />
@@ -161,6 +199,16 @@ export default function Setup() {
           </form>
         </CardContent>
       </Card>
+
+      {showKeyboard && (
+        <VirtualKeyboard
+          inputName={activeInput || ""}
+          initialValue={activeInput ? (formData as any)[activeInput] : ""}
+          onChange={handleKeyboardChange}
+          onKeyPress={handleKeyPress}
+          onClose={() => setShowKeyboard(false)}
+        />
+      )}
       
       <div className="absolute bottom-8 text-slate-600 text-xs uppercase tracking-widest pointer-events-none">
         MUPA Digital Signage &copy; 2026
