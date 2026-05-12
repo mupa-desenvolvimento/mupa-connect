@@ -18,17 +18,17 @@ serve(async (req) => {
     )
 
     const body = await req.json()
-    const { ean, store_id: overrideStoreId, device_serial } = body
+    const { ean, product_id, store_id: overrideStoreId, device_serial } = body
 
-    if (!ean) {
-      console.error("[ASSAI_ERROR] EAN não fornecido");
-      return new Response(JSON.stringify({ error: 'EAN is required' }), {
+    if (!ean && !product_id) {
+      console.error("[ASSAI_ERROR] EAN ou Product ID não fornecido");
+      return new Response(JSON.stringify({ error: 'EAN or product_id is required' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
       })
     }
 
-    console.log(`[ASSAI_EAN] ${ean}`);
+    console.log(`[ASSAI_INPUT] EAN: ${ean} | ProductID: ${product_id}`);
 
     // Tentar descobrir a loja pelo serial do dispositivo ou usar default
     let storeId = overrideStoreId || '53'
