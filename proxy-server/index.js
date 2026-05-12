@@ -7,9 +7,10 @@ const PORT = process.env.PORT || 3000;
 
 // Configurações
 const SUPABASE_URL = 'https://iurqddkuihjsmxubibao.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_KEY; // Deve ser passado como env var
-const IMAGE_BASE_URL = 'http://srv-mupa.ddns.net:5050/produto-imagem';
-const STORE_ID = 53;
+const SUPABASE_KEY = process.env.SUPABASE_KEY || 'SUA_CHAVE_AQUI'; 
+const IMAGE_BASE_URL = process.env.IMAGE_BASE_URL || 'http://srv-mupa.ddns.net:5050/produto-imagem';
+const DEFAULT_STORE_ID = 53;
+
 
 app.use(cors());
 app.use(express.json());
