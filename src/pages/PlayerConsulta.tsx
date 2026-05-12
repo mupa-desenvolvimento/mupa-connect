@@ -398,8 +398,7 @@ export default function PlayerConsulta() {
             if (timeSinceLastSent >= 5000) { // 5 seconds cooldown
               // Send data to audience_detections table
               try {
-                const parsedDeviceId = Number((deviceInfo as any)?.id);
-                const validDeviceId = Number.isFinite(parsedDeviceId) ? parsedDeviceId : null;
+                const validDeviceId = isValidUUID((deviceInfo as any)?.device_uuid) ? (deviceInfo as any).device_uuid : null;
                 const validTenantId = isValidUUID(deviceInfo?.tenant_id) ? deviceInfo.tenant_id : 
                                       isValidUUID(manifest?.tenant_id) ? manifest.tenant_id : null;
                 const session = faceSessionsRef.current[index];
@@ -450,8 +449,7 @@ export default function PlayerConsulta() {
           if (!session) return;
           if (now - session.lastSeenAt < 1500) return;
 
-          const parsedDeviceId = Number((deviceInfo as any)?.id);
-          const validDeviceId = Number.isFinite(parsedDeviceId) ? parsedDeviceId : null;
+          const validDeviceId = isValidUUID((deviceInfo as any)?.device_uuid) ? (deviceInfo as any).device_uuid : null;
           const validTenantId = isValidUUID(deviceInfo?.tenant_id) ? deviceInfo.tenant_id :
                                 isValidUUID(manifest?.tenant_id) ? manifest.tenant_id : null;
           const durationMs = Math.max(0, session.lastSeenAt - session.startedAt);
