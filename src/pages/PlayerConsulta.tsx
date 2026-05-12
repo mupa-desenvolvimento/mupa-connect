@@ -100,7 +100,7 @@ export default function PlayerConsulta() {
   const [error, setError] = useState<string | null>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   // Removido inputRef pois a captura agora é global via keydown
-  const [inputValue, setInputValue] = useState("");
+  // inputValue removido pois agora usamos o valor diretamente no ref para o scanner global
   const [manualProductId, setManualProductId] = useState("");
   const [showManualInput, setShowManualInput] = useState(false);
   const [fallbackImageUrl, setFallbackImageUrl] = useState<string | null>(null);
