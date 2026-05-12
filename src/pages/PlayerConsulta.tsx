@@ -416,6 +416,41 @@ export default function PlayerConsulta() {
     }
   }, [hideTimeoutRef]);
 
+  const handleManualConsult = useCallback(async (productId: string) => {
+    const cleanId = productId.trim();
+    if (!cleanId) return;
+    
+    console.log("[Consulta] Iniciando para Product ID:", cleanId);
+    setIsConsulting(true);
+    setShowOverlay(true);
+    setError(null);
+    setProduct(null);
+    setLastConsultedEan(null);
+
+    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("integra-assai", {
+        body: { 
+          product_id: cleanId,
+          device_serial: deviceCode 
+        }
+      });
+
+      if (error) throw error;
+      if (!data || data.error) throw new Error(data?.error || "Falha na resposta da API");
+
+      console.log("[Consulta] Resultado API (Manual):", data);
+      setProduct(data);
+    } catch (err: any) {
+      console.error("Erro na consulta manual:", err);
+      setError(err.message || "Produto não encontrado");
+    } finally {
+      setIsConsulting(false);
+      startHideTimer();
+    }
+  }, [hideTimeoutRef, deviceCode]);
+
   // 3. FOCO AUTOMÁTICO NO INPUT PARA LEITORES DE CÓDIGO DE BARRAS (EMULAÇÃO DE TECLADO)
   const inputRef = useRef<HTMLInputElement>(null);
 
