@@ -627,17 +627,20 @@ export default function PlayerConsulta() {
       </AnimatePresence>
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4">
-        {/* Input visível para debug conforme solicitado pelo usuário */}
+        {/* Input visível para debug e captura do leitor de teclado */}
         <div className="flex flex-col items-center gap-2 mb-4 bg-black/40 backdrop-blur-md p-3 rounded-xl border border-white/10">
-          <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Debug de Leitura</span>
+          <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Leitor Ativo (Foco Automático)</span>
           <Input 
+            ref={inputRef}
             value={inputValue}
-            readOnly
-            className="w-64 h-10 bg-white/5 border-white/20 text-white text-center font-mono text-lg focus:ring-0 cursor-default"
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="w-64 h-10 bg-white/5 border-white/20 text-white text-center font-mono text-lg focus:ring-1 focus:ring-primary/50"
             placeholder="Aguardando scanner..."
+            autoFocus
           />
           <div className="flex gap-2 text-[9px] text-white/30 uppercase font-medium">
-            <span>Enter confirma leitura</span>
+            <span>O leitor envia Enter automaticamente</span>
             <span>•</span>
             <span>{inputValue.length} dígitos</span>
           </div>
