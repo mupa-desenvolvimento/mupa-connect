@@ -623,10 +623,23 @@ export default function PlayerConsulta() {
         )}
       </AnimatePresence>
 
-      {/* Removido input invisível para evitar abertura de teclado em dispositivos móveis/terminais */}
-      {/* A captura de código agora é feita via listener global de keydown */}
-
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4">
+        {/* Input visível para debug conforme solicitado pelo usuário */}
+        <div className="flex flex-col items-center gap-2 mb-4 bg-black/40 backdrop-blur-md p-3 rounded-xl border border-white/10">
+          <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Debug de Leitura</span>
+          <Input 
+            value={inputValue}
+            readOnly
+            className="w-64 h-10 bg-white/5 border-white/20 text-white text-center font-mono text-lg focus:ring-0 cursor-default"
+            placeholder="Aguardando scanner..."
+          />
+          <div className="flex gap-2 text-[9px] text-white/30 uppercase font-medium">
+            <span>Enter confirma leitura</span>
+            <span>•</span>
+            <span>{inputValue.length} dígitos</span>
+          </div>
+        </div>
+
         <div className="flex items-center gap-3 opacity-30 grayscale">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center font-bold text-white">M</div>
           <span className="text-white font-medium tracking-[0.2em] text-[10px] md:text-xs lg:text-sm uppercase">Mupa Retail Media</span>
