@@ -990,6 +990,15 @@ export default function PlayerConsulta() {
               <div className="flex flex-col items-center gap-6 text-white">
                 <Loader2 className="h-16 w-16 animate-spin text-primary" />
                 <h2 className="text-[clamp(1.5rem,5vw,3rem)] font-bold">Consultando produto...</h2>
+                <button 
+                  onClick={() => {
+                    setShowOverlay(false);
+                    setIsConsulting(false);
+                  }}
+                  className="mt-4 px-6 py-2 bg-white/10 hover:bg-white/20 text-white/70 rounded-full text-sm uppercase tracking-widest transition-all"
+                >
+                  Cancelar
+                </button>
               </div>
             ) : error ? (
               <div className="flex flex-col items-center gap-6 text-center max-w-lg text-white">
