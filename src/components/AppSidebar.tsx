@@ -143,6 +143,9 @@ export function AppSidebar() {
               Mupa Cloud
             </div>
             <div className="opacity-60">Sistema Multitenant v3.0</div>
+            <div className="opacity-40 mt-3 normal-case leading-relaxed font-normal">
+              Mupa Desenvolvimento de Solucoes Tecnologicas LTDA - 50.667.125/0001-48
+            </div>
           </div>
         )}
       </SidebarFooter>
