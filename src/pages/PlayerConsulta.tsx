@@ -690,13 +690,15 @@ export default function PlayerConsulta() {
     lastClickTime.current = now;
   };
 
-  // Scanner Wedge global — captura keydown sem input focado.
-  // Evita que Android/Zebra abra o IME do sistema.
+  // Scanner Wedge global — captura keydown e mantém foco no input oculto
+  // sem abrir o teclado virtual (IME) no Android/Zebra.
   useEffect(() => {
     const handleGlobalKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
-      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
-        return;
+      
+      // Se não estiver em modo edição real, garante que o input oculto receba o foco
+      if (target && target.tagName !== "INPUT" && target.tagName !== "TEXTAREA" && !target.isContentEditable) {
+        inputRef.current?.focus();
       }
 
       const now = Date.now();
@@ -711,8 +713,6 @@ export default function PlayerConsulta() {
         if (code.length >= 3) {
           handleConsult(code);
         }
-        e.preventDefault();
-        return;
       }
 
       if (e.key.length === 1) {
@@ -720,8 +720,23 @@ export default function PlayerConsulta() {
       }
     };
 
+    const keepFocus = () => {
+      if (document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") {
+        inputRef.current?.focus();
+      }
+    };
+
     window.addEventListener("keydown", handleGlobalKey, true);
-    return () => window.removeEventListener("keydown", handleGlobalKey, true);
+    window.addEventListener("click", keepFocus);
+    
+    // Foco inicial
+    const timer = setTimeout(keepFocus, 1000);
+
+    return () => {
+      window.removeEventListener("keydown", handleGlobalKey, true);
+      window.removeEventListener("click", keepFocus);
+      clearTimeout(timer);
+    };
   }, [handleConsult]);
 
   // Bloquear long-press, context menu, seleção e copy/paste no kiosk
@@ -1126,7 +1141,26 @@ export default function PlayerConsulta() {
     )}
   </AnimatePresence>
 
-      {/* Scanner global — sem inputs focados, evita teclado Android/Zebra IME */}
+      {/* Input oculto para compatibilidade com equipamentos que exigem foco */}
+      <div className="fixed opacity-0 pointer-events-none overflow-hidden h-0 w-0">
+        <Input 
+          ref={inputRef}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              if (inputValue.length >= 3) {
+                handleConsult(inputValue);
+              }
+              setInputValue("");
+            }
+          }}
+          autoFocus
+          readOnly
+          inputMode="none"
+          tabIndex={-1}
+        />
+      </div>
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4">
         <AnimatePresence>
