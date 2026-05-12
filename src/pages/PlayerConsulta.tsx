@@ -94,6 +94,7 @@ export default function PlayerConsulta() {
   const lastDetectionsRef = useRef<{ [key: number]: number }>({});
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const detectionIntervalRef = useRef<number | null>(null);
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
