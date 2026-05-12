@@ -126,6 +126,11 @@ export default function PlayerConsulta() {
   }, []);
 
   useEffect(() => {
+    setImageError(false);
+  }, [product]);
+
+  useEffect(() => {
+
     if (manifest?.tenant_id) {
       const fetchFallback = async () => {
         try {
