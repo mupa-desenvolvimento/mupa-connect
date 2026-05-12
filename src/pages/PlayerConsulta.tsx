@@ -565,7 +565,15 @@ export default function PlayerConsulta() {
 
   const handleConsult = useCallback(async (ean: string) => {
     const cleanEan = ean.trim();
-    console.log("[EAN]", cleanEan);
+    if (!cleanEan || cleanEan.length < 3) return;
+    
+    // Evitar consultas duplicadas se já estiver consultando
+    if (isConsulting) {
+      console.log("[Scanner] Consulta em andamento, ignorando:", cleanEan);
+      return;
+    }
+
+    console.log("[EAN] Iniciando consulta:", cleanEan);
     setIsConsulting(true);
     setShowOverlay(true);
     setError(null);
@@ -574,11 +582,18 @@ export default function PlayerConsulta() {
 
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
 
+    // Timeout de segurança para a consulta (15 segundos)
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("Tempo esgotado ao consultar produto.")), 15000)
+    );
+
     try {
       const cachedKey = `product_${cleanEan}`;
       const cached = localStorage.getItem(cachedKey);
+      
       if (cached) {
         const parsed = JSON.parse(cached);
+        // Cache válido por 1 hora ou se estiver offline
         if (Date.now() - parsed.timestamp < 3600000 || !navigator.onLine) {
           console.log("[Consulta] Usando cache para:", cleanEan);
           setProduct({ ...parsed.data, is_cached: true });
@@ -588,16 +603,21 @@ export default function PlayerConsulta() {
         }
       }
 
-      const { data, error: functionError } = await supabase.functions.invoke('integra-assai', {
-        body: { ean: cleanEan }
-      });
+      // Corrida entre a consulta e o timeout
+      const result: any = await Promise.race([
+        supabase.functions.invoke('integra-assai', {
+          body: { ean: cleanEan }
+        }),
+        timeoutPromise
+      ]);
+
+      const { data, error: functionError } = result;
 
       if (functionError) throw functionError;
-      if (data.error) throw new Error(data.error);
+      if (data?.error) throw new Error(data.error);
+      if (!data) throw new Error("Produto não encontrado");
 
       console.log("[SEQPRODUTO]", data.internal_id);
-      console.log("[ASSAI_PRICE]", data.stock_prices);
-      
       setProduct(data);
       
       localStorage.setItem(cachedKey, JSON.stringify({
@@ -612,7 +632,7 @@ export default function PlayerConsulta() {
       setIsConsulting(false);
       startHideTimer();
     }
-  }, [hideTimeoutRef]);
+  }, [isConsulting, startHideTimer]);
 
   // AUTO DEMO LOGIC
   useEffect(() => {
@@ -694,50 +714,68 @@ export default function PlayerConsulta() {
   // sem abrir o teclado virtual (IME) no Android/Zebra usando inputMode="none".
   useEffect(() => {
     const handleGlobalKey = (e: KeyboardEvent) => {
+      // Se já estiver consultando, ignora novas teclas para evitar buffer sujo
+      if (isConsulting) {
+        // Opcional: e.preventDefault() aqui se quisermos bloquear totalmente
+        return;
+      }
+
       const target = e.target as HTMLElement | null;
       
-      // Se for Enter, processa a consulta (independente de onde o foco está, se o buffer tiver algo)
+      // Se for Enter, processa a consulta
       if (e.key === "Enter") {
         const code = inputRef.current?.value.trim();
-        console.log("[Scanner] Enter detectado. Valor no input:", code);
-        
-        if (code && code.length >= 3) {
-          handleConsult(code);
+        if (code) {
+          console.log("[Scanner] Enter detectado. Valor:", code);
+          // Limpa o input IMEDIATAMENTE para evitar que a próxima leitura pegue restos
           if (inputRef.current) inputRef.current.value = "";
+          handleConsult(code);
         }
         return;
       }
 
       // Se não estiver em um campo de texto, redireciona o foco para o input principal
-      // e garante que a tecla seja processada pelo input
       if (target && target.tagName !== "INPUT" && target.tagName !== "TEXTAREA" && !target.isContentEditable) {
+        // Se for um dígito, foca no input para capturar a leitura do scanner
         if (/^[0-9]$/.test(e.key)) {
           inputRef.current?.focus();
-          // Não fazemos e.preventDefault() para deixar o caractere entrar no input focado
         }
       }
     };
 
     const keepFocus = () => {
       // Só força o foco se não estivermos em um campo de entrada manual ou outras áreas de texto
+      // e o overlay não estiver aberto
       const active = document.activeElement;
-      if (active?.tagName !== "INPUT" && active?.tagName !== "TEXTAREA" && !showManualInput) {
+      const isInputActive = active?.tagName === "INPUT" || active?.tagName === "TEXTAREA";
+      
+      if (!isInputActive && !showManualInput && !showOverlay) {
         inputRef.current?.focus({ preventScroll: true });
       }
     };
 
-    window.addEventListener("keydown", handleGlobalKey);
+    window.addEventListener("keydown", handleGlobalKey, true); // Use capture to intercept before other handlers
     window.addEventListener("click", keepFocus);
     
-    // Foco inicial
-    const timer = setTimeout(keepFocus, 1000);
+    // Foco inicial e periódico
+    const timer = setInterval(keepFocus, 1000);
 
     return () => {
-      window.removeEventListener("keydown", handleGlobalKey);
+      window.removeEventListener("keydown", handleGlobalKey, true);
       window.removeEventListener("click", keepFocus);
-      clearTimeout(timer);
+      clearInterval(timer);
     };
-  }, [handleConsult, showManualInput]);
+  }, [handleConsult, showManualInput, showOverlay, isConsulting]);
+
+  // Garantir foco ao fechar o overlay
+  useEffect(() => {
+    if (!showOverlay && !showManualInput) {
+      const timer = setTimeout(() => {
+        inputRef.current?.focus({ preventScroll: true });
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [showOverlay, showManualInput]);
 
   // Bloquear long-press, context menu, seleção e copy/paste no kiosk
   useEffect(() => {
@@ -760,7 +798,9 @@ export default function PlayerConsulta() {
     const cleanId = productId.trim();
     if (!cleanId) return;
     
-    console.log("[SEQPRODUTO]", cleanId);
+    if (isConsulting) return;
+
+    console.log("[Manual] Iniciando consulta:", cleanId);
     setIsConsulting(true);
     setShowOverlay(true);
     setError(null);
@@ -769,16 +809,25 @@ export default function PlayerConsulta() {
 
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
 
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("Tempo esgotado ao consultar produto.")), 15000)
+    );
+
     try {
-      const { data, error: functionError } = await supabase.functions.invoke('integra-assai', {
-        body: { product_id: cleanId }
-      });
+      const result: any = await Promise.race([
+        supabase.functions.invoke('integra-assai', {
+          body: { product_id: cleanId }
+        }),
+        timeoutPromise
+      ]);
+
+      const { data, error: functionError } = result;
 
       if (functionError) throw functionError;
-      if (data.error) throw new Error(data.error);
+      if (data?.error) throw new Error(data.error);
+      if (!data) throw new Error("Produto não encontrado");
 
       console.log("[ASSAI_PRICE]", data.stock_prices);
-      
       setProduct(data);
     } catch (err: any) {
       console.error("Erro na consulta manual:", err);
@@ -787,7 +836,7 @@ export default function PlayerConsulta() {
       setIsConsulting(false);
       startHideTimer();
     }
-  }, [hideTimeoutRef]);
+  }, [isConsulting, startHideTimer]);
 
   const getProductNameParts = (desc: string) => {
     if (!desc) return { main: "", rest: "" };
@@ -951,6 +1000,15 @@ export default function PlayerConsulta() {
               <div className="flex flex-col items-center gap-6 text-white">
                 <Loader2 className="h-16 w-16 animate-spin text-primary" />
                 <h2 className="text-[clamp(1.5rem,5vw,3rem)] font-bold">Consultando produto...</h2>
+                <button 
+                  onClick={() => {
+                    setShowOverlay(false);
+                    setIsConsulting(false);
+                  }}
+                  className="mt-4 px-6 py-2 bg-white/10 hover:bg-white/20 text-white/70 rounded-full text-sm uppercase tracking-widest transition-all"
+                >
+                  Cancelar
+                </button>
               </div>
             ) : error ? (
               <div className="flex flex-col items-center gap-6 text-center max-w-lg text-white">

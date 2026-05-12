@@ -119,13 +119,19 @@ serve(async (req) => {
       })
     }
 
-    // Consultar visual (Imagens/Cores) - Opcional
+    // Consultar visual (Imagens/Cores) - Opcional com Timeout
     let visualData = null
     try {
-      // Usar a mesma lógica de imagem se disponível
       const imageBaseUrl = 'http://srv-mupa.ddns.net:5050/produto-imagem'
       const visualUrl = `${imageBaseUrl}/${actualEan}`
-      const visualRes = await fetch(visualUrl)
+      
+      // Adicionar timeout de 3 segundos para a consulta de imagem/visual
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 3000)
+      
+      const visualRes = await fetch(visualUrl, { signal: controller.signal })
+      clearTimeout(timeoutId)
+      
       if (visualRes.ok) {
         visualData = await visualRes.json()
       }
