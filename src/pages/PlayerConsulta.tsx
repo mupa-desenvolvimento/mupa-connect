@@ -384,20 +384,16 @@ export default function PlayerConsulta() {
         }
       }
 
-      const { data, error } = await supabase.functions.invoke("integra-assai", {
-        body: { 
-          ean: cleanEan,
-          device_serial: deviceCode 
-        }
-      });
+      const proxyUrl = `https://srv-mupa.ddns.net/proxy-assai?ean=${cleanEan}`;
+      console.log("[Consulta] Chamando proxy:", proxyUrl);
+      
+      const response = await fetch(proxyUrl);
+      const data = await response.json();
 
-      // Se der erro 404 (não mapeado), tratamos de forma amigável
-      if (error && (error.status === 404 || error.message?.includes('404'))) {
-        throw new Error("Produto não cadastrado para consulta.");
+      if (!response.ok || !data.success) {
+        throw new Error(data?.error || "Produto não encontrado ou erro no proxy");
       }
 
-      if (error) throw error;
-      if (!data || data.error) throw new Error(data?.error || "Falha na resposta da API");
 
       console.log("[Consulta] Resultado API:", data);
       setProduct(data);
