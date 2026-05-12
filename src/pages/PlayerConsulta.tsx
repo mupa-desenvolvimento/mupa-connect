@@ -879,33 +879,6 @@ export default function PlayerConsulta() {
         </AnimatePresence>
       </div>
 
-                className="px-4 h-10 bg-primary/20 hover:bg-primary/40 text-primary rounded-lg border border-primary/30 transition-all font-bold text-sm"
-              >
-                IR
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 opacity-30 grayscale">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center font-bold text-white">M</div>
-          <span className="text-white font-medium tracking-[0.2em] text-[10px] md:text-xs lg:text-sm uppercase">Mupa Retail Media</span>
-        </div>
-        
-        <AnimatePresence>
-          {!showOverlay && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="px-4 py-2 md:px-6 md:py-3 bg-white/5 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-3"
-            >
-              <Barcode className="w-4 h-4 md:w-5 md:h-5 text-primary animate-pulse" />
-              <span className="text-white/40 text-[10px] md:text-xs lg:text-sm font-medium uppercase tracking-widest whitespace-nowrap">Aguardando leitura de código</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
 
       <button
         type="button"
