@@ -1229,14 +1229,14 @@ export default function PlayerConsulta() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="px-4 py-2 md:px-6 md:py-3 bg-white/5 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-3"
+              className="px-4 py-2 md:px-6 md:py-3 bg-white/60 backdrop-blur-md rounded-full border border-slate-200 flex items-center gap-3 shadow-sm"
             >
               <Barcode className="w-4 h-4 md:w-5 md:h-5 text-primary animate-pulse" />
-              <span className="text-white/40 text-[10px] md:text-xs lg:text-sm font-medium uppercase tracking-widest whitespace-nowrap">Aguardando leitura de código</span>
+              <span className="text-slate-500 text-[10px] md:text-xs lg:text-sm font-medium uppercase tracking-widest whitespace-nowrap">Aguardando leitura de código</span>
             </motion.div>
           )}
         </AnimatePresence>
-        <div className="text-white/20 text-[8px] uppercase tracking-tighter text-center opacity-30 hover:opacity-100 transition-opacity">
+        <div className="text-slate-400 text-[8px] uppercase tracking-tighter text-center opacity-40 hover:opacity-100 transition-opacity">
           Mupa Desenvolvimento de Solucoes Tecnologicas LTDA - 50.667.125/0001-48
         </div>
       </div>
