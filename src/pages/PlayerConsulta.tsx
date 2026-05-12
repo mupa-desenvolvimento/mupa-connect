@@ -859,7 +859,34 @@ export default function PlayerConsulta() {
       if (!data) throw new Error("Produto não encontrado");
 
       console.log("[ASSAI_PRICE]", data.stock_prices);
-      setProduct(data);
+      
+      // Se tiver EAN, tenta buscar imagem no Mupa
+      let finalProduct = data;
+      if (data.ean) {
+        const mupaData = await fetchMupaData(data.ean);
+        if (mupaData) {
+          finalProduct = {
+            ...data,
+            visual: {
+              imagem_url: mupaData.imagem_url || data.visual?.imagem_url || DEFAULT_PRODUCT_IMAGE,
+              cor_assinatura_produto: mupaData.cor_assinatura_produto || data.visual?.cor_assinatura_produto || "#000000",
+              fundo_legibilidade: mupaData.fundo_legibilidade || data.visual?.fundo_legibilidade || "#000000",
+              cor_dominante_claro: mupaData.cor_dominante_claro || data.visual?.cor_dominante_claro || "#FFFFFF",
+              cor_dominante_escuro: mupaData.cor_dominante_escuro || data.visual?.cor_dominante_escuro || "#000000",
+            }
+          };
+        } else if (!data.visual?.imagem_url) {
+          finalProduct = {
+            ...data,
+            visual: {
+              ...data.visual,
+              imagem_url: DEFAULT_PRODUCT_IMAGE
+            }
+          };
+        }
+      }
+
+      setProduct(finalProduct);
     } catch (err: any) {
       console.error("Erro na consulta manual:", err);
       setError("Produto não localizado. Por favor, valide a sequência digitada.");
