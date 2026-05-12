@@ -42,10 +42,11 @@ export const PlaylistErrorBanner: React.FC<PlaylistErrorBannerProps> = ({
             variant="outline" 
             size="sm" 
             onClick={onRetry}
-            className="w-fit border-red-500/50 hover:bg-red-500/20 text-red-200"
+            className="w-fit border-white/40 bg-white/10 hover:bg-white/20 text-white font-bold"
           >
             Tentar novamente
           </Button>
+
         )}
       </AlertDescription>
     </Alert>
