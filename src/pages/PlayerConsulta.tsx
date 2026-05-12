@@ -103,6 +103,8 @@ export default function PlayerConsulta() {
   const [manualProductId, setManualProductId] = useState("");
   const [showManualInput, setShowManualInput] = useState(false);
   const [fallbackImageUrl, setFallbackImageUrl] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
+
 
 
   const [isVertical, setIsVertical] = useState(window.innerHeight > window.innerWidth);
