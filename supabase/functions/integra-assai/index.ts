@@ -18,17 +18,17 @@ serve(async (req) => {
     )
 
     const body = await req.json()
-    const { ean, store_id: overrideStoreId, device_serial } = body
+    const { ean, product_id, store_id: overrideStoreId, device_serial } = body
 
-    if (!ean) {
-      console.error("[ASSAI_ERROR] EAN não fornecido");
-      return new Response(JSON.stringify({ error: 'EAN is required' }), {
+    if (!ean && !product_id) {
+      console.error("[ASSAI_ERROR] EAN ou Product ID não fornecido");
+      return new Response(JSON.stringify({ error: 'EAN or product_id is required' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
       })
     }
 
-    console.log(`[ASSAI_EAN] ${ean}`);
+    console.log(`[ASSAI_INPUT] EAN: ${ean} | ProductID: ${product_id}`);
 
     // Tentar descobrir a loja pelo serial do dispositivo ou usar default
     let storeId = overrideStoreId || '53'
@@ -59,24 +59,47 @@ serve(async (req) => {
       }
     }
 
-    // PASSO 1: Consultar código interno no Supabase (seq_produto_assai)
-    const { data: mappingData, error: mappingError } = await supabaseClient
-      .from('seq_produto_assai')
-      .select('SEQPRODUTO, DESCCOMPLETA')
-      .eq('CODACESSONUM', ean)
-      .maybeSingle();
+    // PASSO 1: Obter ID interno e Descrição
+    let internalId = product_id;
+    let description = "Produto";
+    let actualEan = ean;
 
-    if (mappingError || !mappingData) {
-      console.warn(`[ASSAI_ERROR] Produto ${ean} não encontrado no mapeamento Supabase`);
-      return new Response(JSON.stringify({ error: 'Produto não encontrado' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 404,
-      });
+    if (ean) {
+      const { data: mappingData, error: mappingError } = await supabaseClient
+        .from('seq_produto_assai')
+        .select('SEQPRODUTO, DESCCOMPLETA, CODACESSONUM')
+        .eq('CODACESSONUM', ean)
+        .maybeSingle();
+
+      if (mappingError || !mappingData) {
+        console.warn(`[ASSAI_ERROR] Produto ${ean} não encontrado no mapeamento Supabase`);
+        if (!product_id) {
+          return new Response(JSON.stringify({ error: 'Produto não encontrado' }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 404,
+          });
+        }
+      } else {
+        internalId = mappingData.SEQPRODUTO;
+        description = mappingData.DESCCOMPLETA;
+        actualEan = mappingData.CODACESSONUM;
+      }
+    } else if (product_id) {
+      // Se tiver só product_id, tentar buscar descrição e EAN no banco
+      const { data: mappingData } = await supabaseClient
+        .from('seq_produto_assai')
+        .select('DESCCOMPLETA, CODACESSONUM')
+        .eq('SEQPRODUTO', product_id)
+        .limit(1)
+        .maybeSingle();
+      
+      if (mappingData) {
+        description = mappingData.DESCCOMPLETA;
+        actualEan = mappingData.CODACESSONUM;
+      }
     }
 
-    const internalId = mappingData.SEQPRODUTO;
-    const description = mappingData.DESCCOMPLETA;
-    console.log(`[ASSAI_SEQPRODUTO] ${internalId} (${description})`);
+    console.log(`[ASSAI_RESOLVED] ID: ${internalId} | Desc: ${description} | EAN: ${actualEan}`);
 
     // PASSO 2: Consultar preço no marketplace Assai
     let stockPrices = [];
@@ -115,17 +138,19 @@ serve(async (req) => {
     // PASSO 3: Consultar imagem e cores
     let visualData = null;
     try {
-      const visualUrl = `${imageBaseUrl.replace(/\/$/, '')}/${ean}`;
-      const imageResponse = await fetch(visualUrl);
-      if (imageResponse.ok) {
-        visualData = await imageResponse.json();
+      if (actualEan) {
+        const visualUrl = `${imageBaseUrl.replace(/\/$/, '')}/${actualEan}`;
+        const imageResponse = await fetch(visualUrl);
+        if (imageResponse.ok) {
+          visualData = await imageResponse.json();
+        }
       }
     } catch (e) {
       console.error('[ASSAI_ERROR] Erro ao buscar visual:', e);
     }
 
     const result = {
-      ean,
+      ean: actualEan || ean,
       internal_id: internalId,
       description: description,
       stock_prices: stockPrices,

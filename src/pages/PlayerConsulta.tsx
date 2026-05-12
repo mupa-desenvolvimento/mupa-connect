@@ -59,6 +59,8 @@ export default function PlayerConsulta() {
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   // Removido inputRef pois a captura agora é global via keydown
   const [inputValue, setInputValue] = useState("");
+  const [manualProductId, setManualProductId] = useState("");
+  const [showManualInput, setShowManualInput] = useState(false);
 
   const [isVertical, setIsVertical] = useState(window.innerHeight > window.innerWidth);
 
@@ -414,6 +416,41 @@ export default function PlayerConsulta() {
     }
   }, [hideTimeoutRef]);
 
+  const handleManualConsult = useCallback(async (productId: string) => {
+    const cleanId = productId.trim();
+    if (!cleanId) return;
+    
+    console.log("[Consulta] Iniciando para Product ID:", cleanId);
+    setIsConsulting(true);
+    setShowOverlay(true);
+    setError(null);
+    setProduct(null);
+    setLastConsultedEan(null);
+
+    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("integra-assai", {
+        body: { 
+          product_id: cleanId,
+          device_serial: deviceCode 
+        }
+      });
+
+      if (error) throw error;
+      if (!data || data.error) throw new Error(data?.error || "Falha na resposta da API");
+
+      console.log("[Consulta] Resultado API (Manual):", data);
+      setProduct(data);
+    } catch (err: any) {
+      console.error("Erro na consulta manual:", err);
+      setError(err.message || "Produto não encontrado");
+    } finally {
+      setIsConsulting(false);
+      startHideTimer();
+    }
+  }, [hideTimeoutRef, deviceCode]);
+
   // 3. FOCO AUTOMÁTICO NO INPUT PARA LEITORES DE CÓDIGO DE BARRAS (EMULAÇÃO DE TECLADO)
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -688,21 +725,46 @@ export default function PlayerConsulta() {
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4">
         {/* Input visível para debug e captura do leitor de teclado */}
-        <div className="flex flex-col items-center gap-2 mb-4 bg-black/40 backdrop-blur-md p-3 rounded-xl border border-white/10">
-          <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Leitor Ativo (Foco Automático)</span>
-          <Input 
-            ref={inputRef}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="w-64 h-10 bg-white/5 border-white/20 text-white text-center font-mono text-lg focus:ring-1 focus:ring-primary/50"
-            placeholder="Aguardando scanner..."
-            autoFocus
-          />
-          <div className="flex gap-2 text-[9px] text-white/30 uppercase font-medium">
-            <span>O leitor envia Enter automaticamente</span>
-            <span>•</span>
-            <span>{inputValue.length} dígitos</span>
+        {/* Inputs visíveis para consulta e captura */}
+        <div className="flex flex-col md:flex-row gap-4 mb-4">
+          <div className="flex flex-col items-center gap-2 bg-black/40 backdrop-blur-md p-3 rounded-xl border border-white/10">
+            <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Leitor EAN / Scanner</span>
+            <Input 
+              ref={inputRef}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="w-56 h-10 bg-white/5 border-white/20 text-white text-center font-mono text-lg focus:ring-1 focus:ring-primary/50"
+              placeholder="EAN (Barcode)..."
+              autoFocus
+            />
+          </div>
+
+          <div className="flex flex-col items-center gap-2 bg-black/40 backdrop-blur-md p-3 rounded-xl border border-white/10">
+            <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Código do Produto (SEQPRODUTO)</span>
+            <div className="flex gap-2">
+              <Input 
+                value={manualProductId}
+                onChange={(e) => setManualProductId(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleManualConsult(manualProductId);
+                    setManualProductId("");
+                  }
+                }}
+                className="w-40 h-10 bg-white/5 border-white/20 text-white text-center font-mono text-lg focus:ring-1 focus:ring-primary/50"
+                placeholder="Ex: 48"
+              />
+              <button 
+                onClick={() => {
+                  handleManualConsult(manualProductId);
+                  setManualProductId("");
+                }}
+                className="px-4 h-10 bg-primary/20 hover:bg-primary/40 text-primary rounded-lg border border-primary/30 transition-all font-bold text-sm"
+              >
+                IR
+              </button>
+            </div>
           </div>
         </div>
 
