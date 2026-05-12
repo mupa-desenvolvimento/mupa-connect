@@ -485,7 +485,7 @@ export default function PlayerConsulta() {
                   long_session: durationMs >= 60000,
                   face_index: index
                 }
-              })
+              }])
               .then(({ error }) => {
                 if (error) console.error("[Face Detection] Error sending end-of-session to database:", error);
               });
