@@ -624,7 +624,7 @@ const Landing = () => {
 
           <div className="mt-10 pt-6 border-t border-border/40 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="text-sm text-muted-foreground">
-              © {year} Mupa Desenvolvimento de Solucoes Tecnologicas Ltda — Todos os direitos reservados.
+              © {year} Mupa Desenvolvimento de Solucoes Tecnologicas LTDA - 50.667.125/0001-48
             </div>
             <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
               <a href="mailto:contato@mupa.app?subject=Privacidade" className="hover:text-foreground transition-colors">
