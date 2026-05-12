@@ -557,6 +557,105 @@ export default function PlayerConsulta() {
         />
       </div>
 
+      {/* Camada de UI Overlays (Aparência) */}
+      <div className={cn(
+        "absolute inset-0 pointer-events-none p-6 md:p-10 flex flex-col justify-between transition-opacity duration-500",
+        showOverlay ? "opacity-0" : "opacity-100"
+      )}>
+        {/* Header: Device Info & Clock */}
+        <div className="flex items-start justify-between w-full">
+          {/* Device Info */}
+          {(appearance.show_device_name !== false && !isPreview) && (
+            <div className="flex items-center gap-3 animate-fade-in bg-black/20 backdrop-blur-sm p-3 rounded-xl border border-white/5">
+              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary to-blue-600 grid place-items-center font-bold text-white shadow-lg shadow-primary/20">M</div>
+              <div className="leading-tight text-white">
+                <div className="font-bold text-lg tracking-tight">
+                  {deviceInfo?.apelido_interno || "Ponto de Consulta"}
+                </div>
+                <div className="text-[11px] uppercase tracking-[0.2em] opacity-60 font-mono font-bold">
+                  {deviceInfo ? `Filial ${deviceInfo.num_filial}` : `Offline · ${deviceCode}`}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Date/Time */}
+          {(appearance.show_datetime !== false && !isPreview) && (
+            <div className="text-right animate-fade-in bg-black/20 backdrop-blur-sm p-3 rounded-xl border border-white/5 text-white">
+              <div className="font-bold text-3xl tabular-nums tracking-tighter">
+                {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+              </div>
+              <div className="text-[10px] uppercase opacity-50 font-mono tracking-widest">
+                {now.toLocaleDateString("pt-BR", { weekday: 'short', day: '2-digit', month: 'short' })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer Layer */}
+        <div className="flex flex-col items-center gap-4">
+          {/* Logo Overlay */}
+          {appearance.logo?.enabled && appearance.logo.url && (
+            <div 
+              className={cn(
+                "absolute pointer-events-none transition-all duration-500",
+                appearance.logo.position === "top-left" && "top-6 left-6",
+                appearance.logo.position === "top-right" && "top-6 right-6",
+                appearance.logo.position === "bottom-left" && "bottom-6 left-6",
+                appearance.logo.position === "bottom-right" && "bottom-6 right-6",
+                appearance.logo.position === "top-left" && (appearance.show_device_name !== false) && "top-24",
+                appearance.logo.position === "top-right" && (appearance.show_datetime !== false) && "top-24"
+              )}
+              style={{ 
+                opacity: appearance.logo.opacity ?? 1,
+                ...(appearance.logo.position.startsWith('bottom') && appearance.footer?.enabled ? {
+                  bottom: `80px`
+                } : {})
+              }}
+            >
+              <img 
+                src={appearance.logo.url} 
+                alt="Logo" 
+                style={{ width: `${appearance.logo.size || 80}px`, height: 'auto' }}
+                className="drop-shadow-2xl"
+              />
+            </div>
+          )}
+
+          {/* Configurable Footer */}
+          {appearance.footer?.enabled && (
+            <div 
+              className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center justify-center px-8 py-3 rounded-2xl backdrop-blur-md shadow-2xl border border-white/5 animate-fade-in max-w-[90%] pointer-events-none"
+              style={{ 
+                backgroundColor: appearance.footer.background_color || "rgba(0, 0, 0, 0.6)",
+                color: appearance.footer.text_color || "#fff",
+              }}
+            >
+              <div className="flex flex-col items-center justify-center text-center leading-tight">
+                <div 
+                  className="font-bold tracking-wide"
+                  style={{ 
+                    fontFamily: "Satoshi, sans-serif",
+                    fontSize: "1.8rem",
+                    letterSpacing: "0.05em"
+                  }}
+                >
+                  <span className="opacity-95 block line-clamp-2">{appearance.footer.text}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Serial Info (Discreet) */}
+      {(appearance.show_serial !== false && !isPreview && !showOverlay) && (
+        <div className="absolute bottom-4 right-4 z-40 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 font-mono text-[10px] text-white/40 tracking-[0.2em] select-none pointer-events-none uppercase">
+          Device ID: {deviceInfo?.serial || deviceCode}
+        </div>
+      )}
+
+
       <AnimatePresence>
         {showOverlay && (
           <motion.div 
