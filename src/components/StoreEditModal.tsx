@@ -281,7 +281,7 @@ export function StoreEditModal({
           <Button variant="ghost" onClick={onClose} disabled={loading}>
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={loading} className="bg-gradient-primary">
+          <Button onClick={handleSave} disabled={loading} variant="premium">
             {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             {isCreate ? "Criar Loja" : "Salvar Alterações"}
           </Button>
