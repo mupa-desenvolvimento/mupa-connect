@@ -15,12 +15,13 @@ interface ProductData {
   ean: string;
   internal_id: string | number;
   description: string;
-  price: {
+  stock_prices: Array<{
+    unit_pack: number;
     price_pack: number;
-    price_unit: number;
-    promo_text?: string;
-    pack_quantity?: number;
-  } | null;
+    whole_sale?: string | number;
+    stock_avaliable: number;
+    price_prom_pack?: number;
+  }>;
   visual: {
     imagem_url: string;
     cor_assinatura_produto: string;
