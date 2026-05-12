@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,8 +8,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { Loader2, Monitor, Keyboard as KeyboardIcon } from "lucide-react";
 import VirtualKeyboard from "@/components/VirtualKeyboard";
+import { useKioskMode } from "@/hooks/useKioskMode";
+import { PWAInstallModal } from "@/components/PWAInstallModal";
+import { cn } from "@/lib/utils";
 
 export default function Setup() {
+  const { isPwaInstalled, deferredPrompt, installPwa, showCursor, enterFullscreen } = useKioskMode();
+  const [showInstallModal, setShowInstallModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [activeInput, setActiveInput] = useState<string | null>(null);
@@ -19,6 +24,13 @@ export default function Setup() {
     numero_loja: "",
   });
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (deferredPrompt && !isPwaInstalled) {
+      const timer = setTimeout(() => setShowInstallModal(true), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [deferredPrompt, isPwaInstalled]);
 
   const handleKeyboardChange = (value: string) => {
     if (activeInput) {
@@ -38,12 +50,12 @@ export default function Setup() {
   const handleInputFocus = (inputName: string) => {
     setActiveInput(inputName);
     setShowKeyboard(true);
+    enterFullscreen();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate company code (3 numbers + 3 letters)
     const codeRegex = /^\d{3}[A-Z]{3}$/i;
     if (!codeRegex.test(formData.code_empresa)) {
       toast.error("Código da empresa inválido. Use 3 números e 3 letras (ex: 333MUP)");
@@ -57,16 +69,13 @@ export default function Setup() {
 
     setLoading(true);
     try {
-      // 1. Find company by code
       const { data: company, error: companyError } = await supabase
         .from("companies")
         .select("id, tenant_id, name")
         .eq("code", formData.code_empresa.toUpperCase())
         .maybeSingle();
 
-      if (companyError) {
-        throw companyError;
-      }
+      if (companyError) throw companyError;
 
       if (!company) {
         toast.error("Empresa não encontrada com este código");
@@ -74,14 +83,12 @@ export default function Setup() {
         return;
       }
 
-      // 2. Generate a unique serial or use existing one if stored
       let serial = localStorage.getItem("device_serial");
       if (!serial) {
         serial = `CONS-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
         localStorage.setItem("device_serial", serial);
       }
 
-      // 3. Register device via Edge Function
       const { data, error: regError } = await supabase.functions.invoke("device-api", {
         body: {
           serial: serial,
@@ -98,7 +105,6 @@ export default function Setup() {
 
       toast.success(`Dispositivo registrado para ${company.name}!`);
       
-      // 4. Redirect to player-consulta with the serial
       setTimeout(() => {
         navigate(`/player-consulta/${serial}`);
       }, 1500);
@@ -112,7 +118,10 @@ export default function Setup() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4 font-sans">
+    <div className={cn(
+      "min-h-screen flex items-center justify-center bg-slate-950 p-4 font-sans overflow-hidden select-none",
+      !showCursor && "cursor-none"
+    )}>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(17,24,39,1),rgba(2,6,23,1))]" />
       
       <Card className="w-full max-w-md bg-slate-900/80 border-slate-800 text-white backdrop-blur-sm relative z-10 shadow-2xl">
@@ -213,6 +222,15 @@ export default function Setup() {
       <div className="absolute bottom-8 text-slate-600 text-[10px] uppercase tracking-widest pointer-events-none text-center px-4 leading-relaxed">
         Mupa Desenvolvimento de Solucoes Tecnologicas LTDA - 50.667.125/0001-48
       </div>
+
+      <PWAInstallModal 
+        isOpen={showInstallModal}
+        onClose={() => setShowInstallModal(false)}
+        onInstall={() => {
+          installPwa();
+          setShowInstallModal(false);
+        }}
+      />
     </div>
   );
 }
