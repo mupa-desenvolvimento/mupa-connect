@@ -99,7 +99,7 @@ export default function PlayerConsulta() {
   const [lastConsultedEan, setLastConsultedEan] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  // Removido inputRef pois a captura agora é global via keydown
+  // inputRef mantido para compatibilidade com scanners que exigem campo focado
   // inputValue removido pois agora usamos o valor diretamente no ref para o scanner global
   const [manualProductId, setManualProductId] = useState("");
   const [showManualInput, setShowManualInput] = useState(false);
