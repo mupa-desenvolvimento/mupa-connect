@@ -1167,7 +1167,7 @@ export default function PlayerConsulta() {
                                         )}
                                       </div>
                                       <div className="flex items-baseline gap-1">
-                                        <span className="text-sm md:text-lg text-slate-400 font-bold">R$</span>
+                                        <span className="text-sm md:text-lg text-slate-600 font-black">R$</span>
                                         <span className="text-2xl md:text-4xl font-black text-slate-900" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
                                           {formatPrice(finalPrice).replace('R$', '').trim()}
                                         </span>
