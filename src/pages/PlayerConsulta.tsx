@@ -191,37 +191,7 @@ export default function PlayerConsulta() {
 
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Bloqueio do teclado virtual e manutenção do foco
-  useEffect(() => {
-    const keepFocus = () => {
-      if (inputRef.current && document.activeElement !== inputRef.current) {
-        inputRef.current.focus();
-      }
-    };
 
-    const blockVirtualKeyboard = () => {
-      if ('virtualKeyboard' in navigator) {
-        // @ts-ignore - API experimental mas suportada em Chrome/WebView recentes
-        navigator.virtualKeyboard.hide();
-        // @ts-ignore
-        navigator.virtualKeyboard.overlaysContent = true;
-      }
-    };
-
-    const interval = setInterval(() => {
-      keepFocus();
-      blockVirtualKeyboard();
-    }, 1000);
-
-    document.addEventListener("click", keepFocus);
-    document.addEventListener("touchstart", keepFocus);
-
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener("click", keepFocus);
-      document.removeEventListener("touchstart", keepFocus);
-    };
-  }, []);
 
   useEffect(() => {
     const handleResize = () => setIsVertical(window.innerHeight > window.innerWidth);
@@ -1109,8 +1079,8 @@ export default function PlayerConsulta() {
     )}
   </AnimatePresence>
 
-      {/* Inputs ocultos para captura do scanner - Estilizados para bloquear teclado virtual */}
-      <div className="fixed top-0 left-0 w-1 h-1 opacity-0 pointer-events-none overflow-hidden overflow-hidden">
+      {/* Inputs ocultos para captura do scanner */}
+      <div className="fixed opacity-0 pointer-events-none">
         <Input 
           ref={inputRef}
           value={inputValue}
@@ -1118,9 +1088,6 @@ export default function PlayerConsulta() {
           onKeyDown={handleKeyDown}
           autoFocus
           inputMode="none"
-          autoComplete="off"
-          className="absolute -top-40 caret-transparent"
-          style={{ caretColor: 'transparent' }}
         />
         <Input 
           value={manualProductId}
@@ -1132,9 +1099,6 @@ export default function PlayerConsulta() {
             }
           }}
           inputMode="none"
-          autoComplete="off"
-          className="absolute -top-40 caret-transparent"
-          style={{ caretColor: 'transparent' }}
         />
       </div>
 
