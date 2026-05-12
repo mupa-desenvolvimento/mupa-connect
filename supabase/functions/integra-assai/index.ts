@@ -88,7 +88,8 @@ serve(async (req) => {
         headers: {
           'accept': 'application/json',
           'x-basicauthorization': Deno.env.get('ASSAI_BASIC_AUTH') || 'Basic QXNzYWlBcHA6QXNzYWlBcHA=',
-          'Authorization': Deno.env.get('ASSAI_BASIC_AUTH') || 'Basic QXNzYWlBcHA6QXNzYWlBcHA='
+          'Authorization': Deno.env.get('ASSAI_BASIC_AUTH') || 'Basic QXNzYWlBcHA6QXNzYWlBcHA=',
+          'User-Agent': 'AssaiApp/1.0.0 (iPhone; iOS 15.0; Scale/3.00)'
         }
       });
       
