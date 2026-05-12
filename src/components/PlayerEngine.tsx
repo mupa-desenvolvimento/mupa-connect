@@ -192,7 +192,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
             autoPlay={isActive}
             playsInline
             preload="auto"
-            className="w-full h-full object-cover player-gpu-accel"
+            className="w-full h-full object-fill player-gpu-accel"
             onCanPlayThrough={() => {
               if (isActive && videoRef.current && videoRef.current.paused) {
                 videoRef.current.play().catch(e => console.warn("[PlayerEngine] [Playback] Video play failed", e));
