@@ -62,14 +62,8 @@ export default function SettingsPage() {
 
         <div className="mt-6">
           <TabsContent value="geral">
-            <Card className="border-border/60 bg-background/50">
-              <CardHeader>
-                <CardTitle className="font-bold text-lg font-bold">Configurações Gerais</CardTitle>
-              </CardHeader>
-              <CardContent className="text-xs text-muted-foreground font-medium italic">
-                Em breve. Esta seção será habilitada nos próximos módulos.
-              </CardContent>
-            </Card>
+            <CompanySettings />
+
           </TabsContent>
 
           <TabsContent value="usuarios">
