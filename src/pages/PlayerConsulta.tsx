@@ -690,6 +690,57 @@ export default function PlayerConsulta() {
     lastClickTime.current = now;
   };
 
+  // Scanner Wedge global — captura keydown sem input focado.
+  // Evita que Android/Zebra abra o IME do sistema.
+  useEffect(() => {
+    const handleGlobalKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+        return;
+      }
+
+      const now = Date.now();
+      if (now - lastKeyTimeRef.current > 500) {
+        scanBufferRef.current = "";
+      }
+      lastKeyTimeRef.current = now;
+
+      if (e.key === "Enter") {
+        const code = scanBufferRef.current.trim();
+        scanBufferRef.current = "";
+        if (code.length >= 3) {
+          handleConsult(code);
+        }
+        e.preventDefault();
+        return;
+      }
+
+      if (e.key.length === 1) {
+        scanBufferRef.current += e.key;
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalKey, true);
+    return () => window.removeEventListener("keydown", handleGlobalKey, true);
+  }, [handleConsult]);
+
+  // Bloquear long-press, context menu, seleção e copy/paste no kiosk
+  useEffect(() => {
+    const prevent = (e: Event) => e.preventDefault();
+    document.addEventListener("contextmenu", prevent);
+    document.addEventListener("selectstart", prevent);
+    document.addEventListener("copy", prevent);
+    document.addEventListener("cut", prevent);
+    document.addEventListener("paste", prevent);
+    return () => {
+      document.removeEventListener("contextmenu", prevent);
+      document.removeEventListener("selectstart", prevent);
+      document.removeEventListener("copy", prevent);
+      document.removeEventListener("cut", prevent);
+      document.removeEventListener("paste", prevent);
+    };
+  }, []);
+
   const handleManualConsult = useCallback(async (productId: string) => {
     const cleanId = productId.trim();
     if (!cleanId) return;
