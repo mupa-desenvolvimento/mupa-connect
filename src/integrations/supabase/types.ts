@@ -5975,6 +5975,7 @@ export type Database = {
           metadata: Json | null
           migration_version: number | null
           name: string
+          product_fallback_image_url: string | null
           schema_name: string
           slug: string
           updated_at: string | null
@@ -5990,6 +5991,7 @@ export type Database = {
           metadata?: Json | null
           migration_version?: number | null
           name: string
+          product_fallback_image_url?: string | null
           schema_name: string
           slug: string
           updated_at?: string | null
@@ -6005,6 +6007,7 @@ export type Database = {
           metadata?: Json | null
           migration_version?: number | null
           name?: string
+          product_fallback_image_url?: string | null
           schema_name?: string
           slug?: string
           updated_at?: string | null
