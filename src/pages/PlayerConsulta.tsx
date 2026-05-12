@@ -627,7 +627,7 @@ export default function PlayerConsulta() {
 
     } catch (err: any) {
       console.error("Erro na consulta:", err);
-      setError(err.message || "Produto não encontrado ou não cadastrado na loja.");
+      setError("Não encontramos este produto em nossos registros. Verifique o código e tente novamente.");
     } finally {
       setIsConsulting(false);
       startHideTimer();
@@ -831,7 +831,7 @@ export default function PlayerConsulta() {
       setProduct(data);
     } catch (err: any) {
       console.error("Erro na consulta manual:", err);
-      setError(err.message || "Produto não encontrado ou não cadastrado na loja.");
+      setError("Produto não localizado. Por favor, valide a sequência digitada.");
     } finally {
       setIsConsulting(false);
       startHideTimer();
@@ -848,14 +848,14 @@ export default function PlayerConsulta() {
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
+      <div className="fixed inset-0 bg-slate-50 flex items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className={cn("fixed inset-0 bg-black overflow-hidden select-none touch-none overscroll-none", !showCursor && "cursor-none")} onClick={() => enterFullscreen()} onTouchStart={() => enterFullscreen()}>
+    <div className={cn("fixed inset-0 bg-[#f8fafc] overflow-hidden select-none touch-none overscroll-none", !showCursor && "cursor-none")} onClick={() => enterFullscreen()} onTouchStart={() => enterFullscreen()}>
       {/* Hidden camera and canvas for face detection */}
       {!isPreview && (
         <>
@@ -890,9 +890,9 @@ export default function PlayerConsulta() {
         <div className="flex items-start justify-between w-full">
           {/* Device Info */}
           {(appearance.show_device_name !== false && !isPreview) && (
-            <div className="flex items-center gap-3 animate-fade-in bg-black/20 backdrop-blur-sm p-3 rounded-xl border border-white/5">
+            <div className="flex items-center gap-3 animate-fade-in bg-white/60 backdrop-blur-md p-3 rounded-xl border border-slate-200 shadow-sm">
               <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary to-blue-600 grid place-items-center font-bold text-white shadow-lg shadow-primary/20">M</div>
-              <div className="leading-tight text-white">
+              <div className="leading-tight text-slate-900">
                 <div className="font-bold text-lg tracking-tight">
                   {deviceInfo?.apelido_interno || "Ponto de Consulta"}
                 </div>
@@ -907,7 +907,7 @@ export default function PlayerConsulta() {
           {(appearance.show_datetime !== false && !isPreview) && (
             <div 
               onClick={handleHiddenShortcut}
-              className="text-right animate-fade-in bg-black/20 backdrop-blur-sm p-3 rounded-xl border border-white/5 text-white pointer-events-auto cursor-pointer active:scale-95 transition-transform"
+              className="text-right animate-fade-in bg-white/60 backdrop-blur-md p-3 rounded-xl border border-slate-200 text-slate-900 pointer-events-auto cursor-pointer active:scale-95 transition-transform shadow-sm"
             >
               <div className="font-bold text-3xl tabular-nums tracking-tighter">
                 {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
@@ -992,12 +992,12 @@ export default function PlayerConsulta() {
             exit={{ opacity: 0, scale: 0.95 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-6 md:p-12"
             style={{ 
-              backgroundColor: product?.visual?.fundo_legibilidade ? `${product.visual.fundo_legibilidade}CC` : 'rgba(0,0,0,0.85)',
-              backdropFilter: 'blur(20px)'
+              backgroundColor: product?.visual?.fundo_legibilidade ? `${product.visual.fundo_legibilidade}F2` : 'rgba(255,255,255,0.96)',
+              backdropFilter: 'blur(15px)'
             }}
           >
             {isConsulting ? (
-              <div className="flex flex-col items-center gap-6 text-white">
+              <div className="flex flex-col items-center gap-6 text-slate-900">
                 <Loader2 className="h-16 w-16 animate-spin text-primary" />
                 <h2 className="text-[clamp(1.5rem,5vw,3rem)] font-bold">Consultando produto...</h2>
                 <button 
@@ -1005,24 +1005,24 @@ export default function PlayerConsulta() {
                     setShowOverlay(false);
                     setIsConsulting(false);
                   }}
-                  className="mt-4 px-6 py-2 bg-white/10 hover:bg-white/20 text-white/70 rounded-full text-sm uppercase tracking-widest transition-all"
+                  className="mt-4 px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full text-sm uppercase tracking-widest transition-all font-semibold"
                 >
                   Cancelar
                 </button>
               </div>
             ) : error ? (
-              <div className="flex flex-col items-center gap-6 text-center max-w-lg text-white">
+              <div className="flex flex-col items-center gap-6 text-center max-w-lg text-slate-900">
                 <AlertCircle className="h-[clamp(4rem,10vw,6rem)] w-[clamp(4rem,10vw,6rem)] text-red-500" />
-                <h2 className="text-[clamp(2rem,6vw,4rem)] font-bold">Ops!</h2>
-                <p className="text-[clamp(1.2rem,4vw,2.5rem)] text-white/80">{error}</p>
+                <h2 className="text-[clamp(2rem,6vw,4rem)] font-bold">Atenção</h2>
+                <p className="text-[clamp(1.2rem,4vw,2.5rem)] text-slate-600 leading-tight">{error}</p>
                 {lastConsultedEan && (
-                  <p className="text-[clamp(0.8rem,2vw,1.2rem)] text-white/30 font-mono mt-2">EAN: {lastConsultedEan}</p>
+                  <p className="text-[clamp(0.8rem,2vw,1.2rem)] text-slate-400 font-mono mt-2">EAN: {lastConsultedEan}</p>
                 )}
                 <button 
                   onClick={() => setShowOverlay(false)}
-                  className="mt-8 px-8 py-3 md:px-12 md:py-4 bg-white/10 hover:bg-white/20 text-white rounded-full text-[clamp(1rem,3vw,1.5rem)] transition-all"
+                  className="mt-8 px-8 py-3 md:px-12 md:py-4 bg-primary text-white rounded-full text-[clamp(1rem,3vw,1.5rem)] transition-all font-bold shadow-lg shadow-primary/20"
                 >
-                  Voltar
+                  Tentar outro código
                 </button>
               </div>
             ) : product && (
@@ -1031,7 +1031,7 @@ export default function PlayerConsulta() {
                 isVertical ? "flex-col" : "flex-row"
               )}>
                 <div className={cn(
-                  "flex items-center justify-center bg-white/5 rounded-3xl overflow-hidden shadow-2xl relative",
+                  "flex items-center justify-center bg-slate-100 rounded-3xl overflow-hidden shadow-sm relative border border-slate-200",
                   isVertical ? "h-2/5 w-full" : "w-1/2 h-full order-2"
                 )}>
                   {!imageError && (product.visual?.imagem_url || fallbackImageUrl) ? (
@@ -1075,13 +1075,13 @@ export default function PlayerConsulta() {
 
                 <div className={cn(
                   "flex flex-col justify-between",
-                  isVertical ? "h-3/5 w-full" : "w-1/2 h-full order-1 text-white"
+                  isVertical ? "h-3/5 w-full" : "w-1/2 h-full order-1 text-slate-900"
                 )}>
                   <div className="space-y-6">
-                    <div className="inline-block px-4 py-1.5 md:px-6 md:py-2 rounded-full bg-white/10 text-white/60 text-base md:text-xl font-medium">
+                    <div className="inline-block px-4 py-1.5 md:px-6 md:py-2 rounded-full bg-slate-100 text-slate-500 text-base md:text-xl font-medium border border-slate-200">
                       Código: {product.internal_id}
                       {product.is_cached && (
-                        <span className="ml-3 text-[10px] bg-white/10 px-2 py-0.5 rounded uppercase tracking-widest font-bold">Modo Offline</span>
+                        <span className="ml-3 text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded uppercase tracking-widest font-bold">Modo Offline</span>
                       )}
                     </div>
                     
@@ -1089,7 +1089,7 @@ export default function PlayerConsulta() {
                       <h1 className="text-[clamp(2.5rem,8vw,6rem)] font-black leading-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
                         {getProductNameParts(product.description).main}
                       </h1>
-                      <p className="text-[clamp(1.2rem,4vw,2.5rem)] text-white/50 font-medium">
+                      <p className="text-[clamp(1.2rem,4vw,2.5rem)] text-slate-400 font-medium leading-tight">
                         {getProductNameParts(product.description).rest}
                       </p>
                     </div>
@@ -1098,9 +1098,9 @@ export default function PlayerConsulta() {
                   <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-4 scrollbar-hide">
                     {/* Preço Unitário Principal */}
                     {(!product.stock_prices || product.stock_prices.filter(p => p.price_pack > 0).length === 0) ? (
-                      <div className="p-12 rounded-[30px] bg-white/5 border border-white/10 flex flex-col items-center justify-center text-center gap-4">
-                        <Package className="w-16 h-16 text-white/20" />
-                        <span className="text-white/40 text-xl font-bold uppercase tracking-widest">Preço não disponível</span>
+                      <div className="p-12 rounded-[30px] bg-white border border-slate-100 flex flex-col items-center justify-center text-center gap-4">
+                        <Package className="w-16 h-16 text-slate-200" />
+                        <span className="text-slate-400 text-xl font-bold uppercase tracking-widest">Preço não disponível</span>
                       </div>
                     ) : (() => {
                       const validPrices = product.stock_prices.filter(p => p.price_pack > 0);
@@ -1115,16 +1115,17 @@ export default function PlayerConsulta() {
                           <div 
                             className="p-6 md:p-8 rounded-[30px] shadow-xl relative overflow-hidden flex flex-col justify-center"
                             style={{ 
-                              backgroundColor: product.visual?.cor_dominante_escuro || '#111',
-                              border: `2px solid ${product.visual?.cor_dominante_claro || '#333'}66`
+                              backgroundColor: '#fff',
+                              border: `1px solid ${product.visual?.cor_dominante_claro || '#e2e8f0'}`,
+                              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)'
                             }}
                           >
-                            <span className="text-white/40 text-sm md:text-xl font-bold uppercase tracking-wider block mb-1">
+                            <span className="text-slate-400 text-sm md:text-xl font-bold uppercase tracking-wider block mb-1">
                               {mainPriceItem.unit_pack === 1 ? 'Unidade' : `Pack com ${mainPriceItem.unit_pack}`}
                             </span>
                             <div className="flex items-baseline gap-2">
-                              <span className="text-2xl md:text-4xl text-white/40 font-bold">R$</span>
-                              <span className="text-[clamp(3.5rem,10vw,8rem)] leading-none font-black text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+                              <span className="text-2xl md:text-4xl text-slate-400 font-bold">R$</span>
+                              <span className="text-[clamp(3.5rem,10vw,8rem)] leading-none font-black text-slate-900" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
                                 {formatPrice(mainPriceItem.price_prom_pack && mainPriceItem.price_prom_pack > 0 ? mainPriceItem.price_prom_pack : mainPriceItem.price_pack).replace('R$', '').trim()}
                               </span>
                             </div>
@@ -1152,35 +1153,34 @@ export default function PlayerConsulta() {
                                 return (
                                   <div 
                                     key={`pack-${idx}`}
-                                    className="p-5 md:p-6 rounded-[24px] bg-white/5 border border-white/10 shadow-lg flex flex-col justify-between relative"
+                                    className="p-5 md:p-6 rounded-[24px] bg-white border border-slate-100 shadow-sm flex flex-col justify-between relative"
                                   >
                                     <div>
                                       <div className="flex justify-between items-start mb-2">
-                                        <span className="text-white/40 text-[10px] md:text-xs font-bold uppercase tracking-wider">
+                                        <span className="text-slate-400 text-[10px] md:text-xs font-bold uppercase tracking-wider">
                                           {label}
                                         </span>
                                         {economyPercent > 0 && (
-                                          <span className="bg-primary/20 text-primary text-[10px] md:text-[12px] font-bold px-2 py-0.5 rounded-md border border-primary/30">
+                                          <span className="bg-green-50 text-green-600 text-[10px] md:text-[12px] font-bold px-2 py-0.5 rounded-md border border-green-100">
                                             -{economyPercent}% de economia
                                           </span>
                                         )}
                                       </div>
                                       <div className="flex items-baseline gap-1">
-                                        <span className="text-sm md:text-lg text-white/40 font-bold">R$</span>
-                                        <span className="text-2xl md:text-4xl font-black text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+                                        <span className="text-sm md:text-lg text-slate-400 font-bold">R$</span>
+                                        <span className="text-2xl md:text-4xl font-black text-slate-900" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
                                           {formatPrice(finalPrice).replace('R$', '').trim()}
                                         </span>
                                       </div>
                                     </div>
-
-                                    <div className="mt-2 pt-2 border-t border-white/5 flex justify-between items-center">
-                                      <span className="text-white/30 text-[10px] md:text-xs">Nesta oferta cada um sai por:</span>
-                                      <span className="text-white/60 text-xs md:text-sm font-bold">{formatPrice(currentUnitPrice)}</span>
+                                    <div className="mt-2 pt-2 border-t border-slate-50 flex justify-between items-center">
+                                      <span className="text-slate-400 text-[10px] md:text-xs">Sai por unidade:</span>
+                                      <span className="text-slate-600 text-xs md:text-sm font-bold">{formatPrice(currentUnitPrice)}</span>
                                     </div>
 
                                     {price.stock_avaliable <= 0 && (
-                                      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] rounded-[24px] flex items-center justify-center">
-                                        <span className="text-white/60 text-[10px] font-bold uppercase tracking-widest">Esgotado</span>
+                                      <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] rounded-[24px] flex items-center justify-center">
+                                        <span className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Esgotado</span>
                                       </div>
                                     )}
                                   </div>
@@ -1205,14 +1205,14 @@ export default function PlayerConsulta() {
         showOverlay ? "opacity-0 pointer-events-none translate-y-4" : "opacity-100 translate-y-0"
       )}>
         <div className="relative group">
-          <div className="absolute -inset-1 bg-gradient-to-r from-primary/50 to-blue-600/50 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-          <div className="relative flex items-center bg-black/40 backdrop-blur-xl rounded-xl border border-white/10 p-1 pr-4 shadow-2xl">
-            <div className="p-3 text-primary/60">
+          <div className="absolute -inset-1 bg-gradient-to-r from-primary/30 to-blue-400/30 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+          <div className="relative flex items-center bg-white/80 backdrop-blur-xl rounded-xl border border-slate-200 p-1 pr-4 shadow-xl">
+            <div className="p-3 text-primary/80">
               <Barcode className="w-5 h-5" />
             </div>
             <Input 
               ref={inputRef}
-              className="w-64 md:w-80 bg-transparent border-none text-white placeholder:text-white/20 focus-visible:ring-0 focus-visible:ring-offset-0 text-lg font-mono tracking-widest"
+              className="w-64 md:w-80 bg-transparent border-none text-slate-900 placeholder:text-slate-300 focus-visible:ring-0 focus-visible:ring-offset-0 text-lg font-mono tracking-widest"
               placeholder="AGUARDANDO LEITURA..."
               autoFocus
               inputMode="none"
@@ -1229,14 +1229,14 @@ export default function PlayerConsulta() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="px-4 py-2 md:px-6 md:py-3 bg-white/5 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-3"
+              className="px-4 py-2 md:px-6 md:py-3 bg-white/60 backdrop-blur-md rounded-full border border-slate-200 flex items-center gap-3 shadow-sm"
             >
               <Barcode className="w-4 h-4 md:w-5 md:h-5 text-primary animate-pulse" />
-              <span className="text-white/40 text-[10px] md:text-xs lg:text-sm font-medium uppercase tracking-widest whitespace-nowrap">Aguardando leitura de código</span>
+              <span className="text-slate-500 text-[10px] md:text-xs lg:text-sm font-medium uppercase tracking-widest whitespace-nowrap">Aguardando leitura de código</span>
             </motion.div>
           )}
         </AnimatePresence>
-        <div className="text-white/20 text-[8px] uppercase tracking-tighter text-center opacity-30 hover:opacity-100 transition-opacity">
+        <div className="text-slate-400 text-[8px] uppercase tracking-tighter text-center opacity-40 hover:opacity-100 transition-opacity">
           Mupa Desenvolvimento de Solucoes Tecnologicas LTDA - 50.667.125/0001-48
         </div>
       </div>
@@ -1246,9 +1246,9 @@ export default function PlayerConsulta() {
         type="button"
         onClick={() => setShowFaceDetections(v => !v)}
         className={cn(
-          "absolute bottom-4 right-4 z-[70] rounded-full border border-white/10 bg-black/30 backdrop-blur-md p-2 text-white/40 transition-all",
-          "hover:bg-black/50 hover:text-white/80",
-          showFaceDetections && "bg-black/60 text-white/80 border-white/20"
+          "absolute bottom-4 right-4 z-[70] rounded-full border border-slate-200 bg-white/60 backdrop-blur-md p-2 text-slate-400 transition-all shadow-sm",
+          "hover:bg-white/80 hover:text-slate-600",
+          showFaceDetections && "bg-white text-slate-900 border-slate-300 shadow-md"
         )}
         aria-label="Detecções da câmera"
       >
