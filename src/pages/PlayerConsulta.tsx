@@ -1094,32 +1094,20 @@ export default function PlayerConsulta() {
                 )}>
                   {!imageError ? (
                     <img 
-                      src={`http://srv-mupa.ddns.net:5050/produto-imagem/${product.ean}`}
+                      src={product.visual?.imagem_url || `http://srv-mupa.ddns.net:5050/static/processed/${product.ean}.png`}
                       alt={product.description}
                       className="max-w-full max-h-full object-contain p-8 transition-opacity duration-300"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        const mupaUrl = `http://srv-mupa.ddns.net:5050/produto-imagem/${product.ean}`;
-                        const visualUrl = product.visual?.imagem_url;
+                        const defaultFallback = "https://qtbkvshbmqlszncxlcuc.supabase.co/storage/v1/object/public/dsl-uploads/kqrRuPz304ckV2bn5HmQpveeQQo1/821f6c4e-8d26-4bd2-90bd-a52929afc73e.png";
                         
-                        // 1. Se a imagem da Mupa falhar, tenta a visual da API
-                        if (target.src === mupaUrl && visualUrl) {
-                          target.src = visualUrl.replace('http://', 'https://');
-                          return;
-                        }
-
-                        // 2. Tenta o fallback do tenant ou imagem default
-                        const finalFallback = fallbackImageUrl || "https://qtbkvshbmqlszncxlcuc.supabase.co/storage/v1/object/public/dsl-uploads/kqrRuPz304ckV2bn5HmQpveeQQo1/821f6c4e-8d26-4bd2-90bd-a52929afc73e.png";
-                        
-                        if (target.src !== finalFallback) {
-                          target.src = finalFallback;
-                          if (finalFallback !== "https://qtbkvshbmqlszncxlcuc.supabase.co/storage/v1/object/public/dsl-uploads/kqrRuPz304ckV2bn5HmQpveeQQo1/821f6c4e-8d26-4bd2-90bd-a52929afc73e.png") {
-                            target.classList.add('opacity-40');
-                          }
+                        // 1. Se falhou e não é o fallback final, tenta o fallback
+                        if (target.src !== defaultFallback) {
+                          target.src = fallbackImageUrl || defaultFallback;
                           return;
                         }
                         
-                        // 3. Fallback final para ícone
+                        // 2. Se tudo falhou
                         setImageError(true);
                       }}
                     />
