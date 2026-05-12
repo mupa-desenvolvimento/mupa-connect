@@ -528,7 +528,43 @@ export default function PlayerConsulta() {
   };
 
   const handleManualConsult = useCallback(async (productId: string) => {
-...
+    const cleanId = productId.trim();
+    if (!cleanId) return;
+    
+    console.log("[SEQPRODUTO]", cleanId);
+    setIsConsulting(true);
+    setShowOverlay(true);
+    setError(null);
+    setProduct(null);
+    setLastConsultedEan(null);
+
+    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+
+    try {
+      const { data, error: functionError } = await supabase.functions.invoke('integra-assai', {
+        body: { product_id: cleanId }
+      });
+
+      if (functionError) throw functionError;
+      if (data.error) throw new Error(data.error);
+
+      console.log("[ASSAI_PRICE]", data.stock_prices);
+      
+      setProduct(data);
+    } catch (err: any) {
+      console.error("Erro na consulta manual:", err);
+      setError(err.message || "Produto não encontrado ou não cadastrado na loja.");
+    } finally {
+      setIsConsulting(false);
+      startHideTimer();
+    }
+  }, [hideTimeoutRef]);
+
+  const getProductNameParts = (desc: string) => {
+    if (!desc) return { main: "", rest: "" };
+    const words = desc.split(" ");
+    const main = words.slice(0, 3).join(" ");
+    const rest = words.slice(3).join(" ");
     return { main, rest };
   };
 
