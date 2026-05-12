@@ -663,7 +663,7 @@ export default function PlayerConsulta() {
         </>
       )}
 
-      <div className={cn("w-full h-full transition-all duration-700", showOverlay ? "scale-95 blur-md opacity-50" : "scale-100 blur-0 opacity-100")}>
+      <div className={cn("w-full h-full transition-all duration-700", showOverlay ? "blur-md opacity-50" : "blur-0 opacity-100")}>
         <PlayerEngine 
           playlist={activePlaylist} 
           onMediaChange={setCurrentIndex}
