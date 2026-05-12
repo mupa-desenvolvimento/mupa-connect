@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,89 +12,130 @@ serve(async (req) => {
   }
 
   try {
-    const { ean, store_id = '53' } = await req.json()
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    )
+
+    const body = await req.json()
+    const { ean, store_id: overrideStoreId, device_serial } = body
 
     if (!ean) {
+      console.error("[ASSAI_ERROR] EAN não fornecido");
       return new Response(JSON.stringify({ error: 'EAN is required' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
       })
     }
 
-    console.log(`[Consulta] Buscando mapping para EAN: ${ean}`);
+    console.log(`[ASSAI_EAN] ${ean}`);
 
-    // PASSO 1: Consultar código interno no novo endpoint
-    let mappingData = null;
-    try {
-      const mappingResponse = await fetch(`http://srv-mupa.ddns.net:5050/api/ean/seqproduto?codbar=${ean}`);
-      if (mappingResponse.ok) {
-        mappingData = await mappingResponse.json();
-      } else {
-        console.error(`Erro no mapping API: ${mappingResponse.status}`);
+    // Tentar descobrir a loja pelo serial do dispositivo ou usar default
+    let storeId = overrideStoreId || '53'
+    let imageBaseUrl = 'http://srv-mupa.ddns.net:5050/produto-imagem'
+
+    if (device_serial) {
+      const { data: device } = await supabaseClient
+        .from('dispositivos')
+        .select('company_id, num_filial')
+        .eq('serial', device_serial)
+        .single()
+
+      if (device) {
+        if (device.num_filial) storeId = String(device.num_filial)
+        
+        const { data: integration } = await supabaseClient
+          .from('company_integrations')
+          .select('settings')
+          .eq('company_id', device.company_id)
+          .eq('is_active', true)
+          .limit(1)
+          .maybeSingle()
+        
+        if (integration?.settings) {
+          if (integration.settings.loja) storeId = String(integration.settings.loja)
+          if (integration.settings.image_base_url) imageBaseUrl = integration.settings.image_base_url
+        }
       }
-    } catch (e) {
-      console.error('Erro ao buscar mapping externo:', e);
     }
 
-    if (!mappingData) {
-      return new Response(JSON.stringify({ error: 'Produto não encontrado na base de dados' }), {
+    // PASSO 1: Consultar código interno no Supabase (seq_produto_assai)
+    const { data: mappingData, error: mappingError } = await supabaseClient
+      .from('seq_produto_assai')
+      .select('SEQPRODUTO, DESCCOMPLETA')
+      .eq('CODACESSONUM', ean)
+      .maybeSingle();
+
+    if (mappingError || !mappingData) {
+      console.warn(`[ASSAI_ERROR] Produto ${ean} não encontrado no mapeamento Supabase`);
+      return new Response(JSON.stringify({ error: 'Produto não encontrado' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 404,
       });
     }
 
-    const internalId = mappingData.id_product;
-    const description = mappingData.descricao;
+    const internalId = mappingData.SEQPRODUTO;
+    const description = mappingData.DESCCOMPLETA;
+    console.log(`[ASSAI_SEQPRODUTO] ${internalId} (${description})`);
 
     // PASSO 2: Consultar preço no marketplace Assai
-    let priceData = null;
+    let stockPrices = [];
     try {
-      console.log(`[Consulta] Buscando preço para id_product: ${internalId}`);
-      const assaiResponse = await fetch(`https://marketplace.assai.com.br/stock?id_product=${internalId}&id_store=${store_id}`, {
+      const assaiUrl = `https://marketplace.assai.com.br/stock?id_product=${internalId}&id_store=${parseInt(storeId)}`;
+      console.log(`[ASSAI_QUERY] ${assaiUrl}`);
+      
+      const assaiResponse = await fetch(assaiUrl, {
         headers: {
           'accept': 'application/json',
-          'x-basicauthorization': Deno.env.get('ASSAI_BASIC_AUTH') || 'Basic QXNzYWlBcHA6QXNzYWlBcHA=' 
+          'x-basicauthorization': Deno.env.get('ASSAI_BASIC_AUTH') || 'Basic QXNzYWlBcHA6QXNzYWlBcHA=',
+          'Authorization': Deno.env.get('ASSAI_BASIC_AUTH') || 'Basic QXNzYWlBcHA6QXNzYWlBcHA='
         }
       });
       
       if (assaiResponse.ok) {
-        const fullPriceData = await assaiResponse.json();
-        priceData = Array.isArray(fullPriceData) ? fullPriceData[0] : fullPriceData;
+        const fullData = await assaiResponse.json();
+        stockPrices = fullData.stock_price || [];
+        console.log(`[ASSAI_PRICE] Encontrado ${stockPrices.length} níveis de preço`);
+        
+        // Log dos packs para debug
+        const packsInfo = stockPrices
+          .filter(p => p.price_pack > 0)
+          .map(p => `Pack ${p.unit_pack}: R$ ${p.price_pack}`)
+          .join(' | ');
+        console.log(`[ASSAI_PACKS] ${packsInfo || 'Nenhum pack com preço > 0'}`);
       } else {
-        console.warn(`Aviso: API de preço retornou status ${assaiResponse.status}`);
+        console.warn(`[ASSAI_ERROR] API Assai retornou status ${assaiResponse.status}`);
       }
     } catch (e) {
-      console.error('Erro ao buscar preço:', e);
+      console.error('[ASSAI_ERROR] Erro ao buscar preço no Assai:', e);
     }
 
     // PASSO 3: Consultar imagem e cores
     let visualData = null;
     try {
-      console.log(`[Consulta] Buscando visual para EAN: ${ean}`);
-      const imageResponse = await fetch(`http://srv-mupa.ddns.net:5050/produto-imagem/${ean}`);
+      const visualUrl = `${imageBaseUrl.replace(/\/$/, '')}/${ean}`;
+      const imageResponse = await fetch(visualUrl);
       if (imageResponse.ok) {
         visualData = await imageResponse.json();
       }
     } catch (e) {
-      console.error('Erro ao buscar imagem:', e);
+      console.error('[ASSAI_ERROR] Erro ao buscar visual:', e);
     }
 
     const result = {
       ean,
       internal_id: internalId,
       description: description,
-      price: priceData,
+      stock_prices: stockPrices,
       visual: visualData
     };
-
-    console.log('[Consulta] Sucesso:', result);
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
   } catch (error) {
-    console.error('Error in integra-assai:', error);
+    console.error('[ASSAI_ERROR] Critical failure:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
