@@ -475,7 +475,7 @@ export default function PlayerConsulta() {
       setProduct(data);
     } catch (err: any) {
       console.error("Erro na consulta manual:", err);
-      setError(err.message || "Produto não encontrado");
+      setError(err.message || "Produto não encontrado ou não cadastrado na loja.");
     } finally {
       setIsConsulting(false);
       startHideTimer();
