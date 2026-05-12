@@ -145,6 +145,7 @@ export default function Setup() {
                 placeholder="Ex: Consulta Corredor 05"
                 value={formData.apelido}
                 onChange={(e) => setFormData({ ...formData, apelido: e.target.value })}
+                onFocus={() => handleInputFocus("apelido")}
                 required
                 className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-600 h-12 focus:ring-blue-500 focus:border-blue-500"
               />
@@ -157,6 +158,7 @@ export default function Setup() {
                 placeholder="Ex: 123"
                 value={formData.numero_loja}
                 onChange={(e) => setFormData({ ...formData, numero_loja: e.target.value })}
+                onFocus={() => handleInputFocus("numero_loja")}
                 required
                 className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-600 h-12 focus:ring-blue-500 focus:border-blue-500"
               />
@@ -179,6 +181,15 @@ export default function Setup() {
           </form>
         </CardContent>
       </Card>
+
+      {showKeyboard && (
+        <VirtualKeyboard
+          inputName={activeInput || ""}
+          initialValue={activeInput ? (formData as any)[activeInput] : ""}
+          onChange={handleKeyboardChange}
+          onClose={() => setShowKeyboard(false)}
+        />
+      )}
       
       <div className="absolute bottom-8 text-slate-600 text-xs uppercase tracking-widest pointer-events-none">
         MUPA Digital Signage &copy; 2026
