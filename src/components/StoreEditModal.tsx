@@ -143,7 +143,6 @@ export function StoreEditModal({
 
         <div className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          </div>
           <div className="grid gap-2">
             <Label htmlFor="name" className="flex items-center gap-1.5">
               <Store className="h-3.5 w-3.5 text-muted-foreground" />
