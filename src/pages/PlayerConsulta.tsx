@@ -907,7 +907,7 @@ export default function PlayerConsulta() {
           {(appearance.show_datetime !== false && !isPreview) && (
             <div 
               onClick={handleHiddenShortcut}
-              className="text-right animate-fade-in bg-black/20 backdrop-blur-sm p-3 rounded-xl border border-white/5 text-white pointer-events-auto cursor-pointer active:scale-95 transition-transform"
+              className="text-right animate-fade-in bg-white/60 backdrop-blur-md p-3 rounded-xl border border-slate-200 text-slate-900 pointer-events-auto cursor-pointer active:scale-95 transition-transform shadow-sm"
             >
               <div className="font-bold text-3xl tabular-nums tracking-tighter">
                 {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
