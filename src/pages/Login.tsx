@@ -108,6 +108,11 @@ const Login = () => {
       </Card>
     </div>
 
+    <div className="fixed bottom-4 left-0 right-0 text-center pointer-events-none">
+      <p className="text-[10px] text-muted-foreground/50 uppercase tracking-widest leading-relaxed">
+        Mupa Desenvolvimento de Solucoes Tecnologicas LTDA - 50.667.125/0001-48
+      </p>
+    </div>
   );
 };
 
