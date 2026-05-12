@@ -58,6 +58,8 @@ interface ProductData {
   is_cached?: boolean;
 }
 
+const DEFAULT_PRODUCT_IMAGE = "https://qtbkvshbmqlszncxlcuc.supabase.co/storage/v1/object/public/dsl-uploads/kqrRuPz304ckV2bn5HmQpveeQQo1/821f6c4e-8d26-4bd2-90bd-a52929afc73e.png";
+
 const isValidUUID = (value: any): boolean => {
   if (typeof value !== 'string') return false;
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -561,11 +563,22 @@ export default function PlayerConsulta() {
     };
   }, []);
 
+  const fetchMupaData = async (ean: string) => {
+    try {
+      const response = await fetch(`http://srv-mupa.ddns.net:5050/produto-imagem/${ean}`);
+      if (!response.ok) throw new Error("Mupa API error");
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      console.error("Error fetching from Mupa:", err);
+      return null;
+    }
+  };
+
   const handleConsult = useCallback(async (ean: string) => {
     const cleanEan = ean.trim();
     if (!cleanEan || cleanEan.length < 3) return;
     
-    // Evitar consultas duplicadas se já estiver consultando
     if (isConsulting) {
       console.log("[Scanner] Consulta em andamento, ignorando:", cleanEan);
       return;
@@ -580,7 +593,6 @@ export default function PlayerConsulta() {
 
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
 
-    // Timeout de segurança para a consulta (15 segundos)
     const timeoutPromise = new Promise((_, reject) => 
       setTimeout(() => reject(new Error("Tempo esgotado ao consultar produto.")), 15000)
     );
@@ -591,7 +603,6 @@ export default function PlayerConsulta() {
       
       if (cached) {
         const parsed = JSON.parse(cached);
-        // Cache válido por 1 hora ou se estiver offline
         if (Date.now() - parsed.timestamp < 3600000 || !navigator.onLine) {
           console.log("[Consulta] Usando cache para:", cleanEan);
           setProduct({ ...parsed.data, is_cached: true });
@@ -601,7 +612,6 @@ export default function PlayerConsulta() {
         }
       }
 
-      // Corrida entre a consulta e o timeout
       const result: any = await Promise.race([
         supabase.functions.invoke('integra-assai', {
           body: { ean: cleanEan }
@@ -616,10 +626,31 @@ export default function PlayerConsulta() {
       if (!data) throw new Error("Produto não encontrado");
 
       console.log("[SEQPRODUTO]", data.internal_id);
-      setProduct(data);
+      
+      // Fetch visual data from Mupa
+      const mupaData = await fetchMupaData(cleanEan);
+      
+      const finalProduct = {
+        ...data,
+        visual: mupaData ? {
+          imagem_url: mupaData.imagem_url || data.visual?.imagem_url || DEFAULT_PRODUCT_IMAGE,
+          cor_assinatura_produto: mupaData.cor_assinatura_produto || data.visual?.cor_assinatura_produto || "#000000",
+          fundo_legibilidade: mupaData.fundo_legibilidade || data.visual?.fundo_legibilidade || "#000000",
+          cor_dominante_claro: mupaData.cor_dominante_claro || data.visual?.cor_dominante_claro || "#FFFFFF",
+          cor_dominante_escuro: mupaData.cor_dominante_escuro || data.visual?.cor_dominante_escuro || "#000000",
+        } : (data.visual || {
+          imagem_url: DEFAULT_PRODUCT_IMAGE,
+          cor_assinatura_produto: "#000000",
+          fundo_legibilidade: "#000000",
+          cor_dominante_claro: "#FFFFFF",
+          cor_dominante_escuro: "#000000",
+        })
+      };
+
+      setProduct(finalProduct);
       
       localStorage.setItem(cachedKey, JSON.stringify({
-        data,
+        data: finalProduct,
         timestamp: Date.now()
       }));
 
@@ -826,7 +857,34 @@ export default function PlayerConsulta() {
       if (!data) throw new Error("Produto não encontrado");
 
       console.log("[ASSAI_PRICE]", data.stock_prices);
-      setProduct(data);
+      
+      // Se tiver EAN, tenta buscar imagem no Mupa
+      let finalProduct = data;
+      if (data.ean) {
+        const mupaData = await fetchMupaData(data.ean);
+        if (mupaData) {
+          finalProduct = {
+            ...data,
+            visual: {
+              imagem_url: mupaData.imagem_url || data.visual?.imagem_url || DEFAULT_PRODUCT_IMAGE,
+              cor_assinatura_produto: mupaData.cor_assinatura_produto || data.visual?.cor_assinatura_produto || "#000000",
+              fundo_legibilidade: mupaData.fundo_legibilidade || data.visual?.fundo_legibilidade || "#000000",
+              cor_dominante_claro: mupaData.cor_dominante_claro || data.visual?.cor_dominante_claro || "#FFFFFF",
+              cor_dominante_escuro: mupaData.cor_dominante_escuro || data.visual?.cor_dominante_escuro || "#000000",
+            }
+          };
+        } else if (!data.visual?.imagem_url) {
+          finalProduct = {
+            ...data,
+            visual: {
+              ...data.visual,
+              imagem_url: DEFAULT_PRODUCT_IMAGE
+            }
+          };
+        }
+      }
+
+      setProduct(finalProduct);
     } catch (err: any) {
       console.error("Erro na consulta manual:", err);
       setError("Produto não localizado. Por favor, valide a sequência digitada.");
@@ -1032,32 +1090,22 @@ export default function PlayerConsulta() {
                   "flex items-center justify-center bg-slate-100 rounded-3xl overflow-hidden shadow-sm relative border border-slate-200",
                   isVertical ? "h-2/5 w-full" : "w-1/2 h-full order-2"
                 )}>
-                  {!imageError && (product.visual?.imagem_url || fallbackImageUrl) ? (
+                  {!imageError ? (
                     <img 
-                      src={(product.visual?.imagem_url || fallbackImageUrl)?.replace('http://', 'https://')} 
+                      src={product.visual?.imagem_url || `http://srv-mupa.ddns.net:5050/static/processed/${product.ean}.png`}
                       alt={product.description}
-                      className={cn(
-                        "max-w-full max-h-full object-contain p-8 transition-opacity duration-300",
-                        !product.visual?.imagem_url && "opacity-40"
-                      )}
+                      className="max-w-full max-h-full object-contain p-8 transition-opacity duration-300"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        const originalUrl = product.visual?.imagem_url;
+                        const defaultFallback = "https://qtbkvshbmqlszncxlcuc.supabase.co/storage/v1/object/public/dsl-uploads/kqrRuPz304ckV2bn5HmQpveeQQo1/821f6c4e-8d26-4bd2-90bd-a52929afc73e.png";
                         
-                        // 1. Try HTTP if HTTPS failed (for ddns domains without SSL)
-                        if (target.src.startsWith('https://') && originalUrl?.startsWith('http://')) {
-                          target.src = originalUrl;
+                        // 1. Se falhou e não é o fallback final, tenta o fallback
+                        if (target.src !== defaultFallback) {
+                          target.src = fallbackImageUrl || defaultFallback;
                           return;
                         }
                         
-                        // 2. Try Company Fallback Image if product image failed
-                        if (fallbackImageUrl && target.src !== fallbackImageUrl) {
-                          target.src = fallbackImageUrl;
-                          target.classList.add('opacity-40');
-                          return;
-                        }
-                        
-                        // 3. Final fallback to icon
+                        // 2. Se tudo falhou
                         setImageError(true);
                       }}
                     />
