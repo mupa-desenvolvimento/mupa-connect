@@ -11,6 +11,28 @@ import { Loader2, Package, AlertCircle, Barcode, User, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import * as faceapi from "face-api.js";
 
+interface AppearanceConfig {
+  show_device_name?: boolean;
+  show_datetime?: boolean;
+  show_serial?: boolean;
+  transition_type?: "fade" | "slide-left" | "slide-right" | "zoom" | "none";
+  transition_duration?: number;
+  footer?: {
+    enabled: boolean;
+    text: string;
+    background_color: string;
+    text_color: string;
+    height: number;
+  };
+  logo?: {
+    enabled: boolean;
+    url: string;
+    position: "top-left" | "top-right" | "bottom-left" | "bottom-right";
+    size: number;
+    opacity?: number;
+  };
+}
+
 interface ProductData {
   ean: string;
   internal_id: string | number;
