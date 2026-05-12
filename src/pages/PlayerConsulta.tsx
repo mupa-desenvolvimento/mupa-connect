@@ -1011,18 +1011,18 @@ export default function PlayerConsulta() {
                 </button>
               </div>
             ) : error ? (
-              <div className="flex flex-col items-center gap-6 text-center max-w-lg text-white">
+              <div className="flex flex-col items-center gap-6 text-center max-w-lg text-slate-900">
                 <AlertCircle className="h-[clamp(4rem,10vw,6rem)] w-[clamp(4rem,10vw,6rem)] text-red-500" />
-                <h2 className="text-[clamp(2rem,6vw,4rem)] font-bold">Ops!</h2>
-                <p className="text-[clamp(1.2rem,4vw,2.5rem)] text-white/80">{error}</p>
+                <h2 className="text-[clamp(2rem,6vw,4rem)] font-bold">Atenção</h2>
+                <p className="text-[clamp(1.2rem,4vw,2.5rem)] text-slate-600 leading-tight">{error}</p>
                 {lastConsultedEan && (
-                  <p className="text-[clamp(0.8rem,2vw,1.2rem)] text-white/30 font-mono mt-2">EAN: {lastConsultedEan}</p>
+                  <p className="text-[clamp(0.8rem,2vw,1.2rem)] text-slate-400 font-mono mt-2">EAN: {lastConsultedEan}</p>
                 )}
                 <button 
                   onClick={() => setShowOverlay(false)}
-                  className="mt-8 px-8 py-3 md:px-12 md:py-4 bg-white/10 hover:bg-white/20 text-white rounded-full text-[clamp(1rem,3vw,1.5rem)] transition-all"
+                  className="mt-8 px-8 py-3 md:px-12 md:py-4 bg-primary text-white rounded-full text-[clamp(1rem,3vw,1.5rem)] transition-all font-bold shadow-lg shadow-primary/20"
                 >
-                  Voltar
+                  Tentar outro código
                 </button>
               </div>
             ) : product && (
