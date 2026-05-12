@@ -381,7 +381,10 @@ export default function PlayerConsulta() {
       }
 
       const { data, error } = await supabase.functions.invoke("consulta-seq-produto-assai", {
-        body: { ean: cleanEan }
+        body: { 
+          ean: cleanEan,
+          device_serial: deviceCode 
+        }
       });
 
       // Se der erro 404 (não mapeado), tratamos de forma amigável
