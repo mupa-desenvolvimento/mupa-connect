@@ -94,7 +94,15 @@ export default function PlayerConsulta() {
   const lastDetectionsRef = useRef<{ [key: number]: number }>({});
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const detectionIntervalRef = useRef<number | null>(null);
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const appearance = useMemo(() => (manifest?.appearance_config || {}) as AppearanceConfig, [manifest]);
+
 
   useEffect(() => {
     const handleResize = () => setIsVertical(window.innerHeight > window.innerWidth);
