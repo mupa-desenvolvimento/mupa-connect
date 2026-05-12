@@ -20,7 +20,9 @@ const cache = new Map();
 const CACHE_TTL = 3600000; // 1 hora
 
 app.get('/proxy-assai', async (req, res) => {
-  const { ean, product_id } = req.query;
+  const { ean, product_id, store_id } = req.query;
+  const targetStoreId = store_id || DEFAULT_STORE_ID;
+
 
   if (!ean && !product_id) {
     return res.status(400).json({ success: false, error: 'EAN ou product_id é obrigatório' });
