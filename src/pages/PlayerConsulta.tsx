@@ -7,9 +7,11 @@ import { ManifestService } from "@/services/ManifestService";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Package, AlertCircle, Barcode, User, X } from "lucide-react";
+import { Loader2, Package, AlertCircle, Barcode, User, X, Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import * as faceapi from "face-api.js";
+import { useKioskMode } from "@/hooks/useKioskMode";
+import { PWAInstallModal } from "@/components/PWAInstallModal";
 
 interface AppearanceConfig {
   show_device_name?: boolean;
@@ -61,6 +63,8 @@ const isValidUUID = (value: any): boolean => {
 };
 
 export default function PlayerConsulta() {
+  const { isPwaInstalled, deferredPrompt, installPwa, showCursor, enterFullscreen } = useKioskMode();
+  const [showInstallModal, setShowInstallModal] = useState(false);
   const navigate = useNavigate();
   const { deviceCode } = useParams();
   const [searchParams] = useSearchParams();
@@ -71,6 +75,13 @@ export default function PlayerConsulta() {
   const [isLoading, setIsLoading] = useState(true);
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (deferredPrompt && !isPwaInstalled) {
+      const timer = setTimeout(() => setShowInstallModal(true), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [deferredPrompt, isPwaInstalled]);
 
   // MODO CONSULTA STATE
   const [showOverlay, setShowOverlay] = useState(false);
@@ -531,7 +542,7 @@ export default function PlayerConsulta() {
   }
 
   return (
-    <div className="fixed inset-0 bg-black overflow-hidden select-none touch-none overscroll-none">
+    <div className={cn("fixed inset-0 bg-black overflow-hidden select-none touch-none overscroll-none", !showCursor && "cursor-none")} onClick={() => enterFullscreen()} onTouchStart={() => enterFullscreen()}>
       {/* Hidden camera and canvas for face detection */}
       {!isPreview && (
         <>
@@ -950,6 +961,15 @@ export default function PlayerConsulta() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <PWAInstallModal 
+        isOpen={showInstallModal}
+        onClose={() => setShowInstallModal(false)}
+        onInstall={() => {
+          installPwa();
+          setShowInstallModal(false);
+        }}
+      />
     </div>
   );
 }
