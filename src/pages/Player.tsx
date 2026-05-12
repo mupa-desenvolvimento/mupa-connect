@@ -7,6 +7,7 @@ import { PlayerEngine } from "@/components/PlayerEngine";
 import { ManifestManager, ScheduleResolver, MediaCacheService } from "@/components/PlayerServices";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { ManifestService } from "@/services/ManifestService";
+import { DevicePersistenceService } from "@/services/DevicePersistenceService";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Monitor, Wrench, Scan } from "lucide-react";
@@ -85,7 +86,13 @@ export default function Player() {
 
   // 1. Core Loader: Resolve Identity & Manifest (Offline-First)
   useEffect(() => {
-    if (!deviceCode) return;
+    const persistentId = DevicePersistenceService.getOrCreatePersistentId();
+
+    if (!deviceCode && !isPreview) {
+      console.log("[Player] No deviceCode in URL, redirecting to auto-load with:", persistentId);
+      navigate(`/play/${persistentId}`, { replace: true });
+      return;
+    }
 
     async function initializePlayer() {
       // Step A: Load Local Cache Immediately
@@ -146,19 +153,21 @@ export default function Player() {
         if (!deviceCode) return;
 
         const result = await ManifestService.fetchManifest(deviceCode);
-        setManifest(result.manifest);
-        if (result.device) {
-          setDeviceUuid(result.device.id?.toString());
-          setDeviceInfo(result.device);
+        if (result && result.manifest) {
+          setManifest(result.manifest);
+          if (result.device) {
+            setDeviceUuid(result.device.id?.toString());
+            setDeviceInfo(result.device);
+            DevicePersistenceService.saveDeviceConfig(result.device);
+          }
+          setIsLoading(false);
+        } else {
+          throw new Error("Manifest result invalid");
         }
-        setIsLoading(false);
       } catch (err: any) {
         console.error("[Player] Initial resolve error:", err);
-        if (err.message?.includes("empresa (company_id) é obrigatório") || err.code === "P0001") {
-          setErrorInfo({ 
-            message: "O parâmetro empresa (company_id) é obrigatório para novos dispositivos.", 
-            code: "P0001" 
-          });
+        if (!isPreview && deviceCode) {
+          navigate("/setup", { state: { error: "Dispositivo não encontrado ou não configurado." } });
         }
         setIsLoading(false);
       }
@@ -517,7 +526,7 @@ export default function Player() {
                 
                 const { error } = await supabase
                   .from("audience_detections")
-                  .insert(detectionData);
+                  .insert([detectionData]);
                 
                 if (error) {
                   console.error("[Face Detection] Error sending detection to database:", error);
@@ -557,7 +566,7 @@ export default function Player() {
           if (durationMs > 0) {
             supabase
               .from("audience_detections")
-              .insert({
+              .insert([{
                 detected_at: new Date(session.lastSeenAt).toISOString(),
                 age: session.age,
                 gender: session.gender,
@@ -573,7 +582,7 @@ export default function Player() {
                   long_session: durationMs >= 60000,
                   face_index: index
                 }
-              })
+              }])
               .then(({ error }) => {
                 if (error) console.error("[Face Detection] Error sending end-of-session to database:", error);
               });

@@ -13,6 +13,7 @@ import * as faceapi from "face-api.js";
 import { useKioskMode } from "@/hooks/useKioskMode";
 import { PWAInstallModal } from "@/components/PWAInstallModal";
 import { DevShowcaseOverlay } from "@/components/DevShowcaseOverlay";
+import { DevicePersistenceService } from "@/services/DevicePersistenceService";
 
 interface AppearanceConfig {
   show_device_name?: boolean;
@@ -200,8 +201,12 @@ export default function PlayerConsulta() {
 
   // 1. CARREGAMENTO DO PLAYER
   useEffect(() => {
+    const persistentId = DevicePersistenceService.getOrCreatePersistentId();
+    
+    // Se não houver deviceCode na URL, tenta usar o persistente
     if (!deviceCode && !isPreview) {
-      navigate("/setup");
+      console.log("[Player] No deviceCode in URL, redirecting to auto-load with:", persistentId);
+      navigate(`/player-consulta/${persistentId}`, { replace: true });
       return;
     }
 
@@ -239,12 +244,21 @@ export default function PlayerConsulta() {
 
         if (deviceCode) {
           const result = await ManifestService.fetchManifest(deviceCode);
-          setManifest(result.manifest);
-          setDeviceInfo(result.device);
-          setIsLoading(false);
+          if (result && result.manifest) {
+            setManifest(result.manifest);
+            setDeviceInfo(result.device);
+            DevicePersistenceService.saveDeviceConfig(result.device);
+            setIsLoading(false);
+          } else {
+            throw new Error("Erro ao buscar manifest");
+          }
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error initializing player:", err);
+        // Se falhou ao buscar e não temos manifest, mas temos config salva, talvez o serial expirou ou mudou no banco
+        if (!isPreview && deviceCode) {
+          navigate("/setup", { state: { error: "Dispositivo não encontrado ou não configurado." } });
+        }
         setIsLoading(false);
       }
     }
@@ -337,8 +351,8 @@ export default function PlayerConsulta() {
 
         
         if (result.length > 0) {
-            activeIndices.add(index);
           result.forEach(async (face, index) => {
+            activeIndices.add(index);
             // Get the most probable expression
             const expressions = face.expressions.asSortedArray();
             const mostProbableExpression = expressions[0];
@@ -415,7 +429,7 @@ export default function PlayerConsulta() {
                 
                 const { error } = await supabase
                   .from("audience_detections")
-                  .insert(detectionData);
+                  .insert([detectionData]);
                 
                 if (error) {
                   console.error("[Face Detection] Error sending detection to database:", error);
@@ -455,7 +469,7 @@ export default function PlayerConsulta() {
           if (durationMs > 0) {
             supabase
               .from("audience_detections")
-              .insert({
+              .insert([{
                 detected_at: new Date(session.lastSeenAt).toISOString(),
                 age: session.age,
                 gender: session.gender,
@@ -471,7 +485,7 @@ export default function PlayerConsulta() {
                   long_session: durationMs >= 60000,
                   face_index: index
                 }
-              })
+              }])
               .then(({ error }) => {
                 if (error) console.error("[Face Detection] Error sending end-of-session to database:", error);
               });
