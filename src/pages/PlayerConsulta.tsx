@@ -382,7 +382,7 @@ export default function PlayerConsulta() {
         }
       }
 
-      const { data, error } = await supabase.functions.invoke("consulta-seq-produto-assai", {
+      const { data, error } = await supabase.functions.invoke("integra-assai", {
         body: { 
           ean: cleanEan,
           device_serial: deviceCode 
@@ -584,88 +584,101 @@ export default function PlayerConsulta() {
 
                   <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-4 scrollbar-hide">
                     {/* Preço Unitário Principal */}
-                    {product.stock_prices.length === 0 ? (
+                    {(!product.stock_prices || product.stock_prices.filter(p => p.price_pack > 0).length === 0) ? (
                       <div className="p-12 rounded-[30px] bg-white/5 border border-white/10 flex flex-col items-center justify-center text-center gap-4">
                         <Package className="w-16 h-16 text-white/20" />
                         <span className="text-white/40 text-xl font-bold uppercase tracking-widest">Preço não disponível</span>
                       </div>
-                    ) : (
-                      <>
-                        {product.stock_prices.filter(p => p.unit_pack === 1).map((price, idx) => (
-                      <div 
-                        key={`unit-${idx}`}
-                        className="p-6 md:p-8 rounded-[30px] shadow-xl relative overflow-hidden flex flex-col justify-center"
-                        style={{ 
-                          backgroundColor: product.visual?.cor_dominante_escuro || '#111',
-                          border: `2px solid ${product.visual?.cor_dominante_claro || '#333'}66`
-                        }}
-                      >
-                        <span className="text-white/40 text-sm md:text-xl font-bold uppercase tracking-wider block mb-1">Unidade</span>
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-2xl md:text-4xl text-white/40 font-bold">R$</span>
-                          <span className="text-[clamp(3.5rem,10vw,8rem)] leading-none font-black text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
-                            {formatPrice(price.price_prom_pack && price.price_prom_pack > 0 ? price.price_prom_pack : price.price_pack).replace('R$', '').trim()}
-                          </span>
-                        </div>
-                        {price.stock_avaliable <= 0 && (
-                          <div className="absolute top-4 right-4 bg-red-500 text-white text-[10px] md:text-xs font-bold px-3 py-1 rounded-full uppercase">Indisponível</div>
-                        )}
-                      </div>
-                    ))}
+                    ) : (() => {
+                      const validPrices = product.stock_prices.filter(p => p.price_pack > 0);
+                      // Encontrar unit_pack = 1 ou o menor unit_pack disponível
+                      const mainPriceItem = validPrices.find(p => p.unit_pack === 1) || 
+                                           validPrices.reduce((prev, curr) => prev.unit_pack < curr.unit_pack ? prev : curr);
+                      
+                      const promoPacks = validPrices.filter(p => p.unit_pack !== mainPriceItem.unit_pack);
 
-                    {/* Preços de Atacado / Packs */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {product.stock_prices.filter(p => p.unit_pack > 1 || (p.whole_sale && Number(p.whole_sale) > 1)).map((price, idx) => {
-                        const unitPrice = product.stock_prices.find(p => p.unit_pack === 1);
-                        const currentUnitPrice = (price.price_prom_pack && price.price_prom_pack > 0 ? price.price_prom_pack : price.price_pack) / price.unit_pack;
-                        const originalUnitPrice = unitPrice ? (unitPrice.price_prom_pack && unitPrice.price_prom_pack > 0 ? unitPrice.price_prom_pack : unitPrice.price_pack) : currentUnitPrice;
-                        const economyPercent = originalUnitPrice > currentUnitPrice ? Math.round(((originalUnitPrice - currentUnitPrice) / originalUnitPrice) * 100) : 0;
-                        
-                        const isWholesale = price.whole_sale && Number(price.whole_sale) > 1 && Number(price.whole_sale) <= price.unit_pack;
-                        const isBox = price.unit_pack >= 12;
-                        const label = isWholesale ? `Atacado a partir de ${price.whole_sale} un` : (isBox ? `Caixa com ${price.unit_pack}` : `Pack com ${price.unit_pack}`);
-
-                        return (
+                      return (
+                        <>
                           <div 
-                            key={`pack-${idx}`}
-                            className="p-5 md:p-6 rounded-[24px] bg-white/5 border border-white/10 shadow-lg flex flex-col justify-between relative"
+                            className="p-6 md:p-8 rounded-[30px] shadow-xl relative overflow-hidden flex flex-col justify-center"
+                            style={{ 
+                              backgroundColor: product.visual?.cor_dominante_escuro || '#111',
+                              border: `2px solid ${product.visual?.cor_dominante_claro || '#333'}66`
+                            }}
                           >
-                            <div>
-                              <div className="flex justify-between items-start mb-2">
-                                <span className="text-white/40 text-[10px] md:text-xs font-bold uppercase tracking-wider">
-                                  {label}
-                                </span>
-                                {economyPercent > 0 && (
-                                  <span className="bg-primary/20 text-primary text-[10px] md:text-[12px] font-bold px-2 py-0.5 rounded-md border border-primary/30">
-                                    -{economyPercent}%
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex items-baseline gap-1">
-                                <span className="text-sm md:text-lg text-white/40 font-bold">R$</span>
-                                <span className="text-2xl md:text-4xl font-black text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
-                                  {formatPrice(price.price_prom_pack && price.price_prom_pack > 0 ? price.price_prom_pack : price.price_pack).replace('R$', '').trim()}
-                                </span>
-                              </div>
+                            <span className="text-white/40 text-sm md:text-xl font-bold uppercase tracking-wider block mb-1">
+                              {mainPriceItem.unit_pack === 1 ? 'Unidade' : `Pack com ${mainPriceItem.unit_pack}`}
+                            </span>
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-2xl md:text-4xl text-white/40 font-bold">R$</span>
+                              <span className="text-[clamp(3.5rem,10vw,8rem)] leading-none font-black text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+                                {formatPrice(mainPriceItem.price_prom_pack && mainPriceItem.price_prom_pack > 0 ? mainPriceItem.price_prom_pack : mainPriceItem.price_pack).replace('R$', '').trim()}
+                              </span>
                             </div>
-
-                            <div className="mt-2 pt-2 border-t border-white/5 flex justify-between items-center">
-                              <span className="text-white/30 text-[10px] md:text-xs">Sai a:</span>
-                              <span className="text-white/60 text-xs md:text-sm font-bold">{formatPrice(currentUnitPrice)} <span className="text-[8px] opacity-50">cada</span></span>
-                            </div>
-
-                            {price.stock_avaliable <= 0 && (
-                              <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] rounded-[24px] flex items-center justify-center">
-                                <span className="text-white/60 text-[10px] font-bold uppercase tracking-widest">Esgotado</span>
-                              </div>
+                            {mainPriceItem.stock_avaliable <= 0 && (
+                              <div className="absolute top-4 right-4 bg-red-500 text-white text-[10px] md:text-xs font-bold px-3 py-1 rounded-full uppercase">Indisponível</div>
                             )}
                           </div>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
-              </div>
+
+                          {/* Preços de Atacado / Packs */}
+                          {promoPacks.length > 0 && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                              {promoPacks.map((price, idx) => {
+                                const finalPrice = price.price_prom_pack && price.price_prom_pack > 0 ? price.price_prom_pack : price.price_pack;
+                                const currentUnitPrice = finalPrice / price.unit_pack;
+                                
+                                const mainFinalPrice = mainPriceItem.price_prom_pack && mainPriceItem.price_prom_pack > 0 ? mainPriceItem.price_prom_pack : mainPriceItem.price_pack;
+                                const mainUnitPrice = mainFinalPrice / mainPriceItem.unit_pack;
+                                
+                                const economyPercent = mainUnitPrice > currentUnitPrice ? Math.round(((mainUnitPrice - currentUnitPrice) / mainUnitPrice) * 100) : 0;
+                                
+                                const isWholesale = price.whole_sale && Number(price.whole_sale) > 1 && Number(price.whole_sale) <= price.unit_pack;
+                                const isBox = price.unit_pack >= 12;
+                                const label = isWholesale ? `Atacado a partir de ${price.whole_sale} un` : (isBox ? `Caixa com ${price.unit_pack}` : `Leve ${price.unit_pack} unidades`);
+
+                                return (
+                                  <div 
+                                    key={`pack-${idx}`}
+                                    className="p-5 md:p-6 rounded-[24px] bg-white/5 border border-white/10 shadow-lg flex flex-col justify-between relative"
+                                  >
+                                    <div>
+                                      <div className="flex justify-between items-start mb-2">
+                                        <span className="text-white/40 text-[10px] md:text-xs font-bold uppercase tracking-wider">
+                                          {label}
+                                        </span>
+                                        {economyPercent > 0 && (
+                                          <span className="bg-primary/20 text-primary text-[10px] md:text-[12px] font-bold px-2 py-0.5 rounded-md border border-primary/30">
+                                            -{economyPercent}% de economia
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="flex items-baseline gap-1">
+                                        <span className="text-sm md:text-lg text-white/40 font-bold">R$</span>
+                                        <span className="text-2xl md:text-4xl font-black text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+                                          {formatPrice(finalPrice).replace('R$', '').trim()}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    <div className="mt-2 pt-2 border-t border-white/5 flex justify-between items-center">
+                                      <span className="text-white/30 text-[10px] md:text-xs">Nesta oferta cada um sai por:</span>
+                                      <span className="text-white/60 text-xs md:text-sm font-bold">{formatPrice(currentUnitPrice)}</span>
+                                    </div>
+
+                                    {price.stock_avaliable <= 0 && (
+                                      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] rounded-[24px] flex items-center justify-center">
+                                        <span className="text-white/60 text-[10px] font-bold uppercase tracking-widest">Esgotado</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
             </div>
           </div>
         )}
