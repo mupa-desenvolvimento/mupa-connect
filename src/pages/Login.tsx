@@ -90,8 +90,24 @@ const Login = () => {
             </Button>
           </CardFooter>
         </form>
+        <div className="px-6 pb-6 pt-0 flex flex-col items-center border-t border-border/50 mt-4">
+          <p className="text-sm text-muted-foreground mt-4 mb-3">
+            Apenas para consulta de preços?
+          </p>
+          <Button 
+            variant="outline" 
+            className="w-full border-primary/20 hover:bg-primary/5 hover:text-primary transition-all group"
+            asChild
+          >
+            <Link to="/player-consulta" className="flex items-center justify-center gap-2">
+              <Link to="/player-consulta" />
+              <span>Acessar Ponto de Consulta</span>
+            </Link>
+          </Button>
+        </div>
       </Card>
     </div>
+
   );
 };
 
