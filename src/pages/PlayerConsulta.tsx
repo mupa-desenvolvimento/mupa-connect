@@ -180,14 +180,10 @@ export default function PlayerConsulta() {
     }).format(value);
   }, []);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      if (inputValue.length >= 3) {
-        handleConsult(inputValue);
-      }
-      setInputValue("");
-    }
-  };
+  // Scanner buffer global — captura keydown sem precisar de input focado.
+  // Isso evita que o Android/Zebra abra o IME/teclado do sistema.
+  const scanBufferRef = useRef<string>("");
+  const lastKeyTimeRef = useRef<number>(0);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
