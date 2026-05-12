@@ -99,8 +99,8 @@ export default function PlayerConsulta() {
   const [lastConsultedEan, setLastConsultedEan] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  // Removido inputRef pois a captura agora é global via keydown
-  const [inputValue, setInputValue] = useState("");
+  // inputRef mantido para compatibilidade com scanners que exigem campo focado
+  // inputValue removido pois agora usamos o valor diretamente no ref para o scanner global
   const [manualProductId, setManualProductId] = useState("");
   const [showManualInput, setShowManualInput] = useState(false);
   const [fallbackImageUrl, setFallbackImageUrl] = useState<string | null>(null);
@@ -696,33 +696,52 @@ export default function PlayerConsulta() {
     const handleGlobalKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       
-      // Se não estiver em modo edição real, garante que o input oculto receba o foco
-      if (target && target.tagName !== "INPUT" && target.tagName !== "TEXTAREA" && !target.isContentEditable) {
-        inputRef.current?.focus();
+      // Se estiver em um campo de texto real (como busca manual ou teclado na tela), ignora a captura global
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA") && !target.classList.contains('hidden-scanner-input')) {
+        return;
       }
 
-      const now = Date.now();
-      if (now - lastKeyTimeRef.current > 500) {
-        scanBufferRef.current = "";
-      }
-      lastKeyTimeRef.current = now;
-
-      if (e.key === "Enter") {
-        const code = scanBufferRef.current.trim();
-        scanBufferRef.current = "";
-        if (code.length >= 3) {
-          handleConsult(code);
+      // Se for uma tecla que faz parte de um código EAN (números) ou Enter
+      const isScannerKey = /^[0-9]$/.test(e.key) || e.key === "Enter";
+      
+      if (isScannerKey) {
+        // Bloqueia a ação padrão para evitar que o Android tente abrir o teclado ou preencher o campo
+        e.preventDefault();
+        
+        const now = Date.now();
+        // Reset buffer se passar muito tempo entre teclas (ex: 500ms)
+        if (now - lastKeyTimeRef.current > 500) {
+          scanBufferRef.current = "";
         }
-      }
+        lastKeyTimeRef.current = now;
 
-      if (e.key.length === 1) {
-        scanBufferRef.current += e.key;
+        if (e.key === "Enter") {
+          const code = scanBufferRef.current.trim();
+          console.log("[Scanner Global] Enter detectado. Código acumulado:", code);
+          scanBufferRef.current = "";
+          if (code.length >= 3) {
+            handleConsult(code);
+          }
+          // Limpa o input oculto também para manter consistência
+          if (inputRef.current) inputRef.current.value = "";
+        } else {
+          scanBufferRef.current += e.key;
+          // Sincroniza o input oculto para equipamentos que monitoram o valor do campo
+          if (inputRef.current) {
+            inputRef.current.value = scanBufferRef.current;
+          }
+        }
+      } else {
+        // Se não estiver em modo edição real, garante que o input oculto receba o foco
+        if (target && target.tagName !== "INPUT" && target.tagName !== "TEXTAREA" && !target.isContentEditable) {
+          inputRef.current?.focus({ preventScroll: true });
+        }
       }
     };
 
     const keepFocus = () => {
       if (document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") {
-        inputRef.current?.focus();
+        inputRef.current?.focus({ preventScroll: true });
       }
     };
 
@@ -1145,20 +1164,11 @@ export default function PlayerConsulta() {
       <div className="fixed opacity-0 pointer-events-none overflow-hidden h-0 w-0">
         <Input 
           ref={inputRef}
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              if (inputValue.length >= 3) {
-                handleConsult(inputValue);
-              }
-              setInputValue("");
-            }
-          }}
+          className="hidden-scanner-input"
           autoFocus
-          readOnly
           inputMode="none"
           tabIndex={-1}
+          autoComplete="off"
         />
       </div>
 
