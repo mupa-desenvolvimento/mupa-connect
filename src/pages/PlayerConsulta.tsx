@@ -758,7 +758,7 @@ export default function PlayerConsulta() {
     window.addEventListener("click", keepFocus);
     
     // Foco inicial e periódico
-    const timer = setInterval(keepFocus, 2000);
+    const timer = setInterval(keepFocus, 1000);
 
     return () => {
       window.removeEventListener("keydown", handleGlobalKey, true);
@@ -766,6 +766,16 @@ export default function PlayerConsulta() {
       clearInterval(timer);
     };
   }, [handleConsult, showManualInput, showOverlay, isConsulting]);
+
+  // Garantir foco ao fechar o overlay
+  useEffect(() => {
+    if (!showOverlay && !showManualInput) {
+      const timer = setTimeout(() => {
+        inputRef.current?.focus({ preventScroll: true });
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [showOverlay, showManualInput]);
 
   // Bloquear long-press, context menu, seleção e copy/paste no kiosk
   useEffect(() => {
