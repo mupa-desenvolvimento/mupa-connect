@@ -861,6 +861,7 @@ export default function PlayerConsulta() {
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           autoFocus
+          inputMode="none"
         />
         <Input 
           value={manualProductId}
@@ -871,6 +872,7 @@ export default function PlayerConsulta() {
               setManualProductId("");
             }
           }}
+          inputMode="none"
         />
       </div>
 
