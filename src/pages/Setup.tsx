@@ -129,7 +129,8 @@ export default function Setup() {
                 id="code_empresa"
                 placeholder="000AAA"
                 value={formData.code_empresa}
-                onChange={(e) => setFormData({ ...formData, code_empresa: e.target.value.toUpperCase() })}
+                 onChange={(e) => setFormData({ ...formData, code_empresa: e.target.value.toUpperCase() })}
+                 onFocus={() => handleInputFocus("code_empresa")}
                 required
                 maxLength={6}
                 className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-600 uppercase text-lg h-12 tracking-widest focus:ring-blue-500 focus:border-blue-500"
