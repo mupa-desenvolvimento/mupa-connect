@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { DevicePersistenceService } from "@/services/DevicePersistenceService";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,15 @@ export default function Setup() {
     numero_loja: "",
   });
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    // Se recebemos um erro via state (ex: dispositivo não encontrado no PlayerConsulta), limpamos os dados para novo setup
+    if (location.state?.error) {
+      toast.error(location.state.error);
+      DevicePersistenceService.clearAllData();
+    }
+  }, [location]);
 
   useEffect(() => {
     if (deferredPrompt && !isPwaInstalled) {
@@ -83,11 +93,7 @@ export default function Setup() {
         return;
       }
 
-      let serial = localStorage.getItem("device_serial");
-      if (!serial) {
-        serial = `CONS-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-        localStorage.setItem("device_serial", serial);
-      }
+      const serial = DevicePersistenceService.getOrCreatePersistentId();
 
       const { data, error: regError } = await supabase.functions.invoke("device-api", {
         body: {
