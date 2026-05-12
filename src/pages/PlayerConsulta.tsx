@@ -714,50 +714,58 @@ export default function PlayerConsulta() {
   // sem abrir o teclado virtual (IME) no Android/Zebra usando inputMode="none".
   useEffect(() => {
     const handleGlobalKey = (e: KeyboardEvent) => {
+      // Se já estiver consultando, ignora novas teclas para evitar buffer sujo
+      if (isConsulting) {
+        // Opcional: e.preventDefault() aqui se quisermos bloquear totalmente
+        return;
+      }
+
       const target = e.target as HTMLElement | null;
       
-      // Se for Enter, processa a consulta (independente de onde o foco está, se o buffer tiver algo)
+      // Se for Enter, processa a consulta
       if (e.key === "Enter") {
         const code = inputRef.current?.value.trim();
-        console.log("[Scanner] Enter detectado. Valor no input:", code);
-        
-        if (code && code.length >= 3) {
-          handleConsult(code);
+        if (code) {
+          console.log("[Scanner] Enter detectado. Valor:", code);
+          // Limpa o input IMEDIATAMENTE para evitar que a próxima leitura pegue restos
           if (inputRef.current) inputRef.current.value = "";
+          handleConsult(code);
         }
         return;
       }
 
       // Se não estiver em um campo de texto, redireciona o foco para o input principal
-      // e garante que a tecla seja processada pelo input
       if (target && target.tagName !== "INPUT" && target.tagName !== "TEXTAREA" && !target.isContentEditable) {
+        // Se for um dígito, foca no input para capturar a leitura do scanner
         if (/^[0-9]$/.test(e.key)) {
           inputRef.current?.focus();
-          // Não fazemos e.preventDefault() para deixar o caractere entrar no input focado
         }
       }
     };
 
     const keepFocus = () => {
       // Só força o foco se não estivermos em um campo de entrada manual ou outras áreas de texto
+      // e o overlay não estiver aberto
       const active = document.activeElement;
-      if (active?.tagName !== "INPUT" && active?.tagName !== "TEXTAREA" && !showManualInput) {
+      const isInputActive = active?.tagName === "INPUT" || active?.tagName === "TEXTAREA";
+      
+      if (!isInputActive && !showManualInput && !showOverlay) {
         inputRef.current?.focus({ preventScroll: true });
       }
     };
 
-    window.addEventListener("keydown", handleGlobalKey);
+    window.addEventListener("keydown", handleGlobalKey, true); // Use capture to intercept before other handlers
     window.addEventListener("click", keepFocus);
     
-    // Foco inicial
-    const timer = setTimeout(keepFocus, 1000);
+    // Foco inicial e periódico
+    const timer = setInterval(keepFocus, 2000);
 
     return () => {
-      window.removeEventListener("keydown", handleGlobalKey);
+      window.removeEventListener("keydown", handleGlobalKey, true);
       window.removeEventListener("click", keepFocus);
-      clearTimeout(timer);
+      clearInterval(timer);
     };
-  }, [handleConsult, showManualInput]);
+  }, [handleConsult, showManualInput, showOverlay, isConsulting]);
 
   // Bloquear long-press, context menu, seleção e copy/paste no kiosk
   useEffect(() => {
