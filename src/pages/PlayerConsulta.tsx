@@ -578,49 +578,78 @@ export default function PlayerConsulta() {
                     </div>
                   </div>
 
-                  <div className="space-y-8">
-                    <div className="flex flex-wrap gap-4">
-                      {product.price?.promo_text && (
-                        <div className="px-4 py-2 md:px-6 md:py-3 rounded-2xl bg-primary/20 border border-primary/30 text-primary text-xl md:text-2xl font-bold flex items-center gap-3">
-                          <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-primary animate-pulse" />
-                          {product.price.promo_text}
-                        </div>
-                      )}
-                      {product.price?.pack_quantity && (
-                        <div className="px-4 py-2 md:px-6 md:py-3 rounded-2xl bg-white/10 border border-white/10 text-white text-xl md:text-2xl font-medium">
-                          Leve {product.price.pack_quantity} un
-                        </div>
-                      )}
-                    </div>
-
-                    <div 
-                      className="p-8 md:p-12 rounded-[30px] md:rounded-[40px] shadow-2xl relative overflow-hidden"
-                      style={{ 
-                        backgroundColor: product.visual?.cor_dominante_escuro || '#111',
-                        border: `1px solid ${product.visual?.cor_dominante_claro}33`
-                      }}
-                    >
+                  <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-4 scrollbar-hide">
+                    {/* Preço Unitário Principal */}
+                    {product.stock_prices.filter(p => p.unit_pack === 1).map((price, idx) => (
                       <div 
-                        className="absolute -right-20 -top-20 w-48 h-48 md:w-64 md:h-64 blur-[80px] md:blur-[100px] opacity-40"
-                        style={{ backgroundColor: product.visual?.cor_assinatura_produto || '#00C2FF' }}
-                      />
-
-                      <div className="relative z-10">
-                        <span className="text-white/40 text-xl md:text-3xl font-bold uppercase tracking-wider block mb-2">Preço Exclusivo</span>
-                        <div className="flex items-baseline gap-2 md:gap-4">
-                          <span className="text-3xl md:text-5xl lg:text-6xl text-white/40 font-bold">R$</span>
-                          <span className="text-[clamp(5rem,15vw,12.5rem)] leading-none font-black text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
-                            {formatPrice(product.price?.price_pack || (product.price as any)?.price || (product.price as any)?.price_unit).replace('R$', '').trim()}
+                        key={`unit-${idx}`}
+                        className="p-6 md:p-8 rounded-[30px] shadow-xl relative overflow-hidden flex flex-col justify-center"
+                        style={{ 
+                          backgroundColor: product.visual?.cor_dominante_escuro || '#111',
+                          border: `2px solid ${product.visual?.cor_dominante_claro || '#333'}66`
+                        }}
+                      >
+                        <span className="text-white/40 text-sm md:text-xl font-bold uppercase tracking-wider block mb-1">Unidade</span>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-2xl md:text-4xl text-white/40 font-bold">R$</span>
+                          <span className="text-[clamp(3.5rem,10vw,8rem)] leading-none font-black text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+                            {formatPrice(price.price_prom_pack && price.price_prom_pack > 0 ? price.price_prom_pack : price.price_pack).replace('R$', '').trim()}
                           </span>
                         </div>
-                        
-                        {product.price?.price_unit && (
-                          <div className="mt-4 pt-4 md:pt-6 border-t border-white/10 flex justify-between items-center">
-                            <span className="text-white/40 text-lg md:text-2xl">Preço Unitário</span>
-                            <span className="text-white/80 text-xl md:text-3xl font-bold">{formatPrice(product.price.price_unit)}</span>
-                          </div>
+                        {price.stock_avaliable <= 0 && (
+                          <div className="absolute top-4 right-4 bg-red-500 text-white text-[10px] md:text-xs font-bold px-3 py-1 rounded-full uppercase">Indisponível</div>
                         )}
                       </div>
+                    ))}
+
+                    {/* Preços de Atacado / Packs */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {product.stock_prices.filter(p => p.unit_pack > 1 || (p.whole_sale && Number(p.whole_sale) > 1)).map((price, idx) => {
+                        const unitPrice = product.stock_prices.find(p => p.unit_pack === 1);
+                        const currentUnitPrice = (price.price_prom_pack && price.price_prom_pack > 0 ? price.price_prom_pack : price.price_pack) / price.unit_pack;
+                        const originalUnitPrice = unitPrice ? (unitPrice.price_prom_pack && unitPrice.price_prom_pack > 0 ? unitPrice.price_prom_pack : unitPrice.price_pack) : currentUnitPrice;
+                        const economyPercent = originalUnitPrice > currentUnitPrice ? Math.round(((originalUnitPrice - currentUnitPrice) / originalUnitPrice) * 100) : 0;
+                        
+                        const isWholesale = price.whole_sale && Number(price.whole_sale) > 1;
+                        const isBox = price.unit_pack >= 12;
+
+                        return (
+                          <div 
+                            key={`pack-${idx}`}
+                            className="p-5 md:p-6 rounded-[24px] bg-white/5 border border-white/10 shadow-lg flex flex-col justify-between relative"
+                          >
+                            <div>
+                              <div className="flex justify-between items-start mb-2">
+                                <span className="text-white/40 text-[10px] md:text-xs font-bold uppercase tracking-wider">
+                                  {isWholesale ? `Atacado a partir de ${price.whole_sale} un` : (isBox ? `Caixa com ${price.unit_pack}` : `Pack com ${price.unit_pack}`)}
+                                </span>
+                                {economyPercent > 0 && (
+                                  <span className="bg-primary/20 text-primary text-[10px] md:text-[12px] font-bold px-2 py-0.5 rounded-md border border-primary/30">
+                                    -{economyPercent}%
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-baseline gap-1">
+                                <span className="text-sm md:text-lg text-white/40 font-bold">R$</span>
+                                <span className="text-2xl md:text-4xl font-black text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+                                  {formatPrice(price.price_prom_pack && price.price_prom_pack > 0 ? price.price_prom_pack : price.price_pack).replace('R$', '').trim()}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="mt-2 pt-2 border-t border-white/5 flex justify-between items-center">
+                              <span className="text-white/30 text-[10px] md:text-xs">Sai a:</span>
+                              <span className="text-white/60 text-xs md:text-sm font-bold">{formatPrice(currentUnitPrice)} <span className="text-[8px] opacity-50">cada</span></span>
+                            </div>
+
+                            {price.stock_avaliable <= 0 && (
+                              <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] rounded-[24px] flex items-center justify-center">
+                                <span className="text-white/60 text-[10px] font-bold uppercase tracking-widest">Esgotado</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
