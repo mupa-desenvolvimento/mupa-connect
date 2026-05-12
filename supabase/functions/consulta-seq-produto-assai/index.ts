@@ -65,7 +65,7 @@ serve(async (req) => {
       .single();
 
     if (mappingError || !mappingData) {
-      console.warn(`Produto ${ean} não encontrado no Supabase mapping. Tentando API legado...`);
+      console.warn(`[Consulta] Produto ${ean} não encontrado no Supabase mapping (Error: ${mappingError?.message}). Tentando API legado...`);
       // Fallback para API legado se necessário (opcional, mas mantido por segurança por enquanto)
       try {
         const legacyResponse = await fetch(`http://srv-mupa.ddns.net:5050/api/ean/seqproduto?codbar=${ean}`);
@@ -98,10 +98,11 @@ serve(async (req) => {
     let stockPrices = [];
     try {
       console.log(`[Consulta] Buscando estoque/preço para id_product: ${internalId} na loja: ${storeId}`);
-      const assaiResponse = await fetch(`https://marketplace.assai.com.br/stock?id_product=${internalId}&id_store=${storeId}`, {
+      const assaiResponse = await fetch(`https://marketplace.assai.com.br/stock?id_product=${internalId}&id_store=${parseInt(storeId)}`, {
         headers: {
           'accept': 'application/json',
-          'x-basicauthorization': Deno.env.get('ASSAI_BASIC_AUTH') || 'Basic QXNzYWlBcHA6QXNzYWlBcHA=' 
+          'x-basicauthorization': Deno.env.get('ASSAI_BASIC_AUTH') || 'Basic QXNzYWlBcHA6QXNzYWlBcHA=',
+          'Authorization': Deno.env.get('ASSAI_BASIC_AUTH') || 'Basic QXNzYWlBcHA6QXNzYWlBcHA='
         }
       });
       

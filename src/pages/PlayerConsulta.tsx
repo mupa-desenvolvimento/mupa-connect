@@ -584,7 +584,14 @@ export default function PlayerConsulta() {
 
                   <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-4 scrollbar-hide">
                     {/* Preço Unitário Principal */}
-                    {product.stock_prices.filter(p => p.unit_pack === 1).map((price, idx) => (
+                    {product.stock_prices.length === 0 ? (
+                      <div className="p-12 rounded-[30px] bg-white/5 border border-white/10 flex flex-col items-center justify-center text-center gap-4">
+                        <Package className="w-16 h-16 text-white/20" />
+                        <span className="text-white/40 text-xl font-bold uppercase tracking-widest">Preço não disponível</span>
+                      </div>
+                    ) : (
+                      <>
+                        {product.stock_prices.filter(p => p.unit_pack === 1).map((price, idx) => (
                       <div 
                         key={`unit-${idx}`}
                         className="p-6 md:p-8 rounded-[30px] shadow-xl relative overflow-hidden flex flex-col justify-center"
@@ -656,13 +663,15 @@ export default function PlayerConsulta() {
                         );
                       })}
                     </div>
-                  </div>
-                </div>
+                  </>
+                )}
               </div>
-            )}
-          </motion.div>
+            </div>
+          </div>
         )}
-      </AnimatePresence>
+      </motion.div>
+    )}
+  </AnimatePresence>
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4">
         {/* Input visível para debug e captura do leitor de teclado */}
