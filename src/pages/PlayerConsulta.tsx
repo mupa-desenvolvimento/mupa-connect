@@ -1078,10 +1078,10 @@ export default function PlayerConsulta() {
                   isVertical ? "h-3/5 w-full" : "w-1/2 h-full order-1 text-slate-900"
                 )}>
                   <div className="space-y-6">
-                    <div className="inline-block px-4 py-1.5 md:px-6 md:py-2 rounded-full bg-white/10 text-white/60 text-base md:text-xl font-medium">
+                    <div className="inline-block px-4 py-1.5 md:px-6 md:py-2 rounded-full bg-slate-100 text-slate-500 text-base md:text-xl font-medium border border-slate-200">
                       Código: {product.internal_id}
                       {product.is_cached && (
-                        <span className="ml-3 text-[10px] bg-white/10 px-2 py-0.5 rounded uppercase tracking-widest font-bold">Modo Offline</span>
+                        <span className="ml-3 text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded uppercase tracking-widest font-bold">Modo Offline</span>
                       )}
                     </div>
                     
