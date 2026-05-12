@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,10 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, Monitor } from "lucide-react";
+import { Loader2, Monitor, Keyboard as KeyboardIcon } from "lucide-react";
+import VirtualKeyboard from "@/components/VirtualKeyboard";
 
 export default function Setup() {
   const [loading, setLoading] = useState(false);
+  const [showKeyboard, setShowKeyboard] = useState(false);
+  const [activeInput, setActiveInput] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     code_empresa: "",
     apelido: "teste dev",
