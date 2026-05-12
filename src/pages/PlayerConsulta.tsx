@@ -384,7 +384,9 @@ export default function PlayerConsulta() {
         }
       }
 
-      const proxyUrl = `https://srv-mupa.ddns.net/proxy-assai?ean=${cleanEan}`;
+      const storeId = deviceInfo?.num_filial || '53';
+      const proxyUrl = `https://srv-mupa.ddns.net/proxy-assai?ean=${cleanEan}&store_id=${storeId}`;
+
       console.log("[Consulta] Chamando proxy:", proxyUrl);
       
       const response = await fetch(proxyUrl);
