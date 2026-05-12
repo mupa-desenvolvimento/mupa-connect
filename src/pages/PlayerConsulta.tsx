@@ -890,9 +890,9 @@ export default function PlayerConsulta() {
         <div className="flex items-start justify-between w-full">
           {/* Device Info */}
           {(appearance.show_device_name !== false && !isPreview) && (
-            <div className="flex items-center gap-3 animate-fade-in bg-black/20 backdrop-blur-sm p-3 rounded-xl border border-white/5">
+            <div className="flex items-center gap-3 animate-fade-in bg-white/60 backdrop-blur-md p-3 rounded-xl border border-slate-200 shadow-sm">
               <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary to-blue-600 grid place-items-center font-bold text-white shadow-lg shadow-primary/20">M</div>
-              <div className="leading-tight text-white">
+              <div className="leading-tight text-slate-900">
                 <div className="font-bold text-lg tracking-tight">
                   {deviceInfo?.apelido_interno || "Ponto de Consulta"}
                 </div>
