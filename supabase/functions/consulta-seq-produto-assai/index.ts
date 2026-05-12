@@ -98,7 +98,7 @@ serve(async (req) => {
     let stockPrices = [];
     try {
       console.log(`[Consulta] Buscando estoque/preço para id_product: ${internalId} na loja: ${storeId}`);
-      const assaiResponse = await fetch(`https://marketplace.assai.com.br/stock?id_product=${internalId}&id_store=${storeId}`, {
+      const assaiResponse = await fetch(`https://marketplace.assai.com.br/stock?id_product=${internalId}&id_store=${parseInt(storeId)}`, {
         headers: {
           'accept': 'application/json',
           'x-basicauthorization': Deno.env.get('ASSAI_BASIC_AUTH') || 'Basic QXNzYWlBcHA6QXNzYWlBcHA=',
