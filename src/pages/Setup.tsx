@@ -121,7 +121,16 @@ export default function Setup() {
             Configure as informações do seu ponto de consulta
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setShowKeyboard(!showKeyboard)}
+            className="absolute top-0 right-6 text-slate-500 hover:text-white"
+            title="Abrir teclado"
+          >
+            <KeyboardIcon className="h-5 w-5" />
+          </Button>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="code_empresa" className="text-slate-300 font-medium">Código da Empresa</Label>
