@@ -428,7 +428,9 @@ export default function PlayerConsulta() {
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
 
     try {
-      const proxyUrl = `https://srv-mupa.ddns.net/proxy-assai?product_id=${cleanId}`;
+      const storeId = deviceInfo?.num_filial || '53';
+      const proxyUrl = `https://srv-mupa.ddns.net/proxy-assai?product_id=${cleanId}&store_id=${storeId}`;
+
       console.log("[Consulta Manual] Chamando proxy:", proxyUrl);
       
       const response = await fetch(proxyUrl);
