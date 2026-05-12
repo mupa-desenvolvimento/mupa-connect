@@ -1246,9 +1246,9 @@ export default function PlayerConsulta() {
         type="button"
         onClick={() => setShowFaceDetections(v => !v)}
         className={cn(
-          "absolute bottom-4 right-4 z-[70] rounded-full border border-white/10 bg-black/30 backdrop-blur-md p-2 text-white/40 transition-all",
-          "hover:bg-black/50 hover:text-white/80",
-          showFaceDetections && "bg-black/60 text-white/80 border-white/20"
+          "absolute bottom-4 right-4 z-[70] rounded-full border border-slate-200 bg-white/60 backdrop-blur-md p-2 text-slate-400 transition-all shadow-sm",
+          "hover:bg-white/80 hover:text-slate-600",
+          showFaceDetections && "bg-white text-slate-900 border-slate-300 shadow-md"
         )}
         aria-label="Detecções da câmera"
       >
