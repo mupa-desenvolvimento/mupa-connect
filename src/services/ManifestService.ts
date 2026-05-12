@@ -18,6 +18,11 @@ export const ManifestService = {
         err.code = "P0001";
         throw err;
       }
+      if (endpointData?.error === "Device not found") {
+        const err: any = new Error("Device not found");
+        err.code = "DEVICE_NOT_FOUND";
+        throw err;
+      }
       data = await this.fetchManifestFallback(deviceCode);
     }
 
