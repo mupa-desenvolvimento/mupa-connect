@@ -210,7 +210,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
           <img
             src={localUrl}
             alt=""
-            className="w-full h-full object-cover player-gpu-accel"
+            className="w-full h-full object-fill player-gpu-accel"
             onError={(e) => {
               console.error("[PlayerEngine] [Playback] Image error", e);
               if (isActive) swapBuffers();
