@@ -28,6 +28,8 @@ serve(async (req) => {
     }
 
     let storeId = overrideStoreId || '53'
+    console.log(`[STORE_ID] ${storeId}`)
+
     let seqProduto = product_id
     let descricao = "Produto"
     let actualEan = ean
