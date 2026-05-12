@@ -279,6 +279,7 @@ export default function PlayerConsulta() {
             age: Math.round(face.age),
             gender: face.gender,
             genderProbability: face.genderProbability,
+            box: face.detection.box, // Add box coordinates
             expressions: expressions.map((exp: any) => ({
               expression: exp.expression,
               probability: exp.probability
@@ -290,6 +291,7 @@ export default function PlayerConsulta() {
           };
         });
         setCurrentFaceDetections(debugDetections);
+
         
         if (result.length > 0) {
           result.forEach(async (face, index) => {
