@@ -280,7 +280,7 @@ export function StoreEditModal({
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0 mt-4">
+        <DialogFooter className="p-6 border-t border-white/5 bg-white/[0.02] gap-3">
           <Button variant="ghost" onClick={onClose} disabled={loading}>
             Cancelar
           </Button>
