@@ -1153,30 +1153,29 @@ export default function PlayerConsulta() {
                                 return (
                                   <div 
                                     key={`pack-${idx}`}
-                                    className="p-5 md:p-6 rounded-[24px] bg-white/5 border border-white/10 shadow-lg flex flex-col justify-between relative"
+                                    className="p-5 md:p-6 rounded-[24px] bg-white border border-slate-100 shadow-sm flex flex-col justify-between relative"
                                   >
                                     <div>
                                       <div className="flex justify-between items-start mb-2">
-                                        <span className="text-white/40 text-[10px] md:text-xs font-bold uppercase tracking-wider">
+                                        <span className="text-slate-400 text-[10px] md:text-xs font-bold uppercase tracking-wider">
                                           {label}
                                         </span>
                                         {economyPercent > 0 && (
-                                          <span className="bg-primary/20 text-primary text-[10px] md:text-[12px] font-bold px-2 py-0.5 rounded-md border border-primary/30">
+                                          <span className="bg-green-50 text-green-600 text-[10px] md:text-[12px] font-bold px-2 py-0.5 rounded-md border border-green-100">
                                             -{economyPercent}% de economia
                                           </span>
                                         )}
                                       </div>
                                       <div className="flex items-baseline gap-1">
-                                        <span className="text-sm md:text-lg text-white/40 font-bold">R$</span>
-                                        <span className="text-2xl md:text-4xl font-black text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+                                        <span className="text-sm md:text-lg text-slate-400 font-bold">R$</span>
+                                        <span className="text-2xl md:text-4xl font-black text-slate-900" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
                                           {formatPrice(finalPrice).replace('R$', '').trim()}
                                         </span>
                                       </div>
                                     </div>
-
-                                    <div className="mt-2 pt-2 border-t border-white/5 flex justify-between items-center">
-                                      <span className="text-white/30 text-[10px] md:text-xs">Nesta oferta cada um sai por:</span>
-                                      <span className="text-white/60 text-xs md:text-sm font-bold">{formatPrice(currentUnitPrice)}</span>
+                                    <div className="mt-2 pt-2 border-t border-slate-50 flex justify-between items-center">
+                                      <span className="text-slate-400 text-[10px] md:text-xs">Sai por unidade:</span>
+                                      <span className="text-slate-600 text-xs md:text-sm font-bold">{formatPrice(currentUnitPrice)}</span>
                                     </div>
 
                                     {price.stock_avaliable <= 0 && (
