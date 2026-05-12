@@ -788,7 +788,9 @@ export default function PlayerConsulta() {
     const cleanId = productId.trim();
     if (!cleanId) return;
     
-    console.log("[SEQPRODUTO]", cleanId);
+    if (isConsulting) return;
+
+    console.log("[Manual] Iniciando consulta:", cleanId);
     setIsConsulting(true);
     setShowOverlay(true);
     setError(null);
@@ -797,16 +799,25 @@ export default function PlayerConsulta() {
 
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
 
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("Tempo esgotado ao consultar produto.")), 15000)
+    );
+
     try {
-      const { data, error: functionError } = await supabase.functions.invoke('integra-assai', {
-        body: { product_id: cleanId }
-      });
+      const result: any = await Promise.race([
+        supabase.functions.invoke('integra-assai', {
+          body: { product_id: cleanId }
+        }),
+        timeoutPromise
+      ]);
+
+      const { data, error: functionError } = result;
 
       if (functionError) throw functionError;
-      if (data.error) throw new Error(data.error);
+      if (data?.error) throw new Error(data.error);
+      if (!data) throw new Error("Produto não encontrado");
 
       console.log("[ASSAI_PRICE]", data.stock_prices);
-      
       setProduct(data);
     } catch (err: any) {
       console.error("Erro na consulta manual:", err);
@@ -815,7 +826,7 @@ export default function PlayerConsulta() {
       setIsConsulting(false);
       startHideTimer();
     }
-  }, [hideTimeoutRef]);
+  }, [isConsulting, startHideTimer]);
 
   const getProductNameParts = (desc: string) => {
     if (!desc) return { main: "", rest: "" };
