@@ -696,9 +696,11 @@ export default function PlayerConsulta() {
     const handleGlobalKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       
-      // Se for a tecla Enter no input principal, processa a consulta
-      if (e.key === "Enter" && target === inputRef.current) {
+      // Se for Enter, processa a consulta (independente de onde o foco está, se o buffer tiver algo)
+      if (e.key === "Enter") {
         const code = inputRef.current?.value.trim();
+        console.log("[Scanner] Enter detectado. Valor no input:", code);
+        
         if (code && code.length >= 3) {
           handleConsult(code);
           if (inputRef.current) inputRef.current.value = "";
@@ -707,10 +709,11 @@ export default function PlayerConsulta() {
       }
 
       // Se não estiver em um campo de texto, redireciona o foco para o input principal
+      // e garante que a tecla seja processada pelo input
       if (target && target.tagName !== "INPUT" && target.tagName !== "TEXTAREA" && !target.isContentEditable) {
-        // Para teclas numéricas, se não estiver focado, foca e deixa o evento seguir
         if (/^[0-9]$/.test(e.key)) {
           inputRef.current?.focus();
+          // Não fazemos e.preventDefault() para deixar o caractere entrar no input focado
         }
       }
     };
