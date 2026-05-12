@@ -7,11 +7,12 @@ import { ManifestService } from "@/services/ManifestService";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Package, AlertCircle, Barcode, User, X, Info } from "lucide-react";
+import { Loader2, Package, AlertCircle, Barcode, User, X, Info, Search, Play } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import * as faceapi from "face-api.js";
 import { useKioskMode } from "@/hooks/useKioskMode";
 import { PWAInstallModal } from "@/components/PWAInstallModal";
+import { DevShowcaseOverlay } from "@/components/DevShowcaseOverlay";
 
 interface AppearanceConfig {
   show_device_name?: boolean;
@@ -70,11 +71,18 @@ export default function PlayerConsulta() {
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get("preview") === "true";
   const previewPlaylistId = searchParams.get("id");
+  const isDevModeParam = searchParams.get("dev") === "true";
 
   const [manifest, setManifest] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  // DEV MODE STATE
+  const [isDevMode, setIsDevMode] = useState(isDevModeParam);
+  const [isAutoDemoActive, setIsAutoDemoActive] = useState(false);
+  const [clickCount, setClickCount] = useState(0);
+  const lastClickTime = useRef(0);
 
   useEffect(() => {
     if (deferredPrompt && !isPwaInstalled) {
@@ -114,6 +122,33 @@ export default function PlayerConsulta() {
   }, []);
 
   const appearance = useMemo(() => (manifest?.appearance_config || {}) as AppearanceConfig, [manifest]);
+
+  const startHideTimer = useCallback(() => {
+    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+    hideTimeoutRef.current = setTimeout(() => {
+      setShowOverlay(false);
+    }, 8000);
+  }, []);
+
+  const formatPrice = useCallback((value: number | undefined | null) => {
+    if (value === undefined || value === null) return "--";
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(value);
+  }, []);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      if (inputValue.length >= 3) {
+        handleConsult(inputValue);
+      }
+      setInputValue("");
+    }
+  };
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
 
 
   useEffect(() => {
@@ -244,6 +279,7 @@ export default function PlayerConsulta() {
             age: Math.round(face.age),
             gender: face.gender,
             genderProbability: face.genderProbability,
+            box: face.detection.box, // Add box coordinates
             expressions: expressions.map((exp: any) => ({
               expression: exp.expression,
               probability: exp.probability
@@ -255,6 +291,7 @@ export default function PlayerConsulta() {
           };
         });
         setCurrentFaceDetections(debugDetections);
+
         
         if (result.length > 0) {
           result.forEach(async (face, index) => {
@@ -450,6 +487,82 @@ export default function PlayerConsulta() {
     }
   }, [hideTimeoutRef]);
 
+  // AUTO DEMO LOGIC
+  useEffect(() => {
+    if (!isAutoDemoActive || !isDevMode) return;
+
+    const demoInterval = setInterval(() => {
+      const actions = ["consult", "face", "media"];
+      const randomAction = actions[Math.floor(Math.random() * actions.length)];
+
+      if (randomAction === "consult" && !showOverlay) {
+        const demoEans = ["789100000001", "789100000002", "789100000003"];
+        const randomEan = demoEans[Math.floor(Math.random() * demoEans.length)];
+        
+        // Simular consulta com dados mockados para o demo
+        setShowOverlay(true);
+        setIsConsulting(true);
+        setTimeout(() => {
+          setIsConsulting(false);
+          setProduct({
+            ean: randomEan,
+            internal_id: Math.floor(Math.random() * 10000),
+            description: `PRODUTO DEMONSTRAÇÃO MUPA ${Math.floor(Math.random() * 100)}`,
+            stock_prices: [
+              { unit_pack: 1, price_pack: 29.90, stock_avaliable: 50 },
+              { unit_pack: 6, price_pack: 159.90, stock_avaliable: 20 }
+            ],
+            visual: {
+              imagem_url: "",
+              cor_assinatura_produto: "#06b6d4",
+              fundo_legibilidade: "#000000",
+              cor_dominante_claro: "#06b6d4",
+              cor_dominante_escuro: "#083344"
+            }
+          });
+          startHideTimer();
+        }, 1000);
+      } else if (randomAction === "face") {
+        const mockFace = {
+          faceIndex: Math.floor(Math.random() * 3),
+          age: 25 + Math.floor(Math.random() * 20),
+          gender: Math.random() > 0.5 ? "male" : "female",
+          box: {
+            x: 100 + Math.random() * 300,
+            y: 100 + Math.random() * 200,
+            width: 150,
+            height: 150
+          },
+          mostProbableExpression: {
+            expression: ["happy", "neutral", "surprised"][Math.floor(Math.random() * 3)],
+            probability: 0.9
+          }
+
+        };
+        setCurrentFaceDetections(prev => [mockFace, ...prev.slice(0, 2)]);
+        setTimeout(() => setCurrentFaceDetections([]), 3000);
+      }
+    }, 12000);
+
+    return () => clearInterval(demoInterval);
+  }, [isAutoDemoActive, isDevMode, showOverlay]);
+
+  const handleHiddenShortcut = () => {
+    const now = Date.now();
+    if (now - lastClickTime.current < 500) {
+      const newCount = clickCount + 1;
+      setClickCount(newCount);
+      if (newCount >= 5) {
+        setIsDevMode(!isDevMode);
+        setClickCount(0);
+        console.log("DEV MODE TOGGLED:", !isDevMode);
+      }
+    } else {
+      setClickCount(1);
+    }
+    lastClickTime.current = now;
+  };
+
   const handleManualConsult = useCallback(async (productId: string) => {
     const cleanId = productId.trim();
     if (!cleanId) return;
@@ -472,6 +585,7 @@ export default function PlayerConsulta() {
       if (data.error) throw new Error(data.error);
 
       console.log("[ASSAI_PRICE]", data.stock_prices);
+      
       setProduct(data);
     } catch (err: any) {
       console.error("Erro na consulta manual:", err);
@@ -481,49 +595,6 @@ export default function PlayerConsulta() {
       startHideTimer();
     }
   }, [hideTimeoutRef]);
-
-  // 3. FOCO AUTOMÁTICO NO INPUT PARA LEITORES DE CÓDIGO DE BARRAS (EMULAÇÃO DE TECLADO)
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    // Manter o foco no input o tempo todo para capturar o leitor
-    const focusInput = () => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
-    };
-
-    focusInput();
-    const interval = setInterval(focusInput, 1000); // Reforça o foco periodicamente
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      if (inputValue.length >= 3) {
-        handleConsult(inputValue);
-      }
-      setInputValue("");
-    }
-  };
-
-  // handleKeyDown removido pois a captura agora é global via window event listener
-
-  const startHideTimer = () => {
-    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
-    hideTimeoutRef.current = setTimeout(() => {
-      setShowOverlay(false);
-    }, 8000);
-  };
-
-  const formatPrice = (value: number | undefined | null) => {
-    if (value === undefined || value === null) return "--";
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
 
   const getProductNameParts = (desc: string) => {
     if (!desc) return { main: "", rest: "" };
@@ -592,7 +663,10 @@ export default function PlayerConsulta() {
 
           {/* Date/Time */}
           {(appearance.show_datetime !== false && !isPreview) && (
-            <div className="text-right animate-fade-in bg-black/20 backdrop-blur-sm p-3 rounded-xl border border-white/5 text-white">
+            <div 
+              onClick={handleHiddenShortcut}
+              className="text-right animate-fade-in bg-black/20 backdrop-blur-sm p-3 rounded-xl border border-white/5 text-white pointer-events-auto cursor-pointer active:scale-95 transition-transform"
+            >
               <div className="font-bold text-3xl tabular-nums tracking-tighter">
                 {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
               </div>
@@ -600,6 +674,7 @@ export default function PlayerConsulta() {
                 {now.toLocaleDateString("pt-BR", { weekday: 'short', day: '2-digit', month: 'short' })}
               </div>
             </div>
+
           )}
         </div>
 
@@ -972,6 +1047,16 @@ export default function PlayerConsulta() {
           setShowInstallModal(false);
         }}
       />
+      <DevShowcaseOverlay 
+        isDevMode={isDevMode}
+        deviceInfo={deviceInfo}
+        currentFaceDetections={currentFaceDetections}
+        lastProduct={product}
+        currentMedia={manifest?.items?.[currentIndex]}
+        onToggleAutoDemo={setIsAutoDemoActive}
+        isAutoDemoActive={isAutoDemoActive}
+      />
     </div>
   );
 }
+
