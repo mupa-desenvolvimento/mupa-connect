@@ -654,7 +654,10 @@ export default function PlayerConsulta() {
 
           {/* Date/Time */}
           {(appearance.show_datetime !== false && !isPreview) && (
-            <div className="text-right animate-fade-in bg-black/20 backdrop-blur-sm p-3 rounded-xl border border-white/5 text-white">
+            <div 
+              onClick={handleHiddenShortcut}
+              className="text-right animate-fade-in bg-black/20 backdrop-blur-sm p-3 rounded-xl border border-white/5 text-white pointer-events-auto cursor-pointer active:scale-95 transition-transform"
+            >
               <div className="font-bold text-3xl tabular-nums tracking-tighter">
                 {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
               </div>
@@ -662,6 +665,7 @@ export default function PlayerConsulta() {
                 {now.toLocaleDateString("pt-BR", { weekday: 'short', day: '2-digit', month: 'short' })}
               </div>
             </div>
+
           )}
         </div>
 
