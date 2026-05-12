@@ -1089,7 +1089,7 @@ export default function PlayerConsulta() {
                       <h1 className="text-[clamp(2.5rem,8vw,6rem)] font-black leading-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
                         {getProductNameParts(product.description).main}
                       </h1>
-                      <p className="text-[clamp(1.2rem,4vw,2.5rem)] text-white/50 font-medium">
+                      <p className="text-[clamp(1.2rem,4vw,2.5rem)] text-slate-400 font-medium leading-tight">
                         {getProductNameParts(product.description).rest}
                       </p>
                     </div>
