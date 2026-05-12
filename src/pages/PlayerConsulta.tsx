@@ -7,9 +7,11 @@ import { ManifestService } from "@/services/ManifestService";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Package, AlertCircle, Barcode, User, X } from "lucide-react";
+import { Loader2, Package, AlertCircle, Barcode, User, X, Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import * as faceapi from "face-api.js";
+import { useKioskMode } from "@/hooks/useKioskMode";
+import { PWAInstallModal } from "@/components/PWAInstallModal";
 
 interface AppearanceConfig {
   show_device_name?: boolean;
