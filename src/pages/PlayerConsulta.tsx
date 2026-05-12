@@ -123,6 +123,33 @@ export default function PlayerConsulta() {
 
   const appearance = useMemo(() => (manifest?.appearance_config || {}) as AppearanceConfig, [manifest]);
 
+  const startHideTimer = useCallback(() => {
+    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+    hideTimeoutRef.current = setTimeout(() => {
+      setShowOverlay(false);
+    }, 8000);
+  }, []);
+
+  const formatPrice = useCallback((value: number | undefined | null) => {
+    if (value === undefined || value === null) return "--";
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(value);
+  }, []);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      if (inputValue.length >= 3) {
+        handleConsult(inputValue);
+      }
+      setInputValue("");
+    }
+  };
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+
 
   useEffect(() => {
     const handleResize = () => setIsVertical(window.innerHeight > window.innerWidth);
