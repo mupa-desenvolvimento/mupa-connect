@@ -992,8 +992,8 @@ export default function PlayerConsulta() {
             exit={{ opacity: 0, scale: 0.95 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-6 md:p-12"
             style={{ 
-              backgroundColor: product?.visual?.fundo_legibilidade ? `${product.visual.fundo_legibilidade}CC` : 'rgba(0,0,0,0.85)',
-              backdropFilter: 'blur(20px)'
+              backgroundColor: product?.visual?.fundo_legibilidade ? `${product.visual.fundo_legibilidade}F2` : 'rgba(255,255,255,0.96)',
+              backdropFilter: 'blur(15px)'
             }}
           >
             {isConsulting ? (
