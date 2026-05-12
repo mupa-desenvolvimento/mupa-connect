@@ -92,7 +92,7 @@ app.get('/proxy-assai', async (req, res) => {
 
     while (retries > 0) {
       try {
-        const assaiUrl = `https://marketplace.assai.com.br/stock?id_product=${seqProduto}&id_store=${STORE_ID}`;
+        const assaiUrl = `https://marketplace.assai.com.br/stock?id_product=${seqProduto}&id_store=${targetStoreId}`;
         console.log(`[Proxy] [Tentativa ${4 - retries}] Consultando Assaí: ${assaiUrl}`);
         
         const assaiRes = await fetch(assaiUrl, {
