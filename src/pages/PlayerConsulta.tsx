@@ -690,13 +690,15 @@ export default function PlayerConsulta() {
     lastClickTime.current = now;
   };
 
-  // Scanner Wedge global — captura keydown sem input focado.
-  // Evita que Android/Zebra abra o IME do sistema.
+  // Scanner Wedge global — captura keydown e mantém foco no input oculto
+  // sem abrir o teclado virtual (IME) no Android/Zebra.
   useEffect(() => {
     const handleGlobalKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
-      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
-        return;
+      
+      // Se não estiver em modo edição real, garante que o input oculto receba o foco
+      if (target && target.tagName !== "INPUT" && target.tagName !== "TEXTAREA" && !target.isContentEditable) {
+        inputRef.current?.focus();
       }
 
       const now = Date.now();
@@ -711,8 +713,6 @@ export default function PlayerConsulta() {
         if (code.length >= 3) {
           handleConsult(code);
         }
-        e.preventDefault();
-        return;
       }
 
       if (e.key.length === 1) {
@@ -720,8 +720,23 @@ export default function PlayerConsulta() {
       }
     };
 
+    const keepFocus = () => {
+      if (document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") {
+        inputRef.current?.focus();
+      }
+    };
+
     window.addEventListener("keydown", handleGlobalKey, true);
-    return () => window.removeEventListener("keydown", handleGlobalKey, true);
+    window.addEventListener("click", keepFocus);
+    
+    // Foco inicial
+    const timer = setTimeout(keepFocus, 1000);
+
+    return () => {
+      window.removeEventListener("keydown", handleGlobalKey, true);
+      window.removeEventListener("click", keepFocus);
+      clearTimeout(timer);
+    };
   }, [handleConsult]);
 
   // Bloquear long-press, context menu, seleção e copy/paste no kiosk
