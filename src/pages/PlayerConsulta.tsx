@@ -1179,8 +1179,8 @@ export default function PlayerConsulta() {
                                     </div>
 
                                     {price.stock_avaliable <= 0 && (
-                                      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] rounded-[24px] flex items-center justify-center">
-                                        <span className="text-white/60 text-[10px] font-bold uppercase tracking-widest">Esgotado</span>
+                                      <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] rounded-[24px] flex items-center justify-center">
+                                        <span className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Esgotado</span>
                                       </div>
                                     )}
                                   </div>
