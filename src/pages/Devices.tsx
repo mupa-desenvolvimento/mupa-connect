@@ -266,9 +266,9 @@ export default function DevicesPage() {
                   {selectedIds.size} selecionado(s)
                 </Badge>
                 <Button 
-                  variant="default" 
+                  variant="premium" 
                   size="sm" 
-                  className="h-9 bg-primary text-primary-foreground"
+                  className="h-9"
                   onClick={() => setPlaylistModalOpen(true)}
                 >
                   <Layers className="h-4 w-4 mr-2" /> Alterar Playlist
