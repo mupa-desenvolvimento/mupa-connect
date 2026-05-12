@@ -40,9 +40,9 @@ export function useKioskMode() {
       const docEl = document.documentElement;
       if (!document.fullscreenElement) {
         if (docEl.requestFullscreen) {
-          await docEl.requestFullscreen();
+          await docEl.requestFullscreen({ navigationUI: 'hide' } as any);
         } else if ((docEl as any).webkitRequestFullscreen) {
-          await (docEl as any).webkitRequestFullscreen();
+          await (docEl as any).webkitRequestFullscreen((Element as any).ALLOW_KEYBOARD_INPUT);
         } else if ((docEl as any).mozRequestFullScreen) {
           await (docEl as any).mozRequestFullScreen();
         } else if ((docEl as any).msRequestFullscreen) {
@@ -61,7 +61,7 @@ export function useKioskMode() {
       setIsFullscreen(!!document.fullscreenElement);
       if (!document.fullscreenElement) {
         console.log('Kiosk: Left fullscreen, attempting to re-enter...');
-        // Small delay to prevent infinite loops if something is blocking fullscreen
+        // Small delay to prevent infinite loops
         setTimeout(enterFullscreen, 1000);
       }
     };
@@ -70,11 +70,13 @@ export function useKioskMode() {
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
 
     // Light interval to force fullscreen if Android navbar reappears
+    // Optimizado para Android 9 / X96
     fullscreenRetryInterval.current = setInterval(() => {
-      if (!document.fullscreenElement) {
+      const isActuallyFull = document.fullscreenElement || (document as any).webkitFullscreenElement;
+      if (!isActuallyFull) {
         enterFullscreen();
       }
-    }, 5000); // Check every 5 seconds
+    }, 5000);
 
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
@@ -112,6 +114,7 @@ export function useKioskMode() {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', enterFullscreen);
+    window.addEventListener('touchstart', enterFullscreen, { once: true });
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
