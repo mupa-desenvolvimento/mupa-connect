@@ -961,6 +961,15 @@ export default function PlayerConsulta() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <PWAInstallModal 
+        isOpen={showInstallModal}
+        onClose={() => setShowInstallModal(false)}
+        onInstall={() => {
+          installPwa();
+          setShowInstallModal(false);
+        }}
+      />
     </div>
   );
 }
