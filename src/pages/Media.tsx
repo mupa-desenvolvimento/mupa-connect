@@ -287,7 +287,7 @@ export default function MediaPage() {
           <div className="flex gap-2">
             <Dialog open={isFolderDialogOpen} onOpenChange={setIsFolderDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="secondary" size="sm" className="h-10 text-[10px] font-black uppercase tracking-widest px-6">
+                <Button variant="secondary" size="sm" className="h-10">
                   <FolderPlus className="h-4 w-4 mr-2" /> Nova Pasta
                 </Button>
               </DialogTrigger>
