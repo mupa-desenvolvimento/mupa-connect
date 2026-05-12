@@ -1075,7 +1075,7 @@ export default function PlayerConsulta() {
 
                 <div className={cn(
                   "flex flex-col justify-between",
-                  isVertical ? "h-3/5 w-full" : "w-1/2 h-full order-1 text-white"
+                  isVertical ? "h-3/5 w-full" : "w-1/2 h-full order-1 text-slate-900"
                 )}>
                   <div className="space-y-6">
                     <div className="inline-block px-4 py-1.5 md:px-6 md:py-2 rounded-full bg-white/10 text-white/60 text-base md:text-xl font-medium">
