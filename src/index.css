@@ -106,9 +106,10 @@
     --destructive-foreground: 0 0% 100%;
 
     /* Borders: MUCH more visible in idle state */
-    --border: 222 25% 18%; 
-    --input: 222 25% 18%;
+    --border: 222 25% 25%; 
+    --input: 222 25% 25%;
     --ring: 191 100% 50%;
+
 
     --shadow-premium: 0 20px 50px -12px rgba(0, 0, 0, 0.9);
     --shadow-glow: 0 0 30px rgba(0, 194, 255, 0.4);
