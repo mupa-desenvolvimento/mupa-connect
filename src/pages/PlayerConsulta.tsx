@@ -7,11 +7,12 @@ import { ManifestService } from "@/services/ManifestService";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Package, AlertCircle, Barcode, User, X, Info } from "lucide-react";
+import { Loader2, Package, AlertCircle, Barcode, User, X, Info, Search, Play } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import * as faceapi from "face-api.js";
 import { useKioskMode } from "@/hooks/useKioskMode";
 import { PWAInstallModal } from "@/components/PWAInstallModal";
+import { DevShowcaseOverlay } from "@/components/DevShowcaseOverlay";
 
 interface AppearanceConfig {
   show_device_name?: boolean;
@@ -70,11 +71,18 @@ export default function PlayerConsulta() {
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get("preview") === "true";
   const previewPlaylistId = searchParams.get("id");
+  const isDevModeParam = searchParams.get("dev") === "true";
 
   const [manifest, setManifest] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  // DEV MODE STATE
+  const [isDevMode, setIsDevMode] = useState(isDevModeParam);
+  const [isAutoDemoActive, setIsAutoDemoActive] = useState(false);
+  const [clickCount, setClickCount] = useState(0);
+  const lastClickTime = useRef(0);
 
   useEffect(() => {
     if (deferredPrompt && !isPwaInstalled) {
