@@ -627,7 +627,7 @@ export default function PlayerConsulta() {
 
     } catch (err: any) {
       console.error("Erro na consulta:", err);
-      setError(err.message || "Produto não encontrado ou não cadastrado na loja.");
+      setError("Não encontramos este produto em nossos registros. Verifique o código e tente novamente.");
     } finally {
       setIsConsulting(false);
       startHideTimer();
