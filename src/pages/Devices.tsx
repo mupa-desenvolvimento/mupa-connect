@@ -602,7 +602,7 @@ export default function DevicesPage() {
                         <Monitor className="h-4 w-4 text-primary" />
                         <span className="font-semibold truncate max-w-[150px]">{d.apelido_interno}</span>
                       </div>
-                      <StatusBadge status={getConnectionStatus(d.last_heartbeat_at)} />
+                      <StatusBadge status={getConnectionStatus(d.last_player_activity_at)} />
                     </div>
                     <div className="space-y-2 text-xs">
                       <div className="flex justify-between">
