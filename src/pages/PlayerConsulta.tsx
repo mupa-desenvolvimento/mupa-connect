@@ -374,7 +374,7 @@ export default function PlayerConsulta() {
         // Cache de 1 hora
         if (Date.now() - parsed.timestamp < 3600000 || !navigator.onLine) {
           console.log("[Consulta] Usando cache para:", cleanEan);
-          setProduct(parsed.data);
+          setProduct({ ...parsed.data, is_cached: true });
           setIsConsulting(false);
           startHideTimer();
           return;
