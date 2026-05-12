@@ -11,6 +11,28 @@ import { Loader2, Package, AlertCircle, Barcode, User, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import * as faceapi from "face-api.js";
 
+interface AppearanceConfig {
+  show_device_name?: boolean;
+  show_datetime?: boolean;
+  show_serial?: boolean;
+  transition_type?: "fade" | "slide-left" | "slide-right" | "zoom" | "none";
+  transition_duration?: number;
+  footer?: {
+    enabled: boolean;
+    text: string;
+    background_color: string;
+    text_color: string;
+    height: number;
+  };
+  logo?: {
+    enabled: boolean;
+    url: string;
+    position: "top-left" | "top-right" | "bottom-left" | "bottom-right";
+    size: number;
+    opacity?: number;
+  };
+}
+
 interface ProductData {
   ean: string;
   internal_id: string | number;
@@ -73,6 +95,15 @@ export default function PlayerConsulta() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const detectionIntervalRef = useRef<number | null>(null);
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const appearance = useMemo(() => (manifest?.appearance_config || {}) as AppearanceConfig, [manifest]);
+
 
   useEffect(() => {
     const handleResize = () => setIsVertical(window.innerHeight > window.innerWidth);
@@ -526,6 +557,105 @@ export default function PlayerConsulta() {
         />
       </div>
 
+      {/* Camada de UI Overlays (Aparência) */}
+      <div className={cn(
+        "absolute inset-0 pointer-events-none p-6 md:p-10 flex flex-col justify-between transition-opacity duration-500",
+        showOverlay ? "opacity-0" : "opacity-100"
+      )}>
+        {/* Header: Device Info & Clock */}
+        <div className="flex items-start justify-between w-full">
+          {/* Device Info */}
+          {(appearance.show_device_name !== false && !isPreview) && (
+            <div className="flex items-center gap-3 animate-fade-in bg-black/20 backdrop-blur-sm p-3 rounded-xl border border-white/5">
+              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary to-blue-600 grid place-items-center font-bold text-white shadow-lg shadow-primary/20">M</div>
+              <div className="leading-tight text-white">
+                <div className="font-bold text-lg tracking-tight">
+                  {deviceInfo?.apelido_interno || "Ponto de Consulta"}
+                </div>
+                <div className="text-[11px] uppercase tracking-[0.2em] opacity-60 font-mono font-bold">
+                  {deviceInfo ? `Filial ${deviceInfo.num_filial}` : `Offline · ${deviceCode}`}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Date/Time */}
+          {(appearance.show_datetime !== false && !isPreview) && (
+            <div className="text-right animate-fade-in bg-black/20 backdrop-blur-sm p-3 rounded-xl border border-white/5 text-white">
+              <div className="font-bold text-3xl tabular-nums tracking-tighter">
+                {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+              </div>
+              <div className="text-[10px] uppercase opacity-50 font-mono tracking-widest">
+                {now.toLocaleDateString("pt-BR", { weekday: 'short', day: '2-digit', month: 'short' })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer Layer */}
+        <div className="flex flex-col items-center gap-4">
+          {/* Logo Overlay */}
+          {appearance.logo?.enabled && appearance.logo.url && (
+            <div 
+              className={cn(
+                "absolute pointer-events-none transition-all duration-500",
+                appearance.logo.position === "top-left" && "top-6 left-6",
+                appearance.logo.position === "top-right" && "top-6 right-6",
+                appearance.logo.position === "bottom-left" && "bottom-6 left-6",
+                appearance.logo.position === "bottom-right" && "bottom-6 right-6",
+                appearance.logo.position === "top-left" && (appearance.show_device_name !== false) && "top-24",
+                appearance.logo.position === "top-right" && (appearance.show_datetime !== false) && "top-24"
+              )}
+              style={{ 
+                opacity: appearance.logo.opacity ?? 1,
+                ...(appearance.logo.position.startsWith('bottom') && appearance.footer?.enabled ? {
+                  bottom: `80px`
+                } : {})
+              }}
+            >
+              <img 
+                src={appearance.logo.url} 
+                alt="Logo" 
+                style={{ width: `${appearance.logo.size || 80}px`, height: 'auto' }}
+                className="drop-shadow-2xl"
+              />
+            </div>
+          )}
+
+          {/* Configurable Footer */}
+          {appearance.footer?.enabled && (
+            <div 
+              className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center justify-center px-8 py-3 rounded-2xl backdrop-blur-md shadow-2xl border border-white/5 animate-fade-in max-w-[90%] pointer-events-none"
+              style={{ 
+                backgroundColor: appearance.footer.background_color || "rgba(0, 0, 0, 0.6)",
+                color: appearance.footer.text_color || "#fff",
+              }}
+            >
+              <div className="flex flex-col items-center justify-center text-center leading-tight">
+                <div 
+                  className="font-bold tracking-wide"
+                  style={{ 
+                    fontFamily: "Satoshi, sans-serif",
+                    fontSize: "1.8rem",
+                    letterSpacing: "0.05em"
+                  }}
+                >
+                  <span className="opacity-95 block line-clamp-2">{appearance.footer.text}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Serial Info (Discreet) */}
+      {(appearance.show_serial !== false && !isPreview && !showOverlay) && (
+        <div className="absolute bottom-4 right-4 z-40 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 font-mono text-[10px] text-white/40 tracking-[0.2em] select-none pointer-events-none uppercase">
+          Device ID: {deviceInfo?.serial || deviceCode}
+        </div>
+      )}
+
+
       <AnimatePresence>
         {showOverlay && (
           <motion.div 
@@ -712,56 +842,28 @@ export default function PlayerConsulta() {
     )}
   </AnimatePresence>
 
+      {/* Inputs ocultos para captura do scanner */}
+      <div className="fixed opacity-0 pointer-events-none">
+        <Input 
+          ref={inputRef}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          autoFocus
+        />
+        <Input 
+          value={manualProductId}
+          onChange={(e) => setManualProductId(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleManualConsult(manualProductId);
+              setManualProductId("");
+            }
+          }}
+        />
+      </div>
+
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4">
-        {/* Input visível para debug e captura do leitor de teclado */}
-        {/* Inputs visíveis para consulta e captura */}
-        <div className="flex flex-col md:flex-row gap-4 mb-4">
-          <div className="flex flex-col items-center gap-2 bg-black/40 backdrop-blur-md p-3 rounded-xl border border-white/10">
-            <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Leitor EAN / Scanner</span>
-            <Input 
-              ref={inputRef}
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="w-56 h-10 bg-white/5 border-white/20 text-white text-center font-mono text-lg focus:ring-1 focus:ring-primary/50"
-              placeholder="EAN (Barcode)..."
-              autoFocus
-            />
-          </div>
-
-          <div className="flex flex-col items-center gap-2 bg-black/40 backdrop-blur-md p-3 rounded-xl border border-white/10">
-            <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Código do Produto (SEQPRODUTO)</span>
-            <div className="flex gap-2">
-              <Input 
-                value={manualProductId}
-                onChange={(e) => setManualProductId(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleManualConsult(manualProductId);
-                    setManualProductId("");
-                  }
-                }}
-                className="w-40 h-10 bg-white/5 border-white/20 text-white text-center font-mono text-lg focus:ring-1 focus:ring-primary/50"
-                placeholder="Ex: 48"
-              />
-              <button 
-                onClick={() => {
-                  handleManualConsult(manualProductId);
-                  setManualProductId("");
-                }}
-                className="px-4 h-10 bg-primary/20 hover:bg-primary/40 text-primary rounded-lg border border-primary/30 transition-all font-bold text-sm"
-              >
-                IR
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 opacity-30 grayscale">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center font-bold text-white">M</div>
-          <span className="text-white font-medium tracking-[0.2em] text-[10px] md:text-xs lg:text-sm uppercase">Mupa Retail Media</span>
-        </div>
-        
         <AnimatePresence>
           {!showOverlay && (
             <motion.div 
@@ -776,6 +878,7 @@ export default function PlayerConsulta() {
           )}
         </AnimatePresence>
       </div>
+
 
       <button
         type="button"
