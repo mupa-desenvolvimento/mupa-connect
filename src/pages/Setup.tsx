@@ -29,6 +29,12 @@ export default function Setup() {
     }
   };
 
+  const handleKeyPress = (button: string) => {
+    if (button === "{ent}") {
+      setShowKeyboard(false);
+    }
+  };
+
   const handleInputFocus = (inputName: string) => {
     setActiveInput(inputName);
     setShowKeyboard(true);
