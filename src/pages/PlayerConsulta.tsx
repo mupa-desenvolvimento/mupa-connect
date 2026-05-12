@@ -244,13 +244,13 @@ export default function PlayerConsulta() {
 
         if (deviceCode) {
           const result = await ManifestService.fetchManifest(deviceCode);
-          if (result.success) {
+          if (result && result.manifest) {
             setManifest(result.manifest);
             setDeviceInfo(result.device);
             DevicePersistenceService.saveDeviceConfig(result.device);
             setIsLoading(false);
           } else {
-            throw new Error(result.error || "Erro ao buscar manifest");
+            throw new Error("Erro ao buscar manifest");
           }
         }
       } catch (err: any) {
@@ -351,8 +351,8 @@ export default function PlayerConsulta() {
 
         
         if (result.length > 0) {
-            activeIndices.add(index);
           result.forEach(async (face, index) => {
+            activeIndices.add(index);
             // Get the most probable expression
             const expressions = face.expressions.asSortedArray();
             const mostProbableExpression = expressions[0];
@@ -429,7 +429,7 @@ export default function PlayerConsulta() {
                 
                 const { error } = await supabase
                   .from("audience_detections")
-                  .insert(detectionData);
+                  .insert([detectionData]);
                 
                 if (error) {
                   console.error("[Face Detection] Error sending detection to database:", error);
@@ -469,7 +469,7 @@ export default function PlayerConsulta() {
           if (durationMs > 0) {
             supabase
               .from("audience_detections")
-              .insert({
+              .insert([{
                 detected_at: new Date(session.lastSeenAt).toISOString(),
                 age: session.age,
                 gender: session.gender,
