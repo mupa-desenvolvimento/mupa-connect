@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, memo } from "react";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { MediaCacheService } from "@/components/PlayerServices";
 import { cn } from "@/lib/utils";
@@ -21,6 +21,81 @@ interface PlayerEngineProps {
     transition_duration?: number;
   };
 }
+
+// Sub-componente memoizado para evitar re-renders desnecessários de mídias pesadas
+const MediaLayer = memo(({ 
+  media, 
+  localUrl, 
+  isActive, 
+  bufferId, 
+  videoRef, 
+  volume, 
+  onEnded, 
+  onError 
+}: {
+  media: MediaItem | null;
+  localUrl: string;
+  isActive: boolean;
+  bufferId: "A" | "B";
+  videoRef: React.RefObject<HTMLVideoElement>;
+  volume: number;
+  onEnded: () => void;
+  onError: (e: any) => void;
+}) => {
+  if (!media || !localUrl) return null;
+
+  const isVideo = media.type === "video";
+
+  return (
+    <div 
+      className={cn(
+        "player-layer player-gpu-accel",
+        isActive ? "opacity-100 z-10" : "opacity-0 z-0"
+      )}
+      style={{
+        transitionProperty: 'opacity',
+        transitionDuration: '500ms',
+        transitionTimingFunction: 'ease-in-out'
+      }}
+    >
+      {isVideo ? (
+        <video
+          ref={videoRef}
+          src={localUrl}
+          muted={volume === 0}
+          autoPlay={isActive}
+          playsInline
+          preload="auto"
+          className="w-full h-full player-gpu-accel"
+          style={{ objectFit: 'fill' }}
+          onCanPlayThrough={() => {
+            if (isActive && videoRef.current && videoRef.current.paused) {
+              videoRef.current.play().catch(e => console.warn("[PlayerEngine] [Playback] Video play failed", e));
+            }
+          }}
+          onEnded={onEnded}
+          onError={onError}
+        />
+      ) : (
+        <img
+          src={localUrl}
+          alt=""
+          className="w-full h-full player-gpu-accel"
+          style={{ objectFit: 'fill' }}
+          onError={onError}
+        />
+      )}
+    </div>
+  );
+}, (prev, next) => {
+  // Apenas re-renderiza se a mídia ou a URL mudar, ou se o estado de atividade mudar
+  return prev.media?.id === next.media?.id && 
+         prev.localUrl === next.localUrl && 
+         prev.isActive === next.isActive &&
+         prev.volume === next.volume;
+});
+
+MediaLayer.displayName = "MediaLayer";
 
 export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appearance }: PlayerEngineProps) {
   const [bufferA, setBufferA] = useState<MediaItem | null>(null);
@@ -99,8 +174,6 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
 
     onMediaChange?.(newIndex);
 
-    // Logging: FirebaseRealtimeService.logEvent now blocks 'media_transition' from Firebase
-    // and sends it to Android local storage instead.
     if (serial) {
       FirebaseRealtimeService.logEvent(serial, "media_transition", {
         from: playlistRef.current[prevIndex]?.name,
@@ -168,60 +241,9 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
     return () => clearInterval(watchdog);
   }, [swapBuffers]);
 
-  if (!playlist.length) return null;
-
-  const renderMedia = (media: MediaItem | null, bufferId: "A" | "B", isActive: boolean) => {
-    if (!media) return null;
-
-    const isVideo = media.type === "video";
-    const videoRef = bufferId === "A" ? videoARef : videoBRef;
-    const localUrl = bufferId === "A" ? localUrlA : localUrlB;
-
-    return (
-      <div 
-        className={cn(
-          "player-layer player-gpu-accel",
-          isActive ? "opacity-100 z-10" : "opacity-0 z-0"
-        )}
-      >
-        {isVideo ? (
-          <video
-            ref={videoRef}
-            src={localUrl}
-            muted={volume === 0}
-            autoPlay={isActive}
-            playsInline
-            preload="auto"
-            className="w-full h-full player-gpu-accel"
-            style={{ objectFit: 'fill' }}
-            onCanPlayThrough={() => {
-              if (isActive && videoRef.current && videoRef.current.paused) {
-                videoRef.current.play().catch(e => console.warn("[PlayerEngine] [Playback] Video play failed", e));
-              }
-            }}
-            onEnded={() => {
-              if (isActive) swapBuffers();
-            }}
-            onError={(e) => {
-              console.error("[PlayerEngine] [Playback] Video error", e);
-              if (isActive) swapBuffers();
-            }}
-          />
-        ) : (
-          <img
-            src={localUrl}
-            alt=""
-            className="w-full h-full player-gpu-accel"
-            style={{ objectFit: 'fill' }}
-            onError={(e) => {
-              console.error("[PlayerEngine] [Playback] Image error", e);
-              if (isActive) swapBuffers();
-            }}
-          />
-        )}
-      </div>
-    );
-  };
+  const handleMediaError = useCallback(() => {
+    swapBuffers();
+  }, [swapBuffers]);
 
   useEffect(() => {
     const playActiveVideo = async () => {
@@ -238,10 +260,30 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
     playActiveVideo();
   }, [activeBuffer, bufferA, bufferB]);
 
+  if (!playlist.length) return null;
+
   return (
     <div className="relative w-full h-full bg-black overflow-hidden player-gpu-accel">
-      {renderMedia(bufferA, "A", activeBuffer === "A")}
-      {renderMedia(bufferB, "B", activeBuffer === "B")}
+      <MediaLayer 
+        bufferId="A"
+        media={bufferA}
+        localUrl={localUrlA}
+        isActive={activeBuffer === "A"}
+        videoRef={videoARef}
+        volume={volume}
+        onEnded={swapBuffers}
+        onError={handleMediaError}
+      />
+      <MediaLayer 
+        bufferId="B"
+        media={bufferB}
+        localUrl={localUrlB}
+        isActive={activeBuffer === "B"}
+        videoRef={videoBRef}
+        volume={volume}
+        onEnded={swapBuffers}
+        onError={handleMediaError}
+      />
     </div>
   );
 }
