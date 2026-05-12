@@ -270,7 +270,18 @@ const Hero = () => {
               <Play className="mr-2 h-5 w-5 shrink-0" />
               <span>Ver demo</span>
             </Button>
+            <Link to="/player-consulta" className="w-full sm:w-auto">
+              <Button
+                size="lg"
+                variant="ghost"
+                className="w-full sm:w-auto min-h-[3.5rem] h-auto py-4 px-6 sm:px-10 text-base sm:text-lg rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-white/90 backdrop-blur-sm whitespace-normal leading-tight"
+              >
+                <Search className="mr-2 h-5 w-5 shrink-0" />
+                <span>Ponto de Consulta</span>
+              </Button>
+            </Link>
           </motion.div>
+
 
           {/* Floating Elements */}
           <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20">
