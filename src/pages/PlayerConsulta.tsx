@@ -842,43 +842,43 @@ export default function PlayerConsulta() {
     )}
   </AnimatePresence>
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4">
-        {/* Input visível para debug e captura do leitor de teclado */}
-        {/* Inputs visíveis para consulta e captura */}
-        <div className="flex flex-col md:flex-row gap-4 mb-4">
-          <div className="flex flex-col items-center gap-2 bg-black/40 backdrop-blur-md p-3 rounded-xl border border-white/10">
-            <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Leitor EAN / Scanner</span>
-            <Input 
-              ref={inputRef}
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="w-56 h-10 bg-white/5 border-white/20 text-white text-center font-mono text-lg focus:ring-1 focus:ring-primary/50"
-              placeholder="EAN (Barcode)..."
-              autoFocus
-            />
-          </div>
+      {/* Inputs ocultos para captura do scanner */}
+      <div className="fixed opacity-0 pointer-events-none">
+        <Input 
+          ref={inputRef}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          autoFocus
+        />
+        <Input 
+          value={manualProductId}
+          onChange={(e) => setManualProductId(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleManualConsult(manualProductId);
+              setManualProductId("");
+            }
+          }}
+        />
+      </div>
 
-          <div className="flex flex-col items-center gap-2 bg-black/40 backdrop-blur-md p-3 rounded-xl border border-white/10">
-            <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Código do Produto (SEQPRODUTO)</span>
-            <div className="flex gap-2">
-              <Input 
-                value={manualProductId}
-                onChange={(e) => setManualProductId(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleManualConsult(manualProductId);
-                    setManualProductId("");
-                  }
-                }}
-                className="w-40 h-10 bg-white/5 border-white/20 text-white text-center font-mono text-lg focus:ring-1 focus:ring-primary/50"
-                placeholder="Ex: 48"
-              />
-              <button 
-                onClick={() => {
-                  handleManualConsult(manualProductId);
-                  setManualProductId("");
-                }}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4">
+        <AnimatePresence>
+          {!showOverlay && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="px-4 py-2 md:px-6 md:py-3 bg-white/5 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-3"
+            >
+              <Barcode className="w-4 h-4 md:w-5 md:h-5 text-primary animate-pulse" />
+              <span className="text-white/40 text-[10px] md:text-xs lg:text-sm font-medium uppercase tracking-widest whitespace-nowrap">Aguardando leitura de código</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
                 className="px-4 h-10 bg-primary/20 hover:bg-primary/40 text-primary rounded-lg border border-primary/30 transition-all font-bold text-sm"
               >
                 IR
