@@ -139,7 +139,7 @@ export function CreateDeviceModal({ open, onOpenChange, onSuccess }: CreateDevic
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="bg-gradient-primary">
+              <Button type="submit" disabled={isSubmitting} variant="premium">
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Cadastrar Dispositivo
               </Button>
