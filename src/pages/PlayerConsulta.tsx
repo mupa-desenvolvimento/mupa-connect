@@ -1116,7 +1116,7 @@ export default function PlayerConsulta() {
                             className="p-6 md:p-8 rounded-[30px] shadow-xl relative overflow-hidden flex flex-col justify-center"
                             style={{ 
                               backgroundColor: '#fff',
-                              border: `1px solid ${product.visual?.cor_dominante_claro || '#e2e8f0'}`,
+                              border: `1px solid ${product.visual?.cor_dominante_claro || '#cbd5e1'}`,
                               boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)'
                             }}
                           >
