@@ -59,6 +59,7 @@ interface ProductData {
 }
 
 const DEFAULT_PRODUCT_IMAGE = "https://qtbkvshbmqlszncxlcuc.supabase.co/storage/v1/object/public/dsl-uploads/kqrRuPz304ckV2bn5HmQpveeQQo1/821f6c4e-8d26-4bd2-90bd-a52929afc73e.png";
+const MUPA_STATIC_IMAGE = (ean: string) => `http://srv-mupa.ddns.net:5050/static/processed/${ean}.png`;
 
 const isValidUUID = (value: any): boolean => {
   if (typeof value !== 'string') return false;
@@ -563,16 +564,15 @@ export default function PlayerConsulta() {
     };
   }, []);
 
-  const fetchMupaData = async (ean: string) => {
-    try {
-      const response = await fetch(`http://srv-mupa.ddns.net:5050/produto-imagem/${ean}`);
-      if (!response.ok) throw new Error("Mupa API error");
-      const data = await response.json();
-      return data;
-    } catch (err) {
-      console.error("Error fetching from Mupa:", err);
-      return null;
-    }
+  const buildVisual = (ean: string | null | undefined, visual: any) => {
+    const safeEan = typeof ean === "string" && ean.trim() ? ean.trim() : null;
+    return {
+      imagem_url: visual?.imagem_url || (safeEan ? MUPA_STATIC_IMAGE(safeEan) : DEFAULT_PRODUCT_IMAGE),
+      cor_assinatura_produto: visual?.cor_assinatura_produto || "#000000",
+      fundo_legibilidade: visual?.fundo_legibilidade || "#000000",
+      cor_dominante_claro: visual?.cor_dominante_claro || "#FFFFFF",
+      cor_dominante_escuro: visual?.cor_dominante_escuro || "#000000",
+    };
   };
 
   const handleConsult = useCallback(async (ean: string) => {
@@ -605,7 +605,11 @@ export default function PlayerConsulta() {
         const parsed = JSON.parse(cached);
         if (Date.now() - parsed.timestamp < 3600000 || !navigator.onLine) {
           console.log("[Consulta] Usando cache para:", cleanEan);
-          setProduct({ ...parsed.data, is_cached: true });
+          setProduct({
+            ...parsed.data,
+            is_cached: true,
+            visual: buildVisual(cleanEan, parsed.data?.visual),
+          });
           setIsConsulting(false);
           startHideTimer();
           return;
@@ -626,25 +630,10 @@ export default function PlayerConsulta() {
       if (!data) throw new Error("Produto não encontrado");
 
       console.log("[SEQPRODUTO]", data.internal_id);
-      
-      // Fetch visual data from Mupa
-      const mupaData = await fetchMupaData(cleanEan);
-      
+
       const finalProduct = {
         ...data,
-        visual: mupaData ? {
-          imagem_url: mupaData.imagem_url || data.visual?.imagem_url || DEFAULT_PRODUCT_IMAGE,
-          cor_assinatura_produto: mupaData.cor_assinatura_produto || data.visual?.cor_assinatura_produto || "#000000",
-          fundo_legibilidade: mupaData.fundo_legibilidade || data.visual?.fundo_legibilidade || "#000000",
-          cor_dominante_claro: mupaData.cor_dominante_claro || data.visual?.cor_dominante_claro || "#FFFFFF",
-          cor_dominante_escuro: mupaData.cor_dominante_escuro || data.visual?.cor_dominante_escuro || "#000000",
-        } : (data.visual || {
-          imagem_url: DEFAULT_PRODUCT_IMAGE,
-          cor_assinatura_produto: "#000000",
-          fundo_legibilidade: "#000000",
-          cor_dominante_claro: "#FFFFFF",
-          cor_dominante_escuro: "#000000",
-        })
+        visual: buildVisual(cleanEan, data.visual)
       };
 
       setProduct(finalProduct);
@@ -858,31 +847,10 @@ export default function PlayerConsulta() {
 
       console.log("[ASSAI_PRICE]", data.stock_prices);
       
-      // Se tiver EAN, tenta buscar imagem no Mupa
-      let finalProduct = data;
-      if (data.ean) {
-        const mupaData = await fetchMupaData(data.ean);
-        if (mupaData) {
-          finalProduct = {
-            ...data,
-            visual: {
-              imagem_url: mupaData.imagem_url || data.visual?.imagem_url || DEFAULT_PRODUCT_IMAGE,
-              cor_assinatura_produto: mupaData.cor_assinatura_produto || data.visual?.cor_assinatura_produto || "#000000",
-              fundo_legibilidade: mupaData.fundo_legibilidade || data.visual?.fundo_legibilidade || "#000000",
-              cor_dominante_claro: mupaData.cor_dominante_claro || data.visual?.cor_dominante_claro || "#FFFFFF",
-              cor_dominante_escuro: mupaData.cor_dominante_escuro || data.visual?.cor_dominante_escuro || "#000000",
-            }
-          };
-        } else if (!data.visual?.imagem_url) {
-          finalProduct = {
-            ...data,
-            visual: {
-              ...data.visual,
-              imagem_url: DEFAULT_PRODUCT_IMAGE
-            }
-          };
-        }
-      }
+      const finalProduct = {
+        ...data,
+        visual: buildVisual(data.ean, data.visual)
+      };
 
       setProduct(finalProduct);
     } catch (err: any) {
@@ -1092,7 +1060,7 @@ export default function PlayerConsulta() {
                 )}>
                   {!imageError ? (
                     <img 
-                      src={product.visual?.imagem_url || `http://srv-mupa.ddns.net:5050/static/processed/${product.ean}.png`}
+                      src={product.visual?.imagem_url || (product.ean ? MUPA_STATIC_IMAGE(product.ean) : DEFAULT_PRODUCT_IMAGE)}
                       alt={product.description}
                       className="max-w-full max-h-full object-contain p-8 transition-opacity duration-300"
                       onError={(e) => {
