@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
+import { CompanySettings } from "@/components/CompanySettings";
 
 export default function SettingsPage() {
   const { companyId, isLoading: isLoadingRole } = useUserRole();
