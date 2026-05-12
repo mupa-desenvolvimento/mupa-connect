@@ -37,6 +37,12 @@ export const ManifestService = {
       .or(`apelido_interno.eq."${deviceCode}",serial.eq."${deviceCode}"`)
       .maybeSingle();
 
+    if (deviceError || !device) {
+      const err: any = new Error("Device not found");
+      err.code = "DEVICE_NOT_FOUND";
+      throw err;
+    }
+
     let targetPlaylistId = device.playlist_id;
 
     if (!targetPlaylistId) {
