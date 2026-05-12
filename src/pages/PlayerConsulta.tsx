@@ -358,13 +358,12 @@ export default function PlayerConsulta() {
   }, []);
 
   const handleConsult = useCallback(async (ean: string) => {
-    // Limpar EAN para evitar problemas com espaços ou caracteres invisíveis
     const cleanEan = ean.trim();
-    console.log("[Consulta] Iniciando para EAN:", cleanEan);
+    console.log("[EAN]", cleanEan);
     setIsConsulting(true);
     setShowOverlay(true);
     setError(null);
-    setProduct(null); // Limpar produto anterior
+    setProduct(null);
     setLastConsultedEan(cleanEan);
 
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
@@ -374,7 +373,6 @@ export default function PlayerConsulta() {
       const cached = localStorage.getItem(cachedKey);
       if (cached) {
         const parsed = JSON.parse(cached);
-        // Cache de 1 hora
         if (Date.now() - parsed.timestamp < 3600000 || !navigator.onLine) {
           console.log("[Consulta] Usando cache para:", cleanEan);
           setProduct({ ...parsed.data, is_cached: true });
@@ -384,20 +382,16 @@ export default function PlayerConsulta() {
         }
       }
 
-      const storeId = deviceInfo?.num_filial || '53';
-      const proxyUrl = `https://srv-mupa.ddns.net/proxy-assai?ean=${cleanEan}&store_id=${storeId}`;
+      const { data, error: functionError } = await supabase.functions.invoke('integra-assai', {
+        body: { ean: cleanEan }
+      });
 
-      console.log("[Consulta] Chamando proxy:", proxyUrl);
+      if (functionError) throw functionError;
+      if (data.error) throw new Error(data.error);
+
+      console.log("[SEQPRODUTO]", data.internal_id);
+      console.log("[ASSAI_PRICE]", data.stock_prices);
       
-      const response = await fetch(proxyUrl);
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data?.error || "Produto não encontrado ou erro no proxy");
-      }
-
-
-      console.log("[Consulta] Resultado API:", data);
       setProduct(data);
       
       localStorage.setItem(cachedKey, JSON.stringify({
@@ -418,7 +412,7 @@ export default function PlayerConsulta() {
     const cleanId = productId.trim();
     if (!cleanId) return;
     
-    console.log("[Consulta] Iniciando para Product ID:", cleanId);
+    console.log("[SEQPRODUTO]", cleanId);
     setIsConsulting(true);
     setShowOverlay(true);
     setError(null);
@@ -428,20 +422,14 @@ export default function PlayerConsulta() {
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
 
     try {
-      const storeId = deviceInfo?.num_filial || '53';
-      const proxyUrl = `https://srv-mupa.ddns.net/proxy-assai?product_id=${cleanId}&store_id=${storeId}`;
+      const { data, error: functionError } = await supabase.functions.invoke('integra-assai', {
+        body: { product_id: cleanId }
+      });
 
-      console.log("[Consulta Manual] Chamando proxy:", proxyUrl);
-      
-      const response = await fetch(proxyUrl);
-      const data = await response.json();
+      if (functionError) throw functionError;
+      if (data.error) throw new Error(data.error);
 
-      if (!response.ok || !data.success) {
-        throw new Error(data?.error || "Produto não encontrado ou erro no proxy");
-      }
-
-
-      console.log("[Consulta] Resultado API (Manual):", data);
+      console.log("[ASSAI_PRICE]", data.stock_prices);
       setProduct(data);
     } catch (err: any) {
       console.error("Erro na consulta manual:", err);
@@ -450,7 +438,7 @@ export default function PlayerConsulta() {
       setIsConsulting(false);
       startHideTimer();
     }
-  }, [hideTimeoutRef, deviceCode]);
+  }, [hideTimeoutRef]);
 
   // 3. FOCO AUTOMÁTICO NO INPUT PARA LEITORES DE CÓDIGO DE BARRAS (EMULAÇÃO DE TECLADO)
   const inputRef = useRef<HTMLInputElement>(null);
