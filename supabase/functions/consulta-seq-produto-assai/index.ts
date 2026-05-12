@@ -14,8 +14,7 @@ serve(async (req) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', // Use service role for database queries
     )
 
     const body = await req.json()
@@ -58,33 +57,47 @@ serve(async (req) => {
 
     console.log(`[Consulta] Buscando mapping para EAN: ${ean} (Loja: ${storeId})`);
 
-    // PASSO 1: Consultar código interno no novo endpoint
-    let mappingData = null;
-    try {
-      const mappingResponse = await fetch(`http://srv-mupa.ddns.net:5050/api/ean/seqproduto?codbar=${ean}`);
-      if (mappingResponse.ok) {
-        mappingData = await mappingResponse.json();
-      } else {
-        console.error(`Erro no mapping API: ${mappingResponse.status}`);
+    // PASSO 1: Consultar código interno no Supabase (seq_produto_assai)
+    const { data: mappingData, error: mappingError } = await supabaseClient
+      .from('seq_produto_assai')
+      .select('SEQPRODUTO, DESCCOMPLETA')
+      .eq('CODACESSONUM', ean)
+      .single();
+
+    if (mappingError || !mappingData) {
+      console.warn(`Produto ${ean} não encontrado no Supabase mapping. Tentando API legado...`);
+      // Fallback para API legado se necessário (opcional, mas mantido por segurança por enquanto)
+      try {
+        const legacyResponse = await fetch(`http://srv-mupa.ddns.net:5050/api/ean/seqproduto?codbar=${ean}`);
+        if (legacyResponse.ok) {
+          const legacyData = await legacyResponse.json();
+          if (legacyData && legacyData.id_product) {
+            // Adaptar para o mesmo formato
+            (mappingData as any) = {
+              SEQPRODUTO: legacyData.id_product,
+              DESCCOMPLETA: legacyData.descricao
+            };
+          }
+        }
+      } catch (e) {
+        console.error('Erro no fallback legado:', e);
       }
-    } catch (e) {
-      console.error('Erro ao buscar mapping externo:', e);
     }
 
     if (!mappingData) {
-      return new Response(JSON.stringify({ error: 'Produto não encontrado na base de dados' }), {
+      return new Response(JSON.stringify({ error: 'Produto não encontrado' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 404,
       });
     }
 
-    const internalId = mappingData.id_product;
-    const description = mappingData.descricao;
+    const internalId = mappingData.SEQPRODUTO;
+    const description = mappingData.DESCCOMPLETA;
 
     // PASSO 2: Consultar preço no marketplace Assai
-    let priceData = null;
+    let stockPrices = [];
     try {
-      console.log(`[Consulta] Buscando preço para id_product: ${internalId} na loja: ${storeId}`);
+      console.log(`[Consulta] Buscando estoque/preço para id_product: ${internalId} na loja: ${storeId}`);
       const assaiResponse = await fetch(`https://marketplace.assai.com.br/stock?id_product=${internalId}&id_store=${storeId}`, {
         headers: {
           'accept': 'application/json',
@@ -93,19 +106,18 @@ serve(async (req) => {
       });
       
       if (assaiResponse.ok) {
-        const fullPriceData = await assaiResponse.json();
-        priceData = Array.isArray(fullPriceData) ? fullPriceData[0] : fullPriceData;
+        const fullData = await assaiResponse.json();
+        stockPrices = fullData.stock_price || [];
       } else {
-        console.warn(`Aviso: API de preço retornou status ${assaiResponse.status}`);
+        console.warn(`Aviso: API Assai retornou status ${assaiResponse.status}`);
       }
     } catch (e) {
-      console.error('Erro ao buscar preço:', e);
+      console.error('Erro ao buscar preço no Assai:', e);
     }
 
-    // PASSO 3: Consultar imagem e cores
+    // PASSO 3: Consultar imagem e cores (opcional/legado)
     let visualData = null;
     try {
-      console.log(`[Consulta] Buscando visual para EAN: ${ean}`);
       const imageResponse = await fetch(`${imageBaseUrl.replace(/\/$/, '')}/${ean}`);
       if (imageResponse.ok) {
         visualData = await imageResponse.json();
@@ -118,7 +130,7 @@ serve(async (req) => {
       ean,
       internal_id: internalId,
       description: description,
-      price: priceData,
+      stock_prices: stockPrices, // Agora retorna a lista completa
       visual: visualData
     };
 
