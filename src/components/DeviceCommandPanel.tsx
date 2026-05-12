@@ -162,7 +162,7 @@ export function DeviceCommandPanel({ deviceId, deviceName }: Props) {
               <p className="text-sm text-muted-foreground">Aguardando execuções do dispositivo…</p>
             )}
             {logs.map((l) => (
-              <div key={l.id} className="flex items-start gap-3 p-2 rounded-lg bg-muted/40 border border-border">
+              <div key={l.id} className="flex items-start gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition-colors shadow-sm">
                 {l.result === "success"
                   ? <CheckCircle2 className="h-4 w-4 text-success mt-0.5 shrink-0" />
                   : <AlertCircle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />}
