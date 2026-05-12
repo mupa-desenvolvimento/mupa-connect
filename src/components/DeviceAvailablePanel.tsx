@@ -87,7 +87,7 @@ export function DeviceItem({ device, isSelected, onToggle, onClick }: DeviceItem
         "group relative flex items-center gap-3 p-3 rounded-2xl border transition-all duration-300 cursor-pointer overflow-hidden backdrop-blur-md",
         isSelected 
           ? "bg-[#085CF0]/10 border-[#085CF0]/40 shadow-glow shadow-[#085CF0]/20 scale-[1.02]" 
-          : "bg-white/5 border-white/5 hover:border-[#085CF0]/30 hover:bg-white/[0.08] hover:scale-[1.01]",
+          : "bg-white/[0.03] border-white/10 hover:border-primary/40 hover:bg-white/[0.08] hover:scale-[1.01]",
         isDragging && "opacity-0"
       )}
       onClick={() => device.group_id && onClick?.(device.group_id)}
