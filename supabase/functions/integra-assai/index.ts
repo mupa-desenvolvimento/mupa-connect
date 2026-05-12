@@ -110,8 +110,8 @@ serve(async (req) => {
       const assaiResponse = await fetch(assaiUrl, {
         headers: {
           'accept': 'application/json',
-          'x-basicauthorization': 'Basic QXNzYWlBcHA6QXNzYWlBcHA=',
-          'Authorization': 'Basic QXNzYWlBcHA6QXNzYWlBcHA=',
+          'x-basicauthorization': 'b3V0Ym91bmRAc3NhaUNvbXBhc3M6MWY1NzZjZGRkZWU3MzcwZTQwZWFkOWM2ZGZmMzM4NzY1MWIxN2FiMg==',
+          'Authorization': 'b3V0Ym91bmRAc3NhaUNvbXBhc3M6MWY1NzZjZGRkZWU3MzcwZTQwZWFkOWM2ZGZmMzM4NzY1MWIxN2FiMg==',
           'User-Agent': 'AssaiApp/1.0.0 (iPhone; iOS 15.0; Scale/3.00)',
           'x-app-version': '2.1.0'
         }
@@ -121,15 +121,9 @@ serve(async (req) => {
         const fullData = await assaiResponse.json();
         stockPrices = fullData.stock_price || [];
         console.log(`[ASSAI_PRICE] Encontrado ${stockPrices.length} níveis de preço`);
-        
-        // Log dos packs para debug
-        const packsInfo = stockPrices
-          .filter(p => p.price_pack > 0)
-          .map(p => `Pack ${p.unit_pack}: R$ ${p.price_pack}`)
-          .join(' | ');
-        console.log(`[ASSAI_PACKS] ${packsInfo || 'Nenhum pack com preço > 0'}`);
       } else {
-        console.warn(`[ASSAI_ERROR] API Assai retornou status ${assaiResponse.status}`);
+        const errorText = await assaiResponse.text();
+        console.warn(`[ASSAI_ERROR] API Assai retornou status ${assaiResponse.status}: ${errorText}`);
       }
     } catch (e) {
       console.error('[ASSAI_ERROR] Erro ao buscar preço no Assai:', e);
