@@ -1129,9 +1129,7 @@ export default function PlayerConsulta() {
                                 {formatPrice(mainPriceItem.price_prom_pack && mainPriceItem.price_prom_pack > 0 ? mainPriceItem.price_prom_pack : mainPriceItem.price_pack).replace('R$', '').trim()}
                               </span>
                             </div>
-                            {mainPriceItem.stock_avaliable <= 0 && (
-                              <div className="absolute top-4 right-4 bg-red-500 text-white text-[10px] md:text-xs font-bold px-3 py-1 rounded-full uppercase">Indisponível</div>
-                            )}
+                            {/* Removida tag indisponível a pedido do usuário */}
                           </div>
 
                           {/* Preços de Atacado / Packs */}
