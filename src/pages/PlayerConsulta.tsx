@@ -443,7 +443,7 @@ export default function PlayerConsulta() {
 
     } catch (err: any) {
       console.error("Erro na consulta:", err);
-      setError(err.message || "Produto não encontrado");
+      setError(err.message || "Produto não encontrado ou não cadastrado na loja.");
     } finally {
       setIsConsulting(false);
       startHideTimer();
@@ -475,7 +475,7 @@ export default function PlayerConsulta() {
       setProduct(data);
     } catch (err: any) {
       console.error("Erro na consulta manual:", err);
-      setError(err.message || "Produto não encontrado");
+      setError(err.message || "Produto não encontrado ou não cadastrado na loja.");
     } finally {
       setIsConsulting(false);
       startHideTimer();
@@ -861,6 +861,7 @@ export default function PlayerConsulta() {
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           autoFocus
+          inputMode="none"
         />
         <Input 
           value={manualProductId}
@@ -871,6 +872,7 @@ export default function PlayerConsulta() {
               setManualProductId("");
             }
           }}
+          inputMode="none"
         />
       </div>
 
