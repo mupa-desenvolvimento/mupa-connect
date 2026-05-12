@@ -542,7 +542,7 @@ export default function PlayerConsulta() {
   }
 
   return (
-    <div className="fixed inset-0 bg-black overflow-hidden select-none touch-none overscroll-none">
+    <div className={cn("fixed inset-0 bg-black overflow-hidden select-none touch-none overscroll-none", !showCursor && "cursor-none")} onClick={() => enterFullscreen()} onTouchStart={() => enterFullscreen()}>
       {/* Hidden camera and canvas for face detection */}
       {!isPreview && (
         <>
