@@ -426,15 +426,16 @@ export default function PlayerConsulta() {
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
 
     try {
-      const { data, error } = await supabase.functions.invoke("integra-assai", {
-        body: { 
-          product_id: cleanId,
-          device_serial: deviceCode 
-        }
-      });
+      const proxyUrl = `https://srv-mupa.ddns.net/proxy-assai?product_id=${cleanId}`;
+      console.log("[Consulta Manual] Chamando proxy:", proxyUrl);
+      
+      const response = await fetch(proxyUrl);
+      const data = await response.json();
 
-      if (error) throw error;
-      if (!data || data.error) throw new Error(data?.error || "Falha na resposta da API");
+      if (!response.ok || !data.success) {
+        throw new Error(data?.error || "Produto não encontrado ou erro no proxy");
+      }
+
 
       console.log("[Consulta] Resultado API (Manual):", data);
       setProduct(data);
