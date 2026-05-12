@@ -356,7 +356,8 @@ export default function PlayerConsulta() {
             if (timeSinceLastSent >= 5000) { // 5 seconds cooldown
               // Send data to audience_detections table
               try {
-                const validDeviceId = isValidUUID(deviceInfo?.id) ? deviceInfo.id : null;
+                const parsedDeviceId = Number((deviceInfo as any)?.id);
+                const validDeviceId = Number.isFinite(parsedDeviceId) ? parsedDeviceId : null;
                 const validTenantId = isValidUUID(deviceInfo?.tenant_id) ? deviceInfo.tenant_id : 
                                       isValidUUID(manifest?.tenant_id) ? manifest.tenant_id : null;
                 
