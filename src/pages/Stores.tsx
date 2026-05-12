@@ -146,7 +146,7 @@ export default function StoresPage() {
               Atualizar
             </Button>
             <Button 
-              className="bg-gradient-primary shadow-glow" 
+              variant="premium"
               size="sm"
               onClick={() => setIsCreateModalOpen(true)}
             >
