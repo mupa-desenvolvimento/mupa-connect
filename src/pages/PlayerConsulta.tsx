@@ -1126,7 +1126,26 @@ export default function PlayerConsulta() {
     )}
   </AnimatePresence>
 
-      {/* Scanner global — sem inputs focados, evita teclado Android/Zebra IME */}
+      {/* Input oculto para compatibilidade com equipamentos que exigem foco */}
+      <div className="fixed opacity-0 pointer-events-none overflow-hidden h-0 w-0">
+        <Input 
+          ref={inputRef}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              if (inputValue.length >= 3) {
+                handleConsult(inputValue);
+              }
+              setInputValue("");
+            }
+          }}
+          autoFocus
+          readOnly
+          inputMode="none"
+          tabIndex={-1}
+        />
+      </div>
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4">
         <AnimatePresence>
