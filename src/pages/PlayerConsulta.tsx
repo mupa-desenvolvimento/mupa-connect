@@ -1138,16 +1138,27 @@ export default function PlayerConsulta() {
     )}
   </AnimatePresence>
 
-      {/* Input oculto para compatibilidade com equipamentos que exigem foco */}
-      <div className="fixed opacity-0 pointer-events-none overflow-hidden h-0 w-0">
-        <Input 
-          ref={inputRef}
-          className="hidden-scanner-input"
-          autoFocus
-          inputMode="none"
-          tabIndex={-1}
-          autoComplete="off"
-        />
+      {/* Input visível mas estilizado para integração com o layout */}
+      <div className={cn(
+        "fixed bottom-24 left-1/2 -translate-x-1/2 z-50 transition-all duration-500",
+        showOverlay ? "opacity-0 pointer-events-none translate-y-4" : "opacity-100 translate-y-0"
+      )}>
+        <div className="relative group">
+          <div className="absolute -inset-1 bg-gradient-to-r from-primary/50 to-blue-600/50 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+          <div className="relative flex items-center bg-black/40 backdrop-blur-xl rounded-xl border border-white/10 p-1 pr-4 shadow-2xl">
+            <div className="p-3 text-primary/60">
+              <Barcode className="w-5 h-5" />
+            </div>
+            <Input 
+              ref={inputRef}
+              className="w-64 md:w-80 bg-transparent border-none text-white placeholder:text-white/20 focus-visible:ring-0 focus-visible:ring-offset-0 text-lg font-mono tracking-widest"
+              placeholder="AGUARDANDO LEITURA..."
+              autoFocus
+              inputMode="none"
+              autoComplete="off"
+            />
+          </div>
+        </div>
       </div>
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4">
