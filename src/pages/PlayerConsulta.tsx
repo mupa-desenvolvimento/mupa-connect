@@ -1034,32 +1034,34 @@ export default function PlayerConsulta() {
                   "flex items-center justify-center bg-slate-100 rounded-3xl overflow-hidden shadow-sm relative border border-slate-200",
                   isVertical ? "h-2/5 w-full" : "w-1/2 h-full order-2"
                 )}>
-                  {!imageError && (product.visual?.imagem_url || fallbackImageUrl) ? (
+                  {!imageError ? (
                     <img 
-                      src={(product.visual?.imagem_url || fallbackImageUrl)?.replace('http://', 'https://')} 
+                      src={`http://srv-mupa.ddns.net:5050/produto-imagem/${product.ean}`}
                       alt={product.description}
-                      className={cn(
-                        "max-w-full max-h-full object-contain p-8 transition-opacity duration-300",
-                        !product.visual?.imagem_url && "opacity-40"
-                      )}
+                      className="max-w-full max-h-full object-contain p-8 transition-opacity duration-300"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        const originalUrl = product.visual?.imagem_url;
+                        const mupaUrl = `http://srv-mupa.ddns.net:5050/produto-imagem/${product.ean}`;
+                        const visualUrl = product.visual?.imagem_url;
                         
-                        // 1. Try HTTP if HTTPS failed (for ddns domains without SSL)
-                        if (target.src.startsWith('https://') && originalUrl?.startsWith('http://')) {
-                          target.src = originalUrl;
+                        // 1. Se a imagem da Mupa falhar, tenta a visual da API
+                        if (target.src === mupaUrl && visualUrl) {
+                          target.src = visualUrl.replace('http://', 'https://');
+                          return;
+                        }
+
+                        // 2. Tenta o fallback do tenant ou imagem default
+                        const finalFallback = fallbackImageUrl || "https://qtbkvshbmqlszncxlcuc.supabase.co/storage/v1/object/public/dsl-uploads/kqrRuPz304ckV2bn5HmQpveeQQo1/821f6c4e-8d26-4bd2-90bd-a52929afc73e.png";
+                        
+                        if (target.src !== finalFallback) {
+                          target.src = finalFallback;
+                          if (finalFallback !== "https://qtbkvshbmqlszncxlcuc.supabase.co/storage/v1/object/public/dsl-uploads/kqrRuPz304ckV2bn5HmQpveeQQo1/821f6c4e-8d26-4bd2-90bd-a52929afc73e.png") {
+                            target.classList.add('opacity-40');
+                          }
                           return;
                         }
                         
-                        // 2. Try Company Fallback Image if product image failed
-                        if (fallbackImageUrl && target.src !== fallbackImageUrl) {
-                          target.src = fallbackImageUrl;
-                          target.classList.add('opacity-40');
-                          return;
-                        }
-                        
-                        // 3. Final fallback to icon
+                        // 3. Fallback final para ícone
                         setImageError(true);
                       }}
                     />
