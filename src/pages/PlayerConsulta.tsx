@@ -1153,7 +1153,7 @@ export default function PlayerConsulta() {
                                 return (
                                   <div 
                                     key={`pack-${idx}`}
-                                    className="p-5 md:p-6 rounded-[24px] bg-white border border-slate-100 shadow-sm flex flex-col justify-between relative"
+                                    className="p-5 md:p-6 rounded-[24px] bg-white border border-slate-200 shadow-sm flex flex-col justify-between relative"
                                   >
                                     <div>
                                       <div className="flex justify-between items-start mb-2">
