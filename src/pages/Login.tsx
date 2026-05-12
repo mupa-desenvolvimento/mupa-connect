@@ -100,10 +100,10 @@ const Login = () => {
             asChild
           >
             <Link to="/player-consulta" className="flex items-center justify-center gap-2">
-              <Link to="/player-consulta" />
               <span>Acessar Ponto de Consulta</span>
             </Link>
           </Button>
+
         </div>
       </Card>
     </div>
