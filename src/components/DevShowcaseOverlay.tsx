@@ -175,6 +175,21 @@ export const DevShowcaseOverlay: React.FC<DevShowcaseOverlayProps> = ({
 
   return (
     <div className="fixed inset-0 z-[100] pointer-events-none select-none overflow-hidden font-sans">
+      {/* 0. SPLASH NOTIFICATION */}
+      <AnimatePresence>
+        {isDevMode && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="absolute top-6 left-1/2 -translate-x-1/2 px-6 py-2 bg-cyan-500/10 backdrop-blur-md border border-cyan-500/20 rounded-full flex items-center gap-3 z-[110]"
+          >
+            <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse shadow-[0_0_8px_rgba(6,182,212,1)]" />
+            <span className="text-[10px] text-cyan-400 font-black uppercase tracking-[0.3em]">Showcase Mode Active</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* 1. HUD: Mini Painel Discreto (Bottom-Left) */}
       <motion.div 
         initial={{ x: -100, opacity: 0 }}
