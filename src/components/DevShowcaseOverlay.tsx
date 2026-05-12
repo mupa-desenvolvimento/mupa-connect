@@ -272,17 +272,61 @@ export const DevShowcaseOverlay: React.FC<DevShowcaseOverlayProps> = ({
       </div>
 
       {/* 3. FACE-ID BOUNDING BOXES */}
-      <div className="absolute inset-0 pointer-events-none">
-        {currentFaceDetections.map((detection, i) => {
-          // This would ideally use the actual bounding box from face-api
-          // For now we'll simulate a scanning effect if it's active
-          return (
-            <div key={`detection-${i}`} className="hidden">
-              {/* Bounding boxes are hard to render correctly without the raw coordinates from the video element scaling */}
-            </div>
-          );
-        })}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <AnimatePresence>
+          {currentFaceDetections.map((face, i) => {
+            if (!face.box) return null;
+            
+            // Scaling logic (assuming video is captured at some resolution and we scale to window)
+            // For a demo, we'll use approximate scaling
+            const scaleX = window.innerWidth / 640; // Assuming 640x480 for demo
+            const scaleY = window.innerHeight / 480;
+            
+            const left = face.box.x * scaleX;
+            const top = face.box.y * scaleY;
+            const width = face.box.width * scaleX;
+            const height = face.box.height * scaleY;
+
+            return (
+              <motion.div
+                key={`face-box-${i}`}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.2 }}
+                style={{
+                  position: 'absolute',
+                  left: `${left}px`,
+                  top: `${top}px`,
+                  width: `${width}px`,
+                  height: `${height}px`,
+                }}
+                className="border-2 border-cyan-500/50 rounded-2xl shadow-[0_0_20px_rgba(6,182,212,0.4)]"
+              >
+                {/* Corner Accents */}
+                <div className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-cyan-400" />
+                <div className="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-cyan-400" />
+                <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-cyan-400" />
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-cyan-400" />
+                
+                {/* Scanner Line */}
+                <div className="absolute inset-x-0 h-0.5 bg-cyan-400/50 shadow-[0_0_10px_rgba(6,182,212,0.8)] animate-scan" />
+                
+                {/* Labels */}
+                <div className="absolute -top-10 left-0 bg-cyan-500/20 backdrop-blur-md border border-cyan-500/30 px-3 py-1 rounded-lg">
+                  <div className="text-[10px] text-cyan-400 font-bold uppercase tracking-widest flex items-center gap-2">
+                    <User className="w-3 h-3" />
+                    {face.gender === 'male' ? 'M' : 'F'} • {face.age}y • {face.mostProbableExpression?.expression || '...'}
+                  </div>
+                </div>
+
+                {/* Particle pulse */}
+                <div className="absolute inset-0 bg-cyan-500/5 animate-pulse-glow rounded-2xl" />
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
       </div>
+
 
       {/* 4. SIDE PANEL (Retractable) */}
       <div className={cn(
