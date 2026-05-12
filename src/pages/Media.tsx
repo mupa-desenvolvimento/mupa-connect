@@ -311,7 +311,7 @@ export default function MediaPage() {
               </DialogContent>
             </Dialog>
 
-            <Button variant="secondary" size="sm" className="h-10 text-[10px] font-black uppercase tracking-widest px-6" onClick={() => navigate("/midias/lixeira")}>
+            <Button variant="secondary" size="sm" className="h-10" onClick={() => navigate("/midias/lixeira")}>
               <Recycle className="h-4 w-4 mr-2" /> Lixeira
             </Button>
 
