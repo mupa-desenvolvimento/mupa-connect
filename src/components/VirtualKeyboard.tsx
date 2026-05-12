@@ -101,9 +101,18 @@ const VirtualKeyboard = ({
             background: #1e293b !important;
             color: white !important;
             border-bottom: 2px solid #0f172a !important;
-            height: 50px !important;
-            font-size: 1.2rem !important;
-            border-radius: 8px !important;
+            height: 45px !important;
+            font-size: 1rem !important;
+            border-radius: 6px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+          }
+          @media (min-width: 640px) {
+            .hg-theme-default .hg-button {
+              height: 55px !important;
+              font-size: 1.2rem !important;
+            }
           }
           .hg-theme-default .hg-button:active {
             background: #334155 !important;
@@ -113,9 +122,11 @@ const VirtualKeyboard = ({
           }
           .hg-theme-default .hg-button.hg-functionBtn {
             background: #334155 !important;
+            font-size: 0.9rem !important;
           }
           .hg-theme-default {
             padding: 5px !important;
+            background-color: transparent !important;
           }
         `}</style>
       </div>
