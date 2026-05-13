@@ -78,7 +78,10 @@ const getLuminance = (hex: string) => {
 };
 
 const getContrastColor = (hex: string) => {
-  return getLuminance(hex) > 0.5 ? "#000000" : "#FFFFFF";
+  const luminance = getLuminance(hex);
+  // Se luminância > 0.45, fundo é considerado "claro" o suficiente para texto escuro (grafite)
+  // Caso contrário, fundo é "escuro", então texto deve ser branco.
+  return luminance > 0.45 ? "#333333" : "#FFFFFF";
 };
 
 const isDefaultImage = (url: string | null | undefined) => {
@@ -1029,7 +1032,7 @@ export default function PlayerConsulta() {
                   {deviceInfo?.apelido_interno || "Ponto de Consulta"}
                 </div>
                 <div className="text-[11px] uppercase tracking-[0.2em] opacity-60 font-mono font-bold">
-                  {deviceInfo ? `Filial ${deviceInfo.num_filial}` : `Offline · ${deviceCode}`}
+                  {deviceInfo ? `Filial ${deviceInfo.num_filial}` : deviceInfo?.serial || deviceCode}
                 </div>
               </div>
             </div>
@@ -1108,12 +1111,6 @@ export default function PlayerConsulta() {
         </div>
       </div>
 
-      {/* Serial Info (Discreet) */}
-      {(appearance.show_serial !== false && !isPreview && !showOverlay) && (
-        <div className="absolute bottom-4 right-4 z-40 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 font-mono text-[10px] text-white/40 tracking-[0.2em] select-none pointer-events-none uppercase">
-          Device ID: {deviceInfo?.serial || deviceCode}
-        </div>
-      )}
 
 
       <AnimatePresence>
@@ -1122,12 +1119,12 @@ export default function PlayerConsulta() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 lg:p-12"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-10 lg:p-16"
             style={{ 
               backgroundColor: isDefaultImage(product?.visual?.imagem_url)
                 ? (product?.visual?.fundo_legibilidade ? `${product.visual.fundo_legibilidade}F8` : 'rgba(0,51,153,0.98)')
                 : (product?.visual?.fundo_legibilidade || 'rgba(255, 255, 255, 0.98)'),
-              backdropFilter: 'blur(20px)'
+              backdropFilter: 'blur(30px)'
             }}
           >
             {isConsulting ? (
@@ -1159,7 +1156,7 @@ export default function PlayerConsulta() {
               </motion.div>
             ) : product && (
               <div className={cn(
-                "w-full h-full flex gap-8 md:gap-16",
+                "w-full h-full flex gap-8 md:gap-20",
                 isVertical ? "flex-col" : "flex-row items-stretch"
               )}>
                 {/* CONTAINER DA IMAGEM */}
@@ -1168,12 +1165,12 @@ export default function PlayerConsulta() {
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.1, duration: 0.5 }}
                   className={cn(
-                    "relative flex items-center justify-center rounded-[40px] shadow-2xl overflow-hidden border border-white/10 group",
-                    isVertical ? "h-[45%] w-full" : "w-[45%] h-full"
+                    "relative flex items-center justify-center rounded-[48px] shadow-2xl overflow-hidden border border-white/10 group",
+                    isVertical ? "h-[42%] w-full" : "w-[42%] h-full"
                   )}
                   style={{ 
                     background: isDefaultImage(product.visual?.imagem_url)
-                      ? `linear-gradient(135deg, ${product.visual?.cor_dominante_escuro || '#003399'} 0%, #001f5c 100%)`
+                      ? `linear-gradient(135deg, ${product.visual?.cor_dominante_escuro || '#003399'} 0%, ${product.visual?.cor_dominante_claro || '#001f5c'} 100%)`
                       : '#FFFFFF',
                   }}
                 >
@@ -1191,40 +1188,16 @@ export default function PlayerConsulta() {
 
                 {/* CONTEÚDO DO PRODUTO */}
                 <div className={cn(
-                  "flex flex-col justify-between py-4",
-                  isVertical ? "h-[55%] w-full" : "w-[55%] h-full"
+                  "flex flex-col justify-between py-2",
+                  isVertical ? "h-[58%] w-full" : "w-[58%] h-full"
                 )}>
                   <div className="space-y-8">
-                    {/* Código e Tag */}
-                    <motion.div 
-                      initial={{ y: -20, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: 0.2 }}
-                      className="flex items-center gap-4"
-                    >
-                      <div 
-                        className="px-6 py-2 rounded-2xl border backdrop-blur-md font-mono text-xl tracking-[0.2em]"
-                        style={{
-                          backgroundColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                          borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
-                          color: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)',
-                        }}
-                      >
-                        EAN: <span style={{ color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#000000', fontWeight: 900 }}>{product.internal_id}</span>
-                      </div>
-                      {product.is_cached && (
-                        <div className="px-4 py-2 rounded-2xl bg-orange-500 text-white text-xs font-black uppercase tracking-widest">
-                          MODO OFFLINE
-                        </div>
-                      )}
-                    </motion.div>
-                    
-                    {/* Descrição com Fundo Laranja Destaque */}
+                    {/* Descrição com Fundo de Destaque Dinâmico */}
                     <motion.div 
                       initial={{ y: 30, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.4 }}
-                      className="rounded-[30px] p-8 shadow-2xl relative overflow-hidden"
+                      className="rounded-[32px] p-10 shadow-2xl relative overflow-hidden"
                       style={{ 
                         backgroundColor: product.visual?.cor_assinatura_produto || '#F36C21',
                         color: getContrastColor(product.visual?.cor_assinatura_produto || '#F36C21')
@@ -1269,40 +1242,43 @@ export default function PlayerConsulta() {
                           {/* Container Preço Principal */}
                           <motion.div 
                             animate={{ 
-                              boxShadow: [
-                                "0 20px 50px rgba(0,0,0,0.3)",
-                                "0 20px 70px rgba(243,108,33,0.2)",
-                                "0 20px 50px rgba(0,0,0,0.3)"
-                              ] 
+                              boxShadow: isDefaultImage(product.visual?.imagem_url)
+                                ? [
+                                    "0 20px 50px rgba(0,0,0,0.3)",
+                                    "0 20px 70px rgba(243,108,33,0.3)",
+                                    "0 20px 50px rgba(0,0,0,0.3)"
+                                  ]
+                                : [
+                                    "0 20px 50px rgba(0,0,0,0.1)",
+                                    "0 20px 70px rgba(0,0,0,0.15)",
+                                    "0 20px 50px rgba(0,0,0,0.1)"
+                                  ]
                             }}
-                            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                            className="p-10 md:p-12 rounded-[40px] relative overflow-hidden border backdrop-blur-2xl flex flex-col items-center justify-center min-h-[220px]"
+                            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                            className="p-12 md:p-16 rounded-[48px] relative overflow-hidden border backdrop-blur-3xl flex flex-col items-center justify-center min-h-[280px] w-full"
                             style={{ 
                               background: isDefaultImage(product.visual?.imagem_url)
-                                ? 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)'
-                                : 'linear-gradient(180deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.08) 100%)',
-                              borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
+                                ? 'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.02) 100%)'
+                                : 'linear-gradient(180deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.05) 100%)',
+                              borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
                             }}
                           >
-                            <span 
-                              className="text-xl md:text-2xl font-black uppercase tracking-[0.4em] mb-4"
-                              style={{ color: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)' }}
-                            >
-                              {mainPriceItem.unit_pack === 1 ? 'VALOR UNITÁRIO' : `PACK COM ${mainPriceItem.unit_pack}`}
-                            </span>
                             
-                            <div className="flex items-start gap-4">
+                            <div className="flex items-start gap-3 md:gap-5">
                               <span 
-                                className="text-4xl md:text-5xl font-black mt-4"
+                                className="text-4xl md:text-6xl font-black mt-4 md:mt-6"
                                 style={{ color: product.visual?.cor_assinatura_produto || '#F36C21' }}
                               >
                                 R$
                               </span>
                               <span 
-                                className="text-[clamp(6rem,15vw,12rem)] leading-[0.8] font-black tracking-tighter" 
+                                className="text-[clamp(8rem,18vw,15rem)] leading-[0.75] font-black tracking-tighter" 
                                 style={{ 
                                   fontFamily: 'Bebas Neue, sans-serif',
-                                  color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#000000'
+                                  color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#333333',
+                                  textShadow: isDefaultImage(product.visual?.imagem_url) 
+                                    ? `0 0 40px ${product.visual?.cor_assinatura_produto || '#F36C21'}40`
+                                    : 'none'
                                 }}
                               >
                                 {formatPrice(mainFinalPrice).replace('R$', '').trim()}
@@ -1338,19 +1314,13 @@ export default function PlayerConsulta() {
                                 return (
                                   <div 
                                     key={`pack-${idx}`}
-                                    className="p-6 rounded-[30px] border backdrop-blur-md relative overflow-hidden group"
+                                    className="p-8 rounded-[36px] border backdrop-blur-xl relative overflow-hidden group min-h-[140px] flex flex-col justify-center"
                                     style={{
-                                      backgroundColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-                                      borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                                      backgroundColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                                      borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
                                     }}
                                   >
-                                    <div className="flex justify-between items-start mb-3">
-                                      <span 
-                                        className="text-sm font-black tracking-widest uppercase"
-                                        style={{ color: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' }}
-                                      >
-                                        {label}
-                                      </span>
+                                    <div className="flex justify-end items-start mb-3">
                                       {economyPercent > 0 && (
                                         <span 
                                           className="text-white text-[10px] font-black px-3 py-1 rounded-full"
@@ -1362,36 +1332,19 @@ export default function PlayerConsulta() {
                                     </div>
                                     <div className="flex items-baseline gap-2">
                                       <span 
-                                        className="text-xl font-black"
+                                        className="text-2xl font-black"
                                         style={{ color: product.visual?.cor_assinatura_produto || '#F36C21' }}
                                       >
                                         R$
                                       </span>
                                       <span 
-                                        className="text-4xl md:text-5xl font-black" 
+                                        className="text-6xl md:text-7xl font-black tracking-tighter"
                                         style={{ 
                                           fontFamily: 'Bebas Neue, sans-serif',
-                                          color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#000000'
+                                          color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#333333'
                                         }}
                                       >
                                         {formatPrice(finalPrice).replace('R$', '').trim()}
-                                      </span>
-                                    </div>
-                                    <div 
-                                      className="mt-3 pt-3 border-t flex justify-between items-center"
-                                      style={{ borderTopColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}
-                                    >
-                                      <span 
-                                        className="text-xs font-bold uppercase tracking-tighter"
-                                        style={{ color: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' }}
-                                      >
-                                        Unitário:
-                                      </span>
-                                      <span 
-                                        className="text-lg font-black"
-                                        style={{ color: product.visual?.cor_assinatura_produto || '#F36C21' }}
-                                      >
-                                        {formatPrice(currentUnitPrice)}
                                       </span>
                                     </div>
                                   </div>
