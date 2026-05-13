@@ -1118,7 +1118,7 @@ export default function PlayerConsulta() {
 
 
                 <div className={cn(
-                  "flex flex-col justify-between text-white",
+                  "flex flex-col justify-between text-slate-900",
                   isVertical ? "h-3/5 w-full" : "w-1/2 h-full order-1"
                 )}>
                   <div className="space-y-6">
