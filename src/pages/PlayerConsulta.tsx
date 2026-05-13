@@ -1026,7 +1026,7 @@ export default function PlayerConsulta() {
                   {deviceInfo?.apelido_interno || "Ponto de Consulta"}
                 </div>
                 <div className="text-[11px] uppercase tracking-[0.2em] opacity-60 font-mono font-bold">
-                  {deviceInfo ? `Filial ${deviceInfo.num_filial}` : `Offline · ${deviceCode}`}
+                  {deviceInfo ? `Filial ${deviceInfo.num_filial}` : deviceInfo?.serial || deviceCode}
                 </div>
               </div>
             </div>
@@ -1105,12 +1105,6 @@ export default function PlayerConsulta() {
         </div>
       </div>
 
-      {/* Serial Info (Discreet) */}
-      {(appearance.show_serial !== false && !isPreview && !showOverlay) && (
-        <div className="absolute bottom-4 right-4 z-40 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 font-mono text-[10px] text-white/40 tracking-[0.2em] select-none pointer-events-none uppercase">
-          Device ID: {deviceInfo?.serial || deviceCode}
-        </div>
-      )}
 
 
       <AnimatePresence>
