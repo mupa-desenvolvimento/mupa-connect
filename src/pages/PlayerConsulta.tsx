@@ -286,7 +286,18 @@ export default function PlayerConsulta() {
   useEffect(() => {
     const handleResize = () => setIsVertical(window.innerHeight > window.innerWidth);
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    
+    // Forçar foco no input continuamente para leitores que dependem de foco
+    const focusInterval = setInterval(() => {
+      if (inputRef.current && document.activeElement !== inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 1000);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearInterval(focusInterval);
+    };
   }, []);
 
   // 1. CARREGAMENTO DO PLAYER
