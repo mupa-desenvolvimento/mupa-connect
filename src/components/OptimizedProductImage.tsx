@@ -11,6 +11,7 @@ interface OptimizedProductImageProps {
   alt: string;
   className?: string;
   isDefaultImage?: boolean;
+  onResolvedSrc?: (url: string | null) => void;
 }
 
 export const OptimizedProductImage = ({
@@ -19,7 +20,8 @@ export const OptimizedProductImage = ({
   ean,
   alt,
   className,
-  isDefaultImage = false
+  isDefaultImage = false,
+  onResolvedSrc,
 }: OptimizedProductImageProps) => {
   const [currentSrc, setCurrentSrc] = useState<string | null>(null);
   const [hardError, setHardError] = useState(false);
@@ -117,6 +119,10 @@ export const OptimizedProductImage = ({
       }
     };
   }, [src, ean, isDefaultImage, fallbacks.join("|")]);
+
+  useEffect(() => {
+    onResolvedSrc?.(currentSrc);
+  }, [currentSrc, onResolvedSrc]);
 
   return (
     <div className={`relative w-full h-full flex items-center justify-center ${className}`}>

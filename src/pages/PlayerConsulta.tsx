@@ -669,6 +669,22 @@ export default function PlayerConsulta() {
     };
   };
 
+  const handleResolvedProductImage = useCallback((resolvedUrl: string | null) => {
+    if (!resolvedUrl) return;
+    if (isDefaultImage(resolvedUrl)) return;
+    setProduct((prev) => {
+      if (!prev?.visual) return prev;
+      if (prev.visual.imagem_url === resolvedUrl) return prev;
+      return {
+        ...prev,
+        visual: {
+          ...prev.visual,
+          imagem_url: resolvedUrl,
+        },
+      };
+    });
+  }, []);
+
   const handleConsult = useCallback(async (ean: string) => {
     const cleanEan = ean.trim();
     if (!cleanEan || cleanEan.length < 3) return;
@@ -1318,6 +1334,7 @@ export default function PlayerConsulta() {
                       ean={product.ean}
                       alt={product.description}
                       isDefaultImage={isDefaultImage(product.visual?.imagem_url)}
+                      onResolvedSrc={handleResolvedProductImage}
                     />
                   </div>
                 </motion.div>
@@ -1466,26 +1483,24 @@ export default function PlayerConsulta() {
 
                           {/* DEMAIS PREÇOS */}
                           {normalizedPrices.length > 1 && (
-                            <div className="grid grid-cols-1 gap-3">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                               {normalizedPrices
                                 .filter((p) => p.units !== unitPack.units)
                                 .slice(0, 3)
                                 .map((p) => (
                                   <div
                                     key={`price-${p.units}`}
-                                    className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4"
+                                    className="rounded-2xl border border-white/10 bg-white/5 p-4 aspect-square flex flex-col justify-between"
                                   >
-                                    <div className="flex items-center justify-between gap-4">
-                                      <div className="text-white/80 text-sm md:text-base font-black uppercase tracking-wide">
-                                        PACK {p.units} UN
+                                    <div className="text-white/80 text-xs md:text-sm font-black uppercase tracking-wide text-center">
+                                      PACK {p.units} UN
+                                    </div>
+                                    <div className="text-center">
+                                      <div className="text-white text-lg md:text-xl font-black leading-tight">
+                                        {formatPrice(p.total)}
                                       </div>
-                                      <div className="text-right">
-                                        <div className="text-white text-xl md:text-2xl font-black">
-                                          {formatPrice(p.total)}
-                                        </div>
-                                        <div className="text-white/60 text-xs md:text-sm font-bold">
-                                          {formatPrice(p.unitPrice)}/un
-                                        </div>
+                                      <div className="mt-1 text-white/60 text-[11px] md:text-xs font-bold">
+                                        {formatPrice(p.unitPrice)}/un
                                       </div>
                                     </div>
                                   </div>
