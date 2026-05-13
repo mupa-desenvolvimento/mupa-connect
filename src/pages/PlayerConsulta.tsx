@@ -1236,22 +1236,31 @@ export default function PlayerConsulta() {
                       initial={{ y: 30, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.4 }}
-                      className="rounded-[32px] p-10 shadow-2xl relative overflow-hidden"
+                      className="rounded-[40px] p-10 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.3)] relative overflow-hidden border border-white/20"
                       style={{ 
-                        backgroundColor: product.visual?.cor_assinatura_produto || '#F36C21',
+                        background: isDefaultImage(product.visual?.imagem_url)
+                          ? (product.visual?.cor_assinatura_produto || '#F36C21')
+                          : `linear-gradient(135deg, ${product.visual?.cor_assinatura_produto || '#F36C21'} 0%, ${product.visual?.cor_dominante_claro || '#F36C21'} 100%)`,
                         color: getContrastColor(product.visual?.cor_assinatura_produto || '#F36C21')
                       }}
                     >
+                      {/* Efeito de brilho no card */}
+                      <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
+                      
                       <div className="relative z-10 space-y-2">
                         <h1 className="text-[clamp(2.5rem,6vw,5.5rem)] font-black leading-tight uppercase tracking-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
                           {getProductNameParts(product.description).main}
                         </h1>
-                        <p className="text-[clamp(1.2rem,3vw,2.2rem)] font-medium leading-none opacity-80" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+                        <p className="text-[clamp(1.2rem,3vw,2.2rem)] font-medium leading-none opacity-90" style={{ fontFamily: 'Satoshi, sans-serif' }}>
                           {getProductNameParts(product.description).rest}
                         </p>
                       </div>
-                      {/* Detalhe visual no fundo */}
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-[100px] pointer-events-none" />
+
+                      {/* Glow dinâmico interno */}
+                      <div 
+                        className="absolute -right-10 -top-10 w-40 h-40 blur-3xl opacity-30 rounded-full"
+                        style={{ backgroundColor: 'white' }}
+                      />
                     </motion.div>
                   </div>
 
