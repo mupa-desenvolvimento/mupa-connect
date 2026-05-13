@@ -1119,14 +1119,40 @@ export default function PlayerConsulta() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-10 lg:p-16"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-10 lg:p-16 overflow-hidden"
             style={{ 
               backgroundColor: isDefaultImage(product?.visual?.imagem_url)
                 ? (product?.visual?.fundo_legibilidade ? `${product.visual.fundo_legibilidade}F8` : 'rgba(0,51,153,0.98)')
-                : (product?.visual?.fundo_legibilidade || 'rgba(255, 255, 255, 0.98)'),
-              backdropFilter: 'blur(30px)'
+                : (product?.visual?.cor_dominante_escuro || '#FFFFFF'),
             }}
           >
+            {/* Fundo Dinâmico Premium com Gradientes e Glow */}
+            {!isDefaultImage(product?.visual?.imagem_url) && product?.visual && (
+              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                {/* Gradiente de Base */}
+                <div 
+                  className="absolute inset-0 opacity-40"
+                  style={{ 
+                    background: `radial-gradient(circle at 50% 50%, ${product.visual.cor_dominante_claro}20 0%, ${product.visual.cor_dominante_escuro} 100%)` 
+                  }}
+                />
+                
+                {/* Glows Dinâmicos */}
+                <div 
+                  className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full blur-[120px] opacity-20 animate-pulse"
+                  style={{ backgroundColor: product.visual.cor_assinatura_produto }}
+                />
+                <div 
+                  className="absolute -bottom-[20%] -right-[10%] w-[60%] h-[60%] rounded-full blur-[120px] opacity-20 animate-pulse"
+                  style={{ backgroundColor: product.visual.cor_dominante_claro }}
+                  transition-duration="5s"
+                />
+
+                {/* Camada de profundidade */}
+                <div className="absolute inset-0 bg-black/10 backdrop-blur-[40px]" />
+              </div>
+            )}
+
             {isConsulting ? (
               <div className="flex flex-col items-center gap-8 text-white">
                 <div className="relative">
@@ -1165,25 +1191,38 @@ export default function PlayerConsulta() {
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.1, duration: 0.5 }}
                   className={cn(
-                    "relative flex items-center justify-center rounded-[48px] shadow-2xl overflow-hidden border border-white/10 group",
-                    isVertical ? "h-[42%] w-full" : "w-[42%] h-full"
+                    "relative flex items-center justify-center rounded-[64px] group overflow-visible",
+                    isVertical ? "h-[40%] w-full" : "w-[40%] h-full"
                   )}
-                  style={{ 
-                    background: isDefaultImage(product.visual?.imagem_url)
-                      ? `linear-gradient(135deg, ${product.visual?.cor_dominante_escuro || '#003399'} 0%, ${product.visual?.cor_dominante_claro || '#001f5c'} 100%)`
-                      : '#FFFFFF',
-                  }}
                 >
-                  {/* Glow de fundo */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent pointer-events-none" />
-                  
-                  <OptimizedProductImage 
-                    src={product.visual?.imagem_url || (product.ean ? MUPA_STATIC_IMAGE(product.ean) : DEFAULT_PRODUCT_IMAGE)}
-                    fallback={fallbackImageUrl || DEFAULT_PRODUCT_IMAGE}
-                    ean={product.ean}
-                    alt={product.description}
-                    isDefaultImage={isDefaultImage(product.visual?.imagem_url)}
-                  />
+                  {/* Container da Imagem com Visual Enterprise */}
+                  <div 
+                    className="relative w-full h-full flex items-center justify-center rounded-[64px] border border-white/10 overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)]"
+                    style={{ 
+                      background: isDefaultImage(product.visual?.imagem_url)
+                        ? `linear-gradient(135deg, ${product.visual?.cor_dominante_escuro || '#003399'} 0%, ${product.visual?.cor_dominante_claro || '#001f5c'} 100%)`
+                        : `linear-gradient(145deg, #FFFFFF 0%, ${product.visual?.cor_dominante_claro || '#F8F9FA'} 100%)`,
+                    }}
+                  >
+                    {/* Glow interno leve */}
+                    <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent pointer-events-none" />
+                    
+                    <OptimizedProductImage 
+                      src={product.visual?.imagem_url || (product.ean ? MUPA_STATIC_IMAGE(product.ean) : DEFAULT_PRODUCT_IMAGE)}
+                      fallback={fallbackImageUrl || DEFAULT_PRODUCT_IMAGE}
+                      ean={product.ean}
+                      alt={product.description}
+                      isDefaultImage={isDefaultImage(product.visual?.imagem_url)}
+                    />
+                  </div>
+
+                  {/* Sombra de profundidade externa */}
+                  {!isDefaultImage(product.visual?.imagem_url) && (
+                    <div 
+                      className="absolute -inset-4 blur-3xl opacity-20 -z-10 rounded-full"
+                      style={{ backgroundColor: product.visual?.cor_dominante_escuro }}
+                    />
+                  )}
                 </motion.div>
 
                 {/* CONTEÚDO DO PRODUTO */}
@@ -1197,22 +1236,31 @@ export default function PlayerConsulta() {
                       initial={{ y: 30, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.4 }}
-                      className="rounded-[32px] p-10 shadow-2xl relative overflow-hidden"
+                      className="rounded-[40px] p-10 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.3)] relative overflow-hidden border border-white/20"
                       style={{ 
-                        backgroundColor: product.visual?.cor_assinatura_produto || '#F36C21',
+                        background: isDefaultImage(product.visual?.imagem_url)
+                          ? (product.visual?.cor_assinatura_produto || '#F36C21')
+                          : `linear-gradient(135deg, ${product.visual?.cor_assinatura_produto || '#F36C21'} 0%, ${product.visual?.cor_dominante_claro || '#F36C21'} 100%)`,
                         color: getContrastColor(product.visual?.cor_assinatura_produto || '#F36C21')
                       }}
                     >
+                      {/* Efeito de brilho no card */}
+                      <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
+                      
                       <div className="relative z-10 space-y-2">
                         <h1 className="text-[clamp(2.5rem,6vw,5.5rem)] font-black leading-tight uppercase tracking-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
                           {getProductNameParts(product.description).main}
                         </h1>
-                        <p className="text-[clamp(1.2rem,3vw,2.2rem)] font-medium leading-none opacity-80" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+                        <p className="text-[clamp(1.2rem,3vw,2.2rem)] font-medium leading-none opacity-90" style={{ fontFamily: 'Satoshi, sans-serif' }}>
                           {getProductNameParts(product.description).rest}
                         </p>
                       </div>
-                      {/* Detalhe visual no fundo */}
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-[100px] pointer-events-none" />
+
+                      {/* Glow dinâmico interno */}
+                      <div 
+                        className="absolute -right-10 -top-10 w-40 h-40 blur-3xl opacity-30 rounded-full"
+                        style={{ backgroundColor: 'white' }}
+                      />
                     </motion.div>
                   </div>
 
@@ -1242,55 +1290,65 @@ export default function PlayerConsulta() {
                           {/* Container Preço Principal */}
                           <motion.div 
                             animate={{ 
-                              boxShadow: isDefaultImage(product.visual?.imagem_url)
-                                ? [
-                                    "0 20px 50px rgba(0,0,0,0.3)",
-                                    "0 20px 70px rgba(243,108,33,0.3)",
-                                    "0 20px 50px rgba(0,0,0,0.3)"
-                                  ]
-                                : [
-                                    "0 20px 50px rgba(0,0,0,0.1)",
-                                    "0 20px 70px rgba(0,0,0,0.15)",
-                                    "0 20px 50px rgba(0,0,0,0.1)"
-                                  ]
+                              boxShadow: [
+                                "0 32px 64px -16px rgba(0,0,0,0.4)",
+                                `0 32px 80px -16px ${(product.visual?.cor_assinatura_produto || '#F36C21')}40`,
+                                "0 32px 64px -16px rgba(0,0,0,0.4)"
+                              ]
                             }}
                             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                            className="p-12 md:p-16 rounded-[48px] relative overflow-hidden border backdrop-blur-3xl flex flex-col items-center justify-center min-h-[280px] w-full"
+                            className="p-10 md:p-14 rounded-[56px] relative overflow-hidden border border-white/10 flex flex-col items-center justify-center min-h-[300px] w-full"
                             style={{ 
                               background: isDefaultImage(product.visual?.imagem_url)
-                                ? 'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.02) 100%)'
-                                : 'linear-gradient(180deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.05) 100%)',
-                              borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
+                                ? 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 100%)'
+                                : `linear-gradient(180deg, ${product.visual?.cor_dominante_claro || '#FFFFFF'} 0%, ${product.visual?.cor_dominante_claro}EE 100%)`,
+                              backdropFilter: 'blur(40px)',
                             }}
                           >
+                            {/* Glow de fundo no card de preço */}
+                            <div 
+                              className="absolute inset-0 opacity-10 pointer-events-none"
+                              style={{ 
+                                background: `radial-gradient(circle at center, ${product.visual?.cor_assinatura_produto || '#F36C21'} 0%, transparent 70%)` 
+                              }}
+                            />
                             
-                            <div className="flex items-start gap-3 md:gap-5">
+                            <div className="relative z-10 flex flex-col items-center">
                               <span 
-                                className="text-4xl md:text-6xl font-black mt-4 md:mt-6"
-                                style={{ color: product.visual?.cor_assinatura_produto || '#F36C21' }}
+                                className="text-[1.2rem] font-black uppercase tracking-[0.4em] mb-4 opacity-60"
+                                style={{ color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#333333' }}
                               >
-                                R$
+                                PREÇO EXCLUSIVO
                               </span>
-                              <span 
-                                className="text-[clamp(8rem,18vw,15rem)] leading-[0.75] font-black tracking-tighter" 
-                                style={{ 
-                                  fontFamily: 'Bebas Neue, sans-serif',
-                                  color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#333333',
-                                  textShadow: isDefaultImage(product.visual?.imagem_url) 
-                                    ? `0 0 40px ${product.visual?.cor_assinatura_produto || '#F36C21'}40`
-                                    : 'none'
-                                }}
-                              >
-                                {formatPrice(mainFinalPrice).replace('R$', '').trim()}
-                              </span>
+
+                              <div className="flex items-start gap-3 md:gap-5">
+                                <span 
+                                  className="text-4xl md:text-6xl font-black mt-4 md:mt-8"
+                                  style={{ color: product.visual?.cor_assinatura_produto || '#F36C21' }}
+                                >
+                                  R$
+                                </span>
+                                <span 
+                                  className="text-[clamp(9rem,20vw,17rem)] leading-[0.7] font-black tracking-tighter" 
+                                  style={{ 
+                                    fontFamily: 'Bebas Neue, sans-serif',
+                                    color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#333333',
+                                    filter: isDefaultImage(product.visual?.imagem_url) 
+                                      ? `drop-shadow(0 0 30px ${product.visual?.cor_assinatura_produto || '#F36C21'}60)`
+                                      : 'none'
+                                  }}
+                                >
+                                  {formatPrice(mainFinalPrice).replace('R$', '').trim()}
+                                </span>
+                              </div>
                             </div>
                             
-                            {/* Glow lateral */}
+                            {/* Barra de destaque inferior */}
                             <div 
-                              className="absolute left-0 top-0 bottom-0 w-2 shadow-[0_0_30px]" 
+                              className="absolute bottom-0 left-0 right-0 h-3" 
                               style={{ 
-                                backgroundColor: product.visual?.cor_assinatura_produto || '#F36C21',
-                                boxShadow: `0 0 30px ${product.visual?.cor_assinatura_produto || '#F36C21'}`
+                                background: `linear-gradient(90deg, transparent, ${product.visual?.cor_assinatura_produto || '#F36C21'}, transparent)`,
+                                boxShadow: `0 0 20px ${product.visual?.cor_assinatura_produto || '#F36C21'}`
                               }} 
                             />
                           </motion.div>
@@ -1314,12 +1372,20 @@ export default function PlayerConsulta() {
                                 return (
                                   <div 
                                     key={`pack-${idx}`}
-                                    className="p-8 rounded-[36px] border backdrop-blur-xl relative overflow-hidden group min-h-[140px] flex flex-col justify-center"
+                                    className="p-8 rounded-[48px] border backdrop-blur-3xl relative overflow-hidden group min-h-[160px] flex flex-col justify-center transition-all hover:scale-[1.02]"
                                     style={{
-                                      backgroundColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                                      borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
+                                      background: isDefaultImage(product.visual?.imagem_url) 
+                                        ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)' 
+                                        : `linear-gradient(135deg, ${product.visual?.cor_dominante_claro || '#FFFFFF'} 0%, #F8F9FA 100%)`,
+                                      borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)',
                                     }}
                                   >
+                                    {/* Destaque sutil lateral */}
+                                    <div 
+                                      className="absolute left-0 top-0 bottom-0 w-2 opacity-50"
+                                      style={{ backgroundColor: product.visual?.cor_assinatura_produto }}
+                                    />
+
                                     <div className="flex justify-end items-start mb-3">
                                       {economyPercent > 0 && (
                                         <span 
