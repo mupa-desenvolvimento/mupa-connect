@@ -1,4 +1,4 @@
-import Vibrant from 'node-vibrant';
+import { Vibrant } from 'node-vibrant/browser';
 
 export interface ExtractedColors {
   cor_assinatura_produto: string;
