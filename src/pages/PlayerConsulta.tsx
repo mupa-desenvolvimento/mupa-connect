@@ -12,6 +12,7 @@ import { OptimizedProductImage } from "@/components/OptimizedProductImage";
 import { Input } from "@/components/ui/input";
 import * as faceapi from "face-api.js";
 import { useKioskMode } from "@/hooks/useKioskMode";
+import { useDeviceCommandChannel } from "@/hooks/useDeviceCommandChannel";
 import { PWAInstallModal } from "@/components/PWAInstallModal";
 import { DevShowcaseOverlay } from "@/components/DevShowcaseOverlay";
 import { DevicePersistenceService } from "@/services/DevicePersistenceService";
@@ -123,6 +124,7 @@ export default function PlayerConsulta() {
 
   const [manifest, setManifest] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [deviceUuid, setDeviceUuid] = useState<string | undefined>();
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -335,6 +337,9 @@ export default function PlayerConsulta() {
           if (result && result.manifest) {
             setManifest(result.manifest);
             setDeviceInfo(result.device);
+            if (result.device?.id) {
+              setDeviceUuid(result.device.id.toString());
+            }
             DevicePersistenceService.saveDeviceConfig(result.device);
             setIsLoading(false);
           } else {
@@ -355,6 +360,45 @@ export default function PlayerConsulta() {
   }, [deviceCode, isPreview, previewPlaylistId]);
 
   const activePlaylist = useMemo(() => ScheduleResolver.getActivePlaylist(manifest), [manifest]);
+
+  // CANAL DE COMANDOS REMOTOS
+  const { lastCommand } = useDeviceCommandChannel(isPreview ? undefined : deviceUuid, {
+    reloadPlaylist: async () => {
+      if (deviceCode) {
+        const result = await ManifestService.fetchManifest(deviceCode);
+        if (result && result.manifest) {
+          setManifest(result.manifest);
+          setDeviceInfo(result.device);
+        }
+      }
+    },
+    clearCache: async () => {
+      console.log("[PlayerConsulta] Comando clear_cache recebido");
+      // Limpa caches do browser (Service Worker / Assets)
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(key => caches.delete(key)));
+      }
+      // Limpa estado local do produto
+      setProduct(null);
+      setLastConsultedEan(null);
+      setShowOverlay(false);
+    },
+    resetApp: async () => {
+      console.log("[PlayerConsulta] Comando reset_app recebido");
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(key => caches.delete(key)));
+      }
+      window.location.reload();
+    },
+    reboot: () => window.location.reload(),
+    setVolume: (v) => console.log("Volume set to:", v),
+    screenshot: () => Promise.resolve(""),
+    tenantId: deviceInfo?.tenant_id,
+    companyId: deviceInfo?.company_id,
+    serial: deviceInfo?.serial || deviceCode,
+  });
 
   // Face Detection with Face-API
   useEffect(() => {
