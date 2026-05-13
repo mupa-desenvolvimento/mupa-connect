@@ -1257,12 +1257,6 @@ export default function PlayerConsulta() {
                               borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
                             }}
                           >
-                            <span 
-                              className="text-xl md:text-2xl font-black uppercase tracking-[0.4em] mb-4"
-                              style={{ color: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)' }}
-                            >
-                              {mainPriceItem.unit_pack === 1 ? 'VALOR UNITÁRIO' : `PACK COM ${mainPriceItem.unit_pack}`}
-                            </span>
                             
                             <div className="flex items-start gap-4">
                               <span 
