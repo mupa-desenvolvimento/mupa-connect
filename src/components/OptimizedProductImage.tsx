@@ -104,7 +104,21 @@ export const OptimizedProductImage = ({
       img.onerror = () => {
         clearTimeout(timeoutId);
         if (loadingRef.current !== src) return;
+        
         console.error("[ImageLoader] Error loading image:", src);
+        
+        // Simple retry once after 2 seconds
+        if (!loadingRef.current?.includes('retry=true')) {
+          console.log("[ImageLoader] Retrying in 2s...");
+          setTimeout(() => {
+            if (loadingRef.current === src) {
+              loadingRef.current = src + (src.includes('?') ? '&' : '?') + 'retry=true';
+              img.src = src; // This will trigger onload/onerror again
+            }
+          }, 2000);
+          return;
+        }
+
         setError(true);
         setCurrentSrc(fallback);
         setIsLoaded(true);
