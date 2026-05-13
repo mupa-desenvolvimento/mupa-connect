@@ -1213,6 +1213,7 @@ export default function PlayerConsulta() {
                       ean={product.ean}
                       alt={product.description}
                       isDefaultImage={isDefaultImage(product.visual?.imagem_url)}
+                      style={{ filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.2))" }}
                     />
                   </div>
 
