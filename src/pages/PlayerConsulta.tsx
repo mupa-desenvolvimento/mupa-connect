@@ -374,12 +374,10 @@ export default function PlayerConsulta() {
     },
     clearCache: async () => {
       console.log("[PlayerConsulta] Comando clear_cache recebido");
-      // Limpa caches do browser (Service Worker / Assets)
       if ('caches' in window) {
         const keys = await caches.keys();
         await Promise.all(keys.map(key => caches.delete(key)));
       }
-      // Limpa estado local do produto
       setProduct(null);
       setLastConsultedEan(null);
       setShowOverlay(false);
@@ -393,6 +391,7 @@ export default function PlayerConsulta() {
       window.location.reload();
     },
     reboot: () => window.location.reload(),
+    playCampaign: (id) => console.log("Play campaign command received:", id),
     setVolume: (v) => console.log("Volume set to:", v),
     screenshot: () => Promise.resolve(""),
     tenantId: deviceInfo?.tenant_id,
