@@ -44,45 +44,65 @@ export const OptimizedProductImage = ({
 
       // 1. Try Cache
       if (ean) {
-        const cached = await ImageCacheService.get(ean);
-        if (cached && loadingRef.current === src) {
-          setCurrentSrc(cached);
-          setIsLoaded(true);
-          setShowFallback(false);
-          return;
+        try {
+          const cached = await ImageCacheService.get(ean);
+          if (cached && loadingRef.current === src) {
+            console.log(`[ImageLoader] Cache hit for EAN: ${ean}`);
+            setCurrentSrc(cached);
+            setIsLoaded(true);
+            setShowFallback(false);
+            return;
+          }
+        } catch (e) {
+          console.warn("[ImageLoader] Cache error:", e);
         }
       }
 
       // 2. Fetch in background
+      console.log(`[ImageLoader] Cache miss, loading in background: ${src}`);
       const img = new Image();
       img.src = src;
       
+      const timeoutId = setTimeout(() => {
+        if (loadingRef.current === src && !isLoaded) {
+          console.warn("[ImageLoader] Loading timeout, using fallback");
+          setError(true);
+          setCurrentSrc(fallback);
+          setIsLoaded(true);
+          setShowFallback(false);
+        }
+      }, 5000); // 5s timeout
+
       img.onload = async () => {
+        clearTimeout(timeoutId);
         if (loadingRef.current !== src) return;
 
         // Save to cache as Base64 if possible
         if (ean) {
           try {
-            const response = await fetch(src);
-            const blob = await response.blob();
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              const base64data = reader.result as string;
-              ImageCacheService.set(ean, base64data);
-            };
-            reader.readAsDataURL(blob);
+            const response = await fetch(src, { mode: 'cors' });
+            if (response.ok) {
+              const blob = await response.blob();
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                if (typeof reader.result === 'string') {
+                  ImageCacheService.set(ean, reader.result);
+                }
+              };
+              reader.readAsDataURL(blob);
+            }
           } catch (e) {
-            console.warn("[ImageLoader] Could not cache image:", e);
+            console.warn("[ImageLoader] Could not cache image (CORS or Network):", e);
           }
         }
 
         setCurrentSrc(src);
         setIsLoaded(true);
-        // Delay hiding fallback for a smoother transition
         setTimeout(() => setShowFallback(false), 300);
       };
 
       img.onerror = () => {
+        clearTimeout(timeoutId);
         if (loadingRef.current !== src) return;
         console.error("[ImageLoader] Error loading image:", src);
         setError(true);
