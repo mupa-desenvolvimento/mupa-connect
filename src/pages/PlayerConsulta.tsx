@@ -1484,6 +1484,17 @@ export default function PlayerConsulta() {
               onFocus={(e) => {
                 if (avoidIme) e.currentTarget.blur();
               }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const code = e.currentTarget.value.trim();
+                  if (code) {
+                    console.log("[Input] Enter detectado via teclado. Valor:", code);
+                    e.currentTarget.value = "";
+                    scanBufferRef.current = "";
+                    handleConsult(code);
+                  }
+                }
+              }}
             />
           </div>
         </div>
