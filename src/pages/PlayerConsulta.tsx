@@ -1329,16 +1329,16 @@ export default function PlayerConsulta() {
                                     </div>
                                     <div className="flex items-baseline gap-2">
                                       <span 
-                                        className="text-xl font-black"
+                                        className="text-2xl font-black"
                                         style={{ color: product.visual?.cor_assinatura_produto || '#F36C21' }}
                                       >
                                         R$
                                       </span>
                                       <span 
-                                        className="text-4xl md:text-5xl font-black" 
+                                        className="text-6xl md:text-7xl font-black tracking-tighter"
                                         style={{ 
                                           fontFamily: 'Bebas Neue, sans-serif',
-                                          color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#000000'
+                                          color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#333333'
                                         }}
                                       >
                                         {formatPrice(finalPrice).replace('R$', '').trim()}
