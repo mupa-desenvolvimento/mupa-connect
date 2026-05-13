@@ -1143,6 +1143,9 @@ export default function PlayerConsulta() {
                     <div className="space-y-2">
                       <h1 className="text-[clamp(2.5rem,8vw,6rem)] font-black leading-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
                         {getProductNameParts(product.description).main}
+                        {(!product.visual?.imagem_url || product.visual.imagem_url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png')) && (
+                          <span className="text-[#F36C21]">.</span>
+                        )}
                       </h1>
                       <p className={cn(
                         "text-[clamp(1.2rem,4vw,2.5rem)] font-bold leading-tight",
