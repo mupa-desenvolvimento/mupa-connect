@@ -1242,7 +1242,7 @@ export default function PlayerConsulta() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-10 lg:p-16 overflow-hidden"
+            className="fixed inset-0 z-50 flex items-center justify-center p-6 md:p-12 overflow-visible"
             style={{ 
               backgroundColor: isDefaultImage(product?.visual?.imagem_url)
                 ? (product?.visual?.fundo_legibilidade ? `${product.visual.fundo_legibilidade}F8` : 'rgba(0,51,153,0.98)')
