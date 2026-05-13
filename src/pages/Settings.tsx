@@ -127,8 +127,44 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle className="font-bold text-lg font-bold">Integrações</CardTitle>
               </CardHeader>
-              <CardContent className="text-xs text-muted-foreground font-medium italic">
-                Em breve. Configure integrações com sistemas externos aqui.
+              <CardContent className="space-y-6">
+                <div className="text-xs text-muted-foreground font-medium italic mb-4">
+                  Configure integrações com sistemas externos aqui.
+                </div>
+
+                {userRole === "admin" && (
+                  <div className="space-y-4 pt-4 border-t">
+                    <div className="space-y-2">
+                      <Label htmlFor="test-email" className="flex items-center gap-2">
+                        <Mail className="h-4 w-4" /> Enviar e-mail de teste (Resend)
+                      </Label>
+                      <CardDescription>
+                        Valide se a integração com o Resend está funcionando corretamente enviando um e-mail para qualquer endereço.
+                      </CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        id="test-email"
+                        placeholder="exemplo@email.com"
+                        value={testEmail}
+                        onChange={(e) => setTestEmail(e.target.value)}
+                        className="max-w-md"
+                      />
+                      <Button 
+                        onClick={handleSendTestEmail} 
+                        disabled={isSending}
+                        className="flex gap-2"
+                      >
+                        {isSending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
+                        Enviar
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
