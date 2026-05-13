@@ -628,36 +628,41 @@ export default function PlayerConsulta() {
     }
 
     console.log("[EAN] Iniciando consulta:", cleanEan);
-    setIsConsulting(true);
-    setShowOverlay(true);
-    setError(null);
-    setProduct(null);
-    setLastConsultedEan(cleanEan);
-
+    
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
 
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Tempo esgotado ao consultar produto.")), 15000)
-    );
-
-    try {
-      const cachedKey = `product_${cleanEan}`;
-      const cached = localStorage.getItem(cachedKey);
-      
-      if (cached) {
+    // Check cache BEFORE showing loader to make it truly instant for cached products
+    const cachedKey = `product_${cleanEan}`;
+    const cached = localStorage.getItem(cachedKey);
+    
+    if (cached) {
+      try {
         const parsed = JSON.parse(cached);
-        if (Date.now() - parsed.timestamp < 3600000 || !navigator.onLine) {
+        if (Date.now() - parsed.timestamp < 86400000 || !navigator.onLine) { // 24h cache or offline
           console.log("[Consulta] Usando cache para:", cleanEan);
           setProduct({
             ...parsed.data,
             is_cached: true,
             visual: buildVisual(cleanEan, parsed.data?.visual),
           });
+          setError(null);
+          setShowOverlay(true);
           setIsConsulting(false);
+          setLastConsultedEan(cleanEan);
           startHideTimer();
           return;
         }
+      } catch (e) {
+        console.warn("[Consulta] Erro ao ler cache:", e);
       }
+    }
+
+    // Not in cache or expired, show loader
+    setIsConsulting(true);
+    setShowOverlay(true);
+    setError(null);
+    setProduct(null);
+    setLastConsultedEan(cleanEan);
 
       const result: any = await Promise.race([
         supabase.functions.invoke('integra-assai', {
