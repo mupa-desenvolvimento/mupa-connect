@@ -24,29 +24,40 @@ serve(async (req) => {
       throw new Error("Email, password and name are required");
     }
 
-    // 1. Create User in Auth (Admin)
+    // 1. Try to find existing user or create new one
+    let user;
+    
+    // Simplificando: vamos tentar criar e se der erro de "already registered", buscar o usuário
     const { data: userData, error: createError } = await supabaseClient.auth.admin.createUser({
       email,
       password,
-      email_confirm: true, // Mark as confirmed to avoid standard email
+      email_confirm: true,
       user_metadata: { full_name: name },
     });
 
-    if (createError) throw createError;
+    if (createError) {
+      if (createError.message.includes("already been registered")) {
+        const { data: listData, error: listError } = await supabaseClient.auth.admin.listUsers();
+        user = listData?.users.find(u => u.email === email);
+        if (!user) throw new Error("User exists but could not be found");
+      } else {
+        throw createError;
+      }
+    } else {
+      user = userData.user;
 
-    const user = userData.user;
+      // 2. Create User Profile
+      const { error: profileError } = await supabaseClient
+        .from("user_profiles")
+        .insert({
+          id: user.id,
+          company_id: companyId,
+          tenant_id: tenantId,
+          role: role,
+        });
 
-    // 2. Create User Profile
-    const { error: profileError } = await supabaseClient
-      .from("user_profiles")
-      .insert({
-        id: user.id,
-        company_id: companyId,
-        tenant_id: tenantId,
-        role: role,
-      });
-
-    if (profileError) throw profileError;
+      if (profileError && !profileError.message.includes("duplicate key")) throw profileError;
+    }
 
     // Send Email via Resend
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
