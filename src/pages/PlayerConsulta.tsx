@@ -1298,9 +1298,7 @@ export default function PlayerConsulta() {
             )}
           </motion.div>
         )}
-      </motion.div>
-    )}
-  </AnimatePresence>
+      </AnimatePresence>
 
       {/* Input visível mas estilizado para integração com o layout */}
       <div className={cn(
