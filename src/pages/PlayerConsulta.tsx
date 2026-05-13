@@ -1566,13 +1566,26 @@ export default function PlayerConsulta() {
             <div className="p-3 text-primary/80">
               <Barcode className="w-5 h-5" />
             </div>
-            <Input 
-              ref={inputRef}
-              className="w-64 md:w-80 bg-transparent border-none text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0 text-lg font-mono tracking-widest font-bold"
-              placeholder="AGUARDANDO LEITURA..."
-              autoFocus
-              autoComplete="off"
-            />
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                const code = inputRef.current?.value.trim();
+                if (code) {
+                  console.log("[Scanner] Form Submit (Enter). Valor:", code);
+                  if (inputRef.current) inputRef.current.value = "";
+                  handleConsult(code);
+                }
+              }}
+            >
+              <Input 
+                ref={inputRef}
+                className="w-64 md:w-80 bg-transparent border-none text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0 text-lg font-mono tracking-widest font-bold"
+                placeholder="AGUARDANDO LEITURA..."
+                autoFocus
+                autoComplete="off"
+                inputMode="none"
+              />
+            </form>
           </div>
         </div>
       </div>
