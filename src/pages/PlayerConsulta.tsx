@@ -1495,7 +1495,7 @@ export default function PlayerConsulta() {
                                 return (
                                   <div 
                                     key={`pack-${idx}`}
-                                    className="p-8 rounded-[48px] border backdrop-blur-3xl relative overflow-hidden group min-h-[160px] flex flex-col justify-center transition-all hover:scale-[1.02]"
+                                    className="px-10 py-12 rounded-[48px] border backdrop-blur-3xl relative overflow-visible group min-h-[200px] flex flex-col justify-center transition-all hover:scale-[1.02]"
                                     style={{
                                       background: isDefaultImage(product.visual?.imagem_url) 
                                         ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)' 
