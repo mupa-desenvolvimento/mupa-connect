@@ -66,6 +66,10 @@ const DEFAULT_VISUAL_COLORS = {
   cor_dominante_escuro: "#003399"
 };
 
+const isDefaultImage = (url: string | null | undefined) => {
+  if (!url) return true;
+  return url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png');
+};
 
 const ensureSafeImageUrl = (url: string | null | undefined) => {
   if (!url) return null;
