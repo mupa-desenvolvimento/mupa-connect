@@ -1224,7 +1224,7 @@ export default function PlayerConsulta() {
                   transition={{ delay: 0.1, duration: 0.5 }}
                   className={cn(
                     "relative flex items-center justify-center rounded-[64px] group overflow-visible",
-                    isVertical ? "h-[40%] w-full" : "w-[40%] h-full"
+                    isVertical ? "h-[36%] w-full flex-shrink-0" : "w-[40%] h-full"
                   )}
                 >
                   {/* Container da Imagem com Visual Enterprise */}
