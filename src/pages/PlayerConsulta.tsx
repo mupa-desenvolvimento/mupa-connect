@@ -1242,7 +1242,7 @@ export default function PlayerConsulta() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-10 md:p-16 overflow-visible"
+            className="fixed inset-0 z-50 flex items-center justify-center p-8 md:p-16 overflow-y-auto overflow-x-hidden"
             style={{ 
               backgroundColor: isDefaultImage(product?.visual?.imagem_url)
                 ? (product?.visual?.fundo_legibilidade ? `${product.visual.fundo_legibilidade}F8` : 'rgba(0,51,153,0.98)')
@@ -1305,7 +1305,7 @@ export default function PlayerConsulta() {
               </motion.div>
             ) : product && (
               <div className={cn(
-                "w-full h-full flex gap-12 md:gap-20 overflow-visible",
+                "w-full h-fit flex gap-12 md:gap-20 overflow-visible py-8",
                 isVertical ? "flex-col" : "flex-row items-stretch"
               )}>
                 {/* CONTAINER DA IMAGEM */}
@@ -1315,7 +1315,7 @@ export default function PlayerConsulta() {
                   transition={{ delay: 0.1, duration: 0.5 }}
                   className={cn(
                     "relative flex items-center justify-center rounded-[64px] group overflow-visible",
-                    isVertical ? "flex-[0_0_auto] min-h-[35%] w-full" : "w-[40%] h-full"
+                    isVertical ? "flex-[0_0_auto] h-[30vh] md:h-[35vh] w-full" : "w-[40%] h-full"
                   )}
                 >
                   {/* Container da Imagem com Visual Enterprise */}
@@ -1351,7 +1351,7 @@ export default function PlayerConsulta() {
                 {/* CONTEÚDO DO PRODUTO */}
                 <div className={cn(
                   "flex flex-col justify-between py-10 md:py-14 overflow-visible",
-                  isVertical ? "flex-1 w-full min-h-0" : "w-[58%] h-full"
+                  isVertical ? "flex-[0_0_auto] w-full" : "w-[58%] h-full"
                 )}>
                   <div className="space-y-16">
                     {/* Descrição com Fundo de Destaque Dinâmico */}
@@ -1359,7 +1359,7 @@ export default function PlayerConsulta() {
                       initial={{ y: 30, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.4 }}
-                      className="rounded-[40px] px-14 py-20 md:py-28 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.3)] relative overflow-visible border border-white/20 min-h-[320px] flex flex-col justify-center"
+                      className="rounded-[40px] px-12 py-16 md:py-28 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.3)] relative overflow-visible border border-white/20 min-h-[220px] md:min-h-[320px] flex flex-col justify-center"
                       style={{ 
                         background: isDefaultImage(product.visual?.imagem_url)
                           ? (product.visual?.cor_assinatura_produto || '#F36C21')
@@ -1371,7 +1371,7 @@ export default function PlayerConsulta() {
                       <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
                       
                       <div className="relative z-10 space-y-6">
-                        <h1 className="text-[clamp(2.5rem,6vw,5.5rem)] font-black leading-[1.1] uppercase tracking-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+                        <h1 className="text-[clamp(2rem,6vw,5.5rem)] font-black leading-[1.1] uppercase tracking-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
                           {getProductNameParts(product.description).main}
                         </h1>
                         <p className="text-[clamp(1.2rem,3vw,2.2rem)] font-medium leading-relaxed opacity-90" style={{ fontFamily: 'Satoshi, sans-serif' }}>
@@ -1420,7 +1420,7 @@ export default function PlayerConsulta() {
                               ]
                             }}
                             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                            className="px-12 py-24 md:px-16 md:py-32 rounded-[56px] relative overflow-visible border border-white/10 flex flex-col items-center justify-center min-h-[520px] w-full"
+                            className="px-10 py-16 md:px-16 md:py-32 rounded-[56px] relative overflow-visible border border-white/10 flex flex-col items-center justify-center min-h-[380px] md:min-h-[520px] w-full"
                             style={{ 
                               background: isDefaultImage(product.visual?.imagem_url)
                                 ? 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 100%)'
@@ -1452,7 +1452,7 @@ export default function PlayerConsulta() {
                                   R$
                                 </span>
                                 <span 
-                                  className="text-[clamp(10rem,22vw,18rem)] leading-[0.85] font-black tracking-tighter py-8" 
+                                  className="text-[clamp(8rem,22vw,18rem)] leading-[0.85] font-black tracking-tighter py-6 md:py-8" 
                                   style={{ 
                                     fontFamily: 'Bebas Neue, sans-serif',
                                     color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : getContrastColor(product.visual?.cor_dominante_claro || '#FFFFFF'),
