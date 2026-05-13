@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { Resend } from "npm:resend";
+
+const RESEND_GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -59,17 +60,15 @@ serve(async (req) => {
       if (profileError && !profileError.message.includes("duplicate key")) throw profileError;
     }
 
-    // Send Email via Resend
-    const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-    
-    // IMPORTANTE: O domínio midias.mupa.app deve estar configurado no Resend
-    const fromEmail = "Mupa <contato@midias.mupa.app>"; 
+    // Send Email via Resend (through Lovable connector gateway)
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY is not configured");
 
-    const { data: emailData, error: emailError } = await resend.emails.send({
-      from: fromEmail,
-      to: [email],
-      subject: "Bem-vindo ao Mupa - Seus dados de acesso",
-      html: `
+    // TODO: trocar para "Mupa <contato@midias.mupa.app>" após verificar o domínio no Resend
+    const fromEmail = "Mupa <onboarding@resend.dev>";
+    const html = `
         <!DOCTYPE html>
         <html>
         <head>
@@ -100,12 +99,10 @@ serve(async (req) => {
             <div class="content">
               <h2>Olá, ${name}!</h2>
               <p>Seu perfil de acesso foi criado com sucesso. Agora você pode gerenciar suas mídias e dispositivos.</p>
-              
               <div class="credentials">
                 <div class="credential-item"><span class="credential-label">E-mail:</span> <strong>${email}</strong></div>
                 <div class="credential-item"><span class="credential-label">Senha:</span> <i>(A senha definida pelo administrador)</i></div>
               </div>
-
               <p>Clique no botão abaixo para acessar o painel:</p>
               <a href="${loginUrl || "https://midias.mupa.app/login"}" class="button">Acessar Painel</a>
             </div>
@@ -115,18 +112,34 @@ serve(async (req) => {
           </div>
         </body>
         </html>
-      `,
+      `;
+
+    const emailResp = await fetch(`${RESEND_GATEWAY_URL}/emails`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+        "X-Connection-Api-Key": RESEND_API_KEY,
+      },
+      body: JSON.stringify({
+        from: fromEmail,
+        to: [email],
+        subject: "Bem-vindo ao Mupa - Seus dados de acesso",
+        html,
+      }),
     });
 
-    if (emailError) {
-      console.error("Resend error:", emailError);
-      return new Response(JSON.stringify({ 
-        success: true, 
-        user, 
-        emailError: emailError.message || "Failed to send email",
-        emailDetails: emailError
+    const emailData = await emailResp.json();
+
+    if (!emailResp.ok) {
+      console.error("Resend gateway error:", emailResp.status, emailData);
+      return new Response(JSON.stringify({
+        success: true,
+        user,
+        emailError: emailData?.message || `Failed to send email (${emailResp.status})`,
+        emailDetails: emailData,
       }), {
-        status: 200, // Still return 200 because user was created
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
