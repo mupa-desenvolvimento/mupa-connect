@@ -66,6 +66,10 @@ const DEFAULT_VISUAL_COLORS = {
   cor_dominante_escuro: "#003399"
 };
 
+const isDefaultImage = (url: string | null | undefined) => {
+  if (!url) return true;
+  return url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png');
+};
 
 const ensureSafeImageUrl = (url: string | null | undefined) => {
   if (!url) return null;
@@ -1087,7 +1091,7 @@ export default function PlayerConsulta() {
                 <div className={cn(
                   "flex items-center justify-center rounded-3xl overflow-hidden shadow-sm relative border",
                   isVertical ? "h-2/5 w-full" : "w-1/2 h-full order-2",
-                  (!product.visual?.imagem_url || product.visual.imagem_url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png'))
+                  isDefaultImage(product.visual?.imagem_url)
                     ? "bg-[#003399] border-white/10"
                     : "bg-slate-100 border-slate-200"
                 )}>
@@ -1121,17 +1125,17 @@ export default function PlayerConsulta() {
                 <div className={cn(
                   "flex flex-col justify-between",
                   isVertical ? "h-3/5 w-full" : "w-1/2 h-full order-1",
-                  (!product.visual?.imagem_url || product.visual.imagem_url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png')) ? "text-white" : "text-slate-900"
+                  isDefaultImage(product.visual?.imagem_url) ? "text-white" : "text-slate-900"
                 )}>
                   <div className="space-y-6">
                     <div className={cn(
                       "inline-block px-4 py-1.5 md:px-6 md:py-2 rounded-full text-base md:text-xl font-bold border",
-                      (!product.visual?.imagem_url || product.visual.imagem_url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png')) 
+                      isDefaultImage(product.visual?.imagem_url) 
                         ? "bg-white/10 text-white border-white/20" 
                         : "bg-slate-200 text-slate-700 border-slate-300"
                     )}>
                       Código: <span className={cn(
-                        (!product.visual?.imagem_url || product.visual.imagem_url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png'))
+                        isDefaultImage(product.visual?.imagem_url)
                           ? "text-[#F36C21]"
                           : "text-inherit"
                       )}>{product.internal_id}</span>
@@ -1143,13 +1147,13 @@ export default function PlayerConsulta() {
                     <div className="space-y-2">
                       <h1 className="text-[clamp(2.5rem,8vw,6rem)] font-black leading-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
                         {getProductNameParts(product.description).main}
-                        {(!product.visual?.imagem_url || product.visual.imagem_url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png')) && (
+                        {isDefaultImage(product.visual?.imagem_url) && (
                           <span className="text-[#F36C21]">.</span>
                         )}
                       </h1>
                       <p className={cn(
                         "text-[clamp(1.2rem,4vw,2.5rem)] font-bold leading-tight",
-                        (!product.visual?.imagem_url || product.visual.imagem_url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png'))
+                        isDefaultImage(product.visual?.imagem_url)
                           ? "text-white/80"
                           : "text-slate-600"
                       )}>
@@ -1173,7 +1177,7 @@ export default function PlayerConsulta() {
                       
                       const promoPacks = validPrices.filter(p => p.unit_pack !== mainPriceItem.unit_pack);
                       
-                      const isDefaultImage = (!product.visual?.imagem_url || product.visual.imagem_url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png'));
+                      const hasDefaultImage = isDefaultImage(product.visual?.imagem_url);
 
                       return (
                         <>
@@ -1181,26 +1185,26 @@ export default function PlayerConsulta() {
                             className="p-6 md:p-8 rounded-[30px] shadow-xl relative overflow-hidden flex flex-col justify-center"
                             style={{ 
                               backgroundColor: '#fff',
-                              border: isDefaultImage ? '4px solid #F36C21' : `1px solid ${product.visual?.cor_dominante_claro || '#cbd5e1'}`,
+                              border: hasDefaultImage ? '4px solid #F36C21' : `1px solid ${product.visual?.cor_dominante_claro || '#cbd5e1'}`,
                               boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)'
                             }}
                           >
                             <span className={cn(
                               "text-sm md:text-xl font-black uppercase tracking-wider block mb-1",
-                              isDefaultImage ? "text-[#F36C21]" : "text-slate-600"
-                            )}>
-                              {mainPriceItem.unit_pack === 1 ? 'Unidade' : `Pack com ${mainPriceItem.unit_pack}`}
-                            </span>
-                            <div className="flex items-baseline gap-2">
-                              <span className={cn(
-                                "text-2xl md:text-4xl font-black",
-                                isDefaultImage ? "text-[#F36C21]" : "text-slate-500"
-                              )}>R$</span>
+                               hasDefaultImage ? "text-[#F36C21]" : "text-slate-600"
+                             )}>
+                               {mainPriceItem.unit_pack === 1 ? 'Unidade' : `Pack com ${mainPriceItem.unit_pack}`}
+                             </span>
+                             <div className="flex items-baseline gap-2">
+                               <span className={cn(
+                                 "text-2xl md:text-4xl font-black",
+                                 hasDefaultImage ? "text-[#F36C21]" : "text-slate-500"
+                               )}>R$</span>
                               <span className="text-[clamp(3.5rem,10vw,8rem)] leading-none font-black text-slate-900" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
                                 {formatPrice(mainPriceItem.price_prom_pack && mainPriceItem.price_prom_pack > 0 ? mainPriceItem.price_prom_pack : mainPriceItem.price_pack).replace('R$', '').trim()}
                               </span>
                             </div>
-                            {isDefaultImage && (
+                            {hasDefaultImage && (
                               <div className="absolute top-0 right-0 w-16 h-16 bg-[#F36C21]/10 rounded-bl-full flex items-start justify-end p-3">
                                 <Package className="w-5 h-5 text-[#F36C21]" />
                               </div>
