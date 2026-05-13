@@ -12,6 +12,7 @@ import { OptimizedProductImage } from "@/components/OptimizedProductImage";
 import { Input } from "@/components/ui/input";
 import * as faceapi from "face-api.js";
 import { useKioskMode } from "@/hooks/useKioskMode";
+import { useDeviceCommandChannel } from "@/hooks/useDeviceCommandChannel";
 import { PWAInstallModal } from "@/components/PWAInstallModal";
 import { DevShowcaseOverlay } from "@/components/DevShowcaseOverlay";
 import { DevicePersistenceService } from "@/services/DevicePersistenceService";
@@ -123,6 +124,7 @@ export default function PlayerConsulta() {
 
   const [manifest, setManifest] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [deviceUuid, setDeviceUuid] = useState<string | undefined>();
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -335,6 +337,9 @@ export default function PlayerConsulta() {
           if (result && result.manifest) {
             setManifest(result.manifest);
             setDeviceInfo(result.device);
+            if (result.device?.id) {
+              setDeviceUuid(result.device.id.toString());
+            }
             DevicePersistenceService.saveDeviceConfig(result.device);
             setIsLoading(false);
           } else {
@@ -355,6 +360,84 @@ export default function PlayerConsulta() {
   }, [deviceCode, isPreview, previewPlaylistId]);
 
   const activePlaylist = useMemo(() => ScheduleResolver.getActivePlaylist(manifest), [manifest]);
+
+  // CANAL DE COMANDOS REMOTOS (Supabase Realtime)
+  const { lastCommand } = useDeviceCommandChannel(isPreview ? undefined : deviceUuid, {
+    reloadPlaylist: async () => {
+      if (deviceCode) {
+        const result = await ManifestService.fetchManifest(deviceCode);
+        if (result && result.manifest) {
+          setManifest(result.manifest);
+          setDeviceInfo(result.device);
+        }
+      }
+    },
+    clearCache: async () => {
+      console.log("[PlayerConsulta] Comando clear_cache recebido via Supabase");
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(key => caches.delete(key)));
+      }
+      setProduct(null);
+      setLastConsultedEan(null);
+      setShowOverlay(false);
+    },
+    resetApp: async () => {
+      console.log("[PlayerConsulta] Comando reset_app recebido via Supabase");
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(key => caches.delete(key)));
+      }
+      window.location.reload();
+    },
+    reboot: () => window.location.reload(),
+    playCampaign: (id) => console.log("Play campaign command received:", id),
+    setVolume: (v) => console.log("Volume set to:", v),
+    screenshot: () => Promise.resolve(""),
+    tenantId: deviceInfo?.tenant_id,
+    companyId: deviceInfo?.company_id,
+    serial: deviceInfo?.serial || deviceCode,
+  });
+
+  // COMANDOS REMOTOS (Firebase Realtime)
+  useEffect(() => {
+    if (!deviceCode || isPreview) return;
+
+    const unsubscribe = FirebaseRealtimeService.subscribeToCommands(deviceCode, (payload) => {
+      if (payload.comando) {
+        console.log("[PlayerConsulta] Comando recebido via Firebase:", payload.comando);
+        
+        // Se for comando de reset ou clear_cache, tratamos aqui também
+        if (payload.comando === "reset_app" || payload.comando === "reset") {
+          if ('caches' in window) {
+            caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key))));
+          }
+          window.location.reload();
+        } else if (payload.comando === "clear_cache") {
+          if ('caches' in window) {
+            caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key))));
+          }
+          setProduct(null);
+          setLastConsultedEan(null);
+          setShowOverlay(false);
+        } else if (payload.comando === "reload" || payload.comando === "reboot") {
+          window.location.reload();
+        }
+
+        // Envia diretamente para o Android Bridge se disponível
+        const win = (window as any);
+        if (win.sendCommandToAndroid) {
+          win.sendCommandToAndroid(payload.comando, payload.payload || {}, {
+            deviceId: deviceInfo?.id,
+            tenantId: deviceInfo?.tenant_id,
+            companyId: deviceInfo?.company_id
+          });
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [deviceCode, deviceInfo]);
 
   // Face Detection with Face-API
   useEffect(() => {
