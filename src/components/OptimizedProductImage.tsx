@@ -22,171 +22,130 @@ export const OptimizedProductImage = ({
   isDefaultImage = false
 }: OptimizedProductImageProps) => {
   const [currentSrc, setCurrentSrc] = useState<string | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [showFallback, setShowFallback] = useState(true);
   const [hardError, setHardError] = useState(false);
-  const loadingRef = useRef<string | null>(null);
+  const activeLoadIdRef = useRef<string | null>(null);
+  const activeIndexRef = useRef<number>(0);
   const fallbacks = (Array.isArray(fallback) ? fallback : [fallback]).filter(
     (v): v is string => typeof v === "string" && v.trim().length > 0,
   );
 
   useEffect(() => {
-    if (!src || isDefaultImage) {
-      setCurrentSrc(src || fallbacks[0] || null);
-      setIsLoaded(true);
-      setShowFallback(false);
+    const candidates = [
+      ...(src && !isDefaultImage ? [src] : []),
+      ...fallbacks,
+      ...(src && isDefaultImage ? [src] : []),
+    ].filter((v, i, arr) => arr.indexOf(v) === i);
+
+    activeIndexRef.current = 0;
+    const loadId = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    activeLoadIdRef.current = loadId;
+    setHardError(false);
+
+    if (candidates.length === 0) {
+      setCurrentSrc(null);
+      setHardError(true);
       return;
     }
 
-    const loadImage = async () => {
-      // Reset state for new EAN
-      setIsLoaded(false);
-      setShowFallback(true);
-      setHardError(false);
-      loadingRef.current = src;
+    const tryCandidate = async (index: number) => {
+      if (activeLoadIdRef.current !== loadId) return;
+      if (index >= candidates.length) {
+        setCurrentSrc(null);
+        setHardError(true);
+        return;
+      }
 
-      // 1. Try Cache
-      if (ean) {
+      const candidate = candidates[index];
+      activeIndexRef.current = index;
+
+      if (ean && candidate === src && !isDefaultImage) {
         try {
           const cached = await ImageCacheService.get(ean);
-          if (cached && loadingRef.current === src) {
-            console.log(`[ImageLoader] Cache hit for EAN: ${ean}`);
+          if (cached && activeLoadIdRef.current === loadId) {
             setCurrentSrc(cached);
-            setIsLoaded(true);
-            setShowFallback(false);
             return;
           }
-        } catch (e) {
-          console.warn("[ImageLoader] Cache error:", e);
+        } catch {
         }
       }
 
-      // 2. Fetch in background
-      console.log(`[ImageLoader] Cache miss, loading in background: ${src}`);
       const img = new Image();
-      img.src = src;
-      
-      const timeoutId = setTimeout(() => {
-        if (loadingRef.current === src && !isLoaded) {
-          console.warn("[ImageLoader] Loading timeout, using fallback");
-          const fb = fallbacks[0] || null;
-          if (fb) {
-            setCurrentSrc(fb);
-            setIsLoaded(true);
-            setShowFallback(false);
-            return;
-          }
-          setHardError(true);
-          setCurrentSrc(null);
-          setIsLoaded(true);
-          setShowFallback(false);
-        }
-      }, 5000); // 5s timeout
+      img.decoding = "async";
+      img.src = candidate;
+
+      const timeoutId = window.setTimeout(() => {
+        if (activeLoadIdRef.current !== loadId) return;
+        tryCandidate(index + 1);
+      }, 4000);
 
       img.onload = async () => {
-        clearTimeout(timeoutId);
-        if (loadingRef.current !== src) return;
+        window.clearTimeout(timeoutId);
+        if (activeLoadIdRef.current !== loadId) return;
 
-        // Save to cache as Base64 if possible
-        if (ean) {
+        if (ean && candidate === src && !isDefaultImage) {
           try {
-            const response = await fetch(src, { mode: 'cors' });
+            const response = await fetch(candidate, { mode: "cors" });
             if (response.ok) {
               const blob = await response.blob();
               const reader = new FileReader();
               reader.onloadend = () => {
-                if (typeof reader.result === 'string') {
+                if (typeof reader.result === "string") {
                   ImageCacheService.set(ean, reader.result);
                 }
               };
               reader.readAsDataURL(blob);
             }
-          } catch (e) {
-            console.warn("[ImageLoader] Could not cache image (CORS or Network):", e);
+          } catch {
           }
         }
 
-        setCurrentSrc(src);
-        setIsLoaded(true);
-        setTimeout(() => setShowFallback(false), 300);
+        setCurrentSrc(candidate);
       };
 
       img.onerror = () => {
-        clearTimeout(timeoutId);
-        if (loadingRef.current !== src) return;
-        
-        console.error("[ImageLoader] Error loading image:", src);
-        
-        // Simple retry once after 2 seconds
-        if (!loadingRef.current?.includes('retry=true')) {
-          console.log("[ImageLoader] Retrying in 2s...");
-          setTimeout(() => {
-            if (loadingRef.current === src) {
-              loadingRef.current = src + (src.includes('?') ? '&' : '?') + 'retry=true';
-              img.src = src; // This will trigger onload/onerror again
-            }
-          }, 2000);
-          return;
-        }
-
-        const fb = fallbacks[0] || null;
-        if (fb) {
-          setCurrentSrc(fb);
-          setIsLoaded(true);
-          setShowFallback(false);
-          return;
-        }
-        setHardError(true);
-        setCurrentSrc(null);
-        setIsLoaded(true);
-        setShowFallback(false);
+        window.clearTimeout(timeoutId);
+        if (activeLoadIdRef.current !== loadId) return;
+        tryCandidate(index + 1);
       };
     };
 
-    loadImage();
-  }, [src, ean, fallback, isDefaultImage]);
+    tryCandidate(0);
+
+    return () => {
+      if (activeLoadIdRef.current === loadId) {
+        activeLoadIdRef.current = null;
+      }
+    };
+  }, [src, ean, isDefaultImage, fallbacks.join("|")]);
 
   return (
     <div className={`relative w-full h-full flex items-center justify-center ${className}`}>
       <AnimatePresence mode="popLayout">
-        {showFallback && (
-          <motion.div
-            key="fallback"
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="absolute inset-0 flex items-center justify-center p-12"
-          >
-            {fallback ? (
-              <img
-                src={fallback}
-                alt="Fallback"
-                className="max-w-full max-h-full object-contain opacity-50 grayscale"
-              />
-            ) : (
-              <Package className="w-48 h-48 text-white/10" />
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <motion.div
-        key={currentSrc || "empty"}
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: isLoaded ? 1 : 0, scale: isLoaded ? 1 : 0.95 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="relative z-10 w-full h-full flex items-center justify-center p-12"
-      >
         {currentSrc ? (
-          <img
+          <motion.img
+            key={currentSrc}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
             src={currentSrc}
             alt={alt}
-            className="max-w-full max-h-full object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+            className="w-full h-full object-contain p-12 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+            draggable={false}
           />
         ) : hardError ? (
-          <Package className="w-48 h-48 text-white/10" />
+          <motion.div
+            key="no-image"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="w-full h-full flex items-center justify-center p-12"
+          >
+            <Package className="w-48 h-48 text-white/10" />
+          </motion.div>
         ) : null}
-      </motion.div>
+      </AnimatePresence>
     </div>
   );
 };
