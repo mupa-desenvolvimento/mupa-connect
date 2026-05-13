@@ -588,13 +588,14 @@ export default function PlayerConsulta() {
   const buildVisual = (ean: string | null | undefined, visual: any) => {
     const safeEan = typeof ean === "string" && ean.trim() ? ean.trim() : null;
     const mupaImage = safeEan ? MUPA_STATIC_IMAGE(safeEan) : null;
+    const hasVisual = !!visual;
     
     return {
       imagem_url: ensureSafeImageUrl(visual?.imagem_url) || mupaImage || DEFAULT_PRODUCT_IMAGE,
-      cor_assinatura_produto: visual?.cor_assinatura_produto || "#000000",
-      fundo_legibilidade: visual?.fundo_legibilidade || "#000000",
-      cor_dominante_claro: visual?.cor_dominante_claro || "#FFFFFF",
-      cor_dominante_escuro: visual?.cor_dominante_escuro || "#000000",
+      cor_assinatura_produto: visual?.cor_assinatura_produto || DEFAULT_VISUAL_COLORS.cor_assinatura_produto,
+      fundo_legibilidade: visual?.fundo_legibilidade || DEFAULT_VISUAL_COLORS.fundo_legibilidade,
+      cor_dominante_claro: visual?.cor_dominante_claro || DEFAULT_VISUAL_COLORS.cor_dominante_claro,
+      cor_dominante_escuro: visual?.cor_dominante_escuro || DEFAULT_VISUAL_COLORS.cor_dominante_escuro,
     };
   };
 
