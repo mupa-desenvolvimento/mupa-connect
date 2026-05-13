@@ -1359,7 +1359,7 @@ export default function PlayerConsulta() {
                       initial={{ y: 30, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.4 }}
-                      className="rounded-[40px] p-10 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.3)] relative overflow-hidden border border-white/20"
+                      className="rounded-[40px] px-12 py-16 md:py-20 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.3)] relative overflow-visible border border-white/20 min-h-[220px] flex flex-col justify-center"
                       style={{ 
                         background: isDefaultImage(product.visual?.imagem_url)
                           ? (product.visual?.cor_assinatura_produto || '#F36C21')
