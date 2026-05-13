@@ -1234,24 +1234,47 @@ export default function PlayerConsulta() {
                               ] 
                             }}
                             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                            className="p-10 md:p-12 rounded-[40px] relative overflow-hidden border border-white/20 backdrop-blur-2xl flex flex-col items-center justify-center min-h-[220px]"
+                            className="p-10 md:p-12 rounded-[40px] relative overflow-hidden border backdrop-blur-2xl flex flex-col items-center justify-center min-h-[220px]"
                             style={{ 
-                              background: `linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)`,
+                              background: isDefaultImage(product.visual?.imagem_url)
+                                ? 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)'
+                                : 'linear-gradient(180deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.08) 100%)',
+                              borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
                             }}
                           >
-                            <span className="text-xl md:text-2xl font-black uppercase tracking-[0.4em] text-white/50 mb-4">
+                            <span 
+                              className="text-xl md:text-2xl font-black uppercase tracking-[0.4em] mb-4"
+                              style={{ color: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)' }}
+                            >
                               {mainPriceItem.unit_pack === 1 ? 'VALOR UNITÁRIO' : `PACK COM ${mainPriceItem.unit_pack}`}
                             </span>
                             
                             <div className="flex items-start gap-4">
-                              <span className="text-4xl md:text-5xl font-black text-[#F36C21] mt-4">R$</span>
-                              <span className="text-[clamp(6rem,15vw,12rem)] leading-[0.8] font-black text-white tracking-tighter" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+                              <span 
+                                className="text-4xl md:text-5xl font-black mt-4"
+                                style={{ color: product.visual?.cor_assinatura_produto || '#F36C21' }}
+                              >
+                                R$
+                              </span>
+                              <span 
+                                className="text-[clamp(6rem,15vw,12rem)] leading-[0.8] font-black tracking-tighter" 
+                                style={{ 
+                                  fontFamily: 'Bebas Neue, sans-serif',
+                                  color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#000000'
+                                }}
+                              >
                                 {formatPrice(mainFinalPrice).replace('R$', '').trim()}
                               </span>
                             </div>
                             
                             {/* Glow lateral */}
-                            <div className="absolute left-0 top-0 bottom-0 w-2 bg-[#F36C21] shadow-[0_0_30px_#F36C21]" />
+                            <div 
+                              className="absolute left-0 top-0 bottom-0 w-2 shadow-[0_0_30px]" 
+                              style={{ 
+                                backgroundColor: product.visual?.cor_assinatura_produto || '#F36C21',
+                                boxShadow: `0 0 30px ${product.visual?.cor_assinatura_produto || '#F36C21'}`
+                              }} 
+                            />
                           </motion.div>
 
                           {/* Preços de Atacado / Packs */}
