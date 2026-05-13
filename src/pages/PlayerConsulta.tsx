@@ -1118,11 +1118,17 @@ export default function PlayerConsulta() {
 
 
                 <div className={cn(
-                  "flex flex-col justify-between text-slate-900",
-                  isVertical ? "h-3/5 w-full" : "w-1/2 h-full order-1"
+                  "flex flex-col justify-between",
+                  isVertical ? "h-3/5 w-full" : "w-1/2 h-full order-1",
+                  (!product.visual?.imagem_url || product.visual.imagem_url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png')) ? "text-white" : "text-slate-900"
                 )}>
                   <div className="space-y-6">
-                    <div className="inline-block px-4 py-1.5 md:px-6 md:py-2 rounded-full bg-slate-200 text-slate-700 text-base md:text-xl font-bold border border-slate-300">
+                    <div className={cn(
+                      "inline-block px-4 py-1.5 md:px-6 md:py-2 rounded-full text-base md:text-xl font-bold border",
+                      (!product.visual?.imagem_url || product.visual.imagem_url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png')) 
+                        ? "bg-white/10 text-white border-white/20" 
+                        : "bg-slate-200 text-slate-700 border-slate-300"
+                    )}>
                       Código: {product.internal_id}
                       {product.is_cached && (
                         <span className="ml-3 text-[10px] bg-slate-300 text-slate-800 px-2 py-0.5 rounded uppercase tracking-widest font-black">Modo Offline</span>
@@ -1133,7 +1139,12 @@ export default function PlayerConsulta() {
                       <h1 className="text-[clamp(2.5rem,8vw,6rem)] font-black leading-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
                         {getProductNameParts(product.description).main}
                       </h1>
-                      <p className="text-[clamp(1.2rem,4vw,2.5rem)] text-slate-600 font-bold leading-tight">
+                      <p className={cn(
+                        "text-[clamp(1.2rem,4vw,2.5rem)] font-bold leading-tight",
+                        (!product.visual?.imagem_url || product.visual.imagem_url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png'))
+                          ? "text-white/80"
+                          : "text-slate-600"
+                      )}>
                         {getProductNameParts(product.description).rest}
                       </p>
                     </div>
