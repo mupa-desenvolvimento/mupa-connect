@@ -1338,23 +1338,6 @@ export default function PlayerConsulta() {
                                         {formatPrice(finalPrice).replace('R$', '').trim()}
                                       </span>
                                     </div>
-                                    <div 
-                                      className="mt-3 pt-3 border-t flex justify-between items-center"
-                                      style={{ borderTopColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}
-                                    >
-                                      <span 
-                                        className="text-xs font-bold uppercase tracking-tighter"
-                                        style={{ color: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' }}
-                                      >
-                                        Unitário:
-                                      </span>
-                                      <span 
-                                        className="text-lg font-black"
-                                        style={{ color: product.visual?.cor_assinatura_produto || '#F36C21' }}
-                                      >
-                                        {formatPrice(currentUnitPrice)}
-                                      </span>
-                                    </div>
                                   </div>
                                 );
                               })}
