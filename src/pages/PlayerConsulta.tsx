@@ -1242,7 +1242,7 @@ export default function PlayerConsulta() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-10 lg:p-16 overflow-hidden"
+            className="fixed inset-0 z-50 flex items-center justify-center p-6 md:p-12 overflow-visible"
             style={{ 
               backgroundColor: isDefaultImage(product?.visual?.imagem_url)
                 ? (product?.visual?.fundo_legibilidade ? `${product.visual.fundo_legibilidade}F8` : 'rgba(0,51,153,0.98)')
@@ -1251,7 +1251,7 @@ export default function PlayerConsulta() {
           >
             {/* Fundo Dinâmico Premium com Gradientes e Glow */}
             {!isDefaultImage(product?.visual?.imagem_url) && product?.visual && (
-              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <div className="absolute inset-0 pointer-events-none overflow-visible">
                 {/* Gradiente de Base */}
                 <div 
                   className="absolute inset-0 opacity-40"
@@ -1350,16 +1350,16 @@ export default function PlayerConsulta() {
 
                 {/* CONTEÚDO DO PRODUTO */}
                 <div className={cn(
-                  "flex flex-col justify-between py-2",
+                  "flex flex-col justify-between py-6 md:py-10",
                   isVertical ? "h-[58%] w-full" : "w-[58%] h-full"
                 )}>
-                  <div className="space-y-8">
+                  <div className="space-y-12">
                     {/* Descrição com Fundo de Destaque Dinâmico */}
                     <motion.div 
                       initial={{ y: 30, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.4 }}
-                      className="rounded-[40px] p-10 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.3)] relative overflow-hidden border border-white/20"
+                      className="rounded-[40px] px-12 py-16 md:py-20 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.3)] relative overflow-visible border border-white/20 min-h-[220px] flex flex-col justify-center"
                       style={{ 
                         background: isDefaultImage(product.visual?.imagem_url)
                           ? (product.visual?.cor_assinatura_produto || '#F36C21')
@@ -1370,11 +1370,11 @@ export default function PlayerConsulta() {
                       {/* Efeito de brilho no card */}
                       <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
                       
-                      <div className="relative z-10 space-y-2">
-                        <h1 className="text-[clamp(2.5rem,6vw,5.5rem)] font-black leading-tight uppercase tracking-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+                      <div className="relative z-10 space-y-4">
+                        <h1 className="text-[clamp(2.5rem,6vw,5.5rem)] font-black leading-[1.1] uppercase tracking-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
                           {getProductNameParts(product.description).main}
                         </h1>
-                        <p className="text-[clamp(1.2rem,3vw,2.2rem)] font-medium leading-none opacity-90" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+                        <p className="text-[clamp(1.2rem,3vw,2.2rem)] font-medium leading-relaxed opacity-90" style={{ fontFamily: 'Satoshi, sans-serif' }}>
                           {getProductNameParts(product.description).rest}
                         </p>
                       </div>
@@ -1392,10 +1392,10 @@ export default function PlayerConsulta() {
                     initial={{ y: 50, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.6 }}
-                    className="space-y-6"
+                    className="space-y-10"
                   >
                     {(!product.stock_prices || product.stock_prices.filter(p => p.price_pack > 0).length === 0) ? (
-                      <div className="p-12 rounded-[40px] bg-white/5 border border-white/10 flex flex-col items-center justify-center text-center gap-4 backdrop-blur-xl">
+                      <div className="py-20 px-12 rounded-[40px] bg-white/5 border border-white/10 flex flex-col items-center justify-center text-center gap-6 backdrop-blur-xl min-h-[300px]">
                         <Package className="w-20 h-20 text-white/10" />
                         <span className="text-white/40 text-2xl font-black uppercase tracking-[0.3em]">PREÇO INDISPONÍVEL</span>
                       </div>
@@ -1409,7 +1409,7 @@ export default function PlayerConsulta() {
                       const mainFinalPrice = mainPriceItem.price_prom_pack && mainPriceItem.price_prom_pack > 0 ? mainPriceItem.price_prom_pack : mainPriceItem.price_pack;
 
                       return (
-                        <div className="space-y-6">
+                        <div className="space-y-10">
                           {/* Container Preço Principal */}
                           <motion.div 
                             animate={{ 
@@ -1420,7 +1420,7 @@ export default function PlayerConsulta() {
                               ]
                             }}
                             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                            className="p-10 md:p-14 rounded-[56px] relative overflow-hidden border border-white/10 flex flex-col items-center justify-center min-h-[300px] w-full"
+                            className="px-12 py-20 md:px-16 md:py-24 rounded-[56px] relative overflow-visible border border-white/10 flex flex-col items-center justify-center min-h-[420px] w-full"
                             style={{ 
                               background: isDefaultImage(product.visual?.imagem_url)
                                 ? 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 100%)'
@@ -1437,8 +1437,8 @@ export default function PlayerConsulta() {
                             />
                             
                             <div className="relative z-10 flex flex-col items-center">
-                              <span 
-                                className="text-[1.2rem] font-black uppercase tracking-[0.4em] mb-4 opacity-60"
+                               <span 
+                                className="text-[1.4rem] font-black uppercase tracking-[0.4em] mb-8 opacity-60"
                                 style={{ color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : getContrastColor(product.visual?.cor_dominante_claro || '#FFFFFF') }}
                               >
                                 PREÇO EXCLUSIVO
@@ -1452,7 +1452,7 @@ export default function PlayerConsulta() {
                                   R$
                                 </span>
                                 <span 
-                                  className="text-[clamp(9rem,20vw,17rem)] leading-[0.7] font-black tracking-tighter" 
+                                  className="text-[clamp(9rem,20vw,17rem)] leading-[0.9] font-black tracking-tighter py-4" 
                                   style={{ 
                                     fontFamily: 'Bebas Neue, sans-serif',
                                     color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : getContrastColor(product.visual?.cor_dominante_claro || '#FFFFFF'),
@@ -1479,7 +1479,7 @@ export default function PlayerConsulta() {
                           {/* Preços de Atacado / Packs */}
                           {promoPacks.length > 0 && (
                             <div className={cn(
-                              "grid gap-4",
+                              "grid gap-8",
                               promoPacks.length > 1 ? "grid-cols-2" : "grid-cols-1"
                             )}>
                               {promoPacks.slice(0, 2).map((price, idx) => {
@@ -1495,7 +1495,7 @@ export default function PlayerConsulta() {
                                 return (
                                   <div 
                                     key={`pack-${idx}`}
-                                    className="p-8 rounded-[48px] border backdrop-blur-3xl relative overflow-hidden group min-h-[160px] flex flex-col justify-center transition-all hover:scale-[1.02]"
+                                    className="px-10 py-12 rounded-[48px] border backdrop-blur-3xl relative overflow-visible group min-h-[200px] flex flex-col justify-center transition-all hover:scale-[1.02]"
                                     style={{
                                       background: isDefaultImage(product.visual?.imagem_url) 
                                         ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)' 
