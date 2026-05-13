@@ -124,6 +124,7 @@ export default function PlayerConsulta() {
   const [manifest, setManifest] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
+  const [reloadKey, setReloadKey] = useState<number>(0);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // DEV MODE STATE
