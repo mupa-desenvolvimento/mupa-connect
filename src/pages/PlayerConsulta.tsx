@@ -1192,30 +1192,6 @@ export default function PlayerConsulta() {
                   isVertical ? "h-[55%] w-full" : "w-[55%] h-full"
                 )}>
                   <div className="space-y-8">
-                    {/* Código e Tag */}
-                    <motion.div 
-                      initial={{ y: -20, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: 0.2 }}
-                      className="flex items-center gap-4"
-                    >
-                      <div 
-                        className="px-6 py-2 rounded-2xl border backdrop-blur-md font-mono text-xl tracking-[0.2em]"
-                        style={{
-                          backgroundColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                          borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
-                          color: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)',
-                        }}
-                      >
-                        EAN: <span style={{ color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#000000', fontWeight: 900 }}>{product.internal_id}</span>
-                      </div>
-                      {product.is_cached && (
-                        <div className="px-4 py-2 rounded-2xl bg-orange-500 text-white text-xs font-black uppercase tracking-widest">
-                          MODO OFFLINE
-                        </div>
-                      )}
-                    </motion.div>
-                    
                     {/* Descrição com Fundo Laranja Destaque */}
                     <motion.div 
                       initial={{ y: 30, opacity: 0 }}
@@ -1281,12 +1257,6 @@ export default function PlayerConsulta() {
                               borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
                             }}
                           >
-                            <span 
-                              className="text-xl md:text-2xl font-black uppercase tracking-[0.4em] mb-4"
-                              style={{ color: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)' }}
-                            >
-                              {mainPriceItem.unit_pack === 1 ? 'VALOR UNITÁRIO' : `PACK COM ${mainPriceItem.unit_pack}`}
-                            </span>
                             
                             <div className="flex items-start gap-4">
                               <span 
@@ -1341,13 +1311,7 @@ export default function PlayerConsulta() {
                                       borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
                                     }}
                                   >
-                                    <div className="flex justify-between items-start mb-3">
-                                      <span 
-                                        className="text-sm font-black tracking-widest uppercase"
-                                        style={{ color: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' }}
-                                      >
-                                        {label}
-                                      </span>
+                                    <div className="flex justify-end items-start mb-3">
                                       {economyPercent > 0 && (
                                         <span 
                                           className="text-white text-[10px] font-black px-3 py-1 rounded-full"
@@ -1372,23 +1336,6 @@ export default function PlayerConsulta() {
                                         }}
                                       >
                                         {formatPrice(finalPrice).replace('R$', '').trim()}
-                                      </span>
-                                    </div>
-                                    <div 
-                                      className="mt-3 pt-3 border-t flex justify-between items-center"
-                                      style={{ borderTopColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}
-                                    >
-                                      <span 
-                                        className="text-xs font-bold uppercase tracking-tighter"
-                                        style={{ color: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' }}
-                                      >
-                                        Unitário:
-                                      </span>
-                                      <span 
-                                        className="text-lg font-black"
-                                        style={{ color: product.visual?.cor_assinatura_produto || '#F36C21' }}
-                                      >
-                                        {formatPrice(currentUnitPrice)}
                                       </span>
                                     </div>
                                   </div>
