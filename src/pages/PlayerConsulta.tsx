@@ -840,6 +840,8 @@ export default function PlayerConsulta() {
 
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+        // Se estiver no INPUT, permite o Enter nativo (já tratado pelo onKeyDown do input)
+        // mas bloqueia se for apenas um caractere que já seria processado pelo input nativo
         return;
       }
 
@@ -1483,6 +1485,17 @@ export default function PlayerConsulta() {
               tabIndex={avoidIme ? -1 : 0}
               onFocus={(e) => {
                 if (avoidIme) e.currentTarget.blur();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const code = e.currentTarget.value.trim();
+                  if (code) {
+                    console.log("[Input] Enter detectado via teclado. Valor:", code);
+                    e.currentTarget.value = "";
+                    scanBufferRef.current = "";
+                    handleConsult(code);
+                  }
+                }
               }}
             />
           </div>
