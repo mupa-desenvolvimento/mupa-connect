@@ -265,6 +265,7 @@ export default function PlayerConsulta() {
   // Isso evita que o Android/Zebra abra o IME/teclado do sistema.
   const scanBufferRef = useRef<string>("");
   const lastKeyTimeRef = useRef<number>(0);
+  const scanCommitTimerRef = useRef<number | null>(null);
   const avoidIme = useMemo(() => {
     const ua = navigator.userAgent || "";
     const isMobileUa = /Android|iPhone|iPad|iPod/i.test(ua);
@@ -839,27 +840,36 @@ export default function PlayerConsulta() {
       }
 
       const target = e.target as HTMLElement | null;
-      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
-        // Se estiver no INPUT, permite o Enter nativo (já tratado pelo onKeyDown do input)
-        // mas bloqueia se for apenas um caractere que já seria processado pelo input nativo
+      if (
+        target &&
+        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) &&
+        target !== inputRef.current
+      ) {
         return;
       }
 
       const now = Date.now();
-      if (now - lastKeyTimeRef.current > 150) {
+      if (now - lastKeyTimeRef.current > 250) {
         scanBufferRef.current = "";
       }
-      
-      // Se for Enter, processa a consulta
-      if (e.key === "Enter") {
+
+      const commitScan = () => {
         const code = (scanBufferRef.current || inputRef.current?.value || "").trim();
-        if (code) {
-          console.log("[Scanner] Enter detectado. Valor:", code);
-          // Limpa o input IMEDIATAMENTE para evitar que a próxima leitura pegue restos
-          scanBufferRef.current = "";
-          if (inputRef.current) inputRef.current.value = "";
-          handleConsult(code);
+        scanBufferRef.current = "";
+        if (inputRef.current) inputRef.current.value = "";
+        if (!code) return;
+        if (code.length < 5) return;
+        handleConsult(code);
+      };
+      
+      // Terminadores comuns de scanner
+      if (e.key === "Enter" || e.key === "Tab") {
+        if (e.key === "Tab") e.preventDefault();
+        if (scanCommitTimerRef.current) {
+          window.clearTimeout(scanCommitTimerRef.current);
+          scanCommitTimerRef.current = null;
         }
+        commitScan();
         return;
       }
 
@@ -874,12 +884,22 @@ export default function PlayerConsulta() {
         scanBufferRef.current += e.key;
         lastKeyTimeRef.current = now;
         if (inputRef.current) inputRef.current.value = scanBufferRef.current;
+
+        if (scanCommitTimerRef.current) window.clearTimeout(scanCommitTimerRef.current);
+        scanCommitTimerRef.current = window.setTimeout(() => {
+          scanCommitTimerRef.current = null;
+          commitScan();
+        }, 180);
       }
     };
 
     window.addEventListener("keydown", handleGlobalKey, true); // Use capture to intercept before other handlers
 
     return () => {
+      if (scanCommitTimerRef.current) {
+        window.clearTimeout(scanCommitTimerRef.current);
+        scanCommitTimerRef.current = null;
+      }
       window.removeEventListener("keydown", handleGlobalKey, true);
     };
   }, [handleConsult, isConsulting]);
@@ -1482,46 +1502,32 @@ export default function PlayerConsulta() {
         )}
       </AnimatePresence>
 
-      {/* Input visível mas estilizado para integração com o layout */}
-      <div className={cn(
-        "fixed bottom-24 left-1/2 -translate-x-1/2 z-50 transition-all duration-500",
-        showOverlay ? "opacity-0 pointer-events-none translate-y-4" : "opacity-100 translate-y-0"
-      )}>
-        <div className="relative group">
-          <div className="absolute -inset-1 bg-gradient-to-r from-primary/30 to-blue-400/30 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-          <div className="relative flex items-center bg-white/80 backdrop-blur-xl rounded-xl border border-slate-200 p-1 pr-4 shadow-xl">
-            <div className="p-3 text-primary/80">
-              <Barcode className="w-5 h-5" />
-            </div>
-            <Input 
-              ref={inputRef}
-              className="w-64 md:w-80 bg-transparent border-none text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0 text-lg font-mono tracking-widest font-bold"
-              placeholder="AGUARDANDO LEITURA..."
-              autoFocus={!avoidIme}
-              inputMode="none"
-              autoComplete="off"
-              readOnly={avoidIme}
-              tabIndex={avoidIme ? -1 : 0}
-              onFocus={(e) => {
-                if (avoidIme) e.currentTarget.blur();
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const code = e.currentTarget.value.trim();
-                  if (code) {
-                    console.log("[Input] Enter detectado via teclado. Valor:", code);
-                    e.currentTarget.value = "";
-                    scanBufferRef.current = "";
-                    handleConsult(code);
-                  }
-                }
-              }}
-            />
-          </div>
-        </div>
-      </div>
+      <Input
+        ref={inputRef}
+        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 opacity-0 pointer-events-none"
+        placeholder="AGUARDANDO LEITURA..."
+        autoFocus={!avoidIme}
+        inputMode="none"
+        autoComplete="off"
+        readOnly={avoidIme}
+        tabIndex={avoidIme ? -1 : 0}
+        onFocus={(e) => {
+          if (avoidIme) e.currentTarget.blur();
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            const code = e.currentTarget.value.trim();
+            if (code) {
+              console.log("[Input] Enter detectado via teclado. Valor:", code);
+              e.currentTarget.value = "";
+              scanBufferRef.current = "";
+              handleConsult(code);
+            }
+          }
+        }}
+      />
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4">
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 opacity-0 pointer-events-none select-none">
         <AnimatePresence>
           {!showOverlay && (
             <motion.div 
@@ -1539,7 +1545,6 @@ export default function PlayerConsulta() {
           Mupa Desenvolvimento de Solucoes Tecnologicas LTDA - 50.667.125/0001-48
         </div>
       </div>
-
 
       <button
         type="button"
