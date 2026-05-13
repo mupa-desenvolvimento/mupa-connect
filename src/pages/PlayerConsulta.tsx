@@ -1168,8 +1168,8 @@ export default function PlayerConsulta() {
                     
                     {/* Descrição com Fundo Laranja Destaque */}
                     <motion.div 
-                      initial={{ x: 50, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
+                      initial={{ y: 30, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.4 }}
                       className="rounded-[30px] p-8 shadow-2xl relative overflow-hidden"
                       style={{ 
