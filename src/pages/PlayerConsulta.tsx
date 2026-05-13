@@ -1490,16 +1490,16 @@ export default function PlayerConsulta() {
                                 .map((p) => (
                                   <div
                                     key={`price-${p.units}`}
-                                    className="rounded-2xl border border-white/10 bg-white/5 p-4 aspect-square flex flex-col justify-between"
+                                    className="rounded-2xl border border-white/10 bg-white/5 p-3 aspect-square flex flex-col"
                                   >
-                                    <div className="text-white/80 text-xs md:text-sm font-black uppercase tracking-wide text-center">
+                                    <div className="text-white/80 text-[11px] md:text-xs font-black uppercase tracking-wide text-center leading-none">
                                       PACK {p.units} UN
                                     </div>
-                                    <div className="text-center">
-                                      <div className="text-white text-lg md:text-xl font-black leading-tight">
+                                    <div className="text-center flex-1 flex flex-col items-center justify-center">
+                                      <div className="text-white text-xl md:text-2xl font-black leading-none">
                                         {formatPrice(p.total)}
                                       </div>
-                                      <div className="mt-1 text-white/60 text-[11px] md:text-xs font-bold">
+                                      <div className="mt-0.5 text-white/60 text-[11px] md:text-xs font-bold leading-none">
                                         {formatPrice(p.unitPrice)}/un
                                       </div>
                                     </div>
