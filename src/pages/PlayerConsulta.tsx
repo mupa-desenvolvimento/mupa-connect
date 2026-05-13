@@ -184,6 +184,32 @@ export default function PlayerConsulta() {
   }, []);
 
   useEffect(() => {
+    if (!product?.visual?.imagem_url || isDefaultImage(product.visual.imagem_url)) return;
+
+    const updateColors = async () => {
+      // Se já temos cores customizadas (não as default), não precisamos extrair
+      // Mas se quisermos que seja SEMPRE dinâmico se for da imagem, podemos extrair mesmo assim
+      // O prompt diz "alimentar a paleta dinâmica", então vamos extrair.
+      
+      const colors = await extractColorsFromImage(product.visual.imagem_url);
+      if (colors) {
+        setProduct(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            visual: {
+              ...prev.visual!,
+              ...colors
+            }
+          };
+        });
+      }
+    };
+
+    updateColors();
+  }, [product?.visual?.imagem_url]);
+
+  useEffect(() => {
     setImageError(false);
     // Preload basic images
     const preload = [DEFAULT_PRODUCT_IMAGE];
