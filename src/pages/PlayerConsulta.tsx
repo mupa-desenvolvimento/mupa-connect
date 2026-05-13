@@ -1130,12 +1130,12 @@ export default function PlayerConsulta() {
                   <div className="space-y-6">
                     <div className={cn(
                       "inline-block px-4 py-1.5 md:px-6 md:py-2 rounded-full text-base md:text-xl font-bold border",
-                      (!product.visual?.imagem_url || product.visual.imagem_url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png')) 
+                      isDefaultImage(product.visual?.imagem_url) 
                         ? "bg-white/10 text-white border-white/20" 
                         : "bg-slate-200 text-slate-700 border-slate-300"
                     )}>
                       Código: <span className={cn(
-                        (!product.visual?.imagem_url || product.visual.imagem_url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png'))
+                        isDefaultImage(product.visual?.imagem_url)
                           ? "text-[#F36C21]"
                           : "text-inherit"
                       )}>{product.internal_id}</span>
