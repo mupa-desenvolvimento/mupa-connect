@@ -15,6 +15,7 @@ import { useKioskMode } from "@/hooks/useKioskMode";
 import { PWAInstallModal } from "@/components/PWAInstallModal";
 import { DevShowcaseOverlay } from "@/components/DevShowcaseOverlay";
 import { DevicePersistenceService } from "@/services/DevicePersistenceService";
+import { extractColorsFromImage } from "@/utils/colorExtractor";
 
 interface AppearanceConfig {
   show_device_name?: boolean;
@@ -181,6 +182,37 @@ export default function PlayerConsulta() {
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  useEffect(() => {
+    if (!product?.visual?.imagem_url || isDefaultImage(product.visual.imagem_url)) return;
+
+    const updateColors = async () => {
+      // O prompt diz "alimentar a paleta dinâmica", então vamos extrair sempre que a imagem mudar.
+      const colors = await extractColorsFromImage(product.visual!.imagem_url);
+      if (colors) {
+        setProduct(prev => {
+          if (!prev) return prev;
+          
+          // Evita atualização se as cores principais já forem as mesmas para evitar re-renders infinitos
+          if (prev.visual?.cor_assinatura_produto === colors.cor_assinatura_produto && 
+              prev.visual?.cor_dominante_escuro === colors.cor_dominante_escuro &&
+              prev.visual?.fundo_legibilidade === colors.fundo_legibilidade) {
+            return prev;
+          }
+
+          return {
+            ...prev,
+            visual: {
+              ...prev.visual!,
+              ...colors
+            }
+          };
+        });
+      }
+    };
+
+    updateColors();
+  }, [product?.visual?.imagem_url]);
 
   useEffect(() => {
     setImageError(false);
@@ -1201,7 +1233,7 @@ export default function PlayerConsulta() {
                     style={{ 
                       background: isDefaultImage(product.visual?.imagem_url)
                         ? `linear-gradient(135deg, ${product.visual?.cor_dominante_escuro || '#003399'} 0%, ${product.visual?.cor_dominante_claro || '#001f5c'} 100%)`
-                        : `linear-gradient(145deg, #FFFFFF 0%, ${product.visual?.cor_dominante_claro || '#F8F9FA'} 100%)`,
+                        : "#FFFFFF",
                     }}
                   >
                     {/* Glow interno leve */}
@@ -1316,7 +1348,7 @@ export default function PlayerConsulta() {
                             <div className="relative z-10 flex flex-col items-center">
                               <span 
                                 className="text-[1.2rem] font-black uppercase tracking-[0.4em] mb-4 opacity-60"
-                                style={{ color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#333333' }}
+                                style={{ color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : getContrastColor(product.visual?.cor_dominante_claro || '#FFFFFF') }}
                               >
                                 PREÇO EXCLUSIVO
                               </span>
@@ -1332,7 +1364,7 @@ export default function PlayerConsulta() {
                                   className="text-[clamp(9rem,20vw,17rem)] leading-[0.7] font-black tracking-tighter" 
                                   style={{ 
                                     fontFamily: 'Bebas Neue, sans-serif',
-                                    color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#333333',
+                                    color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : getContrastColor(product.visual?.cor_dominante_claro || '#FFFFFF'),
                                     filter: isDefaultImage(product.visual?.imagem_url) 
                                       ? `drop-shadow(0 0 30px ${product.visual?.cor_assinatura_produto || '#F36C21'}60)`
                                       : 'none'
