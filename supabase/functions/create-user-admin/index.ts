@@ -109,7 +109,15 @@ serve(async (req) => {
 
     if (emailError) {
       console.error("Resend error:", emailError);
-      // We don't throw here to avoid failing the whole process if only the email fails
+      return new Response(JSON.stringify({ 
+        success: true, 
+        user, 
+        emailError: emailError.message || "Failed to send email",
+        emailDetails: emailError
+      }), {
+        status: 200, // Still return 200 because user was created
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     return new Response(JSON.stringify({ success: true, user, email: emailData }), {
