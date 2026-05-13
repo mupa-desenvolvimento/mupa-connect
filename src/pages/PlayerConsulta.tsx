@@ -664,6 +664,11 @@ export default function PlayerConsulta() {
     setProduct(null);
     setLastConsultedEan(cleanEan);
 
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("Tempo esgotado ao consultar produto.")), 15000)
+    );
+
+    try {
       const result: any = await Promise.race([
         supabase.functions.invoke('integra-assai', {
           body: { 
