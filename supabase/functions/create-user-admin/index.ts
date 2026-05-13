@@ -48,12 +48,13 @@ serve(async (req) => {
 
     if (profileError) throw profileError;
 
-    // 3. Send Email via Resend
+    // Send Email via Resend
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
     
-    // Tentamos usar o domínio configurado se existir, senão usamos o default do Resend para testes
+    // IMPORTANTE: Configure seu domínio no painel do Resend para usar um e-mail próprio
+    // Se o domínio midias.mupa.app estiver verificado no Resend, use: 'Mupa <contato@midias.mupa.app>'
     const fromEmail = "Mupa <onboarding@resend.dev>"; 
-    
+
     const { data: emailData, error: emailError } = await resend.emails.send({
       from: fromEmail,
       to: [email],
