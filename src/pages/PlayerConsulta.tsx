@@ -1162,8 +1162,8 @@ export default function PlayerConsulta() {
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.1, duration: 0.5 }}
                   className={cn(
-                    "relative flex items-center justify-center rounded-[40px] shadow-2xl overflow-hidden border border-white/10 group",
-                    isVertical ? "h-[45%] w-full" : "w-[45%] h-full"
+                    "relative flex items-center justify-center rounded-[48px] shadow-2xl overflow-hidden border border-white/10 group",
+                    isVertical ? "h-[42%] w-full" : "w-[42%] h-full"
                   )}
                   style={{ 
                     background: isDefaultImage(product.visual?.imagem_url)
