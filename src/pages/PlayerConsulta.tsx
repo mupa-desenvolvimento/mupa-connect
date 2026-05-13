@@ -1261,18 +1261,21 @@ export default function PlayerConsulta() {
                             }}
                           >
                             
-                            <div className="flex items-start gap-4">
+                            <div className="flex items-start gap-3 md:gap-5">
                               <span 
-                                className="text-4xl md:text-5xl font-black mt-4"
+                                className="text-4xl md:text-6xl font-black mt-4 md:mt-6"
                                 style={{ color: product.visual?.cor_assinatura_produto || '#F36C21' }}
                               >
                                 R$
                               </span>
                               <span 
-                                className="text-[clamp(6rem,15vw,12rem)] leading-[0.8] font-black tracking-tighter" 
+                                className="text-[clamp(8rem,18vw,15rem)] leading-[0.75] font-black tracking-tighter" 
                                 style={{ 
                                   fontFamily: 'Bebas Neue, sans-serif',
-                                  color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#000000'
+                                  color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#333333',
+                                  textShadow: isDefaultImage(product.visual?.imagem_url) 
+                                    ? `0 0 40px ${product.visual?.cor_assinatura_produto || '#F36C21'}40`
+                                    : 'none'
                                 }}
                               >
                                 {formatPrice(mainFinalPrice).replace('R$', '').trim()}
