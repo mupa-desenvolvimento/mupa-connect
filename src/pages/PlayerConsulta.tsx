@@ -875,13 +875,38 @@ export default function PlayerConsulta() {
     if (isConsulting) return;
 
     console.log("[Manual] Iniciando consulta:", cleanId);
+    
+    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+
+    // Try cache for manual ID too
+    const cachedKey = `product_manual_${cleanId}`;
+    const cached = localStorage.getItem(cachedKey);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (Date.now() - parsed.timestamp < 86400000 || !navigator.onLine) {
+          console.log("[Manual] Usando cache para:", cleanId);
+          setProduct({
+            ...parsed.data,
+            is_cached: true,
+            visual: buildVisual(parsed.data?.ean, parsed.data?.visual),
+          });
+          setError(null);
+          setShowOverlay(true);
+          setIsConsulting(false);
+          startHideTimer();
+          return;
+        }
+      } catch (e) {
+        console.warn("[Manual] Erro ao ler cache:", e);
+      }
+    }
+
     setIsConsulting(true);
     setShowOverlay(true);
     setError(null);
     setProduct(null);
     setLastConsultedEan(null);
-
-    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
 
     const timeoutPromise = new Promise((_, reject) => 
       setTimeout(() => reject(new Error("Tempo esgotado ao consultar produto.")), 15000)
