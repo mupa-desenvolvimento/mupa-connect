@@ -1091,7 +1091,7 @@ export default function PlayerConsulta() {
                 <div className={cn(
                   "flex items-center justify-center rounded-3xl overflow-hidden shadow-sm relative border",
                   isVertical ? "h-2/5 w-full" : "w-1/2 h-full order-2",
-                  (!product.visual?.imagem_url || product.visual.imagem_url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png'))
+                  isDefaultImage(product.visual?.imagem_url)
                     ? "bg-[#003399] border-white/10"
                     : "bg-slate-100 border-slate-200"
                 )}>
