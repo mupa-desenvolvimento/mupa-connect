@@ -66,7 +66,8 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
     if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY is not configured");
 
-    const fromEmail = "Mupa <contato@midias.mupa.app>";
+    // TODO: trocar para "Mupa <contato@midias.mupa.app>" após verificar o domínio no Resend
+    const fromEmail = "Mupa <onboarding@resend.dev>";
     const html = `
         <!DOCTYPE html>
         <html>
