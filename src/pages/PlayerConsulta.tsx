@@ -840,6 +840,8 @@ export default function PlayerConsulta() {
 
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+        // Se estiver no INPUT, permite o Enter nativo (já tratado pelo onKeyDown do input)
+        // mas bloqueia se for apenas um caractere que já seria processado pelo input nativo
         return;
       }
 
