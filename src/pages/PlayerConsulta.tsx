@@ -15,6 +15,7 @@ import { useKioskMode } from "@/hooks/useKioskMode";
 import { PWAInstallModal } from "@/components/PWAInstallModal";
 import { DevShowcaseOverlay } from "@/components/DevShowcaseOverlay";
 import { DevicePersistenceService } from "@/services/DevicePersistenceService";
+import { extractImageColors } from "@/utils/extractImageColors";
 
 interface AppearanceConfig {
   show_device_name?: boolean;
