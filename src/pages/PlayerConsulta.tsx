@@ -58,7 +58,7 @@ interface ProductData {
   is_cached?: boolean;
 }
 
-const DEFAULT_PRODUCT_IMAGE = "https://qtbkvshbmqlszncxlcuc.supabase.co/storage/v1/object/public/dsl-uploads/kqrRuPz304ckV2bn5HmQpveeQQo1/21ac8a50-0789-4678-a545-452e2bbef889.png";
+const DEFAULT_PRODUCT_IMAGE = "https://qtbkvshbmqlszncxlcuc.supabase.co/storage/v1/object/public/dsl-uploads/kqrRuPz304ckV2bn5HmQpveeQQo1/821f6c4e-8d26-4bd2-90bd-a52929afc73e.png";
 const DEFAULT_VISUAL_COLORS = {
   cor_assinatura_produto: "#F36C21",
   fundo_legibilidade: "#003399",
