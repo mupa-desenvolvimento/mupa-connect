@@ -1085,8 +1085,11 @@ export default function PlayerConsulta() {
                 isVertical ? "flex-col" : "flex-row"
               )}>
                 <div className={cn(
-                  "flex items-center justify-center bg-slate-100 rounded-3xl overflow-hidden shadow-sm relative border border-slate-200",
-                  isVertical ? "h-2/5 w-full" : "w-1/2 h-full order-2"
+                  "flex items-center justify-center rounded-3xl overflow-hidden shadow-sm relative border",
+                  isVertical ? "h-2/5 w-full" : "w-1/2 h-full order-2",
+                  (!product.visual?.imagem_url || product.visual.imagem_url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png'))
+                    ? "bg-[#003399] border-white/10"
+                    : "bg-slate-100 border-slate-200"
                 )}>
                   {!imageError ? (
                     <img 
@@ -1095,15 +1098,13 @@ export default function PlayerConsulta() {
                       className="max-w-full max-h-full object-contain p-8 transition-opacity duration-300"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        const defaultFallback = "https://qtbkvshbmqlszncxlcuc.supabase.co/storage/v1/object/public/dsl-uploads/kqrRuPz304ckV2bn5HmQpveeQQo1/821f6c4e-8d26-4bd2-90bd-a52929afc73e.png";
+                        const defaultFallback = DEFAULT_PRODUCT_IMAGE;
                         
-                        // 1. Se falhou e não é o fallback final, tenta o fallback
                         if (target.src !== defaultFallback) {
                           target.src = fallbackImageUrl || defaultFallback;
                           return;
                         }
                         
-                        // 2. Se tudo falhou
                         setImageError(true);
                       }}
                     />
@@ -1112,7 +1113,7 @@ export default function PlayerConsulta() {
                   )}
                   <div 
                     className="absolute inset-0 -z-10 opacity-30 blur-[100px]"
-                    style={{ backgroundColor: product.visual?.cor_dominante_escuro || '#000' }}
+                    style={{ backgroundColor: product.visual?.cor_dominante_escuro || DEFAULT_VISUAL_COLORS.cor_dominante_escuro }}
                   />
                 </div>
 
@@ -1129,7 +1130,11 @@ export default function PlayerConsulta() {
                         ? "bg-white/10 text-white border-white/20" 
                         : "bg-slate-200 text-slate-700 border-slate-300"
                     )}>
-                      Código: {product.internal_id}
+                      Código: <span className={cn(
+                        (!product.visual?.imagem_url || product.visual.imagem_url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png'))
+                          ? "text-[#F36C21]"
+                          : "text-inherit"
+                      )}>{product.internal_id}</span>
                       {product.is_cached && (
                         <span className="ml-3 text-[10px] bg-slate-300 text-slate-800 px-2 py-0.5 rounded uppercase tracking-widest font-black">Modo Offline</span>
                       )}
@@ -1138,6 +1143,9 @@ export default function PlayerConsulta() {
                     <div className="space-y-2">
                       <h1 className="text-[clamp(2.5rem,8vw,6rem)] font-black leading-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
                         {getProductNameParts(product.description).main}
+                        {(!product.visual?.imagem_url || product.visual.imagem_url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png')) && (
+                          <span className="text-[#F36C21]">.</span>
+                        )}
                       </h1>
                       <p className={cn(
                         "text-[clamp(1.2rem,4vw,2.5rem)] font-bold leading-tight",
@@ -1164,6 +1172,8 @@ export default function PlayerConsulta() {
                                            validPrices.reduce((prev, curr) => prev.unit_pack < curr.unit_pack ? prev : curr);
                       
                       const promoPacks = validPrices.filter(p => p.unit_pack !== mainPriceItem.unit_pack);
+                      
+                      const isDefaultImage = (!product.visual?.imagem_url || product.visual.imagem_url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png'));
 
                       return (
                         <>
@@ -1171,20 +1181,30 @@ export default function PlayerConsulta() {
                             className="p-6 md:p-8 rounded-[30px] shadow-xl relative overflow-hidden flex flex-col justify-center"
                             style={{ 
                               backgroundColor: '#fff',
-                              border: `1px solid ${product.visual?.cor_dominante_claro || '#cbd5e1'}`,
+                              border: isDefaultImage ? '4px solid #F36C21' : `1px solid ${product.visual?.cor_dominante_claro || '#cbd5e1'}`,
                               boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)'
                             }}
                           >
-                            <span className="text-slate-600 text-sm md:text-xl font-black uppercase tracking-wider block mb-1">
+                            <span className={cn(
+                              "text-sm md:text-xl font-black uppercase tracking-wider block mb-1",
+                              isDefaultImage ? "text-[#F36C21]" : "text-slate-600"
+                            )}>
                               {mainPriceItem.unit_pack === 1 ? 'Unidade' : `Pack com ${mainPriceItem.unit_pack}`}
                             </span>
                             <div className="flex items-baseline gap-2">
-                              <span className="text-2xl md:text-4xl text-slate-500 font-black">R$</span>
+                              <span className={cn(
+                                "text-2xl md:text-4xl font-black",
+                                isDefaultImage ? "text-[#F36C21]" : "text-slate-500"
+                              )}>R$</span>
                               <span className="text-[clamp(3.5rem,10vw,8rem)] leading-none font-black text-slate-900" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
                                 {formatPrice(mainPriceItem.price_prom_pack && mainPriceItem.price_prom_pack > 0 ? mainPriceItem.price_prom_pack : mainPriceItem.price_pack).replace('R$', '').trim()}
                               </span>
                             </div>
-                            {/* Removida tag indisponível a pedido do usuário */}
+                            {isDefaultImage && (
+                              <div className="absolute top-0 right-0 w-16 h-16 bg-[#F36C21]/10 rounded-bl-full flex items-start justify-end p-3">
+                                <Package className="w-5 h-5 text-[#F36C21]" />
+                              </div>
+                            )}
                           </div>
 
                           {/* Preços de Atacado / Packs */}
