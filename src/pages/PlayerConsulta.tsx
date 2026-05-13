@@ -937,6 +937,19 @@ export default function PlayerConsulta() {
       };
 
       setProduct(finalProduct);
+      
+      localStorage.setItem(`product_manual_${cleanId}`, JSON.stringify({
+        data: finalProduct,
+        timestamp: Date.now()
+      }));
+      
+      // Also save by EAN if available to sync caches
+      if (data.ean) {
+        localStorage.setItem(`product_${data.ean}`, JSON.stringify({
+          data: finalProduct,
+          timestamp: Date.now()
+        }));
+      }
     } catch (err: any) {
       console.error("Erro na consulta manual:", err);
       setError("Produto não localizado. Por favor, valide a sequência digitada.");
