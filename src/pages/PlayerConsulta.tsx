@@ -1125,7 +1125,7 @@ export default function PlayerConsulta() {
                 <div className={cn(
                   "flex flex-col justify-between",
                   isVertical ? "h-3/5 w-full" : "w-1/2 h-full order-1",
-                  (!product.visual?.imagem_url || product.visual.imagem_url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png')) ? "text-white" : "text-slate-900"
+                  isDefaultImage(product.visual?.imagem_url) ? "text-white" : "text-slate-900"
                 )}>
                   <div className="space-y-6">
                     <div className={cn(
