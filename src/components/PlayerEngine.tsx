@@ -125,28 +125,60 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
   }, []);
 
   useEffect(() => {
+    const isFirstLoad = !bufferA && !bufferB;
     playlistRef.current = playlist;
-    if (playlist.length > 0 && !bufferA && !bufferB) {
-      const init = async () => {
-        const firstMedia = playlist[0];
-        console.log(`[PlayerEngine] [Playback] Initializing first media: ${firstMedia.name}`);
-        const firstUrl = await MediaCacheService.getBlobUrl(firstMedia.url);
-        setLocalUrlA(firstUrl);
-        setBufferA(firstMedia);
+    
+    if (playlist.length > 0) {
+      if (isFirstLoad) {
+        const init = async () => {
+          const firstMedia = playlist[0];
+          console.log(`[PlayerEngine] [Playback] Initializing first media: ${firstMedia.name}`);
+          const firstUrl = await MediaCacheService.getBlobUrl(firstMedia.url);
+          setLocalUrlA(firstUrl);
+          setBufferA(firstMedia);
 
-        if (playlist.length > 1) {
-          const secondMedia = playlist[1];
-          console.log(`[PlayerEngine] [Preload] Preparing second media: ${secondMedia.name}`);
-          const secondUrl = await MediaCacheService.getBlobUrl(secondMedia.url);
-          setLocalUrlB(secondUrl);
-          setBufferB(secondMedia);
-          visualPreload(secondMedia.url);
-        }
+          if (playlist.length > 1) {
+            const secondMedia = playlist[1];
+            console.log(`[PlayerEngine] [Preload] Preparing second media: ${secondMedia.name}`);
+            const secondUrl = await MediaCacheService.getBlobUrl(secondMedia.url);
+            setLocalUrlB(secondUrl);
+            setBufferB(secondMedia);
+            visualPreload(secondMedia.url);
+          }
+          
+          currentIndexRef.current = 0;
+          nextIndexRef.current = playlist.length > 1 ? 1 : 0;
+        };
+        init();
+      } else {
+        // Playlist updated while playing
+        console.log(`[PlayerEngine] [Update] Playlist updated, new length: ${playlist.length}`);
         
-        currentIndexRef.current = 0;
-        nextIndexRef.current = playlist.length > 1 ? 1 : 0;
-      };
-      init();
+        // Ensure indices are within bounds of new playlist
+        if (currentIndexRef.current >= playlist.length) {
+          currentIndexRef.current = 0;
+        }
+        nextIndexRef.current = getNextIndex(currentIndexRef.current);
+
+        // Update the INACTIVE buffer with the next item from the NEW playlist
+        const updateInactiveBuffer = async () => {
+          const nextIndex = nextIndexRef.current;
+          const nextMedia = playlist[nextIndex];
+          if (!nextMedia) return;
+          
+          console.log(`[PlayerEngine] [Update] Buffering next item from new playlist: ${nextMedia.name}`);
+          const nextUrl = await MediaCacheService.getBlobUrl(nextMedia.url);
+          
+          if (activeBuffer === "A") {
+            setLocalUrlB(nextUrl);
+            setBufferB(nextMedia);
+          } else {
+            setLocalUrlA(nextUrl);
+            setBufferA(nextMedia);
+          }
+        };
+        updateInactiveBuffer();
+      }
     }
   }, [playlist, visualPreload]);
 
