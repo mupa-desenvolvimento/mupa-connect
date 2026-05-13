@@ -932,12 +932,13 @@ export default function PlayerConsulta() {
   useEffect(() => {
     const handleGlobalKey = (e: KeyboardEvent) => {
       // Se já estiver consultando, ignora novas teclas para evitar buffer sujo
-      if (isConsulting) {
-        // Opcional: e.preventDefault() aqui se quisermos bloquear totalmente
-        return;
-      }
+      if (isConsulting) return;
 
       const target = e.target as HTMLElement | null;
+      // Se o foco estiver no inputRef, deixa o browser/input lidar naturalmente com o Enter/Submit
+      if (target === inputRef.current) return;
+      
+      // Bloqueia outras interações se for em outros inputs
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
         return;
       }
@@ -947,14 +948,12 @@ export default function PlayerConsulta() {
         scanBufferRef.current = "";
       }
       
-      // Se for Enter, processa a consulta
+      // Se for Enter, processa a consulta (Captura global para quando o foco não está no input)
       if (e.key === "Enter") {
-        const code = (scanBufferRef.current || inputRef.current?.value || "").trim();
+        const code = (scanBufferRef.current || "").trim();
         if (code) {
-          console.log("[Scanner] Enter detectado. Valor:", code);
-          // Limpa o input IMEDIATAMENTE para evitar que a próxima leitura pegue restos
+          console.log("[Scanner] Enter detectado (Global). Valor:", code);
           scanBufferRef.current = "";
-          if (inputRef.current) inputRef.current.value = "";
           handleConsult(code);
         }
         return;
@@ -963,18 +962,16 @@ export default function PlayerConsulta() {
       if (e.key === "Backspace") {
         scanBufferRef.current = scanBufferRef.current.slice(0, -1);
         lastKeyTimeRef.current = now;
-        if (inputRef.current) inputRef.current.value = scanBufferRef.current;
         return;
       }
 
       if (/^[0-9]$/.test(e.key)) {
         scanBufferRef.current += e.key;
         lastKeyTimeRef.current = now;
-        if (inputRef.current) inputRef.current.value = scanBufferRef.current;
       }
     };
 
-    window.addEventListener("keydown", handleGlobalKey, true); // Use capture to intercept before other handlers
+    window.addEventListener("keydown", handleGlobalKey, true);
 
     return () => {
       window.removeEventListener("keydown", handleGlobalKey, true);
@@ -1566,13 +1563,26 @@ export default function PlayerConsulta() {
             <div className="p-3 text-primary/80">
               <Barcode className="w-5 h-5" />
             </div>
-            <Input 
-              ref={inputRef}
-              className="w-64 md:w-80 bg-transparent border-none text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0 text-lg font-mono tracking-widest font-bold"
-              placeholder="AGUARDANDO LEITURA..."
-              autoFocus
-              autoComplete="off"
-            />
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                const code = inputRef.current?.value.trim();
+                if (code) {
+                  console.log("[Scanner] Form Submit (Enter). Valor:", code);
+                  if (inputRef.current) inputRef.current.value = "";
+                  handleConsult(code);
+                }
+              }}
+            >
+              <Input 
+                ref={inputRef}
+                className="w-64 md:w-80 bg-transparent border-none text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0 text-lg font-mono tracking-widest font-bold"
+                placeholder="AGUARDANDO LEITURA..."
+                autoFocus
+                autoComplete="off"
+                inputMode="none"
+              />
+            </form>
           </div>
         </div>
       </div>
