@@ -361,7 +361,7 @@ export default function PlayerConsulta() {
 
   const activePlaylist = useMemo(() => ScheduleResolver.getActivePlaylist(manifest), [manifest]);
 
-  // CANAL DE COMANDOS REMOTOS
+  // CANAL DE COMANDOS REMOTOS (Supabase Realtime)
   const { lastCommand } = useDeviceCommandChannel(isPreview ? undefined : deviceUuid, {
     reloadPlaylist: async () => {
       if (deviceCode) {
@@ -373,7 +373,7 @@ export default function PlayerConsulta() {
       }
     },
     clearCache: async () => {
-      console.log("[PlayerConsulta] Comando clear_cache recebido");
+      console.log("[PlayerConsulta] Comando clear_cache recebido via Supabase");
       if ('caches' in window) {
         const keys = await caches.keys();
         await Promise.all(keys.map(key => caches.delete(key)));
@@ -383,7 +383,7 @@ export default function PlayerConsulta() {
       setShowOverlay(false);
     },
     resetApp: async () => {
-      console.log("[PlayerConsulta] Comando reset_app recebido");
+      console.log("[PlayerConsulta] Comando reset_app recebido via Supabase");
       if ('caches' in window) {
         const keys = await caches.keys();
         await Promise.all(keys.map(key => caches.delete(key)));
@@ -398,6 +398,46 @@ export default function PlayerConsulta() {
     companyId: deviceInfo?.company_id,
     serial: deviceInfo?.serial || deviceCode,
   });
+
+  // COMANDOS REMOTOS (Firebase Realtime)
+  useEffect(() => {
+    if (!deviceCode || isPreview) return;
+
+    const unsubscribe = FirebaseRealtimeService.subscribeToCommands(deviceCode, (payload) => {
+      if (payload.comando) {
+        console.log("[PlayerConsulta] Comando recebido via Firebase:", payload.comando);
+        
+        // Se for comando de reset ou clear_cache, tratamos aqui também
+        if (payload.comando === "reset_app" || payload.comando === "reset") {
+          if ('caches' in window) {
+            caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key))));
+          }
+          window.location.reload();
+        } else if (payload.comando === "clear_cache") {
+          if ('caches' in window) {
+            caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key))));
+          }
+          setProduct(null);
+          setLastConsultedEan(null);
+          setShowOverlay(false);
+        } else if (payload.comando === "reload" || payload.comando === "reboot") {
+          window.location.reload();
+        }
+
+        // Envia diretamente para o Android Bridge se disponível
+        const win = (window as any);
+        if (win.sendCommandToAndroid) {
+          win.sendCommandToAndroid(payload.comando, payload.payload || {}, {
+            deviceId: deviceInfo?.id,
+            tenantId: deviceInfo?.tenant_id,
+            companyId: deviceInfo?.company_id
+          });
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [deviceCode, deviceInfo]);
 
   // Face Detection with Face-API
   useEffect(() => {
