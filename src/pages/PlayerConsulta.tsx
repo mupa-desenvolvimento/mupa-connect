@@ -1160,8 +1160,15 @@ export default function PlayerConsulta() {
                       transition={{ delay: 0.2 }}
                       className="flex items-center gap-4"
                     >
-                      <div className="px-6 py-2 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md text-white/70 font-mono text-xl tracking-[0.2em]">
-                        EAN: <span className="text-white font-black">{product.internal_id}</span>
+                      <div 
+                        className="px-6 py-2 rounded-2xl border backdrop-blur-md font-mono text-xl tracking-[0.2em]"
+                        style={{
+                          backgroundColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                          borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
+                          color: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)',
+                        }}
+                      >
+                        EAN: <span style={{ color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#000000', fontWeight: 900 }}>{product.internal_id}</span>
                       </div>
                       {product.is_cached && (
                         <div className="px-4 py-2 rounded-2xl bg-orange-500 text-white text-xs font-black uppercase tracking-widest">
