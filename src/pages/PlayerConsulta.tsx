@@ -62,7 +62,11 @@ const DEFAULT_PRODUCT_IMAGE = "https://qtbkvshbmqlszncxlcuc.supabase.co/storage/
 
 const ensureSafeImageUrl = (url: string | null | undefined) => {
   if (!url) return null;
+  // Se já estiver usando o proxy ou não for do mupa, não faz nada
+  if (url.includes('wsrv.nl')) return url;
+  
   if (url.includes('srv-mupa.ddns.net')) {
+    // Força http para evitar o erro de SSL no servidor de origem
     const cleanUrl = url.replace('https://', 'http://');
     return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}`;
   }
