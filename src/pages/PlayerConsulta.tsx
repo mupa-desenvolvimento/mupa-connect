@@ -181,7 +181,15 @@ export default function PlayerConsulta() {
 
   useEffect(() => {
     setImageError(false);
-  }, [product]);
+    // Preload basic images
+    const preload = [DEFAULT_PRODUCT_IMAGE];
+    if (fallbackImageUrl) preload.push(fallbackImageUrl);
+    
+    preload.forEach(url => {
+      const img = new Image();
+      img.src = url;
+    });
+  }, [product, fallbackImageUrl]);
 
   useEffect(() => {
 
