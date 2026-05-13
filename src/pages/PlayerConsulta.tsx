@@ -1479,7 +1479,7 @@ export default function PlayerConsulta() {
                           {/* Preços de Atacado / Packs */}
                           {promoPacks.length > 0 && (
                             <div className={cn(
-                              "grid gap-4",
+                              "grid gap-8",
                               promoPacks.length > 1 ? "grid-cols-2" : "grid-cols-1"
                             )}>
                               {promoPacks.slice(0, 2).map((price, idx) => {
