@@ -21,11 +21,15 @@ export const extractColorsFromImage = async (imageUrl: string): Promise<Extracte
     const vibrant = palette.Vibrant?.hex || '#F36C21';
     const darkVibrant = palette.DarkVibrant?.hex || '#003399';
     const lightVibrant = palette.LightVibrant?.hex || '#FFFFFF';
+    const darkMuted = palette.DarkMuted?.hex || '#333333';
     const muted = palette.Muted?.hex || '#666666';
+
+    // Fundo legibilidade deve ser uma cor escura vinda da imagem para garantir contraste com textos claros
+    const fundoLegibilidade = palette.DarkVibrant?.hex || palette.DarkMuted?.hex || '#003399';
 
     return {
       cor_assinatura_produto: vibrant,
-      fundo_legibilidade: darkVibrant,
+      fundo_legibilidade: fundoLegibilidade,
       cor_dominante_claro: lightVibrant,
       cor_dominante_escuro: darkVibrant,
     };
