@@ -1191,25 +1191,38 @@ export default function PlayerConsulta() {
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.1, duration: 0.5 }}
                   className={cn(
-                    "relative flex items-center justify-center rounded-[48px] shadow-2xl overflow-hidden border border-white/10 group",
-                    isVertical ? "h-[42%] w-full" : "w-[42%] h-full"
+                    "relative flex items-center justify-center rounded-[64px] group overflow-visible",
+                    isVertical ? "h-[40%] w-full" : "w-[40%] h-full"
                   )}
-                  style={{ 
-                    background: isDefaultImage(product.visual?.imagem_url)
-                      ? `linear-gradient(135deg, ${product.visual?.cor_dominante_escuro || '#003399'} 0%, ${product.visual?.cor_dominante_claro || '#001f5c'} 100%)`
-                      : '#FFFFFF',
-                  }}
                 >
-                  {/* Glow de fundo */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent pointer-events-none" />
-                  
-                  <OptimizedProductImage 
-                    src={product.visual?.imagem_url || (product.ean ? MUPA_STATIC_IMAGE(product.ean) : DEFAULT_PRODUCT_IMAGE)}
-                    fallback={fallbackImageUrl || DEFAULT_PRODUCT_IMAGE}
-                    ean={product.ean}
-                    alt={product.description}
-                    isDefaultImage={isDefaultImage(product.visual?.imagem_url)}
-                  />
+                  {/* Container da Imagem com Visual Enterprise */}
+                  <div 
+                    className="relative w-full h-full flex items-center justify-center rounded-[64px] border border-white/10 overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)]"
+                    style={{ 
+                      background: isDefaultImage(product.visual?.imagem_url)
+                        ? `linear-gradient(135deg, ${product.visual?.cor_dominante_escuro || '#003399'} 0%, ${product.visual?.cor_dominante_claro || '#001f5c'} 100%)`
+                        : `linear-gradient(145deg, #FFFFFF 0%, ${product.visual?.cor_dominante_claro || '#F8F9FA'} 100%)`,
+                    }}
+                  >
+                    {/* Glow interno leve */}
+                    <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent pointer-events-none" />
+                    
+                    <OptimizedProductImage 
+                      src={product.visual?.imagem_url || (product.ean ? MUPA_STATIC_IMAGE(product.ean) : DEFAULT_PRODUCT_IMAGE)}
+                      fallback={fallbackImageUrl || DEFAULT_PRODUCT_IMAGE}
+                      ean={product.ean}
+                      alt={product.description}
+                      isDefaultImage={isDefaultImage(product.visual?.imagem_url)}
+                    />
+                  </div>
+
+                  {/* Sombra de profundidade externa */}
+                  {!isDefaultImage(product.visual?.imagem_url) && (
+                    <div 
+                      className="absolute -inset-4 blur-3xl opacity-20 -z-10 rounded-full"
+                      style={{ backgroundColor: product.visual?.cor_dominante_escuro }}
+                    />
+                  )}
                 </motion.div>
 
                 {/* CONTEÚDO DO PRODUTO */}
