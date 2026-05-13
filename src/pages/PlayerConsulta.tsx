@@ -948,7 +948,7 @@ export default function PlayerConsulta() {
         <div className="flex items-start justify-between w-full">
           {/* Device Info */}
           {(appearance.show_device_name !== false && !isPreview) && (
-            <div className="flex items-center gap-3 animate-fade-in bg-white/60 backdrop-blur-md p-3 rounded-xl border border-slate-200 shadow-sm">
+            <div className="flex items-center gap-3 animate-fade-in bg-white/60 backdrop-blur-md p-3 rounded-xl border border-slate-200 shadow-sm opacity-0">
               <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary to-blue-600 grid place-items-center font-bold text-white shadow-lg shadow-primary/20">M</div>
               <div className="leading-tight text-slate-900">
                 <div className="font-bold text-lg tracking-tight">
@@ -965,7 +965,7 @@ export default function PlayerConsulta() {
           {(appearance.show_datetime !== false && !isPreview) && (
             <div 
               onClick={handleHiddenShortcut}
-              className="text-right animate-fade-in bg-white/60 backdrop-blur-md p-3 rounded-xl border border-slate-200 text-slate-900 pointer-events-auto cursor-pointer active:scale-95 transition-transform shadow-sm"
+              className="text-right animate-fade-in bg-white/60 backdrop-blur-md p-3 rounded-xl border border-slate-200 text-slate-900 pointer-events-auto cursor-pointer active:scale-95 transition-transform shadow-sm opacity-0"
             >
               <div className="font-bold text-3xl tabular-nums tracking-tighter">
                 {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
@@ -1011,7 +1011,7 @@ export default function PlayerConsulta() {
           {/* Configurable Footer */}
           {appearance.footer?.enabled && (
             <div 
-              className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center justify-center px-8 py-3 rounded-2xl backdrop-blur-md shadow-2xl border border-white/5 animate-fade-in max-w-[90%] pointer-events-none"
+              className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center justify-center px-8 py-3 rounded-2xl backdrop-blur-md shadow-2xl border border-white/5 animate-fade-in max-w-[90%] pointer-events-none opacity-0"
               style={{ 
                 backgroundColor: appearance.footer.background_color || "rgba(0, 0, 0, 0.6)",
                 color: appearance.footer.text_color || "#fff",
