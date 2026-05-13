@@ -1311,10 +1311,10 @@ export default function PlayerConsulta() {
                                 return (
                                   <div 
                                     key={`pack-${idx}`}
-                                    className="p-6 rounded-[30px] border backdrop-blur-md relative overflow-hidden group"
+                                    className="p-8 rounded-[36px] border backdrop-blur-xl relative overflow-hidden group min-h-[140px] flex flex-col justify-center"
                                     style={{
-                                      backgroundColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-                                      borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                                      backgroundColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                                      borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
                                     }}
                                   >
                                     <div className="flex justify-end items-start mb-3">
