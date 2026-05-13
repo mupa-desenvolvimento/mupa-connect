@@ -1121,31 +1121,13 @@ export default function PlayerConsulta() {
                   {/* Glow de fundo */}
                   <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent pointer-events-none" />
                   
-                  <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: 0.3, type: "spring", stiffness: 100 }}
-                    className="relative z-10 w-full h-full flex items-center justify-center p-12"
-                  >
-                    {!imageError ? (
-                      <img 
-                        src={product.visual?.imagem_url || (product.ean ? MUPA_STATIC_IMAGE(product.ean) : DEFAULT_PRODUCT_IMAGE)}
-                        alt={product.description}
-                        className="max-w-full max-h-full object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          const defaultFallback = DEFAULT_PRODUCT_IMAGE;
-                          if (target.src !== defaultFallback) {
-                            target.src = fallbackImageUrl || defaultFallback;
-                            return;
-                          }
-                          setImageError(true);
-                        }}
-                      />
-                    ) : (
-                      <Package className="w-48 h-48 text-white/10" />
-                    )}
-                  </motion.div>
+                  <OptimizedProductImage 
+                    src={product.visual?.imagem_url || (product.ean ? MUPA_STATIC_IMAGE(product.ean) : DEFAULT_PRODUCT_IMAGE)}
+                    fallback={fallbackImageUrl || DEFAULT_PRODUCT_IMAGE}
+                    ean={product.ean}
+                    alt={product.description}
+                    isDefaultImage={isDefaultImage(product.visual?.imagem_url)}
+                  />
                 </motion.div>
 
                 {/* CONTEÚDO DO PRODUTO */}
