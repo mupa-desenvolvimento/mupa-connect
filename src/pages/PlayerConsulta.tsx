@@ -1064,7 +1064,9 @@ export default function PlayerConsulta() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 lg:p-12"
             style={{ 
-              backgroundColor: product?.visual?.fundo_legibilidade ? `${product.visual.fundo_legibilidade}F8` : 'rgba(0,51,153,0.98)',
+              backgroundColor: isDefaultImage(product?.visual?.imagem_url)
+                ? (product?.visual?.fundo_legibilidade ? `${product.visual.fundo_legibilidade}F8` : 'rgba(0,51,153,0.98)')
+                : (product?.visual?.fundo_legibilidade || 'rgba(255, 255, 255, 0.98)'),
               backdropFilter: 'blur(20px)'
             }}
           >
@@ -1110,7 +1112,9 @@ export default function PlayerConsulta() {
                     isVertical ? "h-[45%] w-full" : "w-[45%] h-full"
                   )}
                   style={{ 
-                    background: `linear-gradient(135deg, ${product.visual?.cor_dominante_escuro || '#003399'} 0%, #001f5c 100%)`,
+                    background: isDefaultImage(product.visual?.imagem_url)
+                      ? `linear-gradient(135deg, ${product.visual?.cor_dominante_escuro || '#003399'} 0%, #001f5c 100%)`
+                      : '#FFFFFF',
                   }}
                 >
                   {/* Glow de fundo */}
@@ -1156,8 +1160,15 @@ export default function PlayerConsulta() {
                       transition={{ delay: 0.2 }}
                       className="flex items-center gap-4"
                     >
-                      <div className="px-6 py-2 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md text-white/70 font-mono text-xl tracking-[0.2em]">
-                        EAN: <span className="text-white font-black">{product.internal_id}</span>
+                      <div 
+                        className="px-6 py-2 rounded-2xl border backdrop-blur-md font-mono text-xl tracking-[0.2em]"
+                        style={{
+                          backgroundColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                          borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
+                          color: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)',
+                        }}
+                      >
+                        EAN: <span style={{ color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#000000', fontWeight: 900 }}>{product.internal_id}</span>
                       </div>
                       {product.is_cached && (
                         <div className="px-4 py-2 rounded-2xl bg-orange-500 text-white text-xs font-black uppercase tracking-widest">
@@ -1173,8 +1184,8 @@ export default function PlayerConsulta() {
                       transition={{ delay: 0.4 }}
                       className="rounded-[30px] p-8 shadow-2xl relative overflow-hidden"
                       style={{ 
-                        backgroundColor: '#F36C21',
-                        color: getContrastColor('#F36C21')
+                        backgroundColor: product.visual?.cor_assinatura_produto || '#F36C21',
+                        color: getContrastColor(product.visual?.cor_assinatura_produto || '#F36C21')
                       }}
                     >
                       <div className="relative z-10 space-y-2">
@@ -1223,24 +1234,47 @@ export default function PlayerConsulta() {
                               ] 
                             }}
                             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                            className="p-10 md:p-12 rounded-[40px] relative overflow-hidden border border-white/20 backdrop-blur-2xl flex flex-col items-center justify-center min-h-[220px]"
+                            className="p-10 md:p-12 rounded-[40px] relative overflow-hidden border backdrop-blur-2xl flex flex-col items-center justify-center min-h-[220px]"
                             style={{ 
-                              background: `linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)`,
+                              background: isDefaultImage(product.visual?.imagem_url)
+                                ? 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)'
+                                : 'linear-gradient(180deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.08) 100%)',
+                              borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
                             }}
                           >
-                            <span className="text-xl md:text-2xl font-black uppercase tracking-[0.4em] text-white/50 mb-4">
+                            <span 
+                              className="text-xl md:text-2xl font-black uppercase tracking-[0.4em] mb-4"
+                              style={{ color: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)' }}
+                            >
                               {mainPriceItem.unit_pack === 1 ? 'VALOR UNITÁRIO' : `PACK COM ${mainPriceItem.unit_pack}`}
                             </span>
                             
                             <div className="flex items-start gap-4">
-                              <span className="text-4xl md:text-5xl font-black text-[#F36C21] mt-4">R$</span>
-                              <span className="text-[clamp(6rem,15vw,12rem)] leading-[0.8] font-black text-white tracking-tighter" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+                              <span 
+                                className="text-4xl md:text-5xl font-black mt-4"
+                                style={{ color: product.visual?.cor_assinatura_produto || '#F36C21' }}
+                              >
+                                R$
+                              </span>
+                              <span 
+                                className="text-[clamp(6rem,15vw,12rem)] leading-[0.8] font-black tracking-tighter" 
+                                style={{ 
+                                  fontFamily: 'Bebas Neue, sans-serif',
+                                  color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#000000'
+                                }}
+                              >
                                 {formatPrice(mainFinalPrice).replace('R$', '').trim()}
                               </span>
                             </div>
                             
                             {/* Glow lateral */}
-                            <div className="absolute left-0 top-0 bottom-0 w-2 bg-[#F36C21] shadow-[0_0_30px_#F36C21]" />
+                            <div 
+                              className="absolute left-0 top-0 bottom-0 w-2 shadow-[0_0_30px]" 
+                              style={{ 
+                                backgroundColor: product.visual?.cor_assinatura_produto || '#F36C21',
+                                boxShadow: `0 0 30px ${product.visual?.cor_assinatura_produto || '#F36C21'}`
+                              }} 
+                            />
                           </motion.div>
 
                           {/* Preços de Atacado / Packs */}
@@ -1262,27 +1296,61 @@ export default function PlayerConsulta() {
                                 return (
                                   <div 
                                     key={`pack-${idx}`}
-                                    className="p-6 rounded-[30px] bg-white/5 border border-white/10 backdrop-blur-md relative overflow-hidden group"
+                                    className="p-6 rounded-[30px] border backdrop-blur-md relative overflow-hidden group"
+                                    style={{
+                                      backgroundColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                                      borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                                    }}
                                   >
                                     <div className="flex justify-between items-start mb-3">
-                                      <span className="text-white/40 text-sm font-black tracking-widest uppercase">
+                                      <span 
+                                        className="text-sm font-black tracking-widest uppercase"
+                                        style={{ color: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' }}
+                                      >
                                         {label}
                                       </span>
                                       {economyPercent > 0 && (
-                                        <span className="bg-[#F36C21] text-white text-[10px] font-black px-3 py-1 rounded-full">
+                                        <span 
+                                          className="text-white text-[10px] font-black px-3 py-1 rounded-full"
+                                          style={{ backgroundColor: product.visual?.cor_assinatura_produto || '#F36C21' }}
+                                        >
                                           -{economyPercent}%
                                         </span>
                                       )}
                                     </div>
                                     <div className="flex items-baseline gap-2">
-                                      <span className="text-xl text-[#F36C21] font-black">R$</span>
-                                      <span className="text-4xl md:text-5xl font-black text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+                                      <span 
+                                        className="text-xl font-black"
+                                        style={{ color: product.visual?.cor_assinatura_produto || '#F36C21' }}
+                                      >
+                                        R$
+                                      </span>
+                                      <span 
+                                        className="text-4xl md:text-5xl font-black" 
+                                        style={{ 
+                                          fontFamily: 'Bebas Neue, sans-serif',
+                                          color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#000000'
+                                        }}
+                                      >
                                         {formatPrice(finalPrice).replace('R$', '').trim()}
                                       </span>
                                     </div>
-                                    <div className="mt-3 pt-3 border-t border-white/5 flex justify-between items-center">
-                                      <span className="text-white/30 text-xs font-bold uppercase tracking-tighter">Unitário:</span>
-                                      <span className="text-[#F36C21] text-lg font-black">{formatPrice(currentUnitPrice)}</span>
+                                    <div 
+                                      className="mt-3 pt-3 border-t flex justify-between items-center"
+                                      style={{ borderTopColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}
+                                    >
+                                      <span 
+                                        className="text-xs font-bold uppercase tracking-tighter"
+                                        style={{ color: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' }}
+                                      >
+                                        Unitário:
+                                      </span>
+                                      <span 
+                                        className="text-lg font-black"
+                                        style={{ color: product.visual?.cor_assinatura_produto || '#F36C21' }}
+                                      >
+                                        {formatPrice(currentUnitPrice)}
+                                      </span>
                                     </div>
                                   </div>
                                 );
