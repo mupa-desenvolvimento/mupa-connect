@@ -58,7 +58,7 @@ interface ProductData {
   is_cached?: boolean;
 }
 
-const DEFAULT_PRODUCT_IMAGE = "https://qtbkvshbmqlszncxlcuc.supabase.co/storage/v1/object/public/dsl-uploads/kqrRuPz304ckV2bn5HmQpveeQQo1/821f6c4e-8d26-4bd2-90bd-a52929afc73e.png";
+const DEFAULT_PRODUCT_IMAGE = "https://qtbkvshbmqlszncxlcuc.supabase.co/storage/v1/object/public/dsl-uploads/kqrRuPz304ckV2bn5HmQpveeQQo1/21ac8a50-0789-4678-a545-452e2bbef889.png";
 const DEFAULT_VISUAL_COLORS = {
   cor_assinatura_produto: "#F36C21",
   fundo_legibilidade: "#003399",
@@ -66,9 +66,23 @@ const DEFAULT_VISUAL_COLORS = {
   cor_dominante_escuro: "#003399"
 };
 
+const getLuminance = (hex: string) => {
+  const rgb = hex.startsWith('#') ? hex.slice(1) : hex;
+  if (rgb.length !== 6) return 0.5;
+  const r = parseInt(rgb.substring(0, 2), 16) / 255;
+  const g = parseInt(rgb.substring(2, 4), 16) / 255;
+  const b = parseInt(rgb.substring(4, 6), 16) / 255;
+  const a = [r, g, b].map(v => v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+  return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+};
+
+const getContrastColor = (hex: string) => {
+  return getLuminance(hex) > 0.5 ? "#000000" : "#FFFFFF";
+};
+
 const isDefaultImage = (url: string | null | undefined) => {
   if (!url) return true;
-  return url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png');
+  return url.includes('21ac8a50-0789-4678-a545-452e2bbef889.png') || url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png');
 };
 
 const ensureSafeImageUrl = (url: string | null | undefined) => {
@@ -1045,236 +1059,246 @@ export default function PlayerConsulta() {
       <AnimatePresence>
         {showOverlay && (
           <motion.div 
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-6 md:p-12"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 lg:p-12"
             style={{ 
-              backgroundColor: product?.visual?.fundo_legibilidade ? `${product.visual.fundo_legibilidade}F2` : 'rgba(255,255,255,0.96)',
-              backdropFilter: 'blur(15px)'
+              backgroundColor: product?.visual?.fundo_legibilidade ? `${product.visual.fundo_legibilidade}F8` : 'rgba(0,51,153,0.98)',
+              backdropFilter: 'blur(20px)'
             }}
           >
             {isConsulting ? (
-              <div className="flex flex-col items-center gap-6 text-slate-900">
-                <Loader2 className="h-16 w-16 animate-spin text-primary" />
-                <h2 className="text-[clamp(1.5rem,5vw,3rem)] font-bold">Consultando produto...</h2>
-                <button 
-                  onClick={() => {
-                    setShowOverlay(false);
-                    setIsConsulting(false);
-                  }}
-                  className="mt-4 px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full text-sm uppercase tracking-widest transition-all font-semibold"
-                >
-                  Cancelar
-                </button>
+              <div className="flex flex-col items-center gap-8 text-white">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full animate-pulse" />
+                  <Loader2 className="h-24 w-24 animate-spin text-primary relative z-10" />
+                </div>
+                <h2 className="text-[clamp(2rem,5vw,4rem)] font-black tracking-tight animate-pulse">PROCESSANDO...</h2>
               </div>
             ) : error ? (
-              <div className="flex flex-col items-center gap-6 text-center max-w-lg text-slate-900">
-                <AlertCircle className="h-[clamp(4rem,10vw,6rem)] w-[clamp(4rem,10vw,6rem)] text-red-500" />
-                <h2 className="text-[clamp(2rem,6vw,4rem)] font-bold">Atenção</h2>
-                <p className="text-[clamp(1.2rem,4vw,2.5rem)] text-slate-600 leading-tight">{error}</p>
-                {lastConsultedEan && (
-                  <p className="text-[clamp(0.8rem,2vw,1.2rem)] text-slate-400 font-mono mt-2">EAN: {lastConsultedEan}</p>
-                )}
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="flex flex-col items-center gap-8 text-center max-w-2xl text-white"
+              >
+                <div className="relative">
+                  <div className="absolute inset-0 bg-red-500/20 blur-3xl rounded-full" />
+                  <AlertCircle className="h-32 w-32 text-red-500 relative z-10" />
+                </div>
+                <h2 className="text-[clamp(2.5rem,6vw,5rem)] font-black leading-none">OPS!</h2>
+                <p className="text-[clamp(1.5rem,4vw,2.5rem)] text-white/80 leading-tight font-medium">{error}</p>
                 <button 
                   onClick={() => setShowOverlay(false)}
-                  className="mt-8 px-8 py-3 md:px-12 md:py-4 bg-primary text-white rounded-full text-[clamp(1rem,3vw,1.5rem)] transition-all font-bold shadow-lg shadow-primary/20"
+                  className="mt-8 px-12 py-5 bg-white text-primary rounded-2xl text-2xl transition-all font-black shadow-2xl hover:scale-105 active:scale-95"
                 >
-                  Tentar outro código
+                  TENTAR NOVAMENTE
                 </button>
-              </div>
+              </motion.div>
             ) : product && (
               <div className={cn(
-                "w-full h-full flex gap-6 md:gap-12",
-                isVertical ? "flex-col" : "flex-row"
+                "w-full h-full flex gap-8 md:gap-16",
+                isVertical ? "flex-col" : "flex-row items-stretch"
               )}>
-                <div className={cn(
-                  "flex items-center justify-center rounded-3xl overflow-hidden shadow-sm relative border",
-                  isVertical ? "h-2/5 w-full" : "w-1/2 h-full order-2",
-                  isDefaultImage(product.visual?.imagem_url)
-                    ? "bg-[#003399] border-white/10"
-                    : "bg-slate-100 border-slate-200"
-                )}>
-                  {!imageError ? (
-                    <img 
-                      src={product.visual?.imagem_url || (product.ean ? MUPA_STATIC_IMAGE(product.ean) : DEFAULT_PRODUCT_IMAGE)}
-                      alt={product.description}
-                      className="max-w-full max-h-full object-contain p-8 transition-opacity duration-300"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        const defaultFallback = DEFAULT_PRODUCT_IMAGE;
-                        
-                        if (target.src !== defaultFallback) {
-                          target.src = fallbackImageUrl || defaultFallback;
-                          return;
-                        }
-                        
-                        setImageError(true);
-                      }}
-                    />
-                  ) : (
-                    <Package className="w-48 h-48 text-white/20" />
+                {/* CONTAINER DA IMAGEM */}
+                <motion.div 
+                  initial={{ x: -50, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.1, duration: 0.5 }}
+                  className={cn(
+                    "relative flex items-center justify-center rounded-[40px] shadow-2xl overflow-hidden border border-white/10 group",
+                    isVertical ? "h-[45%] w-full" : "w-[45%] h-full"
                   )}
-                  <div 
-                    className="absolute inset-0 -z-10 opacity-30 blur-[100px]"
-                    style={{ backgroundColor: product.visual?.cor_dominante_escuro || DEFAULT_VISUAL_COLORS.cor_dominante_escuro }}
-                  />
-                </div>
+                  style={{ 
+                    background: `linear-gradient(135deg, ${product.visual?.cor_dominante_escuro || '#003399'} 0%, #001f5c 100%)`,
+                  }}
+                >
+                  {/* Glow de fundo */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent pointer-events-none" />
+                  
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.3, type: "spring", stiffness: 100 }}
+                    className="relative z-10 w-full h-full flex items-center justify-center p-12"
+                  >
+                    {!imageError ? (
+                      <img 
+                        src={product.visual?.imagem_url || (product.ean ? MUPA_STATIC_IMAGE(product.ean) : DEFAULT_PRODUCT_IMAGE)}
+                        alt={product.description}
+                        className="max-w-full max-h-full object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          const defaultFallback = DEFAULT_PRODUCT_IMAGE;
+                          if (target.src !== defaultFallback) {
+                            target.src = fallbackImageUrl || defaultFallback;
+                            return;
+                          }
+                          setImageError(true);
+                        }}
+                      />
+                    ) : (
+                      <Package className="w-48 h-48 text-white/10" />
+                    )}
+                  </motion.div>
+                </motion.div>
 
-
+                {/* CONTEÚDO DO PRODUTO */}
                 <div className={cn(
-                  "flex flex-col justify-between",
-                  isVertical ? "h-3/5 w-full" : "w-1/2 h-full order-1",
-                  isDefaultImage(product.visual?.imagem_url) ? "text-white" : "text-slate-900"
+                  "flex flex-col justify-between py-4",
+                  isVertical ? "h-[55%] w-full" : "w-[55%] h-full"
                 )}>
-                  <div className="space-y-6">
-                    <div className={cn(
-                      "inline-block px-4 py-1.5 md:px-6 md:py-2 rounded-full text-base md:text-xl font-bold border",
-                      isDefaultImage(product.visual?.imagem_url) 
-                        ? "bg-white/10 text-white border-white/20" 
-                        : "bg-slate-200 text-slate-700 border-slate-300"
-                    )}>
-                      Código: <span className={cn(
-                        isDefaultImage(product.visual?.imagem_url)
-                          ? "text-[#F36C21]"
-                          : "text-inherit"
-                      )}>{product.internal_id}</span>
+                  <div className="space-y-8">
+                    {/* Código e Tag */}
+                    <motion.div 
+                      initial={{ y: -20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.2 }}
+                      className="flex items-center gap-4"
+                    >
+                      <div className="px-6 py-2 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md text-white/70 font-mono text-xl tracking-[0.2em]">
+                        EAN: <span className="text-white font-black">{product.internal_id}</span>
+                      </div>
                       {product.is_cached && (
-                        <span className="ml-3 text-[10px] bg-slate-300 text-slate-800 px-2 py-0.5 rounded uppercase tracking-widest font-black">Modo Offline</span>
+                        <div className="px-4 py-2 rounded-2xl bg-orange-500 text-white text-xs font-black uppercase tracking-widest">
+                          MODO OFFLINE
+                        </div>
                       )}
-                    </div>
+                    </motion.div>
                     
-                    <div className="space-y-2">
-                      <h1 className="text-[clamp(2.5rem,8vw,6rem)] font-black leading-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
-                        {getProductNameParts(product.description).main}
-                        {isDefaultImage(product.visual?.imagem_url) && (
-                          <span className="text-[#F36C21]">.</span>
-                        )}
-                      </h1>
-                      <p className={cn(
-                        "text-[clamp(1.2rem,4vw,2.5rem)] font-bold leading-tight",
-                        isDefaultImage(product.visual?.imagem_url)
-                          ? "text-white/80"
-                          : "text-slate-600"
-                      )}>
-                        {getProductNameParts(product.description).rest}
-                      </p>
-                    </div>
+                    {/* Descrição com Fundo Laranja Destaque */}
+                    <motion.div 
+                      initial={{ y: 30, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.4 }}
+                      className="rounded-[30px] p-8 shadow-2xl relative overflow-hidden"
+                      style={{ 
+                        backgroundColor: '#F36C21',
+                        color: getContrastColor('#F36C21')
+                      }}
+                    >
+                      <div className="relative z-10 space-y-2">
+                        <h1 className="text-[clamp(2.5rem,6vw,5.5rem)] font-black leading-tight uppercase tracking-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+                          {getProductNameParts(product.description).main}
+                        </h1>
+                        <p className="text-[clamp(1.2rem,3vw,2.2rem)] font-medium leading-none opacity-80" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+                          {getProductNameParts(product.description).rest}
+                        </p>
+                      </div>
+                      {/* Detalhe visual no fundo */}
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-[100px] pointer-events-none" />
+                    </motion.div>
                   </div>
 
-                  <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-4 scrollbar-hide">
-                    {/* Preço Unitário Principal */}
+                  {/* PREÇO E VALORES */}
+                  <motion.div 
+                    initial={{ y: 50, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.6 }}
+                    className="space-y-6"
+                  >
                     {(!product.stock_prices || product.stock_prices.filter(p => p.price_pack > 0).length === 0) ? (
-                      <div className="p-12 rounded-[30px] bg-white border border-slate-100 flex flex-col items-center justify-center text-center gap-4">
-                        <Package className="w-16 h-16 text-slate-200" />
-                        <span className="text-slate-400 text-xl font-bold uppercase tracking-widest">Preço não disponível</span>
+                      <div className="p-12 rounded-[40px] bg-white/5 border border-white/10 flex flex-col items-center justify-center text-center gap-4 backdrop-blur-xl">
+                        <Package className="w-20 h-20 text-white/10" />
+                        <span className="text-white/40 text-2xl font-black uppercase tracking-[0.3em]">PREÇO INDISPONÍVEL</span>
                       </div>
                     ) : (() => {
                       const validPrices = product.stock_prices.filter(p => p.price_pack > 0);
-                      // Encontrar unit_pack = 1 ou o menor unit_pack disponível
                       const mainPriceItem = validPrices.find(p => p.unit_pack === 1) || 
                                            validPrices.reduce((prev, curr) => prev.unit_pack < curr.unit_pack ? prev : curr);
                       
                       const promoPacks = validPrices.filter(p => p.unit_pack !== mainPriceItem.unit_pack);
                       
-                      const hasDefaultImage = isDefaultImage(product.visual?.imagem_url);
+                      const mainFinalPrice = mainPriceItem.price_prom_pack && mainPriceItem.price_prom_pack > 0 ? mainPriceItem.price_prom_pack : mainPriceItem.price_pack;
 
                       return (
-                        <>
-                          <div 
-                            className="p-6 md:p-8 rounded-[30px] shadow-xl relative overflow-hidden flex flex-col justify-center"
+                        <div className="space-y-6">
+                          {/* Container Preço Principal */}
+                          <motion.div 
+                            animate={{ 
+                              boxShadow: [
+                                "0 20px 50px rgba(0,0,0,0.3)",
+                                "0 20px 70px rgba(243,108,33,0.2)",
+                                "0 20px 50px rgba(0,0,0,0.3)"
+                              ] 
+                            }}
+                            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                            className="p-10 md:p-12 rounded-[40px] relative overflow-hidden border border-white/20 backdrop-blur-2xl flex flex-col items-center justify-center min-h-[220px]"
                             style={{ 
-                              backgroundColor: '#fff',
-                              border: hasDefaultImage ? '4px solid #F36C21' : `1px solid ${product.visual?.cor_dominante_claro || '#cbd5e1'}`,
-                              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)'
+                              background: `linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)`,
                             }}
                           >
-                            <span className={cn(
-                              "text-sm md:text-xl font-black uppercase tracking-wider block mb-1",
-                               hasDefaultImage ? "text-[#F36C21]" : "text-slate-600"
-                             )}>
-                               {mainPriceItem.unit_pack === 1 ? 'Unidade' : `Pack com ${mainPriceItem.unit_pack}`}
-                             </span>
-                             <div className="flex items-baseline gap-2">
-                               <span className={cn(
-                                 "text-2xl md:text-4xl font-black",
-                                 hasDefaultImage ? "text-[#F36C21]" : "text-slate-500"
-                               )}>R$</span>
-                              <span className="text-[clamp(3.5rem,10vw,8rem)] leading-none font-black text-slate-900" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
-                                {formatPrice(mainPriceItem.price_prom_pack && mainPriceItem.price_prom_pack > 0 ? mainPriceItem.price_prom_pack : mainPriceItem.price_pack).replace('R$', '').trim()}
+                            <span className="text-xl md:text-2xl font-black uppercase tracking-[0.4em] text-white/50 mb-4">
+                              {mainPriceItem.unit_pack === 1 ? 'VALOR UNITÁRIO' : `PACK COM ${mainPriceItem.unit_pack}`}
+                            </span>
+                            
+                            <div className="flex items-start gap-4">
+                              <span className="text-4xl md:text-5xl font-black text-[#F36C21] mt-4">R$</span>
+                              <span className="text-[clamp(6rem,15vw,12rem)] leading-[0.8] font-black text-white tracking-tighter" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+                                {formatPrice(mainFinalPrice).replace('R$', '').trim()}
                               </span>
                             </div>
-                            {hasDefaultImage && (
-                              <div className="absolute top-0 right-0 w-16 h-16 bg-[#F36C21]/10 rounded-bl-full flex items-start justify-end p-3">
-                                <Package className="w-5 h-5 text-[#F36C21]" />
-                              </div>
-                            )}
-                          </div>
+                            
+                            {/* Glow lateral */}
+                            <div className="absolute left-0 top-0 bottom-0 w-2 bg-[#F36C21] shadow-[0_0_30px_#F36C21]" />
+                          </motion.div>
 
                           {/* Preços de Atacado / Packs */}
                           {promoPacks.length > 0 && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                              {promoPacks.map((price, idx) => {
+                            <div className={cn(
+                              "grid gap-4",
+                              promoPacks.length > 1 ? "grid-cols-2" : "grid-cols-1"
+                            )}>
+                              {promoPacks.slice(0, 2).map((price, idx) => {
                                 const finalPrice = price.price_prom_pack && price.price_prom_pack > 0 ? price.price_prom_pack : price.price_pack;
                                 const currentUnitPrice = finalPrice / price.unit_pack;
                                 
-                                const mainFinalPrice = mainPriceItem.price_prom_pack && mainPriceItem.price_prom_pack > 0 ? mainPriceItem.price_prom_pack : mainPriceItem.price_pack;
-                                const mainUnitPrice = mainFinalPrice / mainPriceItem.unit_pack;
+                                const referenceUnitPrice = mainFinalPrice / mainPriceItem.unit_pack;
+                                const economyPercent = referenceUnitPrice > currentUnitPrice ? Math.round(((referenceUnitPrice - currentUnitPrice) / referenceUnitPrice) * 100) : 0;
                                 
-                                const economyPercent = mainUnitPrice > currentUnitPrice ? Math.round(((mainUnitPrice - currentUnitPrice) / mainUnitPrice) * 100) : 0;
-                                
-                                const isWholesale = price.whole_sale && Number(price.whole_sale) > 1 && Number(price.whole_sale) <= price.unit_pack;
-                                const isBox = price.unit_pack >= 12;
-                                const label = isWholesale ? `Atacado a partir de ${price.whole_sale} un` : (isBox ? `Caixa com ${price.unit_pack}` : `Leve ${price.unit_pack} unidades`);
+                                const isWholesale = price.whole_sale && Number(price.whole_sale) > 1;
+                                const label = isWholesale ? `A PARTIR DE ${price.whole_sale} UN` : `PACK ${price.unit_pack} UN`;
 
                                 return (
                                   <div 
                                     key={`pack-${idx}`}
-                                    className="p-5 md:p-6 rounded-[24px] bg-white border border-slate-200 shadow-sm flex flex-col justify-between relative"
+                                    className="p-6 rounded-[30px] bg-white/5 border border-white/10 backdrop-blur-md relative overflow-hidden group"
                                   >
-                                    <div>
-                                      <div className="flex justify-between items-start mb-2">
-                                        <span className="text-slate-600 text-[10px] md:text-xs font-black uppercase tracking-wider">
-                                          {label}
+                                    <div className="flex justify-between items-start mb-3">
+                                      <span className="text-white/40 text-sm font-black tracking-widest uppercase">
+                                        {label}
+                                      </span>
+                                      {economyPercent > 0 && (
+                                        <span className="bg-[#F36C21] text-white text-[10px] font-black px-3 py-1 rounded-full">
+                                          -{economyPercent}%
                                         </span>
-                                        {economyPercent > 0 && (
-                                          <span className="bg-green-50 text-green-600 text-[10px] md:text-[12px] font-bold px-2 py-0.5 rounded-md border border-green-100">
-                                            -{economyPercent}% de economia
-                                          </span>
-                                        )}
-                                      </div>
-                                      <div className="flex items-baseline gap-1">
-                                        <span className="text-sm md:text-lg text-slate-600 font-black">R$</span>
-                                        <span className="text-2xl md:text-4xl font-black text-slate-900" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
-                                          {formatPrice(finalPrice).replace('R$', '').trim()}
-                                        </span>
-                                      </div>
+                                      )}
                                     </div>
-                                    <div className="mt-2 pt-2 border-t border-slate-50 flex justify-between items-center">
-                                      <span className="text-slate-500 text-[10px] md:text-xs font-bold">Sai por unidade:</span>
-                                      <span className="text-slate-800 text-xs md:text-sm font-black">{formatPrice(currentUnitPrice)}</span>
+                                    <div className="flex items-baseline gap-2">
+                                      <span className="text-xl text-[#F36C21] font-black">R$</span>
+                                      <span className="text-4xl md:text-5xl font-black text-white" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
+                                        {formatPrice(finalPrice).replace('R$', '').trim()}
+                                      </span>
                                     </div>
-
-                                    {price.stock_avaliable <= 0 && (
-                                      <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] rounded-[24px] flex items-center justify-center">
-                                        <span className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Esgotado</span>
-                                      </div>
-                                    )}
+                                    <div className="mt-3 pt-3 border-t border-white/5 flex justify-between items-center">
+                                      <span className="text-white/30 text-xs font-bold uppercase tracking-tighter">Unitário:</span>
+                                      <span className="text-[#F36C21] text-lg font-black">{formatPrice(currentUnitPrice)}</span>
+                                    </div>
                                   </div>
                                 );
                               })}
                             </div>
                           )}
-                        </>
+                        </div>
                       );
                     })()}
-                  </div>
-            </div>
-          </div>
+                  </motion.div>
+                </div>
+              </div>
+            )}
+          </motion.div>
         )}
-      </motion.div>
-    )}
-  </AnimatePresence>
+      </AnimatePresence>
 
       {/* Input visível mas estilizado para integração com o layout */}
       <div className={cn(
