@@ -1409,7 +1409,7 @@ export default function PlayerConsulta() {
                       const mainFinalPrice = mainPriceItem.price_prom_pack && mainPriceItem.price_prom_pack > 0 ? mainPriceItem.price_prom_pack : mainPriceItem.price_pack;
 
                       return (
-                        <div className="space-y-10">
+                        <div className="space-y-16">
                           {/* Container Preço Principal */}
                           <motion.div 
                             animate={{ 
@@ -1495,7 +1495,7 @@ export default function PlayerConsulta() {
                                 return (
                                   <div 
                                     key={`pack-${idx}`}
-                                    className="px-10 py-12 rounded-[48px] border backdrop-blur-3xl relative overflow-visible group min-h-[200px] flex flex-col justify-center transition-all hover:scale-[1.02]"
+                                    className="px-10 py-16 rounded-[48px] border backdrop-blur-3xl relative overflow-visible group min-h-[260px] flex flex-col justify-center transition-all hover:scale-[1.02]"
                                     style={{
                                       background: isDefaultImage(product.visual?.imagem_url) 
                                         ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)' 
@@ -1509,7 +1509,7 @@ export default function PlayerConsulta() {
                                       style={{ backgroundColor: product.visual?.cor_assinatura_produto }}
                                     />
 
-                                    <div className="flex justify-end items-start mb-3">
+                                    <div className="flex justify-end items-start mb-6">
                                       {economyPercent > 0 && (
                                         <span 
                                           className="text-white text-[10px] font-black px-3 py-1 rounded-full"
