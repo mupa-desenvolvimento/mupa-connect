@@ -62,7 +62,7 @@ export function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalP
     const selectedCompany = companies?.find(c => c.id === targetCompanyId);
     const targetTenantId = selectedCompany?.tenant_id || tenantId;
 
-    if (!email || !password || !name || !targetCompanyId || !role) {
+    if (!email || !name || !targetCompanyId || !role) {
       toast.error("Preencha todos os campos obrigatórios");
       return;
     }
@@ -75,11 +75,11 @@ export function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalP
 
     setLoading(true);
     try {
-      // Use the new Edge Function to create user and send beautiful email via Resend
+      // Use Edge Function to invite user and send email (Supabase Auth)
       const { data, error } = await supabase.functions.invoke("create-user-admin", {
         body: {
           email,
-          password,
+          password: password || null,
           name,
           role,
           companyId: targetCompanyId,
@@ -144,7 +144,6 @@ export function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalP
               placeholder="******"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required
               minLength={6}
             />
           </div>
