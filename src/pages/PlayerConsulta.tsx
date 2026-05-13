@@ -1452,7 +1452,7 @@ export default function PlayerConsulta() {
                                   R$
                                 </span>
                                 <span 
-                                  className="text-[clamp(9rem,20vw,17rem)] leading-[0.7] font-black tracking-tighter" 
+                                  className="text-[clamp(9rem,20vw,17rem)] leading-[0.9] font-black tracking-tighter py-4" 
                                   style={{ 
                                     fontFamily: 'Bebas Neue, sans-serif',
                                     color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : getContrastColor(product.visual?.cor_dominante_claro || '#FFFFFF'),
