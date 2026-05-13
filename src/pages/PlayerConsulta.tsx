@@ -1437,8 +1437,8 @@ export default function PlayerConsulta() {
                             />
                             
                             <div className="relative z-10 flex flex-col items-center">
-                              <span 
-                                className="text-[1.2rem] font-black uppercase tracking-[0.4em] mb-4 opacity-60"
+                               <span 
+                                className="text-[1.4rem] font-black uppercase tracking-[0.4em] mb-8 opacity-60"
                                 style={{ color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : getContrastColor(product.visual?.cor_dominante_claro || '#FFFFFF') }}
                               >
                                 PREÇO EXCLUSIVO
