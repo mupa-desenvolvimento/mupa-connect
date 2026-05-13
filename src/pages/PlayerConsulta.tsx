@@ -1370,11 +1370,11 @@ export default function PlayerConsulta() {
                       {/* Efeito de brilho no card */}
                       <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
                       
-                      <div className="relative z-10 space-y-2">
-                        <h1 className="text-[clamp(2.5rem,6vw,5.5rem)] font-black leading-tight uppercase tracking-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+                      <div className="relative z-10 space-y-4">
+                        <h1 className="text-[clamp(2.5rem,6vw,5.5rem)] font-black leading-[1.1] uppercase tracking-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
                           {getProductNameParts(product.description).main}
                         </h1>
-                        <p className="text-[clamp(1.2rem,3vw,2.2rem)] font-medium leading-none opacity-90" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+                        <p className="text-[clamp(1.2rem,3vw,2.2rem)] font-medium leading-relaxed opacity-90" style={{ fontFamily: 'Satoshi, sans-serif' }}>
                           {getProductNameParts(product.description).rest}
                         </p>
                       </div>
