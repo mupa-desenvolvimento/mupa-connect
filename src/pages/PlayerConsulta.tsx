@@ -1085,8 +1085,11 @@ export default function PlayerConsulta() {
                 isVertical ? "flex-col" : "flex-row"
               )}>
                 <div className={cn(
-                  "flex items-center justify-center bg-slate-100 rounded-3xl overflow-hidden shadow-sm relative border border-slate-200",
-                  isVertical ? "h-2/5 w-full" : "w-1/2 h-full order-2"
+                  "flex items-center justify-center rounded-3xl overflow-hidden shadow-sm relative border",
+                  isVertical ? "h-2/5 w-full" : "w-1/2 h-full order-2",
+                  (!product.visual?.imagem_url || product.visual.imagem_url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png'))
+                    ? "bg-[#003399] border-white/10"
+                    : "bg-slate-100 border-slate-200"
                 )}>
                   {!imageError ? (
                     <img 
@@ -1095,15 +1098,13 @@ export default function PlayerConsulta() {
                       className="max-w-full max-h-full object-contain p-8 transition-opacity duration-300"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        const defaultFallback = "https://qtbkvshbmqlszncxlcuc.supabase.co/storage/v1/object/public/dsl-uploads/kqrRuPz304ckV2bn5HmQpveeQQo1/821f6c4e-8d26-4bd2-90bd-a52929afc73e.png";
+                        const defaultFallback = DEFAULT_PRODUCT_IMAGE;
                         
-                        // 1. Se falhou e não é o fallback final, tenta o fallback
                         if (target.src !== defaultFallback) {
                           target.src = fallbackImageUrl || defaultFallback;
                           return;
                         }
                         
-                        // 2. Se tudo falhou
                         setImageError(true);
                       }}
                     />
@@ -1112,7 +1113,7 @@ export default function PlayerConsulta() {
                   )}
                   <div 
                     className="absolute inset-0 -z-10 opacity-30 blur-[100px]"
-                    style={{ backgroundColor: product.visual?.cor_dominante_escuro || '#000' }}
+                    style={{ backgroundColor: product.visual?.cor_dominante_escuro || DEFAULT_VISUAL_COLORS.cor_dominante_escuro }}
                   />
                 </div>
 
