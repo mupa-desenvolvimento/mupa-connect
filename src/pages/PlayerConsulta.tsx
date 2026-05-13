@@ -15,6 +15,7 @@ import { useKioskMode } from "@/hooks/useKioskMode";
 import { PWAInstallModal } from "@/components/PWAInstallModal";
 import { DevShowcaseOverlay } from "@/components/DevShowcaseOverlay";
 import { DevicePersistenceService } from "@/services/DevicePersistenceService";
+import { extractImageColors } from "@/utils/extractImageColors";
 
 interface AppearanceConfig {
   show_device_name?: boolean;
@@ -193,6 +194,32 @@ export default function PlayerConsulta() {
       img.src = url;
     });
   }, [product, fallbackImageUrl]);
+
+  // Extração automática de cores quando a imagem do produto NÃO for default
+  useEffect(() => {
+    if (!product?.visual?.imagem_url) return;
+    const url = product.visual.imagem_url;
+    if (isDefaultImage(url)) return; // mantém cores default
+
+    let cancelled = false;
+    extractImageColors(url).then(palette => {
+      if (cancelled || !palette) return;
+      setProduct(prev => {
+        if (!prev || !prev.visual || prev.visual.imagem_url !== url) return prev;
+        return {
+          ...prev,
+          visual: {
+            ...prev.visual,
+            cor_dominante_claro: palette.cor_dominante_claro,
+            cor_dominante_escuro: palette.cor_dominante_escuro,
+            cor_assinatura_produto: palette.cor_assinatura_produto,
+            fundo_legibilidade: palette.fundo_legibilidade,
+          },
+        };
+      });
+    });
+    return () => { cancelled = true; };
+  }, [product?.visual?.imagem_url]);
 
   useEffect(() => {
 
@@ -1119,11 +1146,16 @@ export default function PlayerConsulta() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-10 lg:p-16 overflow-hidden"
-            style={{ 
+            className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
+            style={{
               backgroundColor: isDefaultImage(product?.visual?.imagem_url)
                 ? (product?.visual?.fundo_legibilidade ? `${product.visual.fundo_legibilidade}F8` : 'rgba(0,51,153,0.98)')
                 : (product?.visual?.cor_dominante_escuro || '#FFFFFF'),
+              minHeight: '100dvh',
+              paddingTop: 'max(1rem, env(safe-area-inset-top))',
+              paddingBottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1.5rem))',
+              paddingLeft: 'max(1rem, env(safe-area-inset-left))',
+              paddingRight: 'max(1rem, env(safe-area-inset-right))',
             }}
           >
             {/* Fundo Dinâmico Premium com Gradientes e Glow */}
@@ -1182,7 +1214,7 @@ export default function PlayerConsulta() {
               </motion.div>
             ) : product && (
               <div className={cn(
-                "w-full h-full flex gap-8 md:gap-20",
+                "w-full h-full max-h-full flex gap-6 md:gap-12 min-h-0",
                 isVertical ? "flex-col" : "flex-row items-stretch"
               )}>
                 {/* CONTAINER DA IMAGEM */}
@@ -1192,7 +1224,7 @@ export default function PlayerConsulta() {
                   transition={{ delay: 0.1, duration: 0.5 }}
                   className={cn(
                     "relative flex items-center justify-center rounded-[64px] group overflow-visible",
-                    isVertical ? "h-[40%] w-full" : "w-[40%] h-full"
+                    isVertical ? "h-[36%] w-full flex-shrink-0" : "w-[40%] h-full"
                   )}
                 >
                   {/* Container da Imagem com Visual Enterprise */}
@@ -1228,7 +1260,7 @@ export default function PlayerConsulta() {
                 {/* CONTEÚDO DO PRODUTO */}
                 <div className={cn(
                   "flex flex-col justify-between py-2",
-                  isVertical ? "h-[58%] w-full" : "w-[58%] h-full"
+                  isVertical ? "flex-1 min-h-0 w-full overflow-hidden" : "w-[58%] h-full"
                 )}>
                   <div className="space-y-8">
                     {/* Descrição com Fundo de Destaque Dinâmico */}
