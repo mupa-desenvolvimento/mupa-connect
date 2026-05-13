@@ -1,8 +1,14 @@
 import { Resend } from "https://esm.sh/resend@3.2.0";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
 Deno.test("Send test email", async () => {
+  const resendApiKey = Deno.env.get("RESEND_API_KEY");
+  
+  if (!resendApiKey) {
+    console.error("ERRO: RESEND_API_KEY não encontrada nos env vars.");
+    throw new Error("Missing RESEND_API_KEY");
+  }
+
+  const resend = new Resend(resendApiKey);
   console.log("Starting test email send to antunes@mupa.app...");
   
   const fromEmail = "Mupa <contato@midias.mupa.app>";
@@ -17,8 +23,6 @@ Deno.test("Send test email", async () => {
         <div style="font-family: sans-serif; padding: 20px;">
           <h2>Teste de Envio</h2>
           <p>Este é um e-mail de teste disparado manualmente para validar a configuração do Resend.</p>
-          <p>Remetente: <strong>${fromEmail}</strong></p>
-          <p>Destinatário: <strong>${toEmail}</strong></p>
           <hr />
           <p>Data/Hora: ${new Date().toLocaleString('pt-BR')}</p>
         </div>
