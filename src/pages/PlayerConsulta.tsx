@@ -1112,7 +1112,9 @@ export default function PlayerConsulta() {
                     isVertical ? "h-[45%] w-full" : "w-[45%] h-full"
                   )}
                   style={{ 
-                    background: `linear-gradient(135deg, ${product.visual?.cor_dominante_escuro || '#003399'} 0%, #001f5c 100%)`,
+                    background: isDefaultImage(product.visual?.imagem_url)
+                      ? `linear-gradient(135deg, ${product.visual?.cor_dominante_escuro || '#003399'} 0%, #001f5c 100%)`
+                      : '#FFFFFF',
                   }}
                 >
                   {/* Glow de fundo */}
