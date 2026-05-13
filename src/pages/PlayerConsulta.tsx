@@ -59,7 +59,17 @@ interface ProductData {
 }
 
 const DEFAULT_PRODUCT_IMAGE = "https://qtbkvshbmqlszncxlcuc.supabase.co/storage/v1/object/public/dsl-uploads/kqrRuPz304ckV2bn5HmQpveeQQo1/821f6c4e-8d26-4bd2-90bd-a52929afc73e.png";
-const MUPA_STATIC_IMAGE = (ean: string) => `http://srv-mupa.ddns.net:5050/static/processed/${ean}.png`;
+
+const ensureSafeImageUrl = (url: string | null | undefined) => {
+  if (!url) return null;
+  if (url.includes('srv-mupa.ddns.net')) {
+    const cleanUrl = url.replace('https://', 'http://');
+    return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}`;
+  }
+  return url;
+};
+
+const MUPA_STATIC_IMAGE = (ean: string) => ensureSafeImageUrl(`http://srv-mupa.ddns.net:5050/static/processed/${ean}.png`);
 
 const isValidUUID = (value: any): boolean => {
   if (typeof value !== 'string') return false;
