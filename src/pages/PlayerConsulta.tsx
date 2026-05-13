@@ -1204,7 +1204,7 @@ export default function PlayerConsulta() {
                                 {formatPrice(mainPriceItem.price_prom_pack && mainPriceItem.price_prom_pack > 0 ? mainPriceItem.price_prom_pack : mainPriceItem.price_pack).replace('R$', '').trim()}
                               </span>
                             </div>
-                            {isDefaultImage && (
+                            {hasDefaultImage && (
                               <div className="absolute top-0 right-0 w-16 h-16 bg-[#F36C21]/10 rounded-bl-full flex items-start justify-end p-3">
                                 <Package className="w-5 h-5 text-[#F36C21]" />
                               </div>
