@@ -24,7 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function SettingsPage() {
-  const { companyId, userRole, isLoading: isLoadingRole } = useUserRole();
+  const { companyId, role: userRole, isLoading: isLoadingRole } = useUserRole();
   const [testEmail, setTestEmail] = useState("");
   const [isSending, setIsSending] = useState(false);
 
