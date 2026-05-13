@@ -202,7 +202,11 @@ export default function PlayerConsulta() {
     if (isDefaultImage(url)) return; // mantém cores default
 
     let cancelled = false;
-    extractImageColors(url).then(palette => {
+    const run = async () => {
+      const palette =
+        (await extractImageColors(url)) ||
+        (await extractImageColors(`https://wsrv.nl/?url=${encodeURIComponent(url)}`));
+
       if (cancelled || !palette) return;
       setProduct(prev => {
         if (!prev || !prev.visual || prev.visual.imagem_url !== url) return prev;
@@ -217,7 +221,9 @@ export default function PlayerConsulta() {
           },
         };
       });
-    });
+    };
+
+    run();
     return () => { cancelled = true; };
   }, [product?.visual?.imagem_url]);
 
@@ -1374,28 +1380,45 @@ export default function PlayerConsulta() {
                           ? mainPriceItem.price_prom_pack
                           : mainPriceItem.price_pack;
 
-                      const promoPacks = validPrices.filter((p) => p.unit_pack !== mainPriceItem.unit_pack);
+                      const normalizedPrices = validPrices
+                        .map((p) => {
+                          const total =
+                            p.price_prom_pack && p.price_prom_pack > 0 ? p.price_prom_pack : p.price_pack;
+                          const units = Number(p.unit_pack || 1);
+                          const unitPrice = units > 0 ? total / units : total;
+                          const hasPromo = !!(p.price_prom_pack && p.price_prom_pack > 0 && p.price_prom_pack < p.price_pack);
+                          return { ...p, total, units, unitPrice, hasPromo };
+                        })
+                        .filter((p) => Number.isFinite(p.units) && p.units > 0 && Number.isFinite(p.total) && p.total > 0)
+                        .sort((a, b) => a.units - b.units);
+
+                      const unitPack = normalizedPrices.find((p) => p.units === 1) || normalizedPrices[0];
+                      const unitFinalPrice = unitPack.unitPrice;
+
+                      const promoPacks = normalizedPrices.filter((p) => p.units !== unitPack.units);
                       const bestPromo = promoPacks
                         .slice()
                         .sort((a, b) => a.unit_pack - b.unit_pack)[0];
 
-                      const badgeLabel = bestPromo
-                        ? bestPromo.unit_pack === 2
-                          ? "2ª unidade"
-                          : `PACK ${bestPromo.unit_pack} UN`
-                        : "UNITÁRIO";
+                      const bestPromoFinal = bestPromo ? bestPromo.total : null;
 
-                      const bestPromoFinal = bestPromo
-                        ? bestPromo.price_prom_pack && bestPromo.price_prom_pack > 0
-                          ? bestPromo.price_prom_pack
-                          : bestPromo.price_pack
+                      const bestPromoUnits = bestPromo ? Number(bestPromo.unit_pack) : NaN;
+                      const referenceUnitPrice = unitFinalPrice;
+                      const promoUnitPrice = bestPromoFinal && Number.isFinite(bestPromoUnits) && bestPromoUnits > 0
+                        ? bestPromoFinal / bestPromoUnits
                         : null;
+                      const hasRealDiscount = promoUnitPrice !== null && promoUnitPrice < referenceUnitPrice;
+
+                      const badgeLabel =
+                        Number.isFinite(bestPromoUnits) && bestPromoUnits >= 2
+                          ? `${bestPromoUnits}ª unidade`
+                          : null;
 
                       return (
                         <>
                           {/* BADGES */}
                           <div className="flex items-center justify-center gap-3">
-                            {bestPromo && (
+                            {hasRealDiscount && badgeLabel && (
                               <>
                                 <div
                                   className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest text-white"
@@ -1421,22 +1444,56 @@ export default function PlayerConsulta() {
                               borderColor: "rgba(255,255,255,0.12)",
                             }}
                           >
-                            <div className="flex items-end gap-2 md:gap-3">
-                              <div className="text-white/70 text-xl md:text-2xl font-black leading-none">R$</div>
-                              <div
-                                className="text-white text-[clamp(3.8rem,11vw,6.8rem)] leading-[0.85] font-black tracking-tight"
-                                style={{ fontFamily: "Bebas Neue, sans-serif" }}
-                              >
-                                {formatPrice(mainFinalPrice).replace("R$", "").trim()}
+                            <div className="text-center">
+                              <div className="text-white/70 text-xs md:text-sm font-black uppercase tracking-[0.25em]">
+                                Preço por unidade
+                              </div>
+                              <div className="mt-2 flex items-end justify-center gap-2 md:gap-3">
+                                <div className="text-white/70 text-xl md:text-2xl font-black leading-none">R$</div>
+                                <div
+                                  className="text-white text-[clamp(4.6rem,13vw,8rem)] leading-[0.85] font-black tracking-tight"
+                                  style={{ fontFamily: "Bebas Neue, sans-serif" }}
+                                >
+                                  {formatPrice(unitFinalPrice).replace("R$", "").trim()}
+                                </div>
                               </div>
                             </div>
                           </div>
 
+                          {/* DEMAIS PREÇOS */}
+                          {normalizedPrices.length > 1 && (
+                            <div className="grid grid-cols-1 gap-3">
+                              {normalizedPrices
+                                .filter((p) => p.units !== unitPack.units)
+                                .slice(0, 3)
+                                .map((p) => (
+                                  <div
+                                    key={`price-${p.units}`}
+                                    className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4"
+                                  >
+                                    <div className="flex items-center justify-between gap-4">
+                                      <div className="text-white/80 text-sm md:text-base font-black uppercase tracking-wide">
+                                        PACK {p.units} UN
+                                      </div>
+                                      <div className="text-right">
+                                        <div className="text-white text-xl md:text-2xl font-black">
+                                          {formatPrice(p.total)}
+                                        </div>
+                                        <div className="text-white/60 text-xs md:text-sm font-bold">
+                                          {formatPrice(p.unitPrice)}/un
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                            </div>
+                          )}
+
                           {/* TOTAL PROMO */}
-                          {bestPromoFinal && (
+                          {hasRealDiscount && bestPromoFinal && Number.isFinite(bestPromoUnits) && bestPromoUnits >= 2 && (
                             <div className="mt-1 rounded-2xl border border-white/10 bg-white/5 p-5">
                               <div className="text-white/70 text-xs md:text-sm font-bold">
-                                Valor total das {bestPromo!.unit_pack} unidades:
+                                Valor total das {bestPromoUnits} unidades:
                               </div>
                               <div className="mt-3 inline-flex items-center rounded-xl px-5 py-3 font-black text-white text-2xl md:text-3xl"
                                 style={{ backgroundColor: "#16A34A" }}
