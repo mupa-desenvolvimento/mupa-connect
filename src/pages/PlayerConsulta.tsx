@@ -1130,7 +1130,11 @@ export default function PlayerConsulta() {
                         ? "bg-white/10 text-white border-white/20" 
                         : "bg-slate-200 text-slate-700 border-slate-300"
                     )}>
-                      Código: {product.internal_id}
+                      Código: <span className={cn(
+                        (!product.visual?.imagem_url || product.visual.imagem_url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png'))
+                          ? "text-[#F36C21]"
+                          : "text-inherit"
+                      )}>{product.internal_id}</span>
                       {product.is_cached && (
                         <span className="ml-3 text-[10px] bg-slate-300 text-slate-800 px-2 py-0.5 rounded uppercase tracking-widest font-black">Modo Offline</span>
                       )}
