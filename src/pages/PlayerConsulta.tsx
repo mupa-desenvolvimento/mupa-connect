@@ -1064,7 +1064,9 @@ export default function PlayerConsulta() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 lg:p-12"
             style={{ 
-              backgroundColor: product?.visual?.fundo_legibilidade ? `${product.visual.fundo_legibilidade}F8` : 'rgba(0,51,153,0.98)',
+              backgroundColor: isDefaultImage(product?.visual?.imagem_url)
+                ? (product?.visual?.fundo_legibilidade ? `${product.visual.fundo_legibilidade}F8` : 'rgba(0,51,153,0.98)')
+                : (product?.visual?.fundo_legibilidade || 'rgba(255, 255, 255, 0.98)'),
               backdropFilter: 'blur(20px)'
             }}
           >
