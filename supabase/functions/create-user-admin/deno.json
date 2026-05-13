@@ -6,5 +6,6 @@
   },
   "imports": {
     "resend": "npm:resend@3.2.0"
-  }
+  },
+  "nodeModulesDir": "auto"
 }
