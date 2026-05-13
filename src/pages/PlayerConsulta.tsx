@@ -904,6 +904,36 @@ export default function PlayerConsulta() {
     };
   }, [handleConsult, isConsulting]);
 
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+
+    const scheduleCommit = () => {
+      if (isConsulting) return;
+      if (scanCommitTimerRef.current) window.clearTimeout(scanCommitTimerRef.current);
+      scanCommitTimerRef.current = window.setTimeout(() => {
+        scanCommitTimerRef.current = null;
+        const raw = (inputRef.current?.value || "").trim();
+        const digits = raw.replace(/\D/g, "");
+        scanBufferRef.current = digits;
+        if (digits.length < 5) return;
+        if (inputRef.current) inputRef.current.value = "";
+        scanBufferRef.current = "";
+        handleConsult(digits);
+      }, 180);
+    };
+
+    const onInput = () => scheduleCommit();
+    const onPaste = () => scheduleCommit();
+
+    el.addEventListener("input", onInput);
+    el.addEventListener("paste", onPaste);
+    return () => {
+      el.removeEventListener("input", onInput);
+      el.removeEventListener("paste", onPaste);
+    };
+  }, [handleConsult, isConsulting]);
+
   // Garantir foco constante no input para scanners que funcionam como teclado (wedge)
   useEffect(() => {
     const maintainFocus = () => {
@@ -1438,7 +1468,7 @@ export default function PlayerConsulta() {
         autoFocus
         inputMode="none"
         autoComplete="off"
-        readOnly={avoidIme}
+        readOnly={false}
         tabIndex={avoidIme ? -1 : 0}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
