@@ -12,11 +12,9 @@ import { OptimizedProductImage } from "@/components/OptimizedProductImage";
 import { Input } from "@/components/ui/input";
 import * as faceapi from "face-api.js";
 import { useKioskMode } from "@/hooks/useKioskMode";
-import { useDeviceCommandChannel } from "@/hooks/useDeviceCommandChannel";
 import { PWAInstallModal } from "@/components/PWAInstallModal";
 import { DevShowcaseOverlay } from "@/components/DevShowcaseOverlay";
 import { DevicePersistenceService } from "@/services/DevicePersistenceService";
-import { extractColorsFromImage } from "@/utils/colorExtractor";
 
 interface AppearanceConfig {
   show_device_name?: boolean;
@@ -124,7 +122,6 @@ export default function PlayerConsulta() {
 
   const [manifest, setManifest] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [deviceUuid, setDeviceUuid] = useState<string | undefined>();
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -184,37 +181,6 @@ export default function PlayerConsulta() {
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
-
-  useEffect(() => {
-    if (!product?.visual?.imagem_url || isDefaultImage(product.visual.imagem_url)) return;
-
-    const updateColors = async () => {
-      // O prompt diz "alimentar a paleta dinâmica", então vamos extrair sempre que a imagem mudar.
-      const colors = await extractColorsFromImage(product.visual!.imagem_url);
-      if (colors) {
-        setProduct(prev => {
-          if (!prev) return prev;
-          
-          // Evita atualização se as cores principais já forem as mesmas para evitar re-renders infinitos
-          if (prev.visual?.cor_assinatura_produto === colors.cor_assinatura_produto && 
-              prev.visual?.cor_dominante_escuro === colors.cor_dominante_escuro &&
-              prev.visual?.fundo_legibilidade === colors.fundo_legibilidade) {
-            return prev;
-          }
-
-          return {
-            ...prev,
-            visual: {
-              ...prev.visual!,
-              ...colors
-            }
-          };
-        });
-      }
-    };
-
-    updateColors();
-  }, [product?.visual?.imagem_url]);
 
   useEffect(() => {
     setImageError(false);
@@ -286,18 +252,7 @@ export default function PlayerConsulta() {
   useEffect(() => {
     const handleResize = () => setIsVertical(window.innerHeight > window.innerWidth);
     window.addEventListener("resize", handleResize);
-    
-    // Forçar foco no input continuamente para leitores que dependem de foco
-    const focusInterval = setInterval(() => {
-      if (inputRef.current && document.activeElement !== inputRef.current) {
-        inputRef.current.focus();
-      }
-    }, 1000);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      clearInterval(focusInterval);
-    };
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // 1. CARREGAMENTO DO PLAYER
@@ -348,9 +303,6 @@ export default function PlayerConsulta() {
           if (result && result.manifest) {
             setManifest(result.manifest);
             setDeviceInfo(result.device);
-            if (result.device?.id) {
-              setDeviceUuid(result.device.id.toString());
-            }
             DevicePersistenceService.saveDeviceConfig(result.device);
             setIsLoading(false);
           } else {
@@ -371,84 +323,6 @@ export default function PlayerConsulta() {
   }, [deviceCode, isPreview, previewPlaylistId]);
 
   const activePlaylist = useMemo(() => ScheduleResolver.getActivePlaylist(manifest), [manifest]);
-
-  // CANAL DE COMANDOS REMOTOS (Supabase Realtime)
-  const { lastCommand } = useDeviceCommandChannel(isPreview ? undefined : deviceUuid, {
-    reloadPlaylist: async () => {
-      if (deviceCode) {
-        const result = await ManifestService.fetchManifest(deviceCode);
-        if (result && result.manifest) {
-          setManifest(result.manifest);
-          setDeviceInfo(result.device);
-        }
-      }
-    },
-    clearCache: async () => {
-      console.log("[PlayerConsulta] Comando clear_cache recebido via Supabase");
-      if ('caches' in window) {
-        const keys = await caches.keys();
-        await Promise.all(keys.map(key => caches.delete(key)));
-      }
-      setProduct(null);
-      setLastConsultedEan(null);
-      setShowOverlay(false);
-    },
-    resetApp: async () => {
-      console.log("[PlayerConsulta] Comando reset_app recebido via Supabase");
-      if ('caches' in window) {
-        const keys = await caches.keys();
-        await Promise.all(keys.map(key => caches.delete(key)));
-      }
-      window.location.reload();
-    },
-    reboot: () => window.location.reload(),
-    playCampaign: (id) => console.log("Play campaign command received:", id),
-    setVolume: (v) => console.log("Volume set to:", v),
-    screenshot: () => Promise.resolve(""),
-    tenantId: deviceInfo?.tenant_id,
-    companyId: deviceInfo?.company_id,
-    serial: deviceInfo?.serial || deviceCode,
-  });
-
-  // COMANDOS REMOTOS (Firebase Realtime)
-  useEffect(() => {
-    if (!deviceCode || isPreview) return;
-
-    const unsubscribe = FirebaseRealtimeService.subscribeToCommands(deviceCode, (payload) => {
-      if (payload.comando) {
-        console.log("[PlayerConsulta] Comando recebido via Firebase:", payload.comando);
-        
-        // Se for comando de reset ou clear_cache, tratamos aqui também
-        if (payload.comando === "reset_app" || payload.comando === "reset") {
-          if ('caches' in window) {
-            caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key))));
-          }
-          window.location.reload();
-        } else if (payload.comando === "clear_cache") {
-          if ('caches' in window) {
-            caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key))));
-          }
-          setProduct(null);
-          setLastConsultedEan(null);
-          setShowOverlay(false);
-        } else if (payload.comando === "reload" || payload.comando === "reboot") {
-          window.location.reload();
-        }
-
-        // Envia diretamente para o Android Bridge se disponível
-        const win = (window as any);
-        if (win.sendCommandToAndroid) {
-          win.sendCommandToAndroid(payload.comando, payload.payload || {}, {
-            deviceId: deviceInfo?.id,
-            tenantId: deviceInfo?.tenant_id,
-            companyId: deviceInfo?.company_id
-          });
-        }
-      }
-    });
-
-    return () => unsubscribe();
-  }, [deviceCode, deviceInfo]);
 
   // Face Detection with Face-API
   useEffect(() => {
@@ -932,13 +806,12 @@ export default function PlayerConsulta() {
   useEffect(() => {
     const handleGlobalKey = (e: KeyboardEvent) => {
       // Se já estiver consultando, ignora novas teclas para evitar buffer sujo
-      if (isConsulting) return;
+      if (isConsulting) {
+        // Opcional: e.preventDefault() aqui se quisermos bloquear totalmente
+        return;
+      }
 
       const target = e.target as HTMLElement | null;
-      // Se o foco estiver no inputRef, deixa o browser/input lidar naturalmente com o Enter/Submit
-      if (target === inputRef.current) return;
-      
-      // Bloqueia outras interações se for em outros inputs
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
         return;
       }
@@ -948,12 +821,14 @@ export default function PlayerConsulta() {
         scanBufferRef.current = "";
       }
       
-      // Se for Enter, processa a consulta (Captura global para quando o foco não está no input)
+      // Se for Enter, processa a consulta
       if (e.key === "Enter") {
-        const code = (scanBufferRef.current || "").trim();
+        const code = (scanBufferRef.current || inputRef.current?.value || "").trim();
         if (code) {
-          console.log("[Scanner] Enter detectado (Global). Valor:", code);
+          console.log("[Scanner] Enter detectado. Valor:", code);
+          // Limpa o input IMEDIATAMENTE para evitar que a próxima leitura pegue restos
           scanBufferRef.current = "";
+          if (inputRef.current) inputRef.current.value = "";
           handleConsult(code);
         }
         return;
@@ -962,16 +837,18 @@ export default function PlayerConsulta() {
       if (e.key === "Backspace") {
         scanBufferRef.current = scanBufferRef.current.slice(0, -1);
         lastKeyTimeRef.current = now;
+        if (inputRef.current) inputRef.current.value = scanBufferRef.current;
         return;
       }
 
       if (/^[0-9]$/.test(e.key)) {
         scanBufferRef.current += e.key;
         lastKeyTimeRef.current = now;
+        if (inputRef.current) inputRef.current.value = scanBufferRef.current;
       }
     };
 
-    window.addEventListener("keydown", handleGlobalKey, true);
+    window.addEventListener("keydown", handleGlobalKey, true); // Use capture to intercept before other handlers
 
     return () => {
       window.removeEventListener("keydown", handleGlobalKey, true);
@@ -1113,7 +990,7 @@ export default function PlayerConsulta() {
   }
 
   return (
-    <div className={cn("fixed inset-0 bg-[#f8fafc] overflow-hidden select-none touch-none overscroll-none supports-[height:100dvh]:h-[100dvh]", !showCursor && "cursor-none")} onClick={() => enterFullscreen()} onTouchStart={() => enterFullscreen()}>
+    <div className={cn("fixed inset-0 bg-[#f8fafc] overflow-hidden select-none touch-none overscroll-none", !showCursor && "cursor-none")} onClick={() => enterFullscreen()} onTouchStart={() => enterFullscreen()}>
       {/* Hidden camera and canvas for face detection */}
       {!isPreview && (
         <>
@@ -1242,18 +1119,16 @@ export default function PlayerConsulta() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-8 md:p-16 overflow-y-auto overflow-x-hidden supports-[height:100dvh]:h-[100dvh] safe-area-inset"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-10 lg:p-16 overflow-hidden"
             style={{ 
               backgroundColor: isDefaultImage(product?.visual?.imagem_url)
                 ? (product?.visual?.fundo_legibilidade ? `${product.visual.fundo_legibilidade}F8` : 'rgba(0,51,153,0.98)')
                 : (product?.visual?.cor_dominante_escuro || '#FFFFFF'),
-              paddingTop: 'calc(2rem + env(safe-area-inset-top))',
-              paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))',
             }}
           >
             {/* Fundo Dinâmico Premium com Gradientes e Glow */}
             {!isDefaultImage(product?.visual?.imagem_url) && product?.visual && (
-              <div className="absolute inset-0 pointer-events-none overflow-visible">
+              <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 {/* Gradiente de Base */}
                 <div 
                   className="absolute inset-0 opacity-40"
@@ -1307,8 +1182,8 @@ export default function PlayerConsulta() {
               </motion.div>
             ) : product && (
               <div className={cn(
-                "w-full max-w-7xl mx-auto flex gap-12 md:gap-20 overflow-visible py-8 items-start",
-                isVertical ? "flex-col" : "flex-row"
+                "w-full h-full flex gap-8 md:gap-20",
+                isVertical ? "flex-col" : "flex-row items-stretch"
               )}>
                 {/* CONTAINER DA IMAGEM */}
                 <motion.div 
@@ -1317,7 +1192,7 @@ export default function PlayerConsulta() {
                   transition={{ delay: 0.1, duration: 0.5 }}
                   className={cn(
                     "relative flex items-center justify-center rounded-[64px] group overflow-visible",
-                    isVertical ? "flex-[0_0_auto] h-[30vh] md:h-[35vh] w-full" : "w-[40%] h-full"
+                    isVertical ? "h-[40%] w-full" : "w-[40%] h-full"
                   )}
                 >
                   {/* Container da Imagem com Visual Enterprise */}
@@ -1326,7 +1201,7 @@ export default function PlayerConsulta() {
                     style={{ 
                       background: isDefaultImage(product.visual?.imagem_url)
                         ? `linear-gradient(135deg, ${product.visual?.cor_dominante_escuro || '#003399'} 0%, ${product.visual?.cor_dominante_claro || '#001f5c'} 100%)`
-                        : "#FFFFFF",
+                        : `linear-gradient(145deg, #FFFFFF 0%, ${product.visual?.cor_dominante_claro || '#F8F9FA'} 100%)`,
                     }}
                   >
                     {/* Glow interno leve */}
@@ -1352,16 +1227,16 @@ export default function PlayerConsulta() {
 
                 {/* CONTEÚDO DO PRODUTO */}
                 <div className={cn(
-                  "flex flex-col justify-start py-4 md:py-8 overflow-visible",
-                  isVertical ? "flex-[0_0_auto] w-full" : "w-[58%] h-auto"
+                  "flex flex-col justify-between py-2",
+                  isVertical ? "h-[58%] w-full" : "w-[58%] h-full"
                 )}>
-                  <div className="space-y-8 md:space-y-12">
+                  <div className="space-y-8">
                     {/* Descrição com Fundo de Destaque Dinâmico */}
                     <motion.div 
                       initial={{ y: 30, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.4 }}
-                      className="rounded-[40px] px-8 py-10 md:px-12 md:py-16 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.3)] relative overflow-visible border border-white/20 min-h-[180px] md:min-h-[240px] flex flex-col justify-center"
+                      className="rounded-[40px] p-10 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.3)] relative overflow-hidden border border-white/20"
                       style={{ 
                         background: isDefaultImage(product.visual?.imagem_url)
                           ? (product.visual?.cor_assinatura_produto || '#F36C21')
@@ -1372,11 +1247,11 @@ export default function PlayerConsulta() {
                       {/* Efeito de brilho no card */}
                       <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
                       
-                      <div className="relative z-10 space-y-6">
-                        <h1 className="text-[clamp(2rem,6vw,5.5rem)] font-black leading-[1.1] uppercase tracking-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+                      <div className="relative z-10 space-y-2">
+                        <h1 className="text-[clamp(2.5rem,6vw,5.5rem)] font-black leading-tight uppercase tracking-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
                           {getProductNameParts(product.description).main}
                         </h1>
-                        <p className="text-[clamp(1.2rem,3vw,2.2rem)] font-medium leading-relaxed opacity-90" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+                        <p className="text-[clamp(1.2rem,3vw,2.2rem)] font-medium leading-none opacity-90" style={{ fontFamily: 'Satoshi, sans-serif' }}>
                           {getProductNameParts(product.description).rest}
                         </p>
                       </div>
@@ -1394,10 +1269,10 @@ export default function PlayerConsulta() {
                     initial={{ y: 50, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.6 }}
-                    className="space-y-8 mt-8"
+                    className="space-y-6"
                   >
                     {(!product.stock_prices || product.stock_prices.filter(p => p.price_pack > 0).length === 0) ? (
-                      <div className="py-20 px-12 rounded-[40px] bg-white/5 border border-white/10 flex flex-col items-center justify-center text-center gap-6 backdrop-blur-xl min-h-[300px]">
+                      <div className="p-12 rounded-[40px] bg-white/5 border border-white/10 flex flex-col items-center justify-center text-center gap-4 backdrop-blur-xl">
                         <Package className="w-20 h-20 text-white/10" />
                         <span className="text-white/40 text-2xl font-black uppercase tracking-[0.3em]">PREÇO INDISPONÍVEL</span>
                       </div>
@@ -1411,7 +1286,7 @@ export default function PlayerConsulta() {
                       const mainFinalPrice = mainPriceItem.price_prom_pack && mainPriceItem.price_prom_pack > 0 ? mainPriceItem.price_prom_pack : mainPriceItem.price_pack;
 
                       return (
-                        <div className="space-y-10 md:space-y-14">
+                        <div className="space-y-6">
                           {/* Container Preço Principal */}
                           <motion.div 
                             animate={{ 
@@ -1422,7 +1297,7 @@ export default function PlayerConsulta() {
                               ]
                             }}
                             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                            className="px-8 py-10 md:px-16 md:py-16 rounded-[56px] relative overflow-visible border border-white/10 flex flex-col items-center justify-center min-h-[300px] md:min-h-[420px] w-full"
+                            className="p-10 md:p-14 rounded-[56px] relative overflow-hidden border border-white/10 flex flex-col items-center justify-center min-h-[300px] w-full"
                             style={{ 
                               background: isDefaultImage(product.visual?.imagem_url)
                                 ? 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 100%)'
@@ -1439,9 +1314,9 @@ export default function PlayerConsulta() {
                             />
                             
                             <div className="relative z-10 flex flex-col items-center">
-                               <span 
-                                className="text-[1.4rem] font-black uppercase tracking-[0.4em] mb-8 opacity-60"
-                                style={{ color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : getContrastColor(product.visual?.cor_dominante_claro || '#FFFFFF') }}
+                              <span 
+                                className="text-[1.2rem] font-black uppercase tracking-[0.4em] mb-4 opacity-60"
+                                style={{ color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#333333' }}
                               >
                                 PREÇO EXCLUSIVO
                               </span>
@@ -1454,10 +1329,10 @@ export default function PlayerConsulta() {
                                   R$
                                 </span>
                                 <span 
-                                  className="text-[clamp(8rem,22vw,18rem)] leading-[0.85] font-black tracking-tighter py-6 md:py-8" 
+                                  className="text-[clamp(9rem,20vw,17rem)] leading-[0.7] font-black tracking-tighter" 
                                   style={{ 
                                     fontFamily: 'Bebas Neue, sans-serif',
-                                    color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : getContrastColor(product.visual?.cor_dominante_claro || '#FFFFFF'),
+                                    color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#333333',
                                     filter: isDefaultImage(product.visual?.imagem_url) 
                                       ? `drop-shadow(0 0 30px ${product.visual?.cor_assinatura_produto || '#F36C21'}60)`
                                       : 'none'
@@ -1481,7 +1356,7 @@ export default function PlayerConsulta() {
                           {/* Preços de Atacado / Packs */}
                           {promoPacks.length > 0 && (
                             <div className={cn(
-                              "grid gap-8",
+                              "grid gap-4",
                               promoPacks.length > 1 ? "grid-cols-2" : "grid-cols-1"
                             )}>
                               {promoPacks.slice(0, 2).map((price, idx) => {
@@ -1497,7 +1372,7 @@ export default function PlayerConsulta() {
                                 return (
                                   <div 
                                     key={`pack-${idx}`}
-                                    className="px-10 py-16 rounded-[48px] border backdrop-blur-3xl relative overflow-visible group min-h-[260px] flex flex-col justify-center transition-all hover:scale-[1.02]"
+                                    className="p-8 rounded-[48px] border backdrop-blur-3xl relative overflow-hidden group min-h-[160px] flex flex-col justify-center transition-all hover:scale-[1.02]"
                                     style={{
                                       background: isDefaultImage(product.visual?.imagem_url) 
                                         ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)' 
@@ -1511,7 +1386,7 @@ export default function PlayerConsulta() {
                                       style={{ backgroundColor: product.visual?.cor_assinatura_produto }}
                                     />
 
-                                    <div className="flex justify-end items-start mb-6">
+                                    <div className="flex justify-end items-start mb-3">
                                       {economyPercent > 0 && (
                                         <span 
                                           className="text-white text-[10px] font-black px-3 py-1 rounded-full"
@@ -1556,7 +1431,7 @@ export default function PlayerConsulta() {
 
       {/* Input visível mas estilizado para integração com o layout */}
       <div className={cn(
-        "fixed bottom-24 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 pb-[env(safe-area-inset-bottom)]",
+        "fixed bottom-24 left-1/2 -translate-x-1/2 z-50 transition-all duration-500",
         showOverlay ? "opacity-0 pointer-events-none translate-y-4" : "opacity-100 translate-y-0"
       )}>
         <div className="relative group">
@@ -1565,26 +1440,19 @@ export default function PlayerConsulta() {
             <div className="p-3 text-primary/80">
               <Barcode className="w-5 h-5" />
             </div>
-            <form 
-              onSubmit={(e) => {
-                e.preventDefault();
-                const code = inputRef.current?.value.trim();
-                if (code) {
-                  console.log("[Scanner] Form Submit (Enter). Valor:", code);
-                  if (inputRef.current) inputRef.current.value = "";
-                  handleConsult(code);
-                }
+            <Input 
+              ref={inputRef}
+              className="w-64 md:w-80 bg-transparent border-none text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0 text-lg font-mono tracking-widest font-bold"
+              placeholder="AGUARDANDO LEITURA..."
+              autoFocus={!avoidIme}
+              inputMode="none"
+              autoComplete="off"
+              readOnly={avoidIme}
+              tabIndex={avoidIme ? -1 : 0}
+              onFocus={(e) => {
+                if (avoidIme) e.currentTarget.blur();
               }}
-            >
-              <Input 
-                ref={inputRef}
-                className="w-64 md:w-80 bg-transparent border-none text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0 text-lg font-mono tracking-widest font-bold"
-                placeholder="AGUARDANDO LEITURA..."
-                autoFocus
-                autoComplete="off"
-                inputMode="none"
-              />
-            </form>
+            />
           </div>
         </div>
       </div>
