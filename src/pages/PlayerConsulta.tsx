@@ -884,14 +884,33 @@ export default function PlayerConsulta() {
     };
   }, [handleConsult, isConsulting]);
 
-  // Garantir foco ao fechar o overlay
+  // Garantir foco constante no input para scanners que funcionam como teclado (wedge)
   useEffect(() => {
+    // Se estiver em modo de evitar IME (touch/mobile), não forçamos foco para não abrir teclado
     if (avoidIme) return;
-    if (showOverlay || showManualInput) return;
-    const timer = setTimeout(() => {
-      inputRef.current?.focus({ preventScroll: true });
-    }, 300);
-    return () => clearTimeout(timer);
+
+    const maintainFocus = () => {
+      // Só foca se o overlay estiver fechado e não estivermos em input manual
+      if (!showOverlay && !showManualInput && document.activeElement !== inputRef.current) {
+        inputRef.current?.focus({ preventScroll: true });
+      }
+    };
+
+    // Foca imediatamente ao montar ou mudar estados
+    maintainFocus();
+
+    // Listener para quando o usuário clica fora ou o browser perde foco
+    window.addEventListener("focus", maintainFocus);
+    document.addEventListener("click", maintainFocus);
+
+    // Intervalo de segurança para garantir que o foco volte se for perdido
+    const interval = setInterval(maintainFocus, 1000);
+
+    return () => {
+      window.removeEventListener("focus", maintainFocus);
+      document.removeEventListener("click", maintainFocus);
+      clearInterval(interval);
+    };
   }, [showOverlay, showManualInput, avoidIme]);
 
   // Bloquear long-press, context menu, seleção e copy/paste no kiosk
