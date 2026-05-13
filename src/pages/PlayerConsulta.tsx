@@ -59,7 +59,21 @@ interface ProductData {
 }
 
 const DEFAULT_PRODUCT_IMAGE = "https://qtbkvshbmqlszncxlcuc.supabase.co/storage/v1/object/public/dsl-uploads/kqrRuPz304ckV2bn5HmQpveeQQo1/821f6c4e-8d26-4bd2-90bd-a52929afc73e.png";
-const MUPA_STATIC_IMAGE = (ean: string) => `http://srv-mupa.ddns.net:5050/static/processed/${ean}.png`;
+
+const ensureSafeImageUrl = (url: string | null | undefined) => {
+  if (!url) return null;
+  // Se já estiver usando o proxy ou não for do mupa, não faz nada
+  if (url.includes('wsrv.nl')) return url;
+  
+  if (url.includes('srv-mupa.ddns.net')) {
+    // Força http para evitar o erro de SSL no servidor de origem
+    const cleanUrl = url.replace('https://', 'http://');
+    return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}`;
+  }
+  return url;
+};
+
+const MUPA_STATIC_IMAGE = (ean: string) => ensureSafeImageUrl(`http://srv-mupa.ddns.net:5050/static/processed/${ean}.png`);
 
 const isValidUUID = (value: any): boolean => {
   if (typeof value !== 'string') return false;
@@ -566,8 +580,10 @@ export default function PlayerConsulta() {
 
   const buildVisual = (ean: string | null | undefined, visual: any) => {
     const safeEan = typeof ean === "string" && ean.trim() ? ean.trim() : null;
+    const mupaImage = safeEan ? MUPA_STATIC_IMAGE(safeEan) : null;
+    
     return {
-      imagem_url: visual?.imagem_url || (safeEan ? MUPA_STATIC_IMAGE(safeEan) : DEFAULT_PRODUCT_IMAGE),
+      imagem_url: ensureSafeImageUrl(visual?.imagem_url) || mupaImage || DEFAULT_PRODUCT_IMAGE,
       cor_assinatura_produto: visual?.cor_assinatura_produto || "#000000",
       fundo_legibilidade: visual?.fundo_legibilidade || "#000000",
       cor_dominante_claro: visual?.cor_dominante_claro || "#FFFFFF",
