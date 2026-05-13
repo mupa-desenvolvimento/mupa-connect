@@ -906,9 +906,6 @@ export default function PlayerConsulta() {
 
   // Garantir foco constante no input para scanners que funcionam como teclado (wedge)
   useEffect(() => {
-    // Se estiver em modo de evitar IME (touch/mobile), não forçamos foco para não abrir teclado
-    if (avoidIme) return;
-
     const maintainFocus = () => {
       // Só foca se o overlay estiver fechado e não estivermos em input manual
       if (!showOverlay && !showManualInput && document.activeElement !== inputRef.current) {
@@ -1438,14 +1435,11 @@ export default function PlayerConsulta() {
         ref={inputRef}
         className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 opacity-0 pointer-events-none"
         placeholder="AGUARDANDO LEITURA..."
-        autoFocus={!avoidIme}
+        autoFocus
         inputMode="none"
         autoComplete="off"
         readOnly={avoidIme}
         tabIndex={avoidIme ? -1 : 0}
-        onFocus={(e) => {
-          if (avoidIme) e.currentTarget.blur();
-        }}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             const code = e.currentTarget.value.trim();
