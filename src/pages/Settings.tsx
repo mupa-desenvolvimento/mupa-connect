@@ -24,7 +24,47 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function SettingsPage() {
-  const { companyId, isLoading: isLoadingRole } = useUserRole();
+  const { companyId, userRole, isLoading: isLoadingRole } = useUserRole();
+  const [testEmail, setTestEmail] = useState("");
+  const [isSending, setIsSending] = useState(false);
+
+  const handleSendTestEmail = async () => {
+    if (!testEmail) {
+      toast.error("Por favor, insira um e-mail.");
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-test-email", {
+        body: {
+          to: testEmail,
+          subject: "E-mail de Teste do Sistema Mupa",
+          html: `
+            <h1>Teste de Funcionamento</h1>
+            <p>Este é um e-mail de teste enviado para validar a integração com o Resend.</p>
+            <p>Se você recebeu este e-mail, a configuração do conector está correta.</p>
+            <hr />
+            <p>Data: ${new Date().toLocaleString('pt-BR')}</p>
+          `
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success("E-mail de teste enviado com sucesso!");
+        setTestEmail("");
+      } else {
+        toast.error(data?.error?.message || "Erro ao enviar e-mail de teste.");
+      }
+    } catch (error: any) {
+      console.error("Error sending test email:", error);
+      toast.error(error.message || "Erro ao processar o envio.");
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   const { data: apps, isLoading: isLoadingApps } = useQuery({
     queryKey: ["company-apps", companyId],
