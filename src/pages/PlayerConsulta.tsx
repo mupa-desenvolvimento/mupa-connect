@@ -1119,14 +1119,40 @@ export default function PlayerConsulta() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-10 lg:p-16"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-10 lg:p-16 overflow-hidden"
             style={{ 
               backgroundColor: isDefaultImage(product?.visual?.imagem_url)
                 ? (product?.visual?.fundo_legibilidade ? `${product.visual.fundo_legibilidade}F8` : 'rgba(0,51,153,0.98)')
-                : (product?.visual?.fundo_legibilidade || 'rgba(255, 255, 255, 0.98)'),
-              backdropFilter: 'blur(30px)'
+                : (product?.visual?.cor_dominante_escuro || '#FFFFFF'),
             }}
           >
+            {/* Fundo Dinâmico Premium com Gradientes e Glow */}
+            {!isDefaultImage(product?.visual?.imagem_url) && product?.visual && (
+              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                {/* Gradiente de Base */}
+                <div 
+                  className="absolute inset-0 opacity-40"
+                  style={{ 
+                    background: `radial-gradient(circle at 50% 50%, ${product.visual.cor_dominante_claro}20 0%, ${product.visual.cor_dominante_escuro} 100%)` 
+                  }}
+                />
+                
+                {/* Glows Dinâmicos */}
+                <div 
+                  className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full blur-[120px] opacity-20 animate-pulse"
+                  style={{ backgroundColor: product.visual.cor_assinatura_produto }}
+                />
+                <div 
+                  className="absolute -bottom-[20%] -right-[10%] w-[60%] h-[60%] rounded-full blur-[120px] opacity-20 animate-pulse"
+                  style={{ backgroundColor: product.visual.cor_dominante_claro }}
+                  transition-duration="5s"
+                />
+
+                {/* Camada de profundidade */}
+                <div className="absolute inset-0 bg-black/10 backdrop-blur-[40px]" />
+              </div>
+            )}
+
             {isConsulting ? (
               <div className="flex flex-col items-center gap-8 text-white">
                 <div className="relative">
