@@ -1254,33 +1254,28 @@ export default function PlayerConsulta() {
                 </button>
               </motion.div>
             ) : product && (
-              <div className={cn(
-                "w-full h-full max-h-full flex gap-6 md:gap-12 min-h-0",
-                isVertical ? "flex-col" : "flex-row items-stretch"
-              )}>
-                {/* CONTAINER DA IMAGEM */}
-                <motion.div 
-                  initial={{ x: -50, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.1, duration: 0.5 }}
+              <div
+                className={cn(
+                  "w-full h-full max-h-full min-h-0",
+                  isVertical ? "flex flex-col gap-6" : "grid grid-cols-2 gap-10 items-center",
+                )}
+              >
+                {/* IMAGEM (TOP) */}
+                <motion.div
+                  initial={{ y: -30, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.1, duration: 0.45 }}
                   className={cn(
-                    "relative flex items-center justify-center rounded-[64px] group overflow-visible",
-                    isVertical ? "h-[36%] w-full flex-shrink-0" : "w-[40%] h-full"
+                    "rounded-[28px] overflow-hidden border shadow-[0_20px_60px_-20px_rgba(0,0,0,0.65)]",
+                    isVertical ? "h-[34%] w-full" : "h-full w-full",
                   )}
+                  style={{
+                    background: "linear-gradient(180deg, #FFFFFF 0%, rgba(255,255,255,0.92) 100%)",
+                    borderColor: "rgba(255,255,255,0.25)",
+                  }}
                 >
-                  {/* Container da Imagem com Visual Enterprise */}
-                  <div 
-                    className="relative w-full h-full flex items-center justify-center rounded-[64px] border border-white/10 overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)]"
-                    style={{ 
-                      background: isDefaultImage(product.visual?.imagem_url)
-                        ? `linear-gradient(135deg, ${product.visual?.cor_dominante_escuro || '#003399'} 0%, ${product.visual?.cor_dominante_claro || '#001f5c'} 100%)`
-                        : `linear-gradient(145deg, #FFFFFF 0%, ${product.visual?.cor_dominante_claro || '#F8F9FA'} 100%)`,
-                    }}
-                  >
-                    {/* Glow interno leve */}
-                    <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent pointer-events-none" />
-                    
-                    <OptimizedProductImage 
+                  <div className="relative w-full h-full">
+                    <OptimizedProductImage
                       src={product.visual?.imagem_url || (product.ean ? MUPA_STATIC_IMAGE(product.ean) : DEFAULT_PRODUCT_IMAGE)}
                       fallback={fallbackImageUrl || DEFAULT_PRODUCT_IMAGE}
                       ean={product.ean}
@@ -1288,214 +1283,151 @@ export default function PlayerConsulta() {
                       isDefaultImage={isDefaultImage(product.visual?.imagem_url)}
                     />
                   </div>
-
-                  {/* Sombra de profundidade externa */}
-                  {!isDefaultImage(product.visual?.imagem_url) && (
-                    <div 
-                      className="absolute -inset-4 blur-3xl opacity-20 -z-10 rounded-full"
-                      style={{ backgroundColor: product.visual?.cor_dominante_escuro }}
-                    />
-                  )}
                 </motion.div>
 
-                {/* CONTEÚDO DO PRODUTO */}
-                <div className={cn(
-                  "flex flex-col justify-between py-2",
-                  isVertical ? "flex-1 min-h-0 w-full overflow-hidden" : "w-[58%] h-full"
-                )}>
-                  <div className="space-y-8">
-                    {/* Descrição com Fundo de Destaque Dinâmico */}
-                    <motion.div 
-                      initial={{ y: 30, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: 0.4 }}
-                      className="rounded-[40px] p-10 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.3)] relative overflow-hidden border border-white/20"
-                      style={{ 
-                        background: isDefaultImage(product.visual?.imagem_url)
-                          ? (product.visual?.cor_assinatura_produto || '#F36C21')
-                          : `linear-gradient(135deg, ${product.visual?.cor_assinatura_produto || '#F36C21'} 0%, ${product.visual?.cor_dominante_claro || '#F36C21'} 100%)`,
-                        color: getContrastColor(product.visual?.cor_assinatura_produto || '#F36C21')
+                {/* CARD DE INFORMAÇÕES (BASE DO MOCK) */}
+                <motion.div
+                  initial={{ y: 30, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2, duration: 0.45 }}
+                  className={cn(
+                    "relative overflow-hidden rounded-[28px] border backdrop-blur-3xl shadow-[0_22px_70px_-26px_rgba(0,0,0,0.75)]",
+                    isVertical ? "w-full flex-1 min-h-0" : "w-full h-full",
+                  )}
+                  style={{
+                    background: `linear-gradient(180deg, ${(product.visual?.cor_dominante_escuro || "#003399")} 0%, ${(product.visual?.cor_dominante_claro || "#0B5CA8")} 140%)`,
+                    borderColor: "rgba(255,255,255,0.15)",
+                  }}
+                >
+                  <div
+                    className="absolute inset-0 opacity-25 pointer-events-none"
+                    style={{
+                      background: `radial-gradient(circle at 30% 15%, ${(product.visual?.cor_assinatura_produto || "#F36C21")}66 0%, transparent 55%)`,
+                    }}
+                  />
+
+                  <div className="relative z-10 h-full p-6 md:p-10 flex flex-col gap-5 md:gap-7">
+                    {/* TÍTULO */}
+                    <div
+                      className="rounded-2xl px-5 py-4 md:px-8 md:py-5"
+                      style={{
+                        background: "rgba(0,0,0,0.18)",
+                        border: "1px solid rgba(255,255,255,0.12)",
                       }}
                     >
-                      {/* Efeito de brilho no card */}
-                      <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
-                      
-                      <div className="relative z-10 space-y-2">
-                        <h1 className="text-[clamp(2.5rem,6vw,5.5rem)] font-black leading-tight uppercase tracking-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
-                          {getProductNameParts(product.description).main}
-                        </h1>
-                        <p className="text-[clamp(1.2rem,3vw,2.2rem)] font-medium leading-none opacity-90" style={{ fontFamily: 'Satoshi, sans-serif' }}>
-                          {getProductNameParts(product.description).rest}
-                        </p>
+                      <div className="text-center">
+                        <div
+                          className="text-[clamp(1.6rem,5vw,3.25rem)] font-black uppercase tracking-tight leading-tight text-white"
+                          style={{ fontFamily: "Satoshi, sans-serif" }}
+                        >
+                          {`${getProductNameParts(product.description).main} ${getProductNameParts(product.description).rest}`.trim()}
+                        </div>
                       </div>
+                    </div>
 
-                      {/* Glow dinâmico interno */}
-                      <div 
-                        className="absolute -right-10 -top-10 w-40 h-40 blur-3xl opacity-30 rounded-full"
-                        style={{ backgroundColor: 'white' }}
-                      />
-                    </motion.div>
-                  </div>
+                    {(() => {
+                      const validPrices = (product.stock_prices || []).filter((p) => p.price_pack > 0);
+                      if (validPrices.length === 0) {
+                        return (
+                          <div className="flex-1 grid place-items-center rounded-2xl border border-white/10 bg-white/5">
+                            <div className="flex flex-col items-center gap-3 text-center text-white/80">
+                              <Package className="w-14 h-14 text-white/20" />
+                              <div className="text-sm font-black tracking-[0.25em] uppercase">PREÇO INDISPONÍVEL</div>
+                            </div>
+                          </div>
+                        );
+                      }
 
-                  {/* PREÇO E VALORES */}
-                  <motion.div 
-                    initial={{ y: 50, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.6 }}
-                    className="space-y-6"
-                  >
-                    {(!product.stock_prices || product.stock_prices.filter(p => p.price_pack > 0).length === 0) ? (
-                      <div className="p-12 rounded-[40px] bg-white/5 border border-white/10 flex flex-col items-center justify-center text-center gap-4 backdrop-blur-xl">
-                        <Package className="w-20 h-20 text-white/10" />
-                        <span className="text-white/40 text-2xl font-black uppercase tracking-[0.3em]">PREÇO INDISPONÍVEL</span>
-                      </div>
-                    ) : (() => {
-                      const validPrices = product.stock_prices.filter(p => p.price_pack > 0);
-                      const mainPriceItem = validPrices.find(p => p.unit_pack === 1) || 
-                                           validPrices.reduce((prev, curr) => prev.unit_pack < curr.unit_pack ? prev : curr);
-                      
-                      const promoPacks = validPrices.filter(p => p.unit_pack !== mainPriceItem.unit_pack);
-                      
-                      const mainFinalPrice = mainPriceItem.price_prom_pack && mainPriceItem.price_prom_pack > 0 ? mainPriceItem.price_prom_pack : mainPriceItem.price_pack;
+                      const mainPriceItem =
+                        validPrices.find((p) => p.unit_pack === 1) ||
+                        validPrices.reduce((prev, curr) => (prev.unit_pack < curr.unit_pack ? prev : curr));
+
+                      const mainFinalPrice =
+                        mainPriceItem.price_prom_pack && mainPriceItem.price_prom_pack > 0
+                          ? mainPriceItem.price_prom_pack
+                          : mainPriceItem.price_pack;
+
+                      const promoPacks = validPrices.filter((p) => p.unit_pack !== mainPriceItem.unit_pack);
+                      const bestPromo = promoPacks
+                        .slice()
+                        .sort((a, b) => a.unit_pack - b.unit_pack)[0];
+
+                      const badgeLabel = bestPromo
+                        ? bestPromo.unit_pack === 2
+                          ? "2ª unidade"
+                          : `PACK ${bestPromo.unit_pack} UN`
+                        : "UNITÁRIO";
+
+                      const bestPromoFinal = bestPromo
+                        ? bestPromo.price_prom_pack && bestPromo.price_prom_pack > 0
+                          ? bestPromo.price_prom_pack
+                          : bestPromo.price_pack
+                        : null;
 
                       return (
-                        <div className="space-y-6">
-                          {/* Container Preço Principal */}
-                          <motion.div 
-                            animate={{ 
-                              boxShadow: [
-                                "0 32px 64px -16px rgba(0,0,0,0.4)",
-                                `0 32px 80px -16px ${(product.visual?.cor_assinatura_produto || '#F36C21')}40`,
-                                "0 32px 64px -16px rgba(0,0,0,0.4)"
-                              ]
-                            }}
-                            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                            className="p-10 md:p-14 rounded-[56px] relative overflow-hidden border border-white/10 flex flex-col items-center justify-center min-h-[300px] w-full"
-                            style={{ 
-                              background: isDefaultImage(product.visual?.imagem_url)
-                                ? 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 100%)'
-                                : `linear-gradient(180deg, ${product.visual?.cor_dominante_claro || '#FFFFFF'} 0%, ${product.visual?.cor_dominante_claro}EE 100%)`,
-                              backdropFilter: 'blur(40px)',
+                        <>
+                          {/* BADGES */}
+                          <div className="flex items-center justify-center gap-3">
+                            {bestPromo && (
+                              <>
+                                <div
+                                  className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest text-white"
+                                  style={{ backgroundColor: "#E11D48" }}
+                                >
+                                  DESCONTO NA
+                                </div>
+                                <div
+                                  className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest text-white"
+                                  style={{ backgroundColor: "rgba(59,130,246,0.95)" }}
+                                >
+                                  {badgeLabel}
+                                </div>
+                              </>
+                            )}
+                          </div>
+
+                          {/* PREÇO PRINCIPAL */}
+                          <div
+                            className="rounded-2xl border px-6 py-5 md:px-8 md:py-6"
+                            style={{
+                              background: "rgba(0,0,0,0.22)",
+                              borderColor: "rgba(255,255,255,0.12)",
                             }}
                           >
-                            {/* Glow de fundo no card de preço */}
-                            <div 
-                              className="absolute inset-0 opacity-10 pointer-events-none"
-                              style={{ 
-                                background: `radial-gradient(circle at center, ${product.visual?.cor_assinatura_produto || '#F36C21'} 0%, transparent 70%)` 
-                              }}
-                            />
-                            
-                            <div className="relative z-10 flex flex-col items-center">
-                              <span 
-                                className="text-[1.2rem] font-black uppercase tracking-[0.4em] mb-4 opacity-60"
-                                style={{ color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#333333' }}
+                            <div className="flex items-end gap-2 md:gap-3">
+                              <div className="text-white/70 text-xl md:text-2xl font-black leading-none">R$</div>
+                              <div
+                                className="text-white text-[clamp(3.8rem,11vw,6.8rem)] leading-[0.85] font-black tracking-tight"
+                                style={{ fontFamily: "Bebas Neue, sans-serif" }}
                               >
-                                PREÇO EXCLUSIVO
-                              </span>
-
-                              <div className="flex items-start gap-3 md:gap-5">
-                                <span 
-                                  className="text-4xl md:text-6xl font-black mt-4 md:mt-8"
-                                  style={{ color: product.visual?.cor_assinatura_produto || '#F36C21' }}
-                                >
-                                  R$
-                                </span>
-                                <span 
-                                  className="text-[clamp(9rem,20vw,17rem)] leading-[0.7] font-black tracking-tighter" 
-                                  style={{ 
-                                    fontFamily: 'Bebas Neue, sans-serif',
-                                    color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#333333',
-                                    filter: isDefaultImage(product.visual?.imagem_url) 
-                                      ? `drop-shadow(0 0 30px ${product.visual?.cor_assinatura_produto || '#F36C21'}60)`
-                                      : 'none'
-                                  }}
-                                >
-                                  {formatPrice(mainFinalPrice).replace('R$', '').trim()}
-                                </span>
+                                {formatPrice(mainFinalPrice).replace("R$", "").trim()}
                               </div>
                             </div>
-                            
-                            {/* Barra de destaque inferior */}
-                            <div 
-                              className="absolute bottom-0 left-0 right-0 h-3" 
-                              style={{ 
-                                background: `linear-gradient(90deg, transparent, ${product.visual?.cor_assinatura_produto || '#F36C21'}, transparent)`,
-                                boxShadow: `0 0 20px ${product.visual?.cor_assinatura_produto || '#F36C21'}`
-                              }} 
-                            />
-                          </motion.div>
+                          </div>
 
-                          {/* Preços de Atacado / Packs */}
-                          {promoPacks.length > 0 && (
-                            <div className={cn(
-                              "grid gap-4",
-                              promoPacks.length > 1 ? "grid-cols-2" : "grid-cols-1"
-                            )}>
-                              {promoPacks.slice(0, 2).map((price, idx) => {
-                                const finalPrice = price.price_prom_pack && price.price_prom_pack > 0 ? price.price_prom_pack : price.price_pack;
-                                const currentUnitPrice = finalPrice / price.unit_pack;
-                                
-                                const referenceUnitPrice = mainFinalPrice / mainPriceItem.unit_pack;
-                                const economyPercent = referenceUnitPrice > currentUnitPrice ? Math.round(((referenceUnitPrice - currentUnitPrice) / referenceUnitPrice) * 100) : 0;
-                                
-                                const isWholesale = price.whole_sale && Number(price.whole_sale) > 1;
-                                const label = isWholesale ? `A PARTIR DE ${price.whole_sale} UN` : `PACK ${price.unit_pack} UN`;
-
-                                return (
-                                  <div 
-                                    key={`pack-${idx}`}
-                                    className="p-8 rounded-[48px] border backdrop-blur-3xl relative overflow-hidden group min-h-[160px] flex flex-col justify-center transition-all hover:scale-[1.02]"
-                                    style={{
-                                      background: isDefaultImage(product.visual?.imagem_url) 
-                                        ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)' 
-                                        : `linear-gradient(135deg, ${product.visual?.cor_dominante_claro || '#FFFFFF'} 0%, #F8F9FA 100%)`,
-                                      borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)',
-                                    }}
-                                  >
-                                    {/* Destaque sutil lateral */}
-                                    <div 
-                                      className="absolute left-0 top-0 bottom-0 w-2 opacity-50"
-                                      style={{ backgroundColor: product.visual?.cor_assinatura_produto }}
-                                    />
-
-                                    <div className="flex justify-end items-start mb-3">
-                                      {economyPercent > 0 && (
-                                        <span 
-                                          className="text-white text-[10px] font-black px-3 py-1 rounded-full"
-                                          style={{ backgroundColor: product.visual?.cor_assinatura_produto || '#F36C21' }}
-                                        >
-                                          -{economyPercent}%
-                                        </span>
-                                      )}
-                                    </div>
-                                    <div className="flex items-baseline gap-2">
-                                      <span 
-                                        className="text-2xl font-black"
-                                        style={{ color: product.visual?.cor_assinatura_produto || '#F36C21' }}
-                                      >
-                                        R$
-                                      </span>
-                                      <span 
-                                        className="text-6xl md:text-7xl font-black tracking-tighter"
-                                        style={{ 
-                                          fontFamily: 'Bebas Neue, sans-serif',
-                                          color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#333333'
-                                        }}
-                                      >
-                                        {formatPrice(finalPrice).replace('R$', '').trim()}
-                                      </span>
-                                    </div>
-                                  </div>
-                                );
-                              })}
+                          {/* TOTAL PROMO */}
+                          {bestPromoFinal && (
+                            <div className="mt-1 rounded-2xl border border-white/10 bg-white/5 p-5">
+                              <div className="text-white/70 text-xs md:text-sm font-bold">
+                                Valor total das {bestPromo!.unit_pack} unidades:
+                              </div>
+                              <div className="mt-3 inline-flex items-center rounded-xl px-5 py-3 font-black text-white text-2xl md:text-3xl"
+                                style={{ backgroundColor: "#16A34A" }}
+                              >
+                                {formatPrice(bestPromoFinal)}
+                              </div>
                             </div>
                           )}
-                        </div>
+
+                          {/* EAN */}
+                          <div className="mt-auto pt-2 text-center text-white/55 text-[11px] font-bold tracking-widest">
+                            Código: {product.ean}
+                          </div>
+                        </>
                       );
                     })()}
-                  </motion.div>
-                </div>
+                  </div>
+                </motion.div>
               </div>
             )}
           </motion.div>
