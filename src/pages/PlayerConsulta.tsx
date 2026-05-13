@@ -1239,19 +1239,25 @@ export default function PlayerConsulta() {
                           {/* Container Preço Principal */}
                           <motion.div 
                             animate={{ 
-                              boxShadow: [
-                                "0 20px 50px rgba(0,0,0,0.3)",
-                                "0 20px 70px rgba(243,108,33,0.2)",
-                                "0 20px 50px rgba(0,0,0,0.3)"
-                              ] 
+                              boxShadow: isDefaultImage(product.visual?.imagem_url)
+                                ? [
+                                    "0 20px 50px rgba(0,0,0,0.3)",
+                                    "0 20px 70px rgba(243,108,33,0.3)",
+                                    "0 20px 50px rgba(0,0,0,0.3)"
+                                  ]
+                                : [
+                                    "0 20px 50px rgba(0,0,0,0.1)",
+                                    "0 20px 70px rgba(0,0,0,0.15)",
+                                    "0 20px 50px rgba(0,0,0,0.1)"
+                                  ]
                             }}
-                            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                            className="p-10 md:p-12 rounded-[40px] relative overflow-hidden border backdrop-blur-2xl flex flex-col items-center justify-center min-h-[220px]"
+                            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                            className="p-12 md:p-16 rounded-[48px] relative overflow-hidden border backdrop-blur-3xl flex flex-col items-center justify-center min-h-[280px] w-full"
                             style={{ 
                               background: isDefaultImage(product.visual?.imagem_url)
-                                ? 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)'
-                                : 'linear-gradient(180deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.08) 100%)',
-                              borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
+                                ? 'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.02) 100%)'
+                                : 'linear-gradient(180deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.05) 100%)',
+                              borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
                             }}
                           >
                             
