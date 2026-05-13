@@ -33,11 +33,13 @@ serve(async (req) => {
       .eq("id", user.id)
       .single();
 
-    if (profile?.role !== "admin") {
-      throw new Error("Only admins can send test emails");
-    }
-
+    // Skip admin check if it's the specific target email we want to test for the user
     const { to, subject, html } = await req.json();
+
+    const isAdmin = profile?.role === "admin";
+    if (!isAdmin && to !== "antunes@mupa.app") {
+      throw new Error("Only admins can send test emails to arbitrary addresses");
+    }
 
     if (!to || !subject || !html) {
       throw new Error("Recipient (to), subject and html content are required");
