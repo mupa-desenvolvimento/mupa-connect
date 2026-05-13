@@ -24,29 +24,37 @@ serve(async (req) => {
       throw new Error("Email, password and name are required");
     }
 
-    // 1. Create User in Auth (Admin)
-    const { data: userData, error: createError } = await supabaseClient.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true, // Mark as confirmed to avoid standard email
-      user_metadata: { full_name: name },
-    });
+    // 1. Try to find existing user or create new one
+    let user;
+    const { data: existingUsers, error: listError } = await supabaseClient.auth.admin.listUsers();
+    const existingUser = existingUsers?.users.find(u => u.email === email);
 
-    if (createError) throw createError;
-
-    const user = userData.user;
-
-    // 2. Create User Profile
-    const { error: profileError } = await supabaseClient
-      .from("user_profiles")
-      .insert({
-        id: user.id,
-        company_id: companyId,
-        tenant_id: tenantId,
-        role: role,
+    if (existingUser) {
+      user = existingUser;
+    } else {
+      // Create User in Auth (Admin)
+      const { data: userData, error: createError } = await supabaseClient.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { full_name: name },
       });
 
-    if (profileError) throw profileError;
+      if (createError) throw createError;
+      user = userData.user;
+
+      // 2. Create User Profile
+      const { error: profileError } = await supabaseClient
+        .from("user_profiles")
+        .insert({
+          id: user.id,
+          company_id: companyId,
+          tenant_id: tenantId,
+          role: role,
+        });
+
+      if (profileError) throw profileError;
+    }
 
     // Send Email via Resend
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
