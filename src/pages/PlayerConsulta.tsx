@@ -1311,13 +1311,7 @@ export default function PlayerConsulta() {
                                       borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
                                     }}
                                   >
-                                    <div className="flex justify-between items-start mb-3">
-                                      <span 
-                                        className="text-sm font-black tracking-widest uppercase"
-                                        style={{ color: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' }}
-                                      >
-                                        {label}
-                                      </span>
+                                    <div className="flex justify-end items-start mb-3">
                                       {economyPercent > 0 && (
                                         <span 
                                           className="text-white text-[10px] font-black px-3 py-1 rounded-full"
