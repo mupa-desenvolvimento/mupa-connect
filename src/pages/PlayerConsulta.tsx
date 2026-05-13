@@ -1153,7 +1153,7 @@ export default function PlayerConsulta() {
               </motion.div>
             ) : product && (
               <div className={cn(
-                "w-full h-full flex gap-8 md:gap-16",
+                "w-full h-full flex gap-8 md:gap-20",
                 isVertical ? "flex-col" : "flex-row items-stretch"
               )}>
                 {/* CONTAINER DA IMAGEM */}
