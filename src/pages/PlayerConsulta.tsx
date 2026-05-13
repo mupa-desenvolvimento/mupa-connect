@@ -124,6 +124,7 @@ export default function PlayerConsulta() {
   const [manifest, setManifest] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
+  const [reloadKey, setReloadKey] = useState<number>(0);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // DEV MODE STATE
@@ -354,7 +355,84 @@ export default function PlayerConsulta() {
     }
 
     initialize();
-  }, [deviceCode, isPreview, previewPlaylistId]);
+  }, [deviceCode, isPreview, previewPlaylistId, reloadKey]);
+
+  // 1.5 Realtime Updates via Firebase
+  useEffect(() => {
+    if (!deviceCode || isPreview) return;
+    
+    const unsubscribe = FirebaseRealtimeService.subscribeToDeviceUpdates(deviceCode, (payload) => {
+      console.log("[Realtime] Sincronizando conteúdo via Firebase...", payload);
+      setReloadKey(k => k + 1);
+    });
+
+    return () => unsubscribe();
+  }, [deviceCode, isPreview]);
+
+  // 1.8 Proactive Cache Management
+  useEffect(() => {
+    if (!manifest || !deviceCode || isPreview) return;
+
+    const syncMediaCache = async () => {
+      console.log("[Player] Syncing media cache for current manifest...");
+      const items = ScheduleResolver.getActivePlaylist(manifest);
+      const urls = items.map(item => item.url).filter(Boolean);
+
+      // Cache all current items in background
+      items.forEach(item => 
+        MediaCacheService.cacheMedia(item.url, item.type, 0, deviceCode).catch(err => {
+          console.warn("[Player] Background cache failed for:", item.url, err);
+        })
+      );
+
+      // Clean old cache entries
+      MediaCacheService.clearOldCache(urls);
+    };
+
+    syncMediaCache();
+  }, [manifest, deviceCode, isPreview]);
+
+  // 4. Background Sync (Polling) - Fallback silent check
+  useEffect(() => {
+    if (!deviceCode || isPreview) return;
+    
+    const backgroundSync = async () => {
+      console.log("[Player] Background sync checking for updates...");
+      try {
+        const { data: device, error } = await (supabase
+          .from("dispositivos")
+          .select("id, atualizado, playlist_id") as any)
+          .or(`apelido_interno.eq."${deviceCode}",serial.eq."${deviceCode}"`)
+          .maybeSingle();
+
+        if (error || !device) return;
+
+        const { data: playlistData } = await supabase
+          .from("playlists")
+          .select("updated_at")
+          .eq("id", device.playlist_id)
+          .maybeSingle();
+
+        const remoteUpdatedAt = playlistData?.updated_at || device.atualizado || "";
+        const cachedManifest = ManifestManager.getManifest(deviceCode);
+
+        if (!cachedManifest || cachedManifest.updated_at !== remoteUpdatedAt) {
+          console.log("[Player] Update detected or no cache, fetching manifest...");
+          const result = await ManifestService.fetchManifest(deviceCode);
+          setManifest(result.manifest);
+          setDeviceInfo(result.device || device);
+        }
+      } catch (err) {
+        console.warn("[Player] Background sync failed", err);
+      }
+    };
+
+    // Initial check immediately, then every 60s
+    backgroundSync();
+    const interval = setInterval(backgroundSync, 60000);
+    
+    return () => clearInterval(interval);
+  }, [deviceCode, isPreview, reloadKey]);
 
   const activePlaylist = useMemo(() => ScheduleResolver.getActivePlaylist(manifest), [manifest]);
 
