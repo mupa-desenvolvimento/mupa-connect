@@ -1251,7 +1251,7 @@ export default function PlayerConsulta() {
           >
             {/* Fundo Dinâmico Premium com Gradientes e Glow */}
             {!isDefaultImage(product?.visual?.imagem_url) && product?.visual && (
-              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <div className="absolute inset-0 pointer-events-none overflow-visible">
                 {/* Gradiente de Base */}
                 <div 
                   className="absolute inset-0 opacity-40"
