@@ -1364,7 +1364,7 @@ export default function PlayerConsulta() {
                                   className="text-[clamp(9rem,20vw,17rem)] leading-[0.7] font-black tracking-tighter" 
                                   style={{ 
                                     fontFamily: 'Bebas Neue, sans-serif',
-                                    color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#333333',
+                                    color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : getContrastColor(product.visual?.cor_dominante_claro || '#FFFFFF'),
                                     filter: isDefaultImage(product.visual?.imagem_url) 
                                       ? `drop-shadow(0 0 30px ${product.visual?.cor_assinatura_produto || '#F36C21'}60)`
                                       : 'none'
