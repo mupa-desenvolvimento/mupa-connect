@@ -1184,8 +1184,8 @@ export default function PlayerConsulta() {
                       transition={{ delay: 0.4 }}
                       className="rounded-[30px] p-8 shadow-2xl relative overflow-hidden"
                       style={{ 
-                        backgroundColor: '#F36C21',
-                        color: getContrastColor('#F36C21')
+                        backgroundColor: product.visual?.cor_assinatura_produto || '#F36C21',
+                        color: getContrastColor(product.visual?.cor_assinatura_produto || '#F36C21')
                       }}
                     >
                       <div className="relative z-10 space-y-2">
