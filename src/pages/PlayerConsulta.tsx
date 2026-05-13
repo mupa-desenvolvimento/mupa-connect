@@ -78,7 +78,10 @@ const getLuminance = (hex: string) => {
 };
 
 const getContrastColor = (hex: string) => {
-  return getLuminance(hex) > 0.5 ? "#000000" : "#FFFFFF";
+  const luminance = getLuminance(hex);
+  // Se luminância > 0.45, fundo é considerado "claro" o suficiente para texto escuro (grafite)
+  // Caso contrário, fundo é "escuro", então texto deve ser branco.
+  return luminance > 0.45 ? "#333333" : "#FFFFFF";
 };
 
 const isDefaultImage = (url: string | null | undefined) => {
