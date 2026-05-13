@@ -1113,7 +1113,7 @@ export default function PlayerConsulta() {
   }
 
   return (
-    <div className={cn("fixed inset-0 bg-[#f8fafc] overflow-hidden select-none touch-none overscroll-none", !showCursor && "cursor-none")} onClick={() => enterFullscreen()} onTouchStart={() => enterFullscreen()}>
+    <div className={cn("fixed inset-0 bg-[#f8fafc] overflow-hidden select-none touch-none overscroll-none supports-[height:100dvh]:h-[100dvh]", !showCursor && "cursor-none")} onClick={() => enterFullscreen()} onTouchStart={() => enterFullscreen()}>
       {/* Hidden camera and canvas for face detection */}
       {!isPreview && (
         <>
@@ -1242,11 +1242,13 @@ export default function PlayerConsulta() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-8 md:p-16 overflow-y-auto overflow-x-hidden"
+            className="fixed inset-0 z-50 flex items-center justify-center p-8 md:p-16 overflow-y-auto overflow-x-hidden supports-[height:100dvh]:h-[100dvh] safe-area-inset"
             style={{ 
               backgroundColor: isDefaultImage(product?.visual?.imagem_url)
                 ? (product?.visual?.fundo_legibilidade ? `${product.visual.fundo_legibilidade}F8` : 'rgba(0,51,153,0.98)')
                 : (product?.visual?.cor_dominante_escuro || '#FFFFFF'),
+              paddingTop: 'calc(2rem + env(safe-area-inset-top))',
+              paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))',
             }}
           >
             {/* Fundo Dinâmico Premium com Gradientes e Glow */}
@@ -1305,8 +1307,8 @@ export default function PlayerConsulta() {
               </motion.div>
             ) : product && (
               <div className={cn(
-                "w-full h-fit flex gap-12 md:gap-20 overflow-visible py-8",
-                isVertical ? "flex-col" : "flex-row items-stretch"
+                "w-full max-w-7xl mx-auto flex gap-12 md:gap-20 overflow-visible py-8 items-start",
+                isVertical ? "flex-col" : "flex-row"
               )}>
                 {/* CONTAINER DA IMAGEM */}
                 <motion.div 
@@ -1350,16 +1352,16 @@ export default function PlayerConsulta() {
 
                 {/* CONTEÚDO DO PRODUTO */}
                 <div className={cn(
-                  "flex flex-col justify-between py-10 md:py-14 overflow-visible",
-                  isVertical ? "flex-[0_0_auto] w-full" : "w-[58%] h-full"
+                  "flex flex-col justify-start py-4 md:py-8 overflow-visible",
+                  isVertical ? "flex-[0_0_auto] w-full" : "w-[58%] h-auto"
                 )}>
-                  <div className="space-y-16">
+                  <div className="space-y-8 md:space-y-12">
                     {/* Descrição com Fundo de Destaque Dinâmico */}
                     <motion.div 
                       initial={{ y: 30, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.4 }}
-                      className="rounded-[40px] px-12 py-16 md:py-28 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.3)] relative overflow-visible border border-white/20 min-h-[220px] md:min-h-[320px] flex flex-col justify-center"
+                      className="rounded-[40px] px-8 py-10 md:px-12 md:py-16 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.3)] relative overflow-visible border border-white/20 min-h-[180px] md:min-h-[240px] flex flex-col justify-center"
                       style={{ 
                         background: isDefaultImage(product.visual?.imagem_url)
                           ? (product.visual?.cor_assinatura_produto || '#F36C21')
@@ -1392,7 +1394,7 @@ export default function PlayerConsulta() {
                     initial={{ y: 50, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.6 }}
-                    className="space-y-10"
+                    className="space-y-8 mt-8"
                   >
                     {(!product.stock_prices || product.stock_prices.filter(p => p.price_pack > 0).length === 0) ? (
                       <div className="py-20 px-12 rounded-[40px] bg-white/5 border border-white/10 flex flex-col items-center justify-center text-center gap-6 backdrop-blur-xl min-h-[300px]">
@@ -1409,7 +1411,7 @@ export default function PlayerConsulta() {
                       const mainFinalPrice = mainPriceItem.price_prom_pack && mainPriceItem.price_prom_pack > 0 ? mainPriceItem.price_prom_pack : mainPriceItem.price_pack;
 
                       return (
-                        <div className="space-y-16">
+                        <div className="space-y-10 md:space-y-14">
                           {/* Container Preço Principal */}
                           <motion.div 
                             animate={{ 
@@ -1420,7 +1422,7 @@ export default function PlayerConsulta() {
                               ]
                             }}
                             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                            className="px-10 py-16 md:px-16 md:py-32 rounded-[56px] relative overflow-visible border border-white/10 flex flex-col items-center justify-center min-h-[380px] md:min-h-[520px] w-full"
+                            className="px-8 py-10 md:px-16 md:py-16 rounded-[56px] relative overflow-visible border border-white/10 flex flex-col items-center justify-center min-h-[300px] md:min-h-[420px] w-full"
                             style={{ 
                               background: isDefaultImage(product.visual?.imagem_url)
                                 ? 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 100%)'
@@ -1554,7 +1556,7 @@ export default function PlayerConsulta() {
 
       {/* Input visível mas estilizado para integração com o layout */}
       <div className={cn(
-        "fixed bottom-24 left-1/2 -translate-x-1/2 z-50 transition-all duration-500",
+        "fixed bottom-24 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 pb-[env(safe-area-inset-bottom)]",
         showOverlay ? "opacity-0 pointer-events-none translate-y-4" : "opacity-100 translate-y-0"
       )}>
         <div className="relative group">
