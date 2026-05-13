@@ -1185,11 +1185,17 @@ export default function PlayerConsulta() {
                               boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)'
                             }}
                           >
-                            <span className="text-slate-600 text-sm md:text-xl font-black uppercase tracking-wider block mb-1">
+                            <span className={cn(
+                              "text-sm md:text-xl font-black uppercase tracking-wider block mb-1",
+                              isDefaultImage ? "text-[#F36C21]" : "text-slate-600"
+                            )}>
                               {mainPriceItem.unit_pack === 1 ? 'Unidade' : `Pack com ${mainPriceItem.unit_pack}`}
                             </span>
                             <div className="flex items-baseline gap-2">
-                              <span className="text-2xl md:text-4xl text-slate-500 font-black">R$</span>
+                              <span className={cn(
+                                "text-2xl md:text-4xl font-black",
+                                isDefaultImage ? "text-[#F36C21]" : "text-slate-500"
+                              )}>R$</span>
                               <span className="text-[clamp(3.5rem,10vw,8rem)] leading-none font-black text-slate-900" style={{ fontFamily: 'Bebas Neue, sans-serif' }}>
                                 {formatPrice(mainPriceItem.price_prom_pack && mainPriceItem.price_prom_pack > 0 ? mainPriceItem.price_prom_pack : mainPriceItem.price_pack).replace('R$', '').trim()}
                               </span>
