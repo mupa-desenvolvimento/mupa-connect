@@ -1177,7 +1177,7 @@ export default function PlayerConsulta() {
                       
                       const promoPacks = validPrices.filter(p => p.unit_pack !== mainPriceItem.unit_pack);
                       
-                      const isDefaultImage = (!product.visual?.imagem_url || product.visual.imagem_url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png'));
+                      const hasDefaultImage = isDefaultImage(product.visual?.imagem_url);
 
                       return (
                         <>
