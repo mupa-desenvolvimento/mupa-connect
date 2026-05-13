@@ -1350,10 +1350,10 @@ export default function PlayerConsulta() {
 
                 {/* CONTEÚDO DO PRODUTO */}
                 <div className={cn(
-                  "flex flex-col justify-between py-2",
+                  "flex flex-col justify-between py-6 md:py-10",
                   isVertical ? "h-[58%] w-full" : "w-[58%] h-full"
                 )}>
-                  <div className="space-y-8">
+                  <div className="space-y-12">
                     {/* Descrição com Fundo de Destaque Dinâmico */}
                     <motion.div 
                       initial={{ y: 30, opacity: 0 }}
