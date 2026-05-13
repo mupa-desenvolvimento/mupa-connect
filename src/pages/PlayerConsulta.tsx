@@ -1395,7 +1395,7 @@ export default function PlayerConsulta() {
                     className="space-y-6"
                   >
                     {(!product.stock_prices || product.stock_prices.filter(p => p.price_pack > 0).length === 0) ? (
-                      <div className="p-12 rounded-[40px] bg-white/5 border border-white/10 flex flex-col items-center justify-center text-center gap-4 backdrop-blur-xl">
+                      <div className="py-20 px-12 rounded-[40px] bg-white/5 border border-white/10 flex flex-col items-center justify-center text-center gap-6 backdrop-blur-xl min-h-[300px]">
                         <Package className="w-20 h-20 text-white/10" />
                         <span className="text-white/40 text-2xl font-black uppercase tracking-[0.3em]">PREÇO INDISPONÍVEL</span>
                       </div>
