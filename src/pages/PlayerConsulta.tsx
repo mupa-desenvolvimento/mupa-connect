@@ -1233,7 +1233,7 @@ export default function PlayerConsulta() {
                     style={{ 
                       background: isDefaultImage(product.visual?.imagem_url)
                         ? `linear-gradient(135deg, ${product.visual?.cor_dominante_escuro || '#003399'} 0%, ${product.visual?.cor_dominante_claro || '#001f5c'} 100%)`
-                        : `linear-gradient(145deg, #FFFFFF 0%, ${product.visual?.cor_dominante_claro || '#F8F9FA'} 100%)`,
+                        : "#FFFFFF",
                     }}
                   >
                     {/* Glow interno leve */}
