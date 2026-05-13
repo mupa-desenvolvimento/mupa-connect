@@ -1392,7 +1392,7 @@ export default function PlayerConsulta() {
                     initial={{ y: 50, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.6 }}
-                    className="space-y-6"
+                    className="space-y-10"
                   >
                     {(!product.stock_prices || product.stock_prices.filter(p => p.price_pack > 0).length === 0) ? (
                       <div className="py-20 px-12 rounded-[40px] bg-white/5 border border-white/10 flex flex-col items-center justify-center text-center gap-6 backdrop-blur-xl min-h-[300px]">
