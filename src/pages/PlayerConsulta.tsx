@@ -1172,6 +1172,8 @@ export default function PlayerConsulta() {
                                            validPrices.reduce((prev, curr) => prev.unit_pack < curr.unit_pack ? prev : curr);
                       
                       const promoPacks = validPrices.filter(p => p.unit_pack !== mainPriceItem.unit_pack);
+                      
+                      const isDefaultImage = (!product.visual?.imagem_url || product.visual.imagem_url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png'));
 
                       return (
                         <>
@@ -1179,7 +1181,7 @@ export default function PlayerConsulta() {
                             className="p-6 md:p-8 rounded-[30px] shadow-xl relative overflow-hidden flex flex-col justify-center"
                             style={{ 
                               backgroundColor: '#fff',
-                              border: `1px solid ${product.visual?.cor_dominante_claro || '#cbd5e1'}`,
+                              border: isDefaultImage ? '4px solid #F36C21' : `1px solid ${product.visual?.cor_dominante_claro || '#cbd5e1'}`,
                               boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)'
                             }}
                           >
