@@ -1372,12 +1372,20 @@ export default function PlayerConsulta() {
                                 return (
                                   <div 
                                     key={`pack-${idx}`}
-                                    className="p-8 rounded-[36px] border backdrop-blur-xl relative overflow-hidden group min-h-[140px] flex flex-col justify-center"
+                                    className="p-8 rounded-[48px] border backdrop-blur-3xl relative overflow-hidden group min-h-[160px] flex flex-col justify-center transition-all hover:scale-[1.02]"
                                     style={{
-                                      backgroundColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                                      borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
+                                      background: isDefaultImage(product.visual?.imagem_url) 
+                                        ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)' 
+                                        : `linear-gradient(135deg, ${product.visual?.cor_dominante_claro || '#FFFFFF'} 0%, #F8F9FA 100%)`,
+                                      borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)',
                                     }}
                                   >
+                                    {/* Destaque sutil lateral */}
+                                    <div 
+                                      className="absolute left-0 top-0 bottom-0 w-2 opacity-50"
+                                      style={{ backgroundColor: product.visual?.cor_assinatura_produto }}
+                                    />
+
                                     <div className="flex justify-end items-start mb-3">
                                       {economyPercent > 0 && (
                                         <span 
