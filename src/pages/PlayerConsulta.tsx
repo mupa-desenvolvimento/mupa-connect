@@ -1157,11 +1157,6 @@ export default function PlayerConsulta() {
               paddingLeft: 'max(1rem, env(safe-area-inset-left))',
               paddingRight: 'max(1rem, env(safe-area-inset-right))',
             }}
-            style={{ 
-              backgroundColor: isDefaultImage(product?.visual?.imagem_url)
-                ? (product?.visual?.fundo_legibilidade ? `${product.visual.fundo_legibilidade}F8` : 'rgba(0,51,153,0.98)')
-                : (product?.visual?.cor_dominante_escuro || '#FFFFFF'),
-            }}
           >
             {/* Fundo Dinâmico Premium com Gradientes e Glow */}
             {!isDefaultImage(product?.visual?.imagem_url) && product?.visual && (
