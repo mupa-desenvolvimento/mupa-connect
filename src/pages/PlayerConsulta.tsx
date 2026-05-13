@@ -1290,55 +1290,65 @@ export default function PlayerConsulta() {
                           {/* Container Preço Principal */}
                           <motion.div 
                             animate={{ 
-                              boxShadow: isDefaultImage(product.visual?.imagem_url)
-                                ? [
-                                    "0 20px 50px rgba(0,0,0,0.3)",
-                                    "0 20px 70px rgba(243,108,33,0.3)",
-                                    "0 20px 50px rgba(0,0,0,0.3)"
-                                  ]
-                                : [
-                                    "0 20px 50px rgba(0,0,0,0.1)",
-                                    "0 20px 70px rgba(0,0,0,0.15)",
-                                    "0 20px 50px rgba(0,0,0,0.1)"
-                                  ]
+                              boxShadow: [
+                                "0 32px 64px -16px rgba(0,0,0,0.4)",
+                                `0 32px 80px -16px ${(product.visual?.cor_assinatura_produto || '#F36C21')}40`,
+                                "0 32px 64px -16px rgba(0,0,0,0.4)"
+                              ]
                             }}
                             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                            className="p-12 md:p-16 rounded-[48px] relative overflow-hidden border backdrop-blur-3xl flex flex-col items-center justify-center min-h-[280px] w-full"
+                            className="p-10 md:p-14 rounded-[56px] relative overflow-hidden border border-white/10 flex flex-col items-center justify-center min-h-[300px] w-full"
                             style={{ 
                               background: isDefaultImage(product.visual?.imagem_url)
-                                ? 'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.02) 100%)'
-                                : 'linear-gradient(180deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.05) 100%)',
-                              borderColor: isDefaultImage(product.visual?.imagem_url) ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
+                                ? 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 100%)'
+                                : `linear-gradient(180deg, ${product.visual?.cor_dominante_claro || '#FFFFFF'} 0%, ${product.visual?.cor_dominante_claro}EE 100%)`,
+                              backdropFilter: 'blur(40px)',
                             }}
                           >
+                            {/* Glow de fundo no card de preço */}
+                            <div 
+                              className="absolute inset-0 opacity-10 pointer-events-none"
+                              style={{ 
+                                background: `radial-gradient(circle at center, ${product.visual?.cor_assinatura_produto || '#F36C21'} 0%, transparent 70%)` 
+                              }}
+                            />
                             
-                            <div className="flex items-start gap-3 md:gap-5">
+                            <div className="relative z-10 flex flex-col items-center">
                               <span 
-                                className="text-4xl md:text-6xl font-black mt-4 md:mt-6"
-                                style={{ color: product.visual?.cor_assinatura_produto || '#F36C21' }}
+                                className="text-[1.2rem] font-black uppercase tracking-[0.4em] mb-4 opacity-60"
+                                style={{ color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#333333' }}
                               >
-                                R$
+                                PREÇO EXCLUSIVO
                               </span>
-                              <span 
-                                className="text-[clamp(8rem,18vw,15rem)] leading-[0.75] font-black tracking-tighter" 
-                                style={{ 
-                                  fontFamily: 'Bebas Neue, sans-serif',
-                                  color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#333333',
-                                  textShadow: isDefaultImage(product.visual?.imagem_url) 
-                                    ? `0 0 40px ${product.visual?.cor_assinatura_produto || '#F36C21'}40`
-                                    : 'none'
-                                }}
-                              >
-                                {formatPrice(mainFinalPrice).replace('R$', '').trim()}
-                              </span>
+
+                              <div className="flex items-start gap-3 md:gap-5">
+                                <span 
+                                  className="text-4xl md:text-6xl font-black mt-4 md:mt-8"
+                                  style={{ color: product.visual?.cor_assinatura_produto || '#F36C21' }}
+                                >
+                                  R$
+                                </span>
+                                <span 
+                                  className="text-[clamp(9rem,20vw,17rem)] leading-[0.7] font-black tracking-tighter" 
+                                  style={{ 
+                                    fontFamily: 'Bebas Neue, sans-serif',
+                                    color: isDefaultImage(product.visual?.imagem_url) ? '#FFFFFF' : '#333333',
+                                    filter: isDefaultImage(product.visual?.imagem_url) 
+                                      ? `drop-shadow(0 0 30px ${product.visual?.cor_assinatura_produto || '#F36C21'}60)`
+                                      : 'none'
+                                  }}
+                                >
+                                  {formatPrice(mainFinalPrice).replace('R$', '').trim()}
+                                </span>
+                              </div>
                             </div>
                             
-                            {/* Glow lateral */}
+                            {/* Barra de destaque inferior */}
                             <div 
-                              className="absolute left-0 top-0 bottom-0 w-2 shadow-[0_0_30px]" 
+                              className="absolute bottom-0 left-0 right-0 h-3" 
                               style={{ 
-                                backgroundColor: product.visual?.cor_assinatura_produto || '#F36C21',
-                                boxShadow: `0 0 30px ${product.visual?.cor_assinatura_produto || '#F36C21'}`
+                                background: `linear-gradient(90deg, transparent, ${product.visual?.cor_assinatura_produto || '#F36C21'}, transparent)`,
+                                boxShadow: `0 0 20px ${product.visual?.cor_assinatura_produto || '#F36C21'}`
                               }} 
                             />
                           </motion.div>
