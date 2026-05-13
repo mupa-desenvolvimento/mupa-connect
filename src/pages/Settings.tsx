@@ -1,5 +1,5 @@
 import { PageHeader } from "@/components/PageHeader";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,16 +10,61 @@ import {
   QrCode, 
   Info,
   Loader2,
-  ExternalLink
+  ExternalLink,
+  Mail,
+  Send
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
 import { CompanySettings } from "@/components/CompanySettings";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function SettingsPage() {
-  const { companyId, isLoading: isLoadingRole } = useUserRole();
+  const { companyId, role: userRole, isLoading: isLoadingRole } = useUserRole();
+  const [testEmail, setTestEmail] = useState("");
+  const [isSending, setIsSending] = useState(false);
+
+  const handleSendTestEmail = async () => {
+    if (!testEmail) {
+      toast.error("Por favor, insira um e-mail.");
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-test-email", {
+        body: {
+          to: testEmail,
+          subject: "E-mail de Teste do Sistema Mupa",
+          html: `
+            <h1>Teste de Funcionamento</h1>
+            <p>Este é um e-mail de teste enviado para validar a integração com o Resend.</p>
+            <p>Se você recebeu este e-mail, a configuração do conector está correta.</p>
+            <hr />
+            <p>Data: ${new Date().toLocaleString('pt-BR')}</p>
+          `
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success("E-mail de teste enviado com sucesso!");
+        setTestEmail("");
+      } else {
+        toast.error(data?.error?.message || "Erro ao enviar e-mail de teste.");
+      }
+    } catch (error: any) {
+      console.error("Error sending test email:", error);
+      toast.error(error.message || "Erro ao processar o envio.");
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   const { data: apps, isLoading: isLoadingApps } = useQuery({
     queryKey: ["company-apps", companyId],
@@ -82,8 +127,44 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle className="font-bold text-lg font-bold">Integrações</CardTitle>
               </CardHeader>
-              <CardContent className="text-xs text-muted-foreground font-medium italic">
-                Em breve. Configure integrações com sistemas externos aqui.
+              <CardContent className="space-y-6">
+                <div className="text-xs text-muted-foreground font-medium italic mb-4">
+                  Configure integrações com sistemas externos aqui.
+                </div>
+
+                {userRole === "admin" && (
+                  <div className="space-y-4 pt-4 border-t">
+                    <div className="space-y-2">
+                      <Label htmlFor="test-email" className="flex items-center gap-2">
+                        <Mail className="h-4 w-4" /> Enviar e-mail de teste (Resend)
+                      </Label>
+                      <CardDescription>
+                        Valide se a integração com o Resend está funcionando corretamente enviando um e-mail para qualquer endereço.
+                      </CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        id="test-email"
+                        placeholder="exemplo@email.com"
+                        value={testEmail}
+                        onChange={(e) => setTestEmail(e.target.value)}
+                        className="max-w-md"
+                      />
+                      <Button 
+                        onClick={handleSendTestEmail} 
+                        disabled={isSending}
+                        className="flex gap-2"
+                      >
+                        {isSending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
+                        Enviar
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
