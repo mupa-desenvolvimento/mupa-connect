@@ -576,8 +576,10 @@ export default function PlayerConsulta() {
 
   const buildVisual = (ean: string | null | undefined, visual: any) => {
     const safeEan = typeof ean === "string" && ean.trim() ? ean.trim() : null;
+    const mupaImage = safeEan ? MUPA_STATIC_IMAGE(safeEan) : null;
+    
     return {
-      imagem_url: visual?.imagem_url || (safeEan ? MUPA_STATIC_IMAGE(safeEan) : DEFAULT_PRODUCT_IMAGE),
+      imagem_url: ensureSafeImageUrl(visual?.imagem_url) || mupaImage || DEFAULT_PRODUCT_IMAGE,
       cor_assinatura_produto: visual?.cor_assinatura_produto || "#000000",
       fundo_legibilidade: visual?.fundo_legibilidade || "#000000",
       cor_dominante_claro: visual?.cor_dominante_claro || "#FFFFFF",
