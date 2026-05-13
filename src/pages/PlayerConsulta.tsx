@@ -82,7 +82,7 @@ const getContrastColor = (hex: string) => {
 
 const isDefaultImage = (url: string | null | undefined) => {
   if (!url) return true;
-  return url.includes('21ac8a50-0789-4678-a545-452e2bbef889.png') || url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png');
+  return url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png') || url.includes('d3db954d-0353-4d10-a92c-375058cceded.png');
 };
 
 const ensureSafeImageUrl = (url: string | null | undefined) => {
