@@ -13,6 +13,7 @@ export const extractColorsFromImage = async (imageUrl: string): Promise<Extracte
       return null;
     }
 
+    // Usar Vibrant.from() que lida bem com URLs no browser v4
     const palette = await Vibrant.from(imageUrl).getPalette();
     
     if (!palette) return null;
