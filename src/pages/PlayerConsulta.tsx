@@ -1420,7 +1420,7 @@ export default function PlayerConsulta() {
                               ]
                             }}
                             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                            className="p-10 md:p-14 rounded-[56px] relative overflow-hidden border border-white/10 flex flex-col items-center justify-center min-h-[300px] w-full"
+                            className="px-12 py-20 md:px-16 md:py-24 rounded-[56px] relative overflow-visible border border-white/10 flex flex-col items-center justify-center min-h-[420px] w-full"
                             style={{ 
                               background: isDefaultImage(product.visual?.imagem_url)
                                 ? 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 100%)'
