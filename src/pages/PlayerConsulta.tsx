@@ -1409,7 +1409,7 @@ export default function PlayerConsulta() {
                       const mainFinalPrice = mainPriceItem.price_prom_pack && mainPriceItem.price_prom_pack > 0 ? mainPriceItem.price_prom_pack : mainPriceItem.price_pack;
 
                       return (
-                        <div className="space-y-6">
+                        <div className="space-y-10">
                           {/* Container Preço Principal */}
                           <motion.div 
                             animate={{ 
