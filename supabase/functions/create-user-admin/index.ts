@@ -26,21 +26,24 @@ serve(async (req) => {
 
     // 1. Try to find existing user or create new one
     let user;
-    const { data: existingUsers, error: listError } = await supabaseClient.auth.admin.listUsers();
-    const existingUser = existingUsers?.users.find(u => u.email === email);
+    
+    // Simplificando: vamos tentar criar e se der erro de "already registered", buscar o usuário
+    const { data: userData, error: createError } = await supabaseClient.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { full_name: name },
+    });
 
-    if (existingUser) {
-      user = existingUser;
+    if (createError) {
+      if (createError.message.includes("already been registered")) {
+        const { data: listData, error: listError } = await supabaseClient.auth.admin.listUsers();
+        user = listData?.users.find(u => u.email === email);
+        if (!user) throw new Error("User exists but could not be found");
+      } else {
+        throw createError;
+      }
     } else {
-      // Create User in Auth (Admin)
-      const { data: userData, error: createError } = await supabaseClient.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: { full_name: name },
-      });
-
-      if (createError) throw createError;
       user = userData.user;
 
       // 2. Create User Profile
@@ -53,7 +56,7 @@ serve(async (req) => {
           role: role,
         });
 
-      if (profileError) throw profileError;
+      if (profileError && !profileError.message.includes("duplicate key")) throw profileError;
     }
 
     // Send Email via Resend
