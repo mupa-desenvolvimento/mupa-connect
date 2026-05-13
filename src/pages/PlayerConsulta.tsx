@@ -235,6 +235,12 @@ export default function PlayerConsulta() {
   // Isso evita que o Android/Zebra abra o IME/teclado do sistema.
   const scanBufferRef = useRef<string>("");
   const lastKeyTimeRef = useRef<number>(0);
+  const avoidIme = useMemo(() => {
+    const ua = navigator.userAgent || "";
+    const isMobileUa = /Android|iPhone|iPad|iPod/i.test(ua);
+    const isTouch = (navigator.maxTouchPoints || 0) > 0;
+    return isMobileUa || isTouch;
+  }, []);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -803,61 +809,58 @@ export default function PlayerConsulta() {
       }
 
       const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+        return;
+      }
+
+      const now = Date.now();
+      if (now - lastKeyTimeRef.current > 150) {
+        scanBufferRef.current = "";
+      }
       
       // Se for Enter, processa a consulta
       if (e.key === "Enter") {
-        const code = inputRef.current?.value.trim();
+        const code = (scanBufferRef.current || inputRef.current?.value || "").trim();
         if (code) {
           console.log("[Scanner] Enter detectado. Valor:", code);
           // Limpa o input IMEDIATAMENTE para evitar que a próxima leitura pegue restos
+          scanBufferRef.current = "";
           if (inputRef.current) inputRef.current.value = "";
           handleConsult(code);
         }
         return;
       }
 
-      // Se não estiver em um campo de texto, redireciona o foco para o input principal
-      if (target && target.tagName !== "INPUT" && target.tagName !== "TEXTAREA" && !target.isContentEditable) {
-        // Se for um dígito, foca no input para capturar a leitura do scanner
-        if (/^[0-9]$/.test(e.key)) {
-          inputRef.current?.focus();
-        }
+      if (e.key === "Backspace") {
+        scanBufferRef.current = scanBufferRef.current.slice(0, -1);
+        lastKeyTimeRef.current = now;
+        if (inputRef.current) inputRef.current.value = scanBufferRef.current;
+        return;
       }
-    };
 
-    const keepFocus = () => {
-      // Só força o foco se não estivermos em um campo de entrada manual ou outras áreas de texto
-      // e o overlay não estiver aberto
-      const active = document.activeElement;
-      const isInputActive = active?.tagName === "INPUT" || active?.tagName === "TEXTAREA";
-      
-      if (!isInputActive && !showManualInput && !showOverlay) {
-        inputRef.current?.focus({ preventScroll: true });
+      if (/^[0-9]$/.test(e.key)) {
+        scanBufferRef.current += e.key;
+        lastKeyTimeRef.current = now;
+        if (inputRef.current) inputRef.current.value = scanBufferRef.current;
       }
     };
 
     window.addEventListener("keydown", handleGlobalKey, true); // Use capture to intercept before other handlers
-    window.addEventListener("click", keepFocus);
-    
-    // Foco inicial e periódico
-    const timer = setInterval(keepFocus, 1000);
 
     return () => {
       window.removeEventListener("keydown", handleGlobalKey, true);
-      window.removeEventListener("click", keepFocus);
-      clearInterval(timer);
     };
-  }, [handleConsult, showManualInput, showOverlay, isConsulting]);
+  }, [handleConsult, isConsulting]);
 
   // Garantir foco ao fechar o overlay
   useEffect(() => {
-    if (!showOverlay && !showManualInput) {
-      const timer = setTimeout(() => {
-        inputRef.current?.focus({ preventScroll: true });
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [showOverlay, showManualInput]);
+    if (avoidIme) return;
+    if (showOverlay || showManualInput) return;
+    const timer = setTimeout(() => {
+      inputRef.current?.focus({ preventScroll: true });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [showOverlay, showManualInput, avoidIme]);
 
   // Bloquear long-press, context menu, seleção e copy/paste no kiosk
   useEffect(() => {
@@ -1422,9 +1425,14 @@ export default function PlayerConsulta() {
               ref={inputRef}
               className="w-64 md:w-80 bg-transparent border-none text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0 text-lg font-mono tracking-widest font-bold"
               placeholder="AGUARDANDO LEITURA..."
-              autoFocus
+              autoFocus={!avoidIme}
               inputMode="none"
               autoComplete="off"
+              readOnly={avoidIme}
+              tabIndex={avoidIme ? -1 : 0}
+              onFocus={(e) => {
+                if (avoidIme) e.currentTarget.blur();
+              }}
             />
           </div>
         </div>
