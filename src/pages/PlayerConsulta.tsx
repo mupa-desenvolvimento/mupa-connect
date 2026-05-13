@@ -1309,8 +1309,12 @@ export default function PlayerConsulta() {
                 >
                   <div className="relative w-full h-full">
                     <OptimizedProductImage
-                      src={product.visual?.imagem_url || (product.ean ? MUPA_STATIC_IMAGE(product.ean) : DEFAULT_PRODUCT_IMAGE)}
-                      fallback={fallbackImageUrl || DEFAULT_PRODUCT_IMAGE}
+                      src={product.visual?.imagem_url || null}
+                      fallback={[
+                        product.ean ? MUPA_STATIC_IMAGE(product.ean) : null,
+                        fallbackImageUrl,
+                        DEFAULT_PRODUCT_IMAGE,
+                      ]}
                       ean={product.ean}
                       alt={product.description}
                       isDefaultImage={isDefaultImage(product.visual?.imagem_url)}
@@ -1424,7 +1428,7 @@ export default function PlayerConsulta() {
                                   className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest text-white"
                                   style={{ backgroundColor: "#E11D48" }}
                                 >
-                                  DESCONTO NA
+                                  DESCONTO!
                                 </div>
                                 <div
                                   className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest text-white"

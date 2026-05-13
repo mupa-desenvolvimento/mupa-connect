@@ -6,7 +6,7 @@ import { Package } from "lucide-react";
 
 interface OptimizedProductImageProps {
   src: string | null;
-  fallback: string | null;
+  fallback: string | string[] | null;
   ean: string | null;
   alt: string;
   className?: string;
@@ -24,12 +24,15 @@ export const OptimizedProductImage = ({
   const [currentSrc, setCurrentSrc] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [showFallback, setShowFallback] = useState(true);
-  const [error, setError] = useState(false);
+  const [hardError, setHardError] = useState(false);
   const loadingRef = useRef<string | null>(null);
+  const fallbacks = (Array.isArray(fallback) ? fallback : [fallback]).filter(
+    (v): v is string => typeof v === "string" && v.trim().length > 0,
+  );
 
   useEffect(() => {
     if (!src || isDefaultImage) {
-      setCurrentSrc(src || fallback);
+      setCurrentSrc(src || fallbacks[0] || null);
       setIsLoaded(true);
       setShowFallback(false);
       return;
@@ -39,7 +42,7 @@ export const OptimizedProductImage = ({
       // Reset state for new EAN
       setIsLoaded(false);
       setShowFallback(true);
-      setError(false);
+      setHardError(false);
       loadingRef.current = src;
 
       // 1. Try Cache
@@ -66,8 +69,15 @@ export const OptimizedProductImage = ({
       const timeoutId = setTimeout(() => {
         if (loadingRef.current === src && !isLoaded) {
           console.warn("[ImageLoader] Loading timeout, using fallback");
-          setError(true);
-          setCurrentSrc(fallback);
+          const fb = fallbacks[0] || null;
+          if (fb) {
+            setCurrentSrc(fb);
+            setIsLoaded(true);
+            setShowFallback(false);
+            return;
+          }
+          setHardError(true);
+          setCurrentSrc(null);
           setIsLoaded(true);
           setShowFallback(false);
         }
@@ -119,8 +129,15 @@ export const OptimizedProductImage = ({
           return;
         }
 
-        setError(true);
-        setCurrentSrc(fallback);
+        const fb = fallbacks[0] || null;
+        if (fb) {
+          setCurrentSrc(fb);
+          setIsLoaded(true);
+          setShowFallback(false);
+          return;
+        }
+        setHardError(true);
+        setCurrentSrc(null);
         setIsLoaded(true);
         setShowFallback(false);
       };
@@ -160,13 +177,13 @@ export const OptimizedProductImage = ({
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="relative z-10 w-full h-full flex items-center justify-center p-12"
       >
-        {currentSrc && !error ? (
+        {currentSrc ? (
           <img
             src={currentSrc}
             alt={alt}
             className="max-w-full max-h-full object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
           />
-        ) : error ? (
+        ) : hardError ? (
           <Package className="w-48 h-48 text-white/10" />
         ) : null}
       </motion.div>
