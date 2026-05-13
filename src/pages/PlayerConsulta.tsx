@@ -1026,7 +1026,7 @@ export default function PlayerConsulta() {
                   {deviceInfo?.apelido_interno || "Ponto de Consulta"}
                 </div>
                 <div className="text-[11px] uppercase tracking-[0.2em] opacity-60 font-mono font-bold">
-                  {deviceInfo ? `Filial ${deviceInfo.num_filial}` : `Offline · ${deviceCode}`}
+                  {deviceInfo ? `Filial ${deviceInfo.num_filial}` : deviceInfo?.serial || deviceCode}
                 </div>
               </div>
             </div>
