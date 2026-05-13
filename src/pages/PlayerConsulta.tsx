@@ -1189,12 +1189,12 @@ export default function PlayerConsulta() {
                   isVertical ? "h-[58%] w-full" : "w-[58%] h-full"
                 )}>
                   <div className="space-y-8">
-                    {/* Descrição com Fundo Laranja Destaque */}
+                    {/* Descrição com Fundo de Destaque Dinâmico */}
                     <motion.div 
                       initial={{ y: 30, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.4 }}
-                      className="rounded-[30px] p-8 shadow-2xl relative overflow-hidden"
+                      className="rounded-[32px] p-10 shadow-2xl relative overflow-hidden"
                       style={{ 
                         backgroundColor: product.visual?.cor_assinatura_produto || '#F36C21',
                         color: getContrastColor(product.visual?.cor_assinatura_produto || '#F36C21')
