@@ -8,6 +8,7 @@ import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Package, AlertCircle, Barcode, User, X, Info, Search, Play } from "lucide-react";
+import { OptimizedProductImage } from "@/components/OptimizedProductImage";
 import { Input } from "@/components/ui/input";
 import * as faceapi from "face-api.js";
 import { useKioskMode } from "@/hooks/useKioskMode";
@@ -180,7 +181,15 @@ export default function PlayerConsulta() {
 
   useEffect(() => {
     setImageError(false);
-  }, [product]);
+    // Preload basic images
+    const preload = [DEFAULT_PRODUCT_IMAGE];
+    if (fallbackImageUrl) preload.push(fallbackImageUrl);
+    
+    preload.forEach(url => {
+      const img = new Image();
+      img.src = url;
+    });
+  }, [product, fallbackImageUrl]);
 
   useEffect(() => {
 
@@ -627,37 +636,47 @@ export default function PlayerConsulta() {
     }
 
     console.log("[EAN] Iniciando consulta:", cleanEan);
-    setIsConsulting(true);
-    setShowOverlay(true);
-    setError(null);
-    setProduct(null);
-    setLastConsultedEan(cleanEan);
-
+    
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
 
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Tempo esgotado ao consultar produto.")), 15000)
-    );
-
-    try {
-      const cachedKey = `product_${cleanEan}`;
-      const cached = localStorage.getItem(cachedKey);
-      
-      if (cached) {
+    // Check cache BEFORE showing loader to make it truly instant for cached products
+    const cachedKey = `product_${cleanEan}`;
+    const cached = localStorage.getItem(cachedKey);
+    
+    if (cached) {
+      try {
         const parsed = JSON.parse(cached);
-        if (Date.now() - parsed.timestamp < 3600000 || !navigator.onLine) {
+        if (Date.now() - parsed.timestamp < 86400000 || !navigator.onLine) { // 24h cache or offline
           console.log("[Consulta] Usando cache para:", cleanEan);
           setProduct({
             ...parsed.data,
             is_cached: true,
             visual: buildVisual(cleanEan, parsed.data?.visual),
           });
+          setError(null);
+          setShowOverlay(true);
           setIsConsulting(false);
+          setLastConsultedEan(cleanEan);
           startHideTimer();
           return;
         }
+      } catch (e) {
+        console.warn("[Consulta] Erro ao ler cache:", e);
       }
+    }
 
+    // Not in cache or expired, show loader
+    setIsConsulting(true);
+    setShowOverlay(true);
+    setError(null);
+    setProduct(null);
+    setLastConsultedEan(cleanEan);
+
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("Tempo esgotado ao consultar produto.")), 15000)
+    );
+
+    try {
       const result: any = await Promise.race([
         supabase.functions.invoke('integra-assai', {
           body: { 
@@ -864,13 +883,38 @@ export default function PlayerConsulta() {
     if (isConsulting) return;
 
     console.log("[Manual] Iniciando consulta:", cleanId);
+    
+    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+
+    // Try cache for manual ID too
+    const cachedKey = `product_manual_${cleanId}`;
+    const cached = localStorage.getItem(cachedKey);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (Date.now() - parsed.timestamp < 86400000 || !navigator.onLine) {
+          console.log("[Manual] Usando cache para:", cleanId);
+          setProduct({
+            ...parsed.data,
+            is_cached: true,
+            visual: buildVisual(parsed.data?.ean, parsed.data?.visual),
+          });
+          setError(null);
+          setShowOverlay(true);
+          setIsConsulting(false);
+          startHideTimer();
+          return;
+        }
+      } catch (e) {
+        console.warn("[Manual] Erro ao ler cache:", e);
+      }
+    }
+
     setIsConsulting(true);
     setShowOverlay(true);
     setError(null);
     setProduct(null);
     setLastConsultedEan(null);
-
-    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
 
     const timeoutPromise = new Promise((_, reject) => 
       setTimeout(() => reject(new Error("Tempo esgotado ao consultar produto.")), 15000)
@@ -901,6 +945,19 @@ export default function PlayerConsulta() {
       };
 
       setProduct(finalProduct);
+      
+      localStorage.setItem(`product_manual_${cleanId}`, JSON.stringify({
+        data: finalProduct,
+        timestamp: Date.now()
+      }));
+      
+      // Also save by EAN if available to sync caches
+      if (data.ean) {
+        localStorage.setItem(`product_${data.ean}`, JSON.stringify({
+          data: finalProduct,
+          timestamp: Date.now()
+        }));
+      }
     } catch (err: any) {
       console.error("Erro na consulta manual:", err);
       setError("Produto não localizado. Por favor, valide a sequência digitada.");
@@ -1120,31 +1177,13 @@ export default function PlayerConsulta() {
                   {/* Glow de fundo */}
                   <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent pointer-events-none" />
                   
-                  <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: 0.3, type: "spring", stiffness: 100 }}
-                    className="relative z-10 w-full h-full flex items-center justify-center p-12"
-                  >
-                    {!imageError ? (
-                      <img 
-                        src={product.visual?.imagem_url || (product.ean ? MUPA_STATIC_IMAGE(product.ean) : DEFAULT_PRODUCT_IMAGE)}
-                        alt={product.description}
-                        className="max-w-full max-h-full object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          const defaultFallback = DEFAULT_PRODUCT_IMAGE;
-                          if (target.src !== defaultFallback) {
-                            target.src = fallbackImageUrl || defaultFallback;
-                            return;
-                          }
-                          setImageError(true);
-                        }}
-                      />
-                    ) : (
-                      <Package className="w-48 h-48 text-white/10" />
-                    )}
-                  </motion.div>
+                  <OptimizedProductImage 
+                    src={product.visual?.imagem_url || (product.ean ? MUPA_STATIC_IMAGE(product.ean) : DEFAULT_PRODUCT_IMAGE)}
+                    fallback={fallbackImageUrl || DEFAULT_PRODUCT_IMAGE}
+                    ean={product.ean}
+                    alt={product.description}
+                    isDefaultImage={isDefaultImage(product.visual?.imagem_url)}
+                  />
                 </motion.div>
 
                 {/* CONTEÚDO DO PRODUTO */}
