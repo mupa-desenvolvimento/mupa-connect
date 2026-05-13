@@ -195,6 +195,32 @@ export default function PlayerConsulta() {
     });
   }, [product, fallbackImageUrl]);
 
+  // Extração automática de cores quando a imagem do produto NÃO for default
+  useEffect(() => {
+    if (!product?.visual?.imagem_url) return;
+    const url = product.visual.imagem_url;
+    if (isDefaultImage(url)) return; // mantém cores default
+
+    let cancelled = false;
+    extractImageColors(url).then(palette => {
+      if (cancelled || !palette) return;
+      setProduct(prev => {
+        if (!prev || !prev.visual || prev.visual.imagem_url !== url) return prev;
+        return {
+          ...prev,
+          visual: {
+            ...prev.visual,
+            cor_dominante_claro: palette.cor_dominante_claro,
+            cor_dominante_escuro: palette.cor_dominante_escuro,
+            cor_assinatura_produto: palette.cor_assinatura_produto,
+            fundo_legibilidade: palette.fundo_legibilidade,
+          },
+        };
+      });
+    });
+    return () => { cancelled = true; };
+  }, [product?.visual?.imagem_url]);
+
   useEffect(() => {
 
     if (manifest?.tenant_id) {
