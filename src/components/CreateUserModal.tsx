@@ -75,37 +75,23 @@ export function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalP
 
     setLoading(true);
     try {
-      // 1. Sign up the user
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: name,
-          },
+      // Use the new Edge Function to create user and send beautiful email via Resend
+      const { data, error } = await supabase.functions.invoke("create-user-admin", {
+        body: {
+          email,
+          password,
+          name,
+          role,
+          companyId: targetCompanyId,
+          tenantId: targetTenantId,
+          loginUrl: window.location.origin + "/login",
         },
       });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      if (data.user) {
-        // 2. Create the user profile
-        const { error: profileError } = await supabase
-          .from("user_profiles")
-          .insert({
-            id: data.user.id,
-            company_id: targetCompanyId,
-            tenant_id: targetTenantId,
-            role: role,
-          });
-
-        if (profileError) {
-          console.error("Error creating user profile:", profileError);
-          toast.error("Usuário criado, mas houve erro ao definir perfil.");
-        } else {
-          toast.success("Usuário cadastrado com sucesso!");
-        }
-      }
+      toast.success("Usuário cadastrado com sucesso e e-mail enviado!");
 
       onSuccess?.();
       onClose();
