@@ -43,6 +43,7 @@ const MediaLayer = memo(({
   onEnded: () => void;
   onError: (e: any) => void;
 }) => {
+  useVideoVolume(videoRef, volume);
   if (!media || !localUrl) return null;
 
   const isVideo = media.type === "video";
