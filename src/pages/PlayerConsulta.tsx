@@ -316,18 +316,26 @@ export default function PlayerConsulta() {
           const { data: items } = await supabase.from("playlist_items").select("*, media_items(*)").eq("playlist_id", previewPlaylistId);
           
           if (playlist && items) {
-            const mappedItems = items.map(it => {
-              const media = Array.isArray(it.media_items) ? it.media_items[0] : it.media_items;
-              return {
-                id: it.media_id,
-                type: it.tipo || media?.type,
-                url: media?.optimized_url || media?.file_url,
-                duration: it.duracao || media?.duration || 10,
-                name: media?.name
-              };
-            }).filter(i => i.url);
+            const mapItems = (items: any[], appearanceConfig: any) => {
+              const itemVolumes = (appearanceConfig as any)?.item_volumes || [];
+              return items.map((it, idx) => {
+                const media = Array.isArray(it.media_items) ? it.media_items[0] : it.media_items;
+                return {
+                  id: it.media_id,
+                  type: it.tipo || media?.type,
+                  url: media?.optimized_url || media?.file_url,
+                  duration: it.duracao || media?.duration || 10,
+                  volume: itemVolumes[idx] ?? 100,
+                  name: media?.name
+                };
+              }).filter(i => i.url);
+            };
 
-            setManifest({ items: mappedItems, updated_at: playlist.updated_at });
+            setManifest({ 
+              items: mapItems(items || [], playlist.appearance_config), 
+              updated_at: playlist.updated_at,
+              appearance_config: playlist.appearance_config || {}
+            });
           }
           setIsLoading(false);
           return;
