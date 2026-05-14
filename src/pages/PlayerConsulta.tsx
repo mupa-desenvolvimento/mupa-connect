@@ -1542,9 +1542,12 @@ export default function PlayerConsulta() {
                         border: "1px solid rgba(255,255,255,0.12)",
                       }}
                     >
-                      <div className="text-center">
+                      <div className={isTradeActive ? "text-left" : "text-center"}>
                         <div
-                          className="text-[clamp(1.6rem,5vw,3.25rem)] font-black uppercase tracking-tight leading-tight text-white"
+                          className={cn(
+                            "font-black uppercase tracking-tight leading-tight text-white",
+                            isTradeActive ? "text-[clamp(1.2rem,3vw,2rem)]" : "text-[clamp(1.6rem,5vw,3.25rem)]"
+                          )}
                           style={{ fontFamily: "Satoshi, sans-serif" }}
                         >
                           {`${getProductNameParts(product.description).main} ${getProductNameParts(product.description).rest}`.trim()}
