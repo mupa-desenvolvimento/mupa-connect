@@ -854,6 +854,16 @@ export default function PlaylistEditor() {
     }
     triggerAutoSave(newItems, playlistName);
   };
+  const updateItemVolume = (id: string, newVolume: number) => {
+    const newItems = items.map(item => 
+      item.id === id ? { ...item, volume: newVolume } : item
+    );
+    setItems(newItems);
+    if (selectedItem?.id === id) {
+      setSelectedItem({ ...selectedItem, volume: newVolume });
+    }
+    triggerAutoSave(newItems, playlistName);
+  };
 
   // totalDuration already defined as useMemo at the top
 
