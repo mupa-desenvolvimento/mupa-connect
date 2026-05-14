@@ -43,15 +43,12 @@ export default function TradeMarketingRules() {
   
   // Rules fetch
   const { data: campaigns, isLoading } = useQuery({
-    queryKey: ["trade-marketing-campaigns", tenantId],
+    query_Key: ["trade-marketing-rules", tenantId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("trade_marketing_campaigns" as any)
-        .select(`
-          *,
-          trade_marketing_rules (*)
-        `)
-        .eq("tenant_id", tenantId)
+        .from("trade_marketing")
+        .select("*")
+        .eq("empresa", tenantId)
         .order("created_at", { ascending: false });
       
       if (error) throw error;
