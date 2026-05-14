@@ -9,12 +9,7 @@ import {
   Plus, 
   Trash2, 
   Megaphone, 
-  Settings2, 
-  Clock, 
-  BarChart3, 
-  FileText,
-  Loader2,
-  AlertCircle
+  Loader2
 } from "lucide-react";
 import { 
   Dialog, 
@@ -32,30 +27,25 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useUserRole } from "@/hooks/use-user-role";
 
 export default function TradeMarketingRules() {
   const queryClient = useQueryClient();
-  const { tenantId, companyId } = useUserRole();
+  const { tenantId } = useUserRole();
   const [isModalOpen, setIsDialogOpen] = useState(false);
   
-  // Rules fetch
   const { data: campaigns, isLoading } = useQuery({
-    queryKey: ["trade-marketing-campaigns", tenantId],
+    queryKey: ["trade-marketing-rules", tenantId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("trade_marketing_campaigns" as any)
-        .select(`
-          *,
-          trade_marketing_rules (*)
-        `)
-        .eq("tenant_id", tenantId)
+        .from("trade_marketing")
+        .select("*")
+        .eq("empresa", tenantId)
         .order("created_at", { ascending: false });
       
       if (error) throw error;
-      return data;
+      return data as any[];
     },
     enabled: !!tenantId
   });
@@ -63,7 +53,6 @@ export default function TradeMarketingRules() {
   const { data: medias } = useQuery({
     queryKey: ["medias", tenantId],
     queryFn: async () => {
-      // Primeiro buscamos os IDs das mídias que estão em playlists ativas
       const { data: activePlaylistItems, error: itemsError } = await supabase
         .from("playlist_items")
         .select(`
@@ -79,7 +68,6 @@ export default function TradeMarketingRules() {
       }
 
       const activeMediaIds = Array.from(new Set(activePlaylistItems.map(item => item.media_id).filter(Boolean)));
-
       if (activeMediaIds.length === 0) return [];
 
       const { data, error } = await supabase
@@ -96,64 +84,40 @@ export default function TradeMarketingRules() {
   });
 
   const [formData, setFormData] = useState({
-    name: "",
     media_id: "",
-    eans: "",
-    display_time: "10",
-    priority: "1",
-    cooldown_seconds: "60",
-    max_dispatches_per_minute: "3"
+    eans: ""
   });
 
   const createRule = useMutation({
     mutationFn: async (payload: any) => {
-      // 1. Create Campaign
-      const { data: campaign, error: campaignError } = await supabase
-        .from("trade_marketing_campaigns" as any)
-        .insert({
-          name: payload.name,
-          tenant_id: tenantId,
-          company_id: companyId,
-          media_id: payload.media_id,
-          display_time: parseInt(payload.display_time),
-          priority: parseInt(payload.priority),
-          cooldown_seconds: parseInt(payload.cooldown_seconds),
-          max_dispatches_per_minute: parseInt(payload.max_dispatches_per_minute)
-        })
-        .select()
-        .single();
-
-      if (campaignError) throw campaignError;
-
-      // 2. Create Rules (EANs)
       const eans = payload.eans.split("\n").map((e: string) => e.trim()).filter(Boolean);
-      if (eans.length > 0) {
-        const rulesToInsert = eans.map((ean: string) => ({
-          trade_campaign_id: (campaign as any).id,
-          ean: ean
-        }));
+      if (eans.length === 0) throw new Error("Pelo menos um EAN deve ser informado");
+      if (!payload.media_id) throw new Error("Selecione uma mídia");
 
-        const { error: rulesError } = await supabase
-          .from("trade_marketing_rules" as any)
-          .insert(rulesToInsert);
+      const selectedMedia = medias?.find((m: any) => m.id === payload.media_id);
 
-        if (rulesError) throw rulesError;
-      }
+      const inserts = eans.map((ean: string) => ({
+        codbar: ean,
+        id_midia: payload.media_id,
+        link_midia: selectedMedia?.file_url || "",
+        empresa: tenantId,
+      }));
 
-      return campaign;
+      const { data, error } = await supabase
+        .from("trade_marketing")
+        .insert(inserts)
+        .select();
+
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
-      toast.success("Regra de Trade criada com sucesso!");
-      queryClient.invalidateQueries({ queryKey: ["trade-marketing-campaigns"] });
+      toast.success("Regras de Trade criadas com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["trade-marketing-rules"] });
       setIsDialogOpen(false);
       setFormData({
-        name: "",
         media_id: "",
-        eans: "",
-        display_time: "10",
-        priority: "1",
-        cooldown_seconds: "60",
-        max_dispatches_per_minute: "3"
+        eans: ""
       });
     },
     onError: (err: any) => {
@@ -161,17 +125,17 @@ export default function TradeMarketingRules() {
     }
   });
 
-  const deleteCampaign = useMutation({
-    mutationFn: async (id: string) => {
+  const deleteRule = useMutation({
+    mutationFn: async (id: any) => {
       const { error } = await supabase
-        .from("trade_marketing_campaigns" as any)
+        .from("trade_marketing")
         .delete()
         .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Campanha excluída!");
-      queryClient.invalidateQueries({ queryKey: ["trade-marketing-campaigns"] });
+      toast.success("Regra excluída!");
+      queryClient.invalidateQueries({ queryKey: ["trade-marketing-rules"] });
     }
   });
 
@@ -196,17 +160,6 @@ export default function TradeMarketingRules() {
             
             <div className="grid gap-6 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="name">Nome da Campanha</Label>
-                <Input 
-                  id="name" 
-                  placeholder="Ex: Coca-Cola Maio" 
-                  className="bg-black/40 border-white/10"
-                  value={formData.name}
-                  onChange={e => setFormData({...formData, name: e.target.value})}
-                />
-              </div>
-
-              <div className="grid gap-2">
                 <Label>Vincular Mídia Promocional</Label>
                 <Select onValueChange={val => setFormData({...formData, media_id: val})}>
                   <SelectTrigger className="bg-black/40 border-white/10">
@@ -229,29 +182,6 @@ export default function TradeMarketingRules() {
                   value={formData.eans}
                   onChange={e => setFormData({...formData, eans: e.target.value})}
                 />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="display">Tempo em Tela (s)</Label>
-                  <Input 
-                    id="display" 
-                    type="number" 
-                    className="bg-black/40 border-white/10"
-                    value={formData.display_time}
-                    onChange={e => setFormData({...formData, display_time: e.target.value})}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="priority">Prioridade (1-10)</Label>
-                  <Input 
-                    id="priority" 
-                    type="number" 
-                    className="bg-black/40 border-white/10"
-                    value={formData.priority}
-                    onChange={e => setFormData({...formData, priority: e.target.value})}
-                  />
-                </div>
               </div>
             </div>
 
@@ -285,12 +215,12 @@ export default function TradeMarketingRules() {
             <Card key={c.id} className="bg-card/40 border-white/5 overflow-hidden">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg font-bold">{c.name}</CardTitle>
+                  <CardTitle className="text-lg font-bold">{c.codbar}</CardTitle>
                   <Button 
                     variant="ghost" 
                     size="icon" 
                     className="h-8 w-8 text-white/20 hover:text-red-500"
-                    onClick={() => deleteCampaign.mutate(c.id)}
+                    onClick={() => deleteRule.mutate(c.id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -299,28 +229,14 @@ export default function TradeMarketingRules() {
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-2 text-xs text-white/40 uppercase font-black">
                   <Megaphone className="h-3 w-3 text-primary" />
-                  {c.trade_marketing_rules?.length || 0} EANs Vinculados
+                  Mídia: {medias?.find((m: any) => m.id === c.id_midia)?.name || "Desconhecida"}
                 </div>
                 
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-black/40 rounded-lg p-2 flex flex-col gap-1">
-                    <span className="text-[10px] text-white/20 font-bold uppercase tracking-wider">Display</span>
-                    <span className="text-sm font-mono font-bold text-primary">{c.display_time}s</span>
-                  </div>
-                  <div className="bg-black/40 rounded-lg p-2 flex flex-col gap-1">
-                    <span className="text-[10px] text-white/20 font-bold uppercase tracking-wider">Prioridade</span>
-                    <span className="text-sm font-mono font-bold text-amber-500">P{c.priority}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-2">
-                  <div className="flex items-center gap-2">
-                    <div className={`h-2 w-2 rounded-full ${c.is_active ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-white/20'}`} />
-                    <span className="text-xs font-bold uppercase text-white/40">{c.is_active ? 'Ativa' : 'Inativa'}</span>
-                  </div>
-                  <Button variant="ghost" size="sm" className="h-7 text-[10px] uppercase font-black gap-1.5 hover:bg-white/5">
-                    <Settings2 className="h-3 w-3" /> Editar
-                  </Button>
+                <div className="bg-black/40 rounded-lg p-2 flex flex-col gap-1">
+                  <span className="text-[10px] text-white/20 font-bold uppercase tracking-wider">Criado em</span>
+                  <span className="text-sm font-mono font-bold text-primary">
+                    {new Date(c.created_at).toLocaleDateString()}
+                  </span>
                 </div>
               </CardContent>
             </Card>
