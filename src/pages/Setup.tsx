@@ -17,6 +17,18 @@ export default function Setup() {
   const { isPwaInstalled, deferredPrompt, installPwa, showCursor, enterFullscreen } = useKioskMode();
   const [showInstallModal, setShowInstallModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+
+  useEffect(() => {
+    const checkStandalone = () => {
+      const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+      setIsStandalone(!!standalone);
+      if (!standalone) {
+        setShowInstallModal(true);
+      }
+    };
+    checkStandalone();
+  }, []);
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [activeInput, setActiveInput] = useState<string | null>(null);
   const [formData, setFormData] = useState({

@@ -114,6 +114,18 @@ const isValidUUID = (value: any): boolean => {
 export default function PlayerConsulta() {
   const { isPwaInstalled, deferredPrompt, installPwa, showCursor, enterFullscreen } = useKioskMode();
   const [showInstallModal, setShowInstallModal] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+  
+  useEffect(() => {
+    const checkStandalone = () => {
+      const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+      setIsStandalone(!!standalone);
+      if (!standalone) {
+        setShowInstallModal(true);
+      }
+    };
+    checkStandalone();
+  }, []);
   const navigate = useNavigate();
   const { deviceCode } = useParams();
   const [searchParams] = useSearchParams();
@@ -140,11 +152,10 @@ export default function PlayerConsulta() {
   const lastClickTime = useRef(0);
 
   useEffect(() => {
-    if (deferredPrompt && !isPwaInstalled) {
-      const timer = setTimeout(() => setShowInstallModal(true), 5000);
-      return () => clearTimeout(timer);
+    if (deferredPrompt && !isPwaInstalled && !isStandalone) {
+      setShowInstallModal(true);
     }
-  }, [deferredPrompt, isPwaInstalled]);
+  }, [deferredPrompt, isPwaInstalled, isStandalone]);
 
   // MODO CONSULTA STATE
   const [showOverlay, setShowOverlay] = useState(false);
