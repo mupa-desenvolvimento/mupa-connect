@@ -777,104 +777,10 @@ export default function PlayerConsulta() {
     });
   }, []);
 
-  const handleConsult = useCallback(async (ean: string) => {
-    const cleanEan = ean.trim();
-    if (!cleanEan || cleanEan.length < 3) return;
-    
-    if (isConsulting) {
-      console.log("[Scanner] Consulta em andamento, ignorando:", cleanEan);
-      return;
-    }
-
-    console.log("[EAN] Iniciando consulta:", cleanEan);
-    
-    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
-
-    // Trigger Trade Marketing Check
-    checkTradeMarketing(cleanEan);
-
-    // Check cache BEFORE showing loader to make it truly instant for cached products
-    const cachedKey = `product_${cleanEan}`;
-    const cached = localStorage.getItem(cachedKey);
-    
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached);
-        if (Date.now() - parsed.timestamp < 86400000 || !navigator.onLine) { // 24h cache or offline
-          console.log("[Consulta] Usando cache para:", cleanEan);
-          setProduct({
-            ...parsed.data,
-            is_cached: true,
-            visual: buildVisual(cleanEan, parsed.data?.visual),
-          });
-          setError(null);
-          setShowOverlay(true);
-          setIsConsulting(false);
-          setLastConsultedEan(cleanEan);
-          startHideTimer();
-          return;
-        }
-      } catch (e) {
-        console.warn("[Consulta] Erro ao ler cache:", e);
-      }
-    }
-
-    // Not in cache or expired, show loader
-    setIsConsulting(true);
-    setShowOverlay(true);
-    setError(null);
-    setProduct(null);
-    setLastConsultedEan(cleanEan);
-
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Tempo esgotado ao consultar produto.")), 15000)
-    );
-
-    try {
-      const result: any = await Promise.race([
-        supabase.functions.invoke('integra-assai', {
-          body: { 
-            ean: cleanEan,
-            store_id: deviceInfo?.num_filial || deviceInfo?.store_id 
-          }
-        }),
-        timeoutPromise
-      ]);
-
-      const { data, error: functionError } = result;
-
-      if (functionError) throw functionError;
-      if (data?.error) throw new Error(data.error);
-      if (!data) throw new Error("Produto não encontrado");
-
-      console.log("[SEQPRODUTO]", data.internal_id);
-
-      const finalProduct = {
-        ...data,
-        visual: buildVisual(cleanEan, data.visual)
-      };
-
-      setProduct(finalProduct);
-      
-      localStorage.setItem(cachedKey, JSON.stringify({
-        data: finalProduct,
-        timestamp: Date.now()
-      }));
-
-    } catch (err: any) {
-      console.error("Erro na consulta:", err);
-      setError("Não encontramos este produto em nossos registros. Verifique o código e tente novamente.");
-    } finally {
-      setIsConsulting(false);
-      startHideTimer();
-    }
-  }, [isConsulting, startHideTimer, checkTradeMarketing]);
-
   const checkTradeMarketing = useCallback(async (ean: string) => {
     try {
       const now = Date.now();
       
-      // 1. Fetch matching campaigns for this EAN
       const { data: rules, error } = await supabase
         .from("trade_marketing_rules" as any)
         .select(`
@@ -888,7 +794,6 @@ export default function PlayerConsulta() {
 
       if (error || !rules?.length) return;
 
-      // 2. Filter active and prioritized campaign
       const validCampaigns = rules
         .map((r: any) => r.trade_marketing_campaigns)
         .filter((c: any) => c && c.is_active)
@@ -897,34 +802,22 @@ export default function PlayerConsulta() {
       const campaign = validCampaigns[0];
       if (!campaign) return;
 
-      // 3. Check Cooldown
       const lastDispatch = tradeCooldowns[campaign.id] || 0;
-      if (now - lastDispatch < (campaign.cooldown_seconds || 60) * 1000) {
-        console.log("[Trade] Campaign in cooldown:", campaign.name);
-        return;
-      }
+      if (now - lastDispatch < (campaign.cooldown_seconds || 60) * 1000) return;
 
-      // 4. Check Rate Limit (max per minute)
       const minuteAgo = now - 60000;
       const recentDispatches = (tradeDispatchesPerMinute[campaign.id] || []).filter(ts => ts > minuteAgo);
-      if (recentDispatches.length >= (campaign.max_dispatches_per_minute || 3)) {
-        console.log("[Trade] Campaign rate limited:", campaign.name);
-        return;
-      }
+      if (recentDispatches.length >= (campaign.max_dispatches_per_minute || 3)) return;
 
-      // 5. Trigger Campaign
-      console.log("[Trade] Triggering campaign:", campaign.name);
       setTradeCampaign(campaign);
       setIsTradeActive(true);
 
-      // Update cooldowns and dispatches
       setTradeCooldowns(prev => ({ ...prev, [campaign.id]: now }));
       setTradeDispatchesPerMinute(prev => ({ 
         ...prev, 
         [campaign.id]: [...recentDispatches, now] 
       }));
 
-      // Log Analytics
       supabase.from("media_events").insert({
         device_id: deviceInfo?.id,
         media_id: campaign.media_id,
@@ -938,16 +831,72 @@ export default function PlayerConsulta() {
         }
       }).then();
 
-      // Auto-hide trade after display_time
       setTimeout(() => {
         setIsTradeActive(false);
-        // We keep tradeCampaign state for transition or just clear it if needed
       }, (campaign.display_time || 10) * 1000);
 
     } catch (err) {
       console.error("[Trade] Error checking rules:", err);
     }
   }, [tradeCooldowns, tradeDispatchesPerMinute, deviceInfo]);
+
+  const handleConsult = useCallback(async (ean: string) => {
+    const cleanEan = ean.trim();
+    if (!cleanEan || cleanEan.length < 3) return;
+    
+    if (isConsulting) return;
+
+    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+
+    checkTradeMarketing(cleanEan);
+
+    const cachedKey = `product_${cleanEan}`;
+    const cached = localStorage.getItem(cachedKey);
+    
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (Date.now() - parsed.timestamp < 86400000 || !navigator.onLine) {
+          setProduct({
+            ...parsed.data,
+            is_cached: true,
+            visual: buildVisual(cleanEan, parsed.data?.visual),
+          });
+          setError(null);
+          setShowOverlay(true);
+          setIsConsulting(false);
+          setLastConsultedEan(cleanEan);
+          startHideTimer();
+          return;
+        }
+      } catch (e) {}
+    }
+
+    setIsConsulting(true);
+    setShowOverlay(true);
+    setError(null);
+    setProduct(null);
+    setLastConsultedEan(cleanEan);
+
+    try {
+      const { data, error: functionError } = await supabase.functions.invoke('integra-assai', {
+        body: { ean: cleanEan, store_id: deviceInfo?.num_filial || deviceInfo?.store_id }
+      });
+
+      if (functionError) throw functionError;
+      if (data?.error) throw new Error(data.error);
+
+      const finalProduct = { ...data, visual: buildVisual(cleanEan, data.visual) };
+      setProduct(finalProduct);
+      localStorage.setItem(cachedKey, JSON.stringify({ data: finalProduct, timestamp: Date.now() }));
+
+    } catch (err: any) {
+      setError("Produto não encontrado.");
+    } finally {
+      setIsConsulting(false);
+      startHideTimer();
+    }
+  }, [isConsulting, startHideTimer, checkTradeMarketing, deviceInfo]);
 
 
   // 4.5 Realtime Commands via Firebase
