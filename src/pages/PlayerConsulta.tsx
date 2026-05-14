@@ -7,7 +7,7 @@ import { ManifestService } from "@/services/ManifestService";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Package, AlertCircle, Barcode, User, X, Info, Search, Play } from "lucide-react";
+import { Loader2, Package, AlertCircle, Barcode, User, X, Info, Search, Play, Megaphone } from "lucide-react";
 import { OptimizedProductImage } from "@/components/OptimizedProductImage";
 import { Input } from "@/components/ui/input";
 import * as faceapi from "face-api.js";
