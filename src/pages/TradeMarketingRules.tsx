@@ -104,44 +104,36 @@ export default function TradeMarketingRules() {
 
   const createRule = useMutation({
     mutationFn: async (payload: any) => {
-      // 1. Create Campaign
-      const { data: campaign, error: campaignError } = await supabase
-        .from("trade_marketing_campaigns" as any)
-        .insert({
-          name: payload.name,
-          tenant_id: tenantId,
-          company_id: companyId,
-          media_id: payload.media_id,
-          display_time: parseInt(payload.display_time),
-          priority: parseInt(payload.priority),
-          cooldown_seconds: parseInt(payload.cooldown_seconds),
-          max_dispatches_per_minute: parseInt(payload.max_dispatches_per_minute)
-        })
-        .select()
-        .single();
-
-      if (campaignError) throw campaignError;
-
-      // 2. Create Rules (EANs)
       const eans = payload.eans.split("\n").map((e: string) => e.trim()).filter(Boolean);
-      if (eans.length > 0) {
-        const rulesToInsert = eans.map((ean: string) => ({
-          trade_campaign_id: (campaign as any).id,
-          ean: ean
-        }));
-
-        const { error: rulesError } = await supabase
-          .from("trade_marketing_rules" as any)
-          .insert(rulesToInsert);
-
-        if (rulesError) throw rulesError;
+      
+      if (eans.length === 0) {
+        throw new Error("Pelo menos um EAN deve ser informado");
       }
 
-      return campaign;
+      if (!payload.media_id) {
+        throw new Error("Selecione uma mídia");
+      }
+
+      const selectedMedia = medias?.find((m: any) => m.id === payload.media_id);
+
+      const inserts = eans.map((ean: string) => ({
+        codbar: ean,
+        id_midia: payload.media_id,
+        link_midia: selectedMedia?.file_url || "",
+        empresa: tenantId,
+      }));
+
+      const { data, error } = await supabase
+        .from("trade_marketing")
+        .insert(inserts)
+        .select();
+
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
-      toast.success("Regra de Trade criada com sucesso!");
-      queryClient.invalidateQueries({ queryKey: ["trade-marketing-campaigns"] });
+      toast.success("Regras de Trade criadas com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["trade-marketing-rules"] });
       setIsDialogOpen(false);
       setFormData({
         name: "",
@@ -158,17 +150,17 @@ export default function TradeMarketingRules() {
     }
   });
 
-  const deleteCampaign = useMutation({
+  const deleteRule = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("trade_marketing_campaigns" as any)
+        .from("trade_marketing")
         .delete()
         .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Campanha excluída!");
-      queryClient.invalidateQueries({ queryKey: ["trade-marketing-campaigns"] });
+      toast.success("Regra excluída!");
+      queryClient.invalidateQueries({ queryKey: ["trade-marketing-rules"] });
     }
   });
 
