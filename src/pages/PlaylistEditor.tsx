@@ -1803,8 +1803,9 @@ export default function PlaylistEditor() {
                               min={1} 
                               max={60} 
                               step={1}
+                              disabled={selectedItem.type === 'video'}
                               onValueChange={(val) => updateItemDuration(selectedItem.id, val[0])}
-                              className="py-4"
+                              className={`py-4 ${selectedItem.type === 'video' ? 'opacity-50' : ''}`}
                             />
                             <div className="flex justify-between text-[10px] text-white/20 font-bold uppercase">
                                <span>1s</span>
