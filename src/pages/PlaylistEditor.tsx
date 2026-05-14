@@ -1918,48 +1918,9 @@ export default function PlaylistEditor() {
                       className="h-full bg-white/40"
                       animate={{ x: ["-100%", "100%"] }}
                       transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-                             />
-                           </div>
-                         </div>
-                         
-                         {selectedItem.type === 'video' && (
-                           <div className="space-y-4">
-                             <div className="flex items-center justify-between">
-                               <div className="flex items-center gap-2">
-                                 {selectedItem.volume === 0 ? <VolumeX className="h-4 w-4 text-red-500" /> : <Volume2 className="h-4 w-4 text-[#085CF0]" />}
-                                 <Label className="text-[10px] font-bold uppercase tracking-wider text-white/40">Volume do Vídeo</Label>
-                               </div>
-                               <span className="text-xs font-mono font-bold text-[#085CF0]">{selectedItem.volume}%</span>
-                             </div>
-                             <div className="px-2">
-                               <Slider 
-                                 value={[selectedItem.volume]} 
-                                 max={100} 
-                                 step={1}
-                                 className="cursor-pointer"
-                                 onValueChange={(val) => updateItemVolume(selectedItem.id, val[0])}
-                               />
-                             </div>
-                             <div className="flex gap-2">
-                               <Button 
-                                 variant="outline" 
-                                 size="sm" 
-                                 className="flex-1 h-7 text-[9px] font-bold uppercase border-white/5 bg-white/5 hover:bg-white/10"
-                                 onClick={() => updateItemVolume(selectedItem.id, 0)}
-                               >
-                                 MUDO
-                               </Button>
-                               <Button 
-                                 variant="outline" 
-                                 size="sm" 
-                                 className="flex-1 h-7 text-[9px] font-bold uppercase border-white/5 bg-white/5 hover:bg-white/10"
-                                 onClick={() => updateItemVolume(selectedItem.id, 100)}
-                               >
-                                 100%
-                               </Button>
-                             </div>
-                           </div>
-                         )}
+                    />
+                  </div>
+                </div>
 
               );
             })()}
