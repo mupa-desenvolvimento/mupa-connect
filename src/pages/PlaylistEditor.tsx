@@ -1474,13 +1474,19 @@ export default function PlaylistEditor() {
                   <div className="w-full h-full relative bg-black">
                     {selectedItem.type === 'video' ? (
                       <video 
-                        key={selectedItem.id + isPlaying} // Forçar recarregamento se necessário
+                        key={selectedItem.id} 
                         src={selectedItem.media?.file_url} 
                         className="w-full h-full object-contain"
                         autoPlay={isPlaying}
                         muted
                         loop
                         playsInline
+                        ref={(el) => {
+                          if (el) {
+                            if (isPlaying) el.play().catch(() => {});
+                            else el.pause();
+                          }
+                        }}
                       />
                     ) : (
                       <img 
