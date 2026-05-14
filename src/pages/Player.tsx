@@ -121,25 +121,31 @@ export default function Player() {
 
           if (itemsError) throw itemsError;
 
-          const mapItems = (items: any[]) => (items || [])
-            .sort((a, b) => (a.position ?? a.ordem ?? 0) - (b.position ?? b.ordem ?? 0))
-            .map((item) => {
-              const media = Array.isArray(item.media_items) ? item.media_items[0] : item.media_items;
-              return {
-                id: item.media_id || item.id,
-                type: item.tipo || media?.type || "image",
-                url: media?.optimized_url || media?.file_url,
-                duration: item.duracao || media?.duration || 10,
-                name: media?.name || "Sem nome"
-              };
-            })
-            .filter((item) => item.url);
+          const mapItems = (items: any[], appearanceConfig: any) => {
+            const itemVolumes = (appearanceConfig as any)?.item_volumes || [];
+            return (items || [])
+              .sort((a, b) => (a.position ?? a.ordem ?? 0) - (b.position ?? b.ordem ?? 0))
+              .map((item, idx) => {
+                const media = Array.isArray(item.media_items) ? item.media_items[0] : item.media_items;
+                return {
+                  id: item.media_id || item.id,
+                  type: item.tipo || media?.type || "image",
+                  url: media?.optimized_url || media?.file_url,
+                  duration: item.duracao || media?.duration || 10,
+                  volume: itemVolumes[idx] ?? 100,
+                  name: media?.name || "Sem nome"
+                };
+              })
+              .filter((item) => item.url);
+          };
+
+          const mappedItems = mapItems(items || [], playlist.appearance_config);
 
           setManifest({
             playlist_id: playlist.id,
             name: playlist.name,
             updated_at: playlist.updated_at || new Date().toISOString(),
-            items: mapItems(items || []),
+            items: mappedItems,
             appearance_config: playlist.appearance_config || {}
           });
           setIsLoading(false);
