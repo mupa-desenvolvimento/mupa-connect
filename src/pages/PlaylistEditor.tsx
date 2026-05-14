@@ -759,6 +759,7 @@ export default function PlaylistEditor() {
             mediaId: it.media.id,
             duration: it.duration_override || it.media.duration || 10,
             priority: 1,
+            volume: 100,
             type: it.media.type === "video" ? "video" : "image",
             media: it.media,
             campaignName: campaign.name,
