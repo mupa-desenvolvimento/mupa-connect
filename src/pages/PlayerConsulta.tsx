@@ -1242,6 +1242,7 @@ export default function PlayerConsulta() {
           playlist={activePlaylist} 
           onMediaChange={setCurrentIndex}
           serial={deviceInfo?.serial}
+          volume={activePlaylist[currentIndex]?.volume ?? 100}
         />
       </div>
 
