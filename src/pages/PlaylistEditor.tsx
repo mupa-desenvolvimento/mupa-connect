@@ -539,7 +539,7 @@ export default function PlaylistEditor() {
             company_id: companyId || companyData.id,
             is_active: true,
             is_company_default: isDefault,
-            appearance_config: appearanceConfig
+            appearance_config: updatedAppearance
           })
           .select().single();
           
