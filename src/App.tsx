@@ -237,6 +237,11 @@ const App = () => {
                     <TradeMarketingDashboard />
                   </ProtectedRoute>
                 } />
+                <Route path="/trade-marketing-rules" element={
+                  <ProtectedRoute requireMarketing>
+                    <TradeMarketingRules />
+                  </ProtectedRoute>
+                } />
 
                 <Route path="/admin/analytics/consultas" element={<ProductQueriesAnalytics />} />
                 <Route path="/admin/analytics/erros" element={<QueryErrorsReport />} />
