@@ -853,6 +853,32 @@ export default function PlayerConsulta() {
     }
   }, [isConsulting, startHideTimer]);
 
+  // 4.5 Realtime Commands via Firebase
+  useEffect(() => {
+    if (!deviceCode || isPreview) return;
+
+    // Subscribe to commands (e.g., remote product consultation)
+    const unsubscribeCommands = FirebaseRealtimeService.subscribeToCommands(deviceCode, (cmd) => {
+      console.log("[Realtime] Comando recebido:", cmd);
+      if (cmd.comando === "consultar" || cmd.comando === "consultar_produto") {
+        const ean = cmd.payload?.ean || cmd.payload?.codigo;
+        if (ean) {
+          console.log("[Realtime] Executando consulta remota para EAN:", ean);
+          handleConsult(ean);
+        }
+      } else if (cmd.comando === "recarregar" || cmd.comando === "reload") {
+        window.location.reload();
+      } else if (cmd.comando === "limpar_cache") {
+        localStorage.clear();
+        window.location.reload();
+      }
+    });
+
+    return () => {
+      unsubscribeCommands();
+    };
+  }, [deviceCode, isPreview, handleConsult]);
+
   // AUTO DEMO LOGIC
   useEffect(() => {
     if (!isAutoDemoActive || !isDevMode) return;
