@@ -992,6 +992,48 @@ export default function PlaylistEditor() {
         </div>
 
         <div className="flex items-center gap-3">
+          {Object.keys(deviceSyncStatus).length > 0 && (
+            <div className="flex items-center gap-1 mr-4 border-r border-white/5 pr-4 h-9">
+              {Object.values(deviceSyncStatus).map((dev: any, i) => (
+                <TooltipProvider key={i}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="relative cursor-help group">
+                        <div className={cn(
+                          "w-2 h-2 rounded-full",
+                          dev.status === 'applied' ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" : 
+                          dev.status === 'sending' ? "bg-blue-500 animate-pulse" : 
+                          dev.status === 'offline' ? "bg-white/20" : "bg-yellow-500"
+                        )} />
+                        {dev.online === false && (
+                          <div className="absolute -top-1 -right-1 w-2 h-2 bg-black rounded-full flex items-center justify-center">
+                            <WifiOff className="w-1.5 h-1.5 text-white/40" />
+                          </div>
+                        )}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-[#1a1a1e] border-white/10 text-white p-2 text-[10px] space-y-1">
+                      <p className="font-bold uppercase tracking-wider">{dev.serial || 'Dispositivo'}</p>
+                      <p className="flex items-center gap-1.5">
+                        Status: 
+                        <span className={cn(
+                          "px-1.5 py-0.5 rounded text-[9px] font-black uppercase",
+                          dev.status === 'applied' ? "bg-green-500/20 text-green-500" : 
+                          dev.status === 'sending' ? "bg-blue-500/20 text-blue-500" : 
+                          "bg-white/10 text-white/40"
+                        )}>
+                          {dev.status === 'applied' ? 'Sincronizado' : 
+                           dev.status === 'sending' ? 'Enviando...' : 
+                           dev.status === 'offline' ? 'Offline' : 'Pendente'}
+                        </span>
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ))}
+            </div>
+          )}
+
           {hasUnsavedChanges && (
             <span className="text-[10px] font-bold text-yellow-500 animate-pulse uppercase tracking-widest mr-2">
               Alterações pendentes
@@ -1022,7 +1064,10 @@ export default function PlaylistEditor() {
           >
             <Play className="h-4 w-4 fill-current" /> Preview
           </Button>
-          <Button className="bg-[#085CF0] hover:bg-[#0750d4] text-white h-9 px-4 gap-2">
+          <Button 
+            className="bg-[#085CF0] hover:bg-[#0750d4] text-white h-9 px-4 gap-2"
+            onClick={() => savePlaylist(items, playlistName)}
+          >
             <RefreshCw className="h-4 w-4" /> Atualizar Telas
           </Button>
         </div>
