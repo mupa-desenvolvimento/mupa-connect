@@ -151,7 +151,7 @@ export default function TradeMarketingRules() {
   });
 
   const deleteRule = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (id: any) => {
       const { error } = await supabase
         .from("trade_marketing")
         .delete()
