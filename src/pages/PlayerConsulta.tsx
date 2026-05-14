@@ -1489,10 +1489,10 @@ export default function PlayerConsulta() {
                   transition={{ delay: 0.1, duration: 0.45 }}
                   className={cn(
                     "rounded-[28px] overflow-hidden border shadow-[0_20px_60px_-20px_rgba(0,0,0,0.65)]",
-                    isVertical ? "h-[34%] w-full" : "h-full w-full",
+                    isTradeActive ? "h-full w-full" : (isVertical ? "h-[34%] w-full" : "h-full w-full"),
                   )}
                   style={{
-                    background: "linear-gradient(180deg, #FFFFFF 0%, rgba(255,255,255,0.92) 100%)",
+                    background: isTradeActive ? "white" : "linear-gradient(180deg, #FFFFFF 0%, rgba(255,255,255,0.92) 100%)",
                     borderColor: "rgba(255,255,255,0.25)",
                   }}
                 >
