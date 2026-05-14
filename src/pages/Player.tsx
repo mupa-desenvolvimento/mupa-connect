@@ -12,6 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Monitor, Wrench, Scan } from "lucide-react";
 import { useKioskMode } from "@/hooks/useKioskMode";
 import { PWAInstallModal } from "@/components/PWAInstallModal";
+import * as faceapi from "face-api.js";
 
 interface AppearanceConfig {
   show_device_name?: boolean;
@@ -42,12 +43,17 @@ const isValidUUID = (value: any): boolean => {
 };
 
 export default function Player() {
+  const { deviceCode, "*": extraPath } = useParams();
+  const [searchParams] = useSearchParams();
+  const isPreview = searchParams.get("preview") === "true";
+  const previewPlaylistId = searchParams.get("id");
+  
   useEffect(() => {
     // Force black background for all players
     document.body.style.backgroundColor = "black";
     document.documentElement.classList.add("dark");
   }, []);
-  const { deviceCode, "*": extraPath } = useParams();
+
   const [isStandalone, setIsStandalone] = useState(false);
   const [showInstallModal, setShowInstallModal] = useState(false);
 
@@ -61,11 +67,10 @@ export default function Player() {
     };
     checkStandalone();
   }, [isPreview]);
+
   const navigate = useNavigate();
   console.log("[Player] Initializing with deviceCode:", deviceCode, "extraPath:", extraPath);
-  const [searchParams] = useSearchParams();
-  const isPreview = searchParams.get("preview") === "true";
-  const previewPlaylistId = searchParams.get("id");
+  
   const [deviceUuid, setDeviceUuid] = useState<string | undefined>();
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
   const [manifest, setManifest] = useState<any>(null);
@@ -847,6 +852,15 @@ export default function Player() {
           {syncToast.msg}
         </div>
       )}
+
+      <PWAInstallModal 
+        isOpen={showInstallModal && !isPreview}
+        onClose={() => setShowInstallModal(false)}
+        onInstall={() => {
+          installPwa();
+          setShowInstallModal(false);
+        }}
+      />
 
     </div>
   );
