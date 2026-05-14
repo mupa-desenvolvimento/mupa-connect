@@ -147,6 +147,7 @@ export function MediaUpload({ tenantId, companyId, currentFolderId, onUploadComp
           const formData = new FormData();
           formData.append('file', fileToUpload);
           formData.append('tenantId', tenantId);
+          formData.append('duration', duration.toString());
           
           // Sempre enviar companyId se disponível para consistência no banco
           if (companyId) {
