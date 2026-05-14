@@ -7,7 +7,7 @@ import { ManifestService } from "@/services/ManifestService";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Package, AlertCircle, Barcode, User, X, Info, Search, Play } from "lucide-react";
+import { Loader2, Package, AlertCircle, Barcode, User, X, Info, Search, Play, Megaphone } from "lucide-react";
 import { OptimizedProductImage } from "@/components/OptimizedProductImage";
 import { Input } from "@/components/ui/input";
 import * as faceapi from "face-api.js";
@@ -126,6 +126,12 @@ export default function PlayerConsulta() {
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
   const [reloadKey, setReloadKey] = useState<number>(0);
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  // TRADE MARKETING STATE
+  const [tradeCampaign, setTradeCampaign] = useState<any>(null);
+  const [isTradeActive, setIsTradeActive] = useState(false);
+  const [tradeCooldowns, setTradeCooldowns] = useState<Record<string, number>>({});
+  const [tradeDispatchesPerMinute, setTradeDispatchesPerMinute] = useState<Record<string, number[]>>({});
 
   // DEV MODE STATE
   const [isDevMode, setIsDevMode] = useState(isDevModeParam);
@@ -771,28 +777,86 @@ export default function PlayerConsulta() {
     });
   }, []);
 
+  const checkTradeMarketing = useCallback(async (ean: string) => {
+    try {
+      const now = Date.now();
+      
+      const { data: rules, error } = await supabase
+        .from("trade_marketing_rules" as any)
+        .select(`
+          *,
+          trade_marketing_campaigns (
+            *,
+            media:media_items (*)
+          )
+        `)
+        .eq("ean", ean);
+
+      if (error || !rules?.length) return;
+
+      const validCampaigns = rules
+        .map((r: any) => r.trade_marketing_campaigns)
+        .filter((c: any) => c && c.is_active)
+        .sort((a: any, b: any) => (b.priority || 0) - (a.priority || 0));
+
+      const campaign = validCampaigns[0];
+      if (!campaign) return;
+
+      const lastDispatch = tradeCooldowns[campaign.id] || 0;
+      if (now - lastDispatch < (campaign.cooldown_seconds || 60) * 1000) return;
+
+      const minuteAgo = now - 60000;
+      const recentDispatches = (tradeDispatchesPerMinute[campaign.id] || []).filter(ts => ts > minuteAgo);
+      if (recentDispatches.length >= (campaign.max_dispatches_per_minute || 3)) return;
+
+      setTradeCampaign(campaign);
+      setIsTradeActive(true);
+
+      setTradeCooldowns(prev => ({ ...prev, [campaign.id]: now }));
+      setTradeDispatchesPerMinute(prev => ({ 
+        ...prev, 
+        [campaign.id]: [...recentDispatches, now] 
+      }));
+
+      supabase.from("media_events").insert({
+        device_id: deviceInfo?.id,
+        media_id: campaign.media_id,
+        event_type: 'trade_dispatch',
+        duration: campaign.display_time,
+        metadata: {
+          ean,
+          trade_campaign_name: campaign.name,
+          trade_campaign_id: campaign.id,
+          serial: deviceInfo?.serial
+        }
+      }).then();
+
+      setTimeout(() => {
+        setIsTradeActive(false);
+      }, (campaign.display_time || 10) * 1000);
+
+    } catch (err) {
+      console.error("[Trade] Error checking rules:", err);
+    }
+  }, [tradeCooldowns, tradeDispatchesPerMinute, deviceInfo]);
+
   const handleConsult = useCallback(async (ean: string) => {
     const cleanEan = ean.trim();
     if (!cleanEan || cleanEan.length < 3) return;
     
-    if (isConsulting) {
-      console.log("[Scanner] Consulta em andamento, ignorando:", cleanEan);
-      return;
-    }
+    if (isConsulting) return;
 
-    console.log("[EAN] Iniciando consulta:", cleanEan);
-    
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
 
-    // Check cache BEFORE showing loader to make it truly instant for cached products
+    checkTradeMarketing(cleanEan);
+
     const cachedKey = `product_${cleanEan}`;
     const cached = localStorage.getItem(cachedKey);
     
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
-        if (Date.now() - parsed.timestamp < 86400000 || !navigator.onLine) { // 24h cache or offline
-          console.log("[Consulta] Usando cache para:", cleanEan);
+        if (Date.now() - parsed.timestamp < 86400000 || !navigator.onLine) {
           setProduct({
             ...parsed.data,
             is_cached: true,
@@ -805,61 +869,35 @@ export default function PlayerConsulta() {
           startHideTimer();
           return;
         }
-      } catch (e) {
-        console.warn("[Consulta] Erro ao ler cache:", e);
-      }
+      } catch (e) {}
     }
 
-    // Not in cache or expired, show loader
     setIsConsulting(true);
     setShowOverlay(true);
     setError(null);
     setProduct(null);
     setLastConsultedEan(cleanEan);
 
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Tempo esgotado ao consultar produto.")), 15000)
-    );
-
     try {
-      const result: any = await Promise.race([
-        supabase.functions.invoke('integra-assai', {
-          body: { 
-            ean: cleanEan,
-            store_id: deviceInfo?.num_filial || deviceInfo?.store_id 
-          }
-        }),
-        timeoutPromise
-      ]);
-
-      const { data, error: functionError } = result;
+      const { data, error: functionError } = await supabase.functions.invoke('integra-assai', {
+        body: { ean: cleanEan, store_id: deviceInfo?.num_filial || deviceInfo?.store_id }
+      });
 
       if (functionError) throw functionError;
       if (data?.error) throw new Error(data.error);
-      if (!data) throw new Error("Produto não encontrado");
 
-      console.log("[SEQPRODUTO]", data.internal_id);
-
-      const finalProduct = {
-        ...data,
-        visual: buildVisual(cleanEan, data.visual)
-      };
-
+      const finalProduct = { ...data, visual: buildVisual(cleanEan, data.visual) };
       setProduct(finalProduct);
-      
-      localStorage.setItem(cachedKey, JSON.stringify({
-        data: finalProduct,
-        timestamp: Date.now()
-      }));
+      localStorage.setItem(cachedKey, JSON.stringify({ data: finalProduct, timestamp: Date.now() }));
 
     } catch (err: any) {
-      console.error("Erro na consulta:", err);
-      setError("Não encontramos este produto em nossos registros. Verifique o código e tente novamente.");
+      setError("Produto não encontrado.");
     } finally {
       setIsConsulting(false);
       startHideTimer();
     }
-  }, [isConsulting, startHideTimer]);
+  }, [isConsulting, startHideTimer, checkTradeMarketing, deviceInfo]);
+
 
   // 4.5 Realtime Commands via Firebase
   useEffect(() => {
@@ -1237,13 +1275,28 @@ export default function PlayerConsulta() {
         </>
       )}
 
-      <div className={cn("w-full h-full transition-all duration-700", showOverlay ? "blur-md opacity-50" : "blur-0 opacity-100")}>
-        <PlayerEngine 
-          playlist={activePlaylist} 
-          onMediaChange={setCurrentIndex}
-          serial={deviceInfo?.serial}
-          volume={activePlaylist[currentIndex]?.volume ?? 100}
-        />
+      <div className={cn("w-full h-full transition-all duration-700", (showOverlay && !isTradeActive) ? "blur-md opacity-50" : "blur-0 opacity-100")}>
+        {isTradeActive && tradeCampaign?.media ? (
+          <PlayerEngine 
+            playlist={[{
+              id: tradeCampaign.media.id,
+              url: tradeCampaign.media.optimized_url || tradeCampaign.media.file_url,
+              type: tradeCampaign.media.type,
+              duration: tradeCampaign.display_time,
+              name: tradeCampaign.media.name,
+              volume: 100
+            }]}
+            onMediaChange={() => {}}
+            serial={deviceInfo?.serial}
+          />
+        ) : (
+          <PlayerEngine 
+            playlist={activePlaylist} 
+            onMediaChange={setCurrentIndex}
+            serial={deviceInfo?.serial}
+            volume={activePlaylist[currentIndex]?.volume ?? 100}
+          />
+        )}
       </div>
 
       {/* Camada de UI Overlays (Aparência) */}
@@ -1346,11 +1399,16 @@ export default function PlayerConsulta() {
       <AnimatePresence>
         {showOverlay && (
           <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
-            style={{
+            initial={isTradeActive ? { opacity: 0, y: 100 } : { opacity: 0 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 100 }}
+            className={cn(
+              "fixed z-50 flex items-center justify-center overflow-hidden transition-all duration-500",
+              isTradeActive 
+                ? "bottom-0 left-0 right-0 h-[32%] bg-black/40 backdrop-blur-xl border-t border-white/10" 
+                : "inset-0"
+            )}
+            style={!isTradeActive ? {
               backgroundColor: isDefaultImage(product?.visual?.imagem_url)
                 ? (product?.visual?.fundo_legibilidade ? `${product.visual.fundo_legibilidade}F8` : 'rgba(0,51,153,0.98)')
                 : (product?.visual?.cor_dominante_escuro || '#FFFFFF'),
@@ -1359,6 +1417,8 @@ export default function PlayerConsulta() {
               paddingBottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1.5rem))',
               paddingLeft: 'max(1rem, env(safe-area-inset-left))',
               paddingRight: 'max(1rem, env(safe-area-inset-right))',
+            } : {
+              padding: '1.25rem'
             }}
           >
             {/* Fundo Dinâmico Premium com Gradientes e Glow */}
@@ -1419,7 +1479,7 @@ export default function PlayerConsulta() {
               <div
                 className={cn(
                   "w-full h-full max-h-full min-h-0",
-                  isVertical ? "flex flex-col gap-6" : "grid grid-cols-2 gap-10 items-center",
+                  isTradeActive ? "grid grid-cols-[200px_1fr_250px] gap-8 items-center" : (isVertical ? "flex flex-col gap-6" : "grid grid-cols-2 gap-10 items-center"),
                 )}
               >
                 {/* IMAGEM (TOP) */}
@@ -1429,10 +1489,10 @@ export default function PlayerConsulta() {
                   transition={{ delay: 0.1, duration: 0.45 }}
                   className={cn(
                     "rounded-[28px] overflow-hidden border shadow-[0_20px_60px_-20px_rgba(0,0,0,0.65)]",
-                    isVertical ? "h-[34%] w-full" : "h-full w-full",
+                    isTradeActive ? "h-full w-full" : (isVertical ? "h-[34%] w-full" : "h-full w-full"),
                   )}
                   style={{
-                    background: "linear-gradient(180deg, #FFFFFF 0%, rgba(255,255,255,0.92) 100%)",
+                    background: isTradeActive ? "white" : "linear-gradient(180deg, #FFFFFF 0%, rgba(255,255,255,0.92) 100%)",
                     borderColor: "rgba(255,255,255,0.25)",
                   }}
                 >
@@ -1459,10 +1519,10 @@ export default function PlayerConsulta() {
                   transition={{ delay: 0.2, duration: 0.45 }}
                   className={cn(
                     "relative overflow-hidden rounded-[28px] border backdrop-blur-3xl shadow-[0_22px_70px_-26px_rgba(0,0,0,0.75)]",
-                    isVertical ? "w-full flex-1 min-h-0" : "w-full h-full",
+                    isTradeActive ? "w-full h-full" : (isVertical ? "w-full flex-1 min-h-0" : "w-full h-full"),
                   )}
                   style={{
-                    background: `linear-gradient(180deg, ${(product.visual?.cor_dominante_escuro || "#003399")} 0%, ${(product.visual?.cor_dominante_claro || "#0B5CA8")} 140%)`,
+                    background: isTradeActive ? "rgba(255,255,255,0.05)" : `linear-gradient(180deg, ${(product.visual?.cor_dominante_escuro || "#003399")} 0%, ${(product.visual?.cor_dominante_claro || "#0B5CA8")} 140%)`,
                     borderColor: "rgba(255,255,255,0.15)",
                   }}
                 >
@@ -1482,9 +1542,12 @@ export default function PlayerConsulta() {
                         border: "1px solid rgba(255,255,255,0.12)",
                       }}
                     >
-                      <div className="text-center">
+                      <div className={isTradeActive ? "text-left" : "text-center"}>
                         <div
-                          className="text-[clamp(1.6rem,5vw,3.25rem)] font-black uppercase tracking-tight leading-tight text-white"
+                          className={cn(
+                            "font-black uppercase tracking-tight leading-tight text-white",
+                            isTradeActive ? "text-[clamp(1.2rem,3vw,2rem)]" : "text-[clamp(1.6rem,5vw,3.25rem)]"
+                          )}
                           style={{ fontFamily: "Satoshi, sans-serif" }}
                         >
                           {`${getProductNameParts(product.description).main} ${getProductNameParts(product.description).rest}`.trim()}
@@ -1637,19 +1700,57 @@ export default function PlayerConsulta() {
                             </div>
                           )}
 
-                          {/* EAN */}
-                          <div className="mt-auto pt-2 text-center text-white/55 text-[11px] font-bold tracking-widest">
-                            Código: {product.ean}
+                          {/* EAN & Trade Info */}
+                          <div className="mt-auto pt-2 flex items-center justify-between">
+                            <div className="text-white/55 text-[11px] font-bold tracking-widest uppercase">
+                              Código: {product.ean}
+                            </div>
+                            {isTradeActive && tradeCampaign && (
+                              <div className="flex items-center gap-2 bg-primary/20 px-3 py-1 rounded-full border border-primary/30">
+                                <Megaphone className="w-3 h-3 text-primary" />
+                                <span className="text-[10px] font-black uppercase text-primary tracking-tighter">Trade Ativo: {tradeCampaign.name}</span>
+                              </div>
+                            )}
                           </div>
                         </>
                       );
                     })()}
                   </div>
                 </motion.div>
+
+                {/* Terceira Coluna: EAN e Badge (Apenas Trade Mode) */}
+                {isTradeActive && (
+                  <motion.div
+                    initial={{ x: 30, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    className="h-full flex flex-col justify-center items-center gap-6"
+                  >
+                    <div className="p-6 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-md flex flex-col items-center gap-4 w-full">
+                       <Barcode className="w-12 h-12 text-white/20" />
+                       <div className="text-center">
+                         <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">EAN Escaneado</p>
+                         <p className="text-xl font-mono font-bold text-white">{product.ean}</p>
+                       </div>
+                    </div>
+                    
+                    {tradeCampaign?.media && (
+                      <div className="p-4 bg-primary/10 rounded-2xl border border-primary/20 w-full flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                           <Megaphone className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="leading-tight">
+                           <p className="text-[10px] font-bold text-white/40 uppercase">Campanha Trade</p>
+                           <p className="text-xs font-black text-white uppercase line-clamp-1">{tradeCampaign.name}</p>
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
               </div>
             )}
           </motion.div>
         )}
+
       </AnimatePresence>
 
       <Input

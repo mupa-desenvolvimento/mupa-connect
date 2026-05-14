@@ -34,6 +34,7 @@ import CompanyAppsPage from "./pages/CompanyApps";
 import AppDownloadProxy from "./pages/AppDownloadProxy";
 import SharedMonitoringPage from "./pages/monitoring/SharedMonitoring";
 import TradeMarketingDashboard from "./pages/TradeMarketing";
+import TradeMarketingRules from "./pages/TradeMarketingRules";
 import FaceTrackDemo from "./pages/FaceTrackDemo";
 import FaceDemo from "./pages/FaceDemo";
 // import AppPlayerPage from "./pages/AppPlayer";
@@ -234,6 +235,11 @@ const App = () => {
                 <Route path="/trade-marketing" element={
                   <ProtectedRoute requireMarketing>
                     <TradeMarketingDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/trade-marketing-rules" element={
+                  <ProtectedRoute requireMarketing>
+                    <TradeMarketingRules />
                   </ProtectedRoute>
                 } />
 
