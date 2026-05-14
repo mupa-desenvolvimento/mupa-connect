@@ -71,7 +71,7 @@ export function MediaUpload({ tenantId, companyId, currentFolderId, onUploadComp
       file,
       progress: 0,
       status: 'pending' as const,
-      preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
+      preview: URL.createObjectURL(file),
     }));
 
     setUploads((prev) => [...prev, ...newUploads]);
