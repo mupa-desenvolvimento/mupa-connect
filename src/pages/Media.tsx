@@ -475,9 +475,17 @@ export default function MediaPage() {
                       loading="lazy" 
                     />
                   ) : (
-                    <div className="flex flex-col items-center gap-2 text-muted-foreground opacity-40">
-                      <Video className="h-8 w-8" />
-                      <span className="text-[10px] font-bold uppercase tracking-widest">Vídeo</span>
+                    <div className="w-full h-full relative group">
+                      <video 
+                        src={`${m.file_url}#t=0.5`}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        muted
+                        playsInline
+                        preload="metadata"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
+                        <Play className="h-8 w-8 text-white fill-white/20" />
+                      </div>
                     </div>
                   )}
                   
@@ -591,7 +599,13 @@ export default function MediaPage() {
                           {m.type === 'image' ? (
                             <img src={m.file_url} className="h-full w-full object-cover" alt="" />
                           ) : (
-                            <Video className="h-4 w-4 text-muted-foreground" />
+                            <video 
+                              src={`${m.file_url}#t=0.5`}
+                              className="h-full w-full object-cover"
+                              muted
+                              playsInline
+                              preload="metadata"
+                            />
                           )}
                         </div>
                         <span className="font-medium truncate max-w-[300px]" title={m.name}>{m.name}</span>

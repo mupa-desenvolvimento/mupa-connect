@@ -213,11 +213,34 @@ const SortableItem = ({
       } ${isDragging ? 'shadow-2xl' : ''}`}
     >
       <div className={`absolute inset-0 ${timelineMode && hasCampaign ? 'bottom-6' : ''} transition-all duration-300`}>
-        <img 
-          src={media?.thumbnail_url || media?.file_url} 
-          alt={media?.name} 
-          className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
-        />
+        {media?.type === 'video' ? (
+          <div className="w-full h-full relative overflow-hidden bg-black">
+            {media?.thumbnail_url ? (
+              <img 
+                src={media.thumbnail_url} 
+                alt={media.name} 
+                className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
+              />
+            ) : (
+              <video 
+                src={`${media?.file_url}#t=0.5`}
+                className="w-full h-full object-cover opacity-40 group-hover:opacity-80 transition-opacity"
+                muted
+                playsInline
+                preload="metadata"
+              />
+            )}
+            <div className="absolute inset-0 flex items-center justify-center opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none">
+              <Play className="h-6 w-6 text-white fill-white/20" />
+            </div>
+          </div>
+        ) : (
+          <img 
+            src={media?.thumbnail_url || media?.file_url} 
+            alt={media?.name} 
+            className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
       </div>
 
@@ -1448,11 +1471,29 @@ export default function PlaylistEditor() {
              {/* Device Mockup Preview */}
              <div className="relative max-w-4xl w-full aspect-video bg-black rounded-3xl overflow-hidden border-[12px] border-[#1a1a1e] shadow-[0_0_100px_rgba(0,0,0,0.5)] group">
                 {selectedItem ? (
-                  <div className="w-full h-full relative">
-                    <img 
-                      src={selectedItem.media?.thumbnail_url || selectedItem.media?.file_url} 
-                      className="w-full h-full object-contain"
-                    />
+                  <div className="w-full h-full relative bg-black">
+                    {selectedItem.type === 'video' ? (
+                      <video 
+                        key={selectedItem.id} 
+                        src={selectedItem.media?.file_url} 
+                        className="w-full h-full object-contain"
+                        autoPlay={isPlaying}
+                        muted
+                        loop
+                        playsInline
+                        ref={(el) => {
+                          if (el) {
+                            if (isPlaying) el.play().catch(() => {});
+                            else el.pause();
+                          }
+                        }}
+                      />
+                    ) : (
+                      <img 
+                        src={selectedItem.media?.thumbnail_url || selectedItem.media?.file_url} 
+                        className="w-full h-full object-contain"
+                      />
+                    )}
                     <div className="absolute top-4 left-4 flex gap-2">
                        <Badge className="bg-[#085CF0]/90 text-white border-none backdrop-blur-md">LIVE PREVIEW</Badge>
                        <Badge variant="secondary" className="bg-black/40 text-white border-white/10 backdrop-blur-md">
@@ -1656,10 +1697,19 @@ export default function PlaylistEditor() {
                       {/* Item Info */}
                       <section className="space-y-4">
                          <div className="h-40 rounded-xl overflow-hidden border border-white/5 bg-black">
-                            <img 
-                              src={selectedItem.media?.thumbnail_url || selectedItem.media?.file_url} 
-                              className="w-full h-full object-cover"
-                            />
+                             {selectedItem.type === 'video' ? (
+                               <video 
+                                 src={`${selectedItem.media?.file_url}#t=0.5`}
+                                 className="w-full h-full object-cover"
+                                 muted
+                                 playsInline
+                               />
+                             ) : (
+                               <img 
+                                 src={selectedItem.media?.thumbnail_url || selectedItem.media?.file_url} 
+                                 className="w-full h-full object-cover"
+                               />
+                             )}
                          </div>
                          <div className="space-y-2">
                             <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Nome da Mídia</label>
