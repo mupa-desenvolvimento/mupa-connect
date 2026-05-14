@@ -303,7 +303,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
         localUrl={localUrlA}
         isActive={activeBuffer === "A"}
         videoRef={videoARef}
-        volume={volume}
+        volume={bufferA?.volume ?? volume}
         onEnded={swapBuffers}
         onError={handleMediaError}
       />
