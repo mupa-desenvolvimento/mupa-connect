@@ -254,8 +254,14 @@ const SortableItem = ({
          </span>
       </div>
 
-      {/* Duration Badge */}
-      <div className="absolute top-2 right-2 z-10">
+      {/* Duration & Volume Badge */}
+      <div className="absolute top-2 right-2 z-10 flex gap-1">
+         {item.type === 'video' && item.volume !== undefined && (
+           <span className={`text-[10px] font-bold text-white px-1.5 py-0.5 rounded ${item.volume === 0 ? 'bg-red-500/80' : 'bg-black/40'} backdrop-blur-sm flex items-center gap-1`}>
+             {item.volume === 0 ? <VolumeX className="h-2.5 w-2.5" /> : <Volume2 className="h-2.5 w-2.5" />}
+             {item.volume}%
+           </span>
+         )}
          <span className="text-[10px] font-bold text-white px-1.5 py-0.5 rounded bg-[#085CF0]/80 backdrop-blur-sm flex items-center gap-1">
            <Clock className="h-2.5 w-2.5" /> {item.duration}s
          </span>
