@@ -9,12 +9,7 @@ import {
   Plus, 
   Trash2, 
   Megaphone, 
-  Settings2, 
-  Clock, 
-  BarChart3, 
-  FileText,
-  Loader2,
-  AlertCircle
+  Loader2
 } from "lucide-react";
 import { 
   Dialog, 
@@ -32,16 +27,14 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useUserRole } from "@/hooks/use-user-role";
 
 export default function TradeMarketingRules() {
   const queryClient = useQueryClient();
-  const { tenantId, companyId } = useUserRole();
+  const { tenantId } = useUserRole();
   const [isModalOpen, setIsDialogOpen] = useState(false);
   
-  // Rules fetch
   const { data: campaigns, isLoading } = useQuery({
     queryKey: ["trade-marketing-rules", tenantId],
     queryFn: async () => {
@@ -60,7 +53,6 @@ export default function TradeMarketingRules() {
   const { data: medias } = useQuery({
     queryKey: ["medias", tenantId],
     queryFn: async () => {
-      // Primeiro buscamos os IDs das mídias que estão em playlists ativas
       const { data: activePlaylistItems, error: itemsError } = await supabase
         .from("playlist_items")
         .select(`
@@ -76,7 +68,6 @@ export default function TradeMarketingRules() {
       }
 
       const activeMediaIds = Array.from(new Set(activePlaylistItems.map(item => item.media_id).filter(Boolean)));
-
       if (activeMediaIds.length === 0) return [];
 
       const { data, error } = await supabase
@@ -93,26 +84,15 @@ export default function TradeMarketingRules() {
   });
 
   const [formData, setFormData] = useState({
-    name: "",
     media_id: "",
-    eans: "",
-    display_time: "10",
-    priority: "1",
-    cooldown_seconds: "60",
-    max_dispatches_per_minute: "3"
+    eans: ""
   });
 
   const createRule = useMutation({
     mutationFn: async (payload: any) => {
       const eans = payload.eans.split("\n").map((e: string) => e.trim()).filter(Boolean);
-      
-      if (eans.length === 0) {
-        throw new Error("Pelo menos um EAN deve ser informado");
-      }
-
-      if (!payload.media_id) {
-        throw new Error("Selecione uma mídia");
-      }
+      if (eans.length === 0) throw new Error("Pelo menos um EAN deve ser informado");
+      if (!payload.media_id) throw new Error("Selecione uma mídia");
 
       const selectedMedia = medias?.find((m: any) => m.id === payload.media_id);
 
@@ -136,13 +116,8 @@ export default function TradeMarketingRules() {
       queryClient.invalidateQueries({ queryKey: ["trade-marketing-rules"] });
       setIsDialogOpen(false);
       setFormData({
-        name: "",
         media_id: "",
-        eans: "",
-        display_time: "10",
-        priority: "1",
-        cooldown_seconds: "60",
-        max_dispatches_per_minute: "3"
+        eans: ""
       });
     },
     onError: (err: any) => {
@@ -185,17 +160,6 @@ export default function TradeMarketingRules() {
             
             <div className="grid gap-6 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="name">Nome da Campanha</Label>
-                <Input 
-                  id="name" 
-                  placeholder="Ex: Coca-Cola Maio" 
-                  className="bg-black/40 border-white/10"
-                  value={formData.name}
-                  onChange={e => setFormData({...formData, name: e.target.value})}
-                />
-              </div>
-
-              <div className="grid gap-2">
                 <Label>Vincular Mídia Promocional</Label>
                 <Select onValueChange={val => setFormData({...formData, media_id: val})}>
                   <SelectTrigger className="bg-black/40 border-white/10">
@@ -218,29 +182,6 @@ export default function TradeMarketingRules() {
                   value={formData.eans}
                   onChange={e => setFormData({...formData, eans: e.target.value})}
                 />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="display">Tempo em Tela (s)</Label>
-                  <Input 
-                    id="display" 
-                    type="number" 
-                    className="bg-black/40 border-white/10"
-                    value={formData.display_time}
-                    onChange={e => setFormData({...formData, display_time: e.target.value})}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="priority">Prioridade (1-10)</Label>
-                  <Input 
-                    id="priority" 
-                    type="number" 
-                    className="bg-black/40 border-white/10"
-                    value={formData.priority}
-                    onChange={e => setFormData({...formData, priority: e.target.value})}
-                  />
-                </div>
               </div>
             </div>
 
@@ -291,23 +232,11 @@ export default function TradeMarketingRules() {
                   Mídia: {medias?.find((m: any) => m.id === c.id_midia)?.name || "Desconhecida"}
                 </div>
                 
-                <div className="grid grid-cols-1 gap-2">
-                  <div className="bg-black/40 rounded-lg p-2 flex flex-col gap-1">
-                    <span className="text-[10px] text-white/20 font-bold uppercase tracking-wider">Criado em</span>
-                    <span className="text-sm font-mono font-bold text-primary">
-                      {new Date(c.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-2">
-                  <div className="flex items-center gap-2">
-                    <div className={`h-2 w-2 rounded-full ${c.is_active ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-white/20'}`} />
-                    <span className="text-xs font-bold uppercase text-white/40">{c.is_active ? 'Ativa' : 'Inativa'}</span>
-                  </div>
-                  <Button variant="ghost" size="sm" className="h-7 text-[10px] uppercase font-black gap-1.5 hover:bg-white/5">
-                    <Settings2 className="h-3 w-3" /> Editar
-                  </Button>
+                <div className="bg-black/40 rounded-lg p-2 flex flex-col gap-1">
+                  <span className="text-[10px] text-white/20 font-bold uppercase tracking-wider">Criado em</span>
+                  <span className="text-sm font-mono font-bold text-primary">
+                    {new Date(c.created_at).toLocaleDateString()}
+                  </span>
                 </div>
               </CardContent>
             </Card>
