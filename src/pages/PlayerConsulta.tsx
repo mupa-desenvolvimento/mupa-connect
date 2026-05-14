@@ -127,6 +127,12 @@ export default function PlayerConsulta() {
   const [reloadKey, setReloadKey] = useState<number>(0);
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // TRADE MARKETING STATE
+  const [tradeCampaign, setTradeCampaign] = useState<any>(null);
+  const [isTradeActive, setIsTradeActive] = useState(false);
+  const [tradeCooldowns, setTradeCooldowns] = useState<Record<string, number>>({});
+  const [tradeDispatchesPerMinute, setTradeDispatchesPerMinute] = useState<Record<string, number[]>>({});
+
   // DEV MODE STATE
   const [isDevMode, setIsDevMode] = useState(isDevModeParam);
   const [isAutoDemoActive, setIsAutoDemoActive] = useState(false);
