@@ -70,6 +70,9 @@ const MediaLayer = memo(({
           className="w-full h-full player-gpu-accel"
           style={{ objectFit: 'fill' }}
           onCanPlayThrough={() => {
+            if (videoRef.current) {
+              videoRef.current.volume = volume / 100;
+            }
             if (isActive && videoRef.current && videoRef.current.paused) {
               videoRef.current.play().catch(e => console.warn("[PlayerEngine] [Playback] Video play failed", e));
             }
