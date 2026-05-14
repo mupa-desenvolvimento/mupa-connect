@@ -653,7 +653,40 @@ export default function PlaylistEditor() {
 
       // 6. Notificar dispositivos vinculados via Firebase Realtime (instantâneo)
       if (currentPlaylistId) {
-        FirebaseRealtimeService.notifyPlaylistDevices(currentPlaylistId).catch(() => {});
+        setSaveStatus("saving");
+        const { data: devices } = await supabase
+          .from("dispositivos")
+          .select("id, serial, apelido_interno, online, atualizado")
+          .eq("playlist_id", currentPlaylistId);
+
+        if (devices) {
+          const initialStatus: Record<string, any> = {};
+          devices.forEach(d => {
+            const deviceId = d.serial || d.apelido_interno || `id-${d.id}`;
+            initialStatus[deviceId] = {
+              status: d.online ? 'sending' : 'offline',
+              serial: d.serial,
+              online: d.online,
+              lastUpdate: d.atualizado
+            };
+          });
+          setDeviceSyncStatus(initialStatus);
+
+          await FirebaseRealtimeService.notifyPlaylistDevices(currentPlaylistId);
+          
+          // Simular o status de "aplicado" para dispositivos online após a notificação
+          setTimeout(() => {
+            setDeviceSyncStatus(prev => {
+              const updated = { ...prev };
+              Object.keys(updated).forEach(id => {
+                if (updated[id].status === 'sending') {
+                  updated[id].status = 'applied';
+                }
+              });
+              return updated;
+            });
+          }, 3000);
+        }
       }
       
       setSaveStatus("saved");
