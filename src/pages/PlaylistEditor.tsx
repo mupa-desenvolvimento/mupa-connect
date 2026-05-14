@@ -559,7 +559,7 @@ export default function PlaylistEditor() {
             name: updatedName, 
             is_company_default: isDefault, 
             updated_at: new Date().toISOString(),
-            appearance_config: appearanceConfig
+            appearance_config: updatedAppearance
           })
           .eq("id", id as any);
         if (updateError) throw updateError;
