@@ -105,7 +105,7 @@ export default function TradeMarketingRules() {
       const eans = payload.eans.split("\n").map((e: string) => e.trim()).filter(Boolean);
       if (eans.length > 0) {
         const rulesToInsert = eans.map((ean: string) => ({
-          trade_campaign_id: campaign.id,
+          trade_campaign_id: (campaign as any).id,
           ean: ean
         }));
 
