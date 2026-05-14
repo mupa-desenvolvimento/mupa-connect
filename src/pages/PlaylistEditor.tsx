@@ -1808,8 +1808,14 @@ export default function PlaylistEditor() {
                               className={`py-4 ${selectedItem.type === 'video' ? 'opacity-50' : ''}`}
                             />
                             <div className="flex justify-between text-[10px] text-white/20 font-bold uppercase">
-                               <span>1s</span>
-                               <span>60s</span>
+                               {selectedItem.type === 'video' ? (
+                                 <span className="text-[#085CF0]">Duração automática do vídeo</span>
+                               ) : (
+                                 <>
+                                   <span>1s</span>
+                                   <span>60s</span>
+                                 </>
+                               )}
                             </div>
                          </div>
  
