@@ -99,6 +99,17 @@ const MediaLayer = memo(({
          prev.volume === next.volume;
 });
 
+// Hook para sincronizar volume do vídeo com o estado
+const useVideoVolume = (videoRef: React.RefObject<HTMLVideoElement>, volume: number) => {
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.volume = volume / 100;
+      videoRef.current.muted = volume === 0;
+    }
+  }, [videoRef, volume]);
+};
+
+
 MediaLayer.displayName = "MediaLayer";
 
 export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appearance }: PlayerEngineProps) {
