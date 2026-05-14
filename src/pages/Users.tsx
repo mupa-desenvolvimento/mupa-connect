@@ -13,13 +13,25 @@ import {
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Users as UsersIcon, Mail, Shield, Trash2 } from "lucide-react";
+import { Plus, Loader2, Users as UsersIcon, Mail, Shield, Trash2, AlertTriangle } from "lucide-react";
 import { CreateUserModal } from "@/components/CreateUserModal";
 import { useUserRole } from "@/hooks/use-user-role";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function UsersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { companyId, tenantId, isAdmin, isSuperAdmin } = useUserRole();
 
   const { data: users, isLoading, refetch } = useQuery({
@@ -69,15 +81,23 @@ export default function UsersPage() {
     enabled: (!!companyId || !!tenantId || isSuperAdmin),
   });
 
-  const handleDeleteUser = async (id: string) => {
-    if (!window.confirm("Deseja realmente remover este usuário?")) return;
+  const handleDeleteUser = async () => {
+    if (!userToDelete || !isSuperAdmin) return;
     
-    const { error } = await supabase.from("user_profiles").delete().eq("id", id);
-    if (error) {
-      toast.error("Erro ao remover usuário");
-    } else {
-      toast.success("Usuário removido");
-      refetch();
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase.from("user_profiles").delete().eq("id", userToDelete.id);
+      if (error) {
+        toast.error("Erro ao remover usuário");
+      } else {
+        toast.success(`Usuário ${userToDelete.name} removido com sucesso`);
+        refetch();
+      }
+    } catch (err) {
+      toast.error("Ocorreu um erro inesperado");
+    } finally {
+      setIsDeleting(false);
+      setUserToDelete(null);
     }
   };
 
@@ -158,14 +178,16 @@ export default function UsersPage() {
                         {new Date(user.created_at).toLocaleDateString("pt-BR")}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => handleDeleteUser(user.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {isSuperAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => setUserToDelete({ id: user.id, name: user.name })}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))
@@ -181,6 +203,45 @@ export default function UsersPage() {
         onClose={() => setIsModalOpen(false)}
         onSuccess={refetch}
       />
+
+      <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+        <AlertDialogContent className="border-destructive/20 bg-destructive/5 backdrop-blur-sm">
+          <AlertDialogHeader>
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+              <AlertTriangle className="h-6 w-6 text-destructive" />
+            </div>
+            <AlertDialogTitle className="text-center text-xl font-bold text-destructive">
+              Confirmar Exclusão
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-foreground/80">
+              Você está prestes a excluir o usuário <span className="font-bold text-destructive">{userToDelete?.name}</span>. 
+              Esta ação é irreversível e removerá todos os acessos vinculados a esta conta.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-6 flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="flex-1 border-border/50 hover:bg-muted/50">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteUser();
+              }}
+              className="flex-1 bg-destructive hover:bg-destructive/90 text-white shadow-lg shadow-destructive/20"
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                "Sim, excluir permanentemente"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
