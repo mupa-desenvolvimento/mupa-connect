@@ -145,6 +145,7 @@ serve(async (req) => {
         original_url: publicUrl,
         optimized_url: publicUrl, // Por enquanto o mesmo, até termos o worker de vídeo/imagem avançado
         file_size: file.size,
+        duration: duration,
         folder_id: folderId || null,
         tenant_id: tenantId,
         company_id: resolvedCompanyId,
