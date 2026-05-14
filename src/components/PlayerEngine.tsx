@@ -8,6 +8,7 @@ interface MediaItem {
   url: string;
   type: "image" | "video";
   duration: number;
+  volume?: number;
   name: string;
 }
 
@@ -42,6 +43,7 @@ const MediaLayer = memo(({
   onEnded: () => void;
   onError: (e: any) => void;
 }) => {
+  useVideoVolume(videoRef, volume);
   if (!media || !localUrl) return null;
 
   const isVideo = media.type === "video";
@@ -69,6 +71,9 @@ const MediaLayer = memo(({
           className="w-full h-full player-gpu-accel"
           style={{ objectFit: 'fill' }}
           onCanPlayThrough={() => {
+            if (videoRef.current) {
+              videoRef.current.volume = volume / 100;
+            }
             if (isActive && videoRef.current && videoRef.current.paused) {
               videoRef.current.play().catch(e => console.warn("[PlayerEngine] [Playback] Video play failed", e));
             }
@@ -94,6 +99,17 @@ const MediaLayer = memo(({
          prev.isActive === next.isActive &&
          prev.volume === next.volume;
 });
+
+// Hook para sincronizar volume do vídeo com o estado
+const useVideoVolume = (videoRef: React.RefObject<HTMLVideoElement>, volume: number) => {
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.volume = volume / 100;
+      videoRef.current.muted = volume === 0;
+    }
+  }, [videoRef, volume]);
+};
+
 
 MediaLayer.displayName = "MediaLayer";
 
@@ -302,7 +318,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
         localUrl={localUrlA}
         isActive={activeBuffer === "A"}
         videoRef={videoARef}
-        volume={volume}
+        volume={bufferA?.volume ?? volume}
         onEnded={swapBuffers}
         onError={handleMediaError}
       />
@@ -312,7 +328,7 @@ export function PlayerEngine({ playlist, onMediaChange, volume = 0, serial, appe
         localUrl={localUrlB}
         isActive={activeBuffer === "B"}
         videoRef={videoBRef}
-        volume={volume}
+        volume={bufferB?.volume ?? volume}
         onEnded={swapBuffers}
         onError={handleMediaError}
       />

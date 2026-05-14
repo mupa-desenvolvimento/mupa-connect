@@ -82,19 +82,23 @@ export const ManifestService = {
       throw new Error("Manifest data not found");
     }
 
-    const mapItems = (items: any[]) => (items || [])
-      .sort((a: any, b: any) => (a.position ?? a.ordem ?? 0) - (b.position ?? b.ordem ?? 0))
-      .map((item: any) => {
-        const media = Array.isArray(item.media_items) ? item.media_items[0] : item.media_items;
-        return {
-          id: item.media_id || item.id,
-          type: item.tipo || media?.type || "image",
-          url: media?.optimized_url || media?.file_url,
-          duration: item.duracao || media?.duration || 10,
-          name: media?.name || "Sem nome"
-        };
-      })
-      .filter((item: any) => item.url);
+    const mapItems = (items: any[], appearanceConfig: any) => {
+      const itemVolumes = appearanceConfig?.item_volumes || [];
+      return (items || [])
+        .sort((a: any, b: any) => (a.position ?? a.ordem ?? 0) - (b.position ?? b.ordem ?? 0))
+        .map((item: any, idx: number) => {
+          const media = Array.isArray(item.media_items) ? item.media_items[0] : item.media_items;
+          return {
+            id: item.media_id || item.id,
+            type: item.tipo || media?.type || "image",
+            url: media?.optimized_url || media?.file_url,
+            duration: item.duracao || media?.duration || 10,
+            volume: itemVolumes[idx] ?? 100,
+            name: media?.name || "Sem nome"
+          };
+        })
+        .filter((item: any) => item.url);
+    };
 
     return {
       device,
@@ -107,7 +111,9 @@ export const ManifestService = {
         schedules: Array.isArray(playlist.schedule) ? playlist.schedule : [],
         fallback_playlist: [],
         fallback_items: [],
-        items: mapItems(playlistItems || []),
+        items: mapItems(playlistItems || [], (device.appearance_config && Object.keys(device.appearance_config).length > 0) 
+          ? device.appearance_config 
+          : (playlist.appearance_config || {})),
         appearance_config: (device.appearance_config && Object.keys(device.appearance_config).length > 0) 
           ? device.appearance_config 
           : (playlist.appearance_config || {})

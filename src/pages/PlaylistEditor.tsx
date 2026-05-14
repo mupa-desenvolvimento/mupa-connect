@@ -49,7 +49,9 @@ import {
   ChevronUp,
   X,
   Pause,
-  Megaphone
+  Megaphone,
+  Volume2,
+  VolumeX
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -99,6 +101,7 @@ interface EditorPlaylistItem {
   mediaId: string;
   duration: number;
   priority: number;
+  volume: number; // Volume 0-100
   type: string;
   media?: any;
   campaignName?: string;
@@ -251,8 +254,14 @@ const SortableItem = ({
          </span>
       </div>
 
-      {/* Duration Badge */}
-      <div className="absolute top-2 right-2 z-10">
+      {/* Duration & Volume Badge */}
+      <div className="absolute top-2 right-2 z-10 flex gap-1">
+         {item.type === 'video' && item.volume !== undefined && (
+           <span className={`text-[10px] font-bold text-white px-1.5 py-0.5 rounded ${item.volume === 0 ? 'bg-red-500/80' : 'bg-black/40'} backdrop-blur-sm flex items-center gap-1`}>
+             {item.volume === 0 ? <VolumeX className="h-2.5 w-2.5" /> : <Volume2 className="h-2.5 w-2.5" />}
+             {item.volume}%
+           </span>
+         )}
          <span className="text-[10px] font-bold text-white px-1.5 py-0.5 rounded bg-[#085CF0]/80 backdrop-blur-sm flex items-center gap-1">
            <Clock className="h-2.5 w-2.5" /> {item.duration}s
          </span>
@@ -447,7 +456,9 @@ export default function PlaylistEditor() {
       setAppearanceConfig(normalizeAppearanceConfig(playlistData.appearance_config));
       
       if (playlistData.playlist_items && playlistData.playlist_items.length > 0) {
-        const mappedItems = playlistData.playlist_items.map((it: any) => {
+        const appearance = playlistData.appearance_config as any;
+        const itemVolumes = appearance?.item_volumes || [];
+        const mappedItems = playlistData.playlist_items.map((it: any, idx: number) => {
           const media = medias?.find(m => m.id === it.media_id);
           // Tentar encontrar a campanha se não houver uma vinculada
           const campaign = campaigns?.find((c: any) => 
@@ -460,6 +471,7 @@ export default function PlaylistEditor() {
             mediaId: it.media_id,
             duration: it.duracao,
             priority: it.prioridade || 1,
+            volume: itemVolumes[idx] ?? 100,
             type: it.tipo,
             media: media,
             campaignName: campaign?.name,
@@ -499,6 +511,11 @@ export default function PlaylistEditor() {
     
     try {
       let currentPlaylistId = id;
+      
+      const updatedAppearance = {
+        ...appearanceConfig,
+        item_volumes: updatedItems.map(it => it.volume)
+      };
 
       if (id === "new") {
         console.log("Saving new playlist. Fetching company for tenant:", tenantId);
@@ -530,7 +547,7 @@ export default function PlaylistEditor() {
             company_id: companyId || companyData.id,
             is_active: true,
             is_company_default: isDefault,
-            appearance_config: appearanceConfig
+            appearance_config: updatedAppearance
           })
           .select().single();
           
@@ -550,7 +567,7 @@ export default function PlaylistEditor() {
             name: updatedName, 
             is_company_default: isDefault, 
             updated_at: new Date().toISOString(),
-            appearance_config: appearanceConfig
+            appearance_config: updatedAppearance
           })
           .eq("id", id as any);
         if (updateError) throw updateError;
@@ -742,6 +759,7 @@ export default function PlaylistEditor() {
             mediaId: it.media.id,
             duration: it.duration_override || it.media.duration || 10,
             priority: 1,
+            volume: 100,
             type: it.media.type === "video" ? "video" : "image",
             media: it.media,
             campaignName: campaign.name,
@@ -801,6 +819,7 @@ export default function PlaylistEditor() {
       mediaId: media.id,
       duration: media.duration || 10,
       priority: 1,
+      volume: 100,
       type: media.type === 'video' ? 'video' : 'image',
       media: media,
       campaignName: campaignInfo?.name,
@@ -841,6 +860,16 @@ export default function PlaylistEditor() {
     setItems(newItems);
     if (selectedItem?.id === id) {
       setSelectedItem({ ...selectedItem, priority: newPriority });
+    }
+    triggerAutoSave(newItems, playlistName);
+  };
+  const updateItemVolume = (id: string, newVolume: number) => {
+    const newItems = items.map(item => 
+      item.id === id ? { ...item, volume: newVolume } : item
+    );
+    setItems(newItems);
+    if (selectedItem?.id === id) {
+      setSelectedItem({ ...selectedItem, volume: newVolume });
     }
     triggerAutoSave(newItems, playlistName);
   };
@@ -1800,7 +1829,49 @@ export default function PlaylistEditor() {
                                <span>Baixa</span>
                                <span>Alta</span>
                             </div>
-                         </div>
+                          </div>
+ 
+                          {selectedItem.type === 'video' && (
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between">
+                                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Volume do Vídeo</label>
+                                <span className="text-xs font-mono font-bold text-[#085CF0]">{selectedItem.volume}%</span>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                {selectedItem.volume === 0 ? (
+                                  <VolumeX className="h-4 w-4 text-red-500 cursor-pointer" onClick={() => updateItemVolume(selectedItem.id, 100)} />
+                                ) : (
+                                  <Volume2 className="h-4 w-4 text-[#085CF0] cursor-pointer" onClick={() => updateItemVolume(selectedItem.id, 0)} />
+                                )}
+                                <Slider 
+                                  value={[selectedItem.volume]} 
+                                  max={100} 
+                                  step={1}
+                                  className="flex-1 cursor-pointer"
+                                  onValueChange={(val) => updateItemVolume(selectedItem.id, val[0])}
+                                />
+                              </div>
+                              <div className="flex gap-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className={`flex-1 h-7 text-[9px] font-bold uppercase ${selectedItem.volume === 0 ? 'bg-red-500/20 border-red-500/50 text-red-500' : 'border-white/5 bg-white/5 text-white/40'}`}
+                                  onClick={() => updateItemVolume(selectedItem.id, 0)}
+                                >
+                                  MUDO
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="flex-1 h-7 text-[9px] font-bold uppercase border-white/5 bg-white/5 text-white/40"
+                                  onClick={() => updateItemVolume(selectedItem.id, 100)}
+                                >
+                                  100%
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+
 
                          <div className="space-y-3">
                             <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Ajuste de Escala</label>
@@ -1899,6 +1970,7 @@ export default function PlaylistEditor() {
                     />
                   </div>
                 </div>
+
               );
             })()}
           </div>
