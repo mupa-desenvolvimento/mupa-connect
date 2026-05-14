@@ -1519,10 +1519,10 @@ export default function PlayerConsulta() {
                   transition={{ delay: 0.2, duration: 0.45 }}
                   className={cn(
                     "relative overflow-hidden rounded-[28px] border backdrop-blur-3xl shadow-[0_22px_70px_-26px_rgba(0,0,0,0.75)]",
-                    isVertical ? "w-full flex-1 min-h-0" : "w-full h-full",
+                    isTradeActive ? "w-full h-full" : (isVertical ? "w-full flex-1 min-h-0" : "w-full h-full"),
                   )}
                   style={{
-                    background: `linear-gradient(180deg, ${(product.visual?.cor_dominante_escuro || "#003399")} 0%, ${(product.visual?.cor_dominante_claro || "#0B5CA8")} 140%)`,
+                    background: isTradeActive ? "rgba(255,255,255,0.05)" : `linear-gradient(180deg, ${(product.visual?.cor_dominante_escuro || "#003399")} 0%, ${(product.visual?.cor_dominante_claro || "#0B5CA8")} 140%)`,
                     borderColor: "rgba(255,255,255,0.15)",
                   }}
                 >
