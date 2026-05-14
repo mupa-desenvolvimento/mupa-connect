@@ -47,6 +47,8 @@ serve(async (req) => {
     const folderId = formData.get('folderId') as string | null
     const tenantId = formData.get('tenantId') as string
     const companyId = formData.get('companyId') as string
+    const durationStr = formData.get('duration') as string | null
+    const duration = durationStr ? parseInt(durationStr) : 0
 
     console.log(`Campos recebidos - Tenant: ${tenantId}, Company: ${companyId}, Folder: ${folderId}, File: ${file?.name}`)
 
