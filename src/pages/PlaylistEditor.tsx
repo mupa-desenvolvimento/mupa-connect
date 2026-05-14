@@ -99,6 +99,7 @@ interface EditorPlaylistItem {
   mediaId: string;
   duration: number;
   priority: number;
+  volume: number; // Volume 0-100
   type: string;
   media?: any;
   campaignName?: string;
