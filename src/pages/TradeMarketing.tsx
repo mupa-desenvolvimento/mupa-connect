@@ -29,8 +29,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useUserRole } from "@/hooks/use-user-role";
 
 export default function TradeMarketingDashboard() {
+  const { tenantId } = useUserRole();
   const [range, setRange] = useState("7"); // days
   const [mediaType, setMediaType] = useState("all");
 
