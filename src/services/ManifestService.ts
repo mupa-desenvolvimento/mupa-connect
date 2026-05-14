@@ -111,7 +111,9 @@ export const ManifestService = {
         schedules: Array.isArray(playlist.schedule) ? playlist.schedule : [],
         fallback_playlist: [],
         fallback_items: [],
-        items: mapItems(playlistItems || []),
+        items: mapItems(playlistItems || [], (device.appearance_config && Object.keys(device.appearance_config).length > 0) 
+          ? device.appearance_config 
+          : (playlist.appearance_config || {})),
         appearance_config: (device.appearance_config && Object.keys(device.appearance_config).length > 0) 
           ? device.appearance_config 
           : (playlist.appearance_config || {})
