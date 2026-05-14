@@ -503,6 +503,11 @@ export default function PlaylistEditor() {
     
     try {
       let currentPlaylistId = id;
+      
+      const updatedAppearance = {
+        ...appearanceConfig,
+        item_volumes: updatedItems.map(it => it.volume)
+      };
 
       if (id === "new") {
         console.log("Saving new playlist. Fetching company for tenant:", tenantId);
