@@ -8,6 +8,7 @@ interface MediaItem {
   url: string;
   type: "image" | "video";
   duration: number;
+  volume?: number;
   name: string;
 }
 
