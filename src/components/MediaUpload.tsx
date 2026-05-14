@@ -128,10 +128,14 @@ export function MediaUpload({ tenantId, companyId, currentFolderId, onUploadComp
           updateUploadStatus(upload.id, { status: 'uploading', progress: 10 });
 
           let fileToUpload = upload.file;
+          let duration = 0;
           
           // Otimização de imagem (se for imagem)
           if (fileToUpload.type.startsWith('image/')) {
             fileToUpload = await optimizeImage(fileToUpload);
+            duration = 10; // Default for images
+          } else if (fileToUpload.type.startsWith('video/')) {
+            duration = await getVideoDuration(fileToUpload);
           }
           
           updateUploadStatus(upload.id, { progress: 30 });
