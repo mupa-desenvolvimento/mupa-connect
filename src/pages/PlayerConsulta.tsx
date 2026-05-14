@@ -867,6 +867,86 @@ export default function PlayerConsulta() {
     }
   }, [isConsulting, startHideTimer]);
 
+  const checkTradeMarketing = useCallback(async (ean: string) => {
+    try {
+      const now = Date.now();
+      
+      // 1. Fetch matching campaigns for this EAN
+      const { data: rules, error } = await supabase
+        .from("trade_marketing_rules" as any)
+        .select(`
+          *,
+          trade_marketing_campaigns (
+            *,
+            media:media_items (*)
+          )
+        `)
+        .eq("ean", ean);
+
+      if (error || !rules?.length) return;
+
+      // 2. Filter active and prioritized campaign
+      const validCampaigns = rules
+        .map((r: any) => r.trade_marketing_campaigns)
+        .filter((c: any) => c && c.is_active)
+        .sort((a: any, b: any) => (b.priority || 0) - (a.priority || 0));
+
+      const campaign = validCampaigns[0];
+      if (!campaign) return;
+
+      // 3. Check Cooldown
+      const lastDispatch = tradeCooldowns[campaign.id] || 0;
+      if (now - lastDispatch < (campaign.cooldown_seconds || 60) * 1000) {
+        console.log("[Trade] Campaign in cooldown:", campaign.name);
+        return;
+      }
+
+      // 4. Check Rate Limit (max per minute)
+      const minuteAgo = now - 60000;
+      const recentDispatches = (tradeDispatchesPerMinute[campaign.id] || []).filter(ts => ts > minuteAgo);
+      if (recentDispatches.length >= (campaign.max_dispatches_per_minute || 3)) {
+        console.log("[Trade] Campaign rate limited:", campaign.name);
+        return;
+      }
+
+      // 5. Trigger Campaign
+      console.log("[Trade] Triggering campaign:", campaign.name);
+      setTradeCampaign(campaign);
+      setIsTradeActive(true);
+
+      // Update cooldowns and dispatches
+      setTradeCooldowns(prev => ({ ...prev, [campaign.id]: now }));
+      setTradeDispatchesPerMinute(prev => ({ 
+        ...prev, 
+        [campaign.id]: [...recentDispatches, now] 
+      }));
+
+      // Log Analytics
+      supabase.from("media_events").insert({
+        device_id: deviceInfo?.id,
+        media_id: campaign.media_id,
+        event_type: 'trade_dispatch',
+        duration: campaign.display_time,
+        metadata: {
+          ean,
+          trade_campaign_name: campaign.name,
+          trade_campaign_id: campaign.id,
+          serial: deviceInfo?.serial
+        }
+      }).then();
+
+      // Auto-hide trade after display_time
+      setTimeout(() => {
+        setIsTradeActive(false);
+        // We keep tradeCampaign state for transition or just clear it if needed
+      }, (campaign.display_time || 10) * 1000);
+
+    } catch (err) {
+      console.error("[Trade] Error checking rules:", err);
+    }
+  }, [tradeCooldowns, tradeDispatchesPerMinute, deviceInfo]);
+
+
   // 4.5 Realtime Commands via Firebase
   useEffect(() => {
     if (!deviceCode || isPreview) return;
