@@ -1399,11 +1399,16 @@ export default function PlayerConsulta() {
       <AnimatePresence>
         {showOverlay && (
           <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
-            style={{
+            initial={isTradeActive ? { opacity: 0, y: 100 } : { opacity: 0 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 100 }}
+            className={cn(
+              "fixed z-50 flex items-center justify-center overflow-hidden transition-all duration-500",
+              isTradeActive 
+                ? "bottom-0 left-0 right-0 h-[32%] bg-black/40 backdrop-blur-xl border-t border-white/10" 
+                : "inset-0"
+            )}
+            style={!isTradeActive ? {
               backgroundColor: isDefaultImage(product?.visual?.imagem_url)
                 ? (product?.visual?.fundo_legibilidade ? `${product.visual.fundo_legibilidade}F8` : 'rgba(0,51,153,0.98)')
                 : (product?.visual?.cor_dominante_escuro || '#FFFFFF'),
@@ -1412,6 +1417,8 @@ export default function PlayerConsulta() {
               paddingBottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1.5rem))',
               paddingLeft: 'max(1rem, env(safe-area-inset-left))',
               paddingRight: 'max(1rem, env(safe-area-inset-right))',
+            } : {
+              padding: '1.25rem'
             }}
           >
             {/* Fundo Dinâmico Premium com Gradientes e Glow */}
