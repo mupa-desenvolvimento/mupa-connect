@@ -804,6 +804,7 @@ export default function PlaylistEditor() {
       mediaId: media.id,
       duration: media.duration || 10,
       priority: 1,
+      volume: 100,
       type: media.type === 'video' ? 'video' : 'image',
       media: media,
       campaignName: campaignInfo?.name,
