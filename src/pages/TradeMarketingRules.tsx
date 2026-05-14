@@ -189,7 +189,7 @@ export default function TradeMarketingRules() {
                     <SelectValue placeholder="Selecione uma mídia..." />
                   </SelectTrigger>
                   <SelectContent className="bg-[#1a1a1e] border-white/10 text-white">
-                    {medias?.map(m => (
+                    {medias?.map((m: any) => (
                       <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
                     ))}
                   </SelectContent>
