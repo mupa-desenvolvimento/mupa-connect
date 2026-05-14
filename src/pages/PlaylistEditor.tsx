@@ -1471,11 +1471,23 @@ export default function PlaylistEditor() {
              {/* Device Mockup Preview */}
              <div className="relative max-w-4xl w-full aspect-video bg-black rounded-3xl overflow-hidden border-[12px] border-[#1a1a1e] shadow-[0_0_100px_rgba(0,0,0,0.5)] group">
                 {selectedItem ? (
-                  <div className="w-full h-full relative">
-                    <img 
-                      src={selectedItem.media?.thumbnail_url || selectedItem.media?.file_url} 
-                      className="w-full h-full object-contain"
-                    />
+                  <div className="w-full h-full relative bg-black">
+                    {selectedItem.type === 'video' ? (
+                      <video 
+                        key={selectedItem.id + isPlaying} // Forçar recarregamento se necessário
+                        src={selectedItem.media?.file_url} 
+                        className="w-full h-full object-contain"
+                        autoPlay={isPlaying}
+                        muted
+                        loop
+                        playsInline
+                      />
+                    ) : (
+                      <img 
+                        src={selectedItem.media?.thumbnail_url || selectedItem.media?.file_url} 
+                        className="w-full h-full object-contain"
+                      />
+                    )}
                     <div className="absolute top-4 left-4 flex gap-2">
                        <Badge className="bg-[#085CF0]/90 text-white border-none backdrop-blur-md">LIVE PREVIEW</Badge>
                        <Badge variant="secondary" className="bg-black/40 text-white border-white/10 backdrop-blur-md">
