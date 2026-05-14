@@ -209,7 +209,16 @@ export function MediaUpload({ tenantId, companyId, currentFolderId, onUploadComp
             <div key={upload.id} className="bg-muted/30 border rounded-lg p-3 flex items-center gap-3">
               <div className="h-12 w-12 rounded bg-background border overflow-hidden flex-shrink-0 flex items-center justify-center">
                 {upload.preview ? (
-                  <img src={upload.preview} className="h-full w-full object-cover" alt="" />
+                  upload.file.type.startsWith('video/') ? (
+                    <video 
+                      src={upload.preview} 
+                      className="h-full w-full object-cover" 
+                      muted 
+                      playsInline 
+                    />
+                  ) : (
+                    <img src={upload.preview} className="h-full w-full object-cover" alt="" />
+                  )
                 ) : (
                   <FileIcon className="h-6 w-6 text-muted-foreground" />
                 )}
