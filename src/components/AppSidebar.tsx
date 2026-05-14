@@ -54,6 +54,7 @@ export function AppSidebar() {
     { title: "Erros de Consulta", url: "/admin/analytics/erros", icon: AlertOctagon, visible: isTecnico },
 
     { title: "Trade Marketing", url: "/trade-marketing", icon: BarChart, visible: isMarketing || isAdmin },
+    { title: "Trade Inteligente", url: "/trade-marketing-rules", icon: Megaphone, visible: isMarketing || isAdmin },
     { title: "Painel NOC", url: "/admin/monitoring", icon: Activity, visible: isTecnico },
     { title: "Download de Apps", url: "/aplicativos", icon: MonitorPlay, visible: isTecnico },
     { title: "Face Track Demo", url: "/face-track-demo", icon: User, visible: true },
