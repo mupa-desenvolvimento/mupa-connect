@@ -274,12 +274,12 @@ export default function TradeMarketingRules() {
             <Card key={c.id} className="bg-card/40 border-white/5 overflow-hidden">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg font-bold">{c.name}</CardTitle>
+                  <CardTitle className="text-lg font-bold">{c.codbar}</CardTitle>
                   <Button 
                     variant="ghost" 
                     size="icon" 
                     className="h-8 w-8 text-white/20 hover:text-red-500"
-                    onClick={() => deleteCampaign.mutate(c.id)}
+                    onClick={() => deleteRule.mutate(c.id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -288,17 +288,15 @@ export default function TradeMarketingRules() {
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-2 text-xs text-white/40 uppercase font-black">
                   <Megaphone className="h-3 w-3 text-primary" />
-                  {c.trade_marketing_rules?.length || 0} EANs Vinculados
+                  Mídia: {medias?.find((m: any) => m.id === c.id_midia)?.name || "Desconhecida"}
                 </div>
                 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 gap-2">
                   <div className="bg-black/40 rounded-lg p-2 flex flex-col gap-1">
-                    <span className="text-[10px] text-white/20 font-bold uppercase tracking-wider">Display</span>
-                    <span className="text-sm font-mono font-bold text-primary">{c.display_time}s</span>
-                  </div>
-                  <div className="bg-black/40 rounded-lg p-2 flex flex-col gap-1">
-                    <span className="text-[10px] text-white/20 font-bold uppercase tracking-wider">Prioridade</span>
-                    <span className="text-sm font-mono font-bold text-amber-500">P{c.priority}</span>
+                    <span className="text-[10px] text-white/20 font-bold uppercase tracking-wider">Criado em</span>
+                    <span className="text-sm font-mono font-bold text-primary">
+                      {new Date(c.created_at).toLocaleDateString()}
+                    </span>
                   </div>
                 </div>
 
