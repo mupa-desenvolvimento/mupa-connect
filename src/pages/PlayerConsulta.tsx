@@ -1479,7 +1479,7 @@ export default function PlayerConsulta() {
               <div
                 className={cn(
                   "w-full h-full max-h-full min-h-0",
-                  isVertical ? "flex flex-col gap-6" : "grid grid-cols-2 gap-10 items-center",
+                  isTradeActive ? "grid grid-cols-[200px_1fr_250px] gap-8 items-center" : (isVertical ? "flex flex-col gap-6" : "grid grid-cols-2 gap-10 items-center"),
                 )}
               >
                 {/* IMAGEM (TOP) */}
