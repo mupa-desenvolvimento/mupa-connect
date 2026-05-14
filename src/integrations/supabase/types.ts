@@ -268,6 +268,7 @@ export type Database = {
           id: string
           metadata: Json | null
           people_count: number | null
+          screen_time: number | null
           session_id: string | null
           store_id: string | null
           tenant_id: string | null
@@ -286,6 +287,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           people_count?: number | null
+          screen_time?: number | null
           session_id?: string | null
           store_id?: string | null
           tenant_id?: string | null
@@ -304,6 +306,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           people_count?: number | null
+          screen_time?: number | null
           session_id?: string | null
           store_id?: string | null
           tenant_id?: string | null
