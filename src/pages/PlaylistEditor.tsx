@@ -448,7 +448,8 @@ export default function PlaylistEditor() {
       setAppearanceConfig(normalizeAppearanceConfig(playlistData.appearance_config));
       
       if (playlistData.playlist_items && playlistData.playlist_items.length > 0) {
-        const mappedItems = playlistData.playlist_items.map((it: any) => {
+        const itemVolumes = playlistData.appearance_config?.item_volumes || [];
+        const mappedItems = playlistData.playlist_items.map((it: any, idx: number) => {
           const media = medias?.find(m => m.id === it.media_id);
           // Tentar encontrar a campanha se não houver uma vinculada
           const campaign = campaigns?.find((c: any) => 
@@ -461,6 +462,7 @@ export default function PlaylistEditor() {
             mediaId: it.media_id,
             duration: it.duracao,
             priority: it.prioridade || 1,
+            volume: itemVolumes[idx] ?? 100,
             type: it.tipo,
             media: media,
             campaignName: campaign?.name,
