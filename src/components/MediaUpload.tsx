@@ -60,6 +60,21 @@ export function MediaUpload({ tenantId, companyId, currentFolderId, onUploadComp
     }
   };
 
+  const getVideoDuration = (file: File): Promise<number> => {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.onloadedmetadata = () => {
+        window.URL.revokeObjectURL(video.src);
+        resolve(Math.round(video.duration));
+      };
+      video.onerror = () => {
+        resolve(10); // Default fallback
+      };
+      video.src = URL.createObjectURL(file);
+    });
+  };
+
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length + uploads.length > 10) {
       toast.error('Máximo de 10 arquivos por vez');
@@ -113,10 +128,14 @@ export function MediaUpload({ tenantId, companyId, currentFolderId, onUploadComp
           updateUploadStatus(upload.id, { status: 'uploading', progress: 10 });
 
           let fileToUpload = upload.file;
+          let duration = 0;
           
           // Otimização de imagem (se for imagem)
           if (fileToUpload.type.startsWith('image/')) {
             fileToUpload = await optimizeImage(fileToUpload);
+            duration = 10; // Default for images
+          } else if (fileToUpload.type.startsWith('video/')) {
+            duration = await getVideoDuration(fileToUpload);
           }
           
           updateUploadStatus(upload.id, { progress: 30 });
@@ -128,6 +147,7 @@ export function MediaUpload({ tenantId, companyId, currentFolderId, onUploadComp
           const formData = new FormData();
           formData.append('file', fileToUpload);
           formData.append('tenantId', tenantId);
+          formData.append('duration', duration.toString());
           
           // Sempre enviar companyId se disponível para consistência no banco
           if (companyId) {
