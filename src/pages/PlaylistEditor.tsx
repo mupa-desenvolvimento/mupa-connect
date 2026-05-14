@@ -448,7 +448,8 @@ export default function PlaylistEditor() {
       setAppearanceConfig(normalizeAppearanceConfig(playlistData.appearance_config));
       
       if (playlistData.playlist_items && playlistData.playlist_items.length > 0) {
-        const itemVolumes = playlistData.appearance_config?.item_volumes || [];
+        const appearance = playlistData.appearance_config as any;
+        const itemVolumes = appearance?.item_volumes || [];
         const mappedItems = playlistData.playlist_items.map((it: any, idx: number) => {
           const media = medias?.find(m => m.id === it.media_id);
           // Tentar encontrar a campanha se não houver uma vinculada
