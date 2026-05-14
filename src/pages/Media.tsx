@@ -599,7 +599,13 @@ export default function MediaPage() {
                           {m.type === 'image' ? (
                             <img src={m.file_url} className="h-full w-full object-cover" alt="" />
                           ) : (
-                            <Video className="h-4 w-4 text-muted-foreground" />
+                            <video 
+                              src={`${m.file_url}#t=0.5`}
+                              className="h-full w-full object-cover"
+                              muted
+                              playsInline
+                              preload="metadata"
+                            />
                           )}
                         </div>
                         <span className="font-medium truncate max-w-[300px]" title={m.name}>{m.name}</span>
