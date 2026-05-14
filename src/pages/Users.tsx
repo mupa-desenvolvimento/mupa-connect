@@ -82,7 +82,8 @@ export default function UsersPage() {
   });
 
   const handleDeleteUser = async () => {
-    if (!userToDelete || !isSuperAdmin) return;
+    const canDelete = isSuperAdmin || (isAdmin && userToDelete && users?.find(u => u.id === userToDelete.id)?.role !== 'admin');
+    if (!userToDelete || !canDelete) return;
     
     setIsDeleting(true);
     try {
@@ -178,7 +179,7 @@ export default function UsersPage() {
                         {new Date(user.created_at).toLocaleDateString("pt-BR")}
                       </TableCell>
                       <TableCell className="text-right">
-                        {isSuperAdmin && (
+                        {((isSuperAdmin) || (isAdmin && user.role !== "admin" && user.role !== "admin_global")) && (
                           <Button
                             variant="ghost"
                             size="icon"
