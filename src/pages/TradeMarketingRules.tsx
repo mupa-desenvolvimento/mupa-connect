@@ -51,6 +51,7 @@ export default function TradeMarketingRules() {
           *,
           trade_marketing_rules (*)
         `)
+        .eq("tenant_id", tenantId)
         .order("created_at", { ascending: false });
       
       if (error) throw error;
@@ -62,13 +63,36 @@ export default function TradeMarketingRules() {
   const { data: medias } = useQuery({
     queryKey: ["medias", tenantId],
     queryFn: async () => {
+      // Primeiro buscamos os IDs das mídias que estão em playlists ativas
+      const { data: activePlaylistItems, error: itemsError } = await supabase
+        .from("playlist_items")
+        .select(`
+          media_id,
+          playlists!inner(is_active, tenant_id)
+        `)
+        .eq("playlists.is_active", true)
+        .eq("playlists.tenant_id", tenantId);
+
+      if (itemsError) {
+        console.error("Erro ao buscar itens de playlist:", itemsError);
+        return [];
+      }
+
+      const activeMediaIds = Array.from(new Set(activePlaylistItems.map(item => item.media_id).filter(Boolean)));
+
+      if (activeMediaIds.length === 0) return [];
+
       const { data, error } = await supabase
         .from("media_items")
         .select("*")
+        .eq("tenant_id", tenantId)
+        .in("id", activeMediaIds)
         .order("name");
+
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: !!tenantId
   });
 
   const [formData, setFormData] = useState({

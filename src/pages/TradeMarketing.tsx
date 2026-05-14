@@ -29,8 +29,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useUserRole } from "@/hooks/use-user-role";
 
 export default function TradeMarketingDashboard() {
+  const { tenantId } = useUserRole();
   const [range, setRange] = useState("7"); // days
   const [mediaType, setMediaType] = useState("all");
 
@@ -38,8 +40,28 @@ export default function TradeMarketingDashboard() {
 
   // Query for KPIs
   const { data: stats, isLoading } = useQuery({
-    queryKey: ["trade-stats", range, mediaType],
+    queryKey: ["trade-stats", range, mediaType, tenantId],
     queryFn: async () => {
+      if (!tenantId) return null;
+
+      // Buscar IDs das playlists do tenant para filtrar eventos
+      const { data: tenantPlaylists } = await supabase
+        .from("playlists")
+        .select("id")
+        .eq("tenant_id", tenantId);
+      
+      const playlistIds = tenantPlaylists?.map(p => p.id) || [];
+
+      if (playlistIds.length === 0) {
+        return {
+          totalViews: 0,
+          totalDuration: 0,
+          uniqueDevices: 0,
+          topMedias: [],
+          allEvents: []
+        };
+      }
+
       let query = supabase
         .from("media_events")
         .select(`
@@ -49,6 +71,7 @@ export default function TradeMarketingDashboard() {
           created_at,
           metadata
         `)
+        .in("playlist_id", playlistIds)
         .gte("created_at", dateLimit.toISOString());
 
       if (mediaType !== "all") {
