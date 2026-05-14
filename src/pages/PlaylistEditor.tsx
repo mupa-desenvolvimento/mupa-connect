@@ -1691,10 +1691,19 @@ export default function PlaylistEditor() {
                       {/* Item Info */}
                       <section className="space-y-4">
                          <div className="h-40 rounded-xl overflow-hidden border border-white/5 bg-black">
-                            <img 
-                              src={selectedItem.media?.thumbnail_url || selectedItem.media?.file_url} 
-                              className="w-full h-full object-cover"
-                            />
+                             {selectedItem.type === 'video' ? (
+                               <video 
+                                 src={`${selectedItem.media?.file_url}#t=0.5`}
+                                 className="w-full h-full object-cover"
+                                 muted
+                                 playsInline
+                               />
+                             ) : (
+                               <img 
+                                 src={selectedItem.media?.thumbnail_url || selectedItem.media?.file_url} 
+                                 className="w-full h-full object-cover"
+                               />
+                             )}
                          </div>
                          <div className="space-y-2">
                             <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Nome da Mídia</label>
