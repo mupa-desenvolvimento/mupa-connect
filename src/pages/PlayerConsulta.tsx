@@ -357,38 +357,17 @@ export default function PlayerConsulta() {
     initialize();
   }, [deviceCode, isPreview, previewPlaylistId, reloadKey]);
 
-  // 1.5 Realtime Updates and Commands via Firebase
+  // 1.5 Realtime Updates via Firebase
   useEffect(() => {
     if (!deviceCode || isPreview) return;
     
-    // Subscribe to content updates
-    const unsubscribeUpdates = FirebaseRealtimeService.subscribeToDeviceUpdates(deviceCode, (payload) => {
+    const unsubscribe = FirebaseRealtimeService.subscribeToDeviceUpdates(deviceCode, (payload) => {
       console.log("[Realtime] Sincronizando conteúdo via Firebase...", payload);
       setReloadKey(k => k + 1);
     });
 
-    // Subscribe to commands (e.g., remote product consultation)
-    const unsubscribeCommands = FirebaseRealtimeService.subscribeToCommands(deviceCode, (cmd) => {
-      console.log("[Realtime] Comando recebido:", cmd);
-      if (cmd.comando === "consultar" || cmd.comando === "consultar_produto") {
-        const ean = cmd.payload?.ean || cmd.payload?.codigo;
-        if (ean) {
-          console.log("[Realtime] Executando consulta remota para EAN:", ean);
-          handleConsult(ean);
-        }
-      } else if (cmd.comando === "recarregar" || cmd.comando === "reload") {
-        window.location.reload();
-      } else if (cmd.comando === "limpar_cache") {
-        localStorage.clear();
-        window.location.reload();
-      }
-    });
-
-    return () => {
-      unsubscribeUpdates();
-      unsubscribeCommands();
-    };
-  }, [deviceCode, isPreview, handleConsult]);
+    return () => unsubscribe();
+  }, [deviceCode, isPreview]);
 
   // 1.8 Proactive Cache Management
   useEffect(() => {
