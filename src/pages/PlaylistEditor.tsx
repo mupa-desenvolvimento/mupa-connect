@@ -385,6 +385,12 @@ export default function PlaylistEditor() {
   const [expandedCampaignId, setExpandedCampaignId] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+  const [deviceSyncStatus, setDeviceSyncStatus] = useState<Record<string, {
+    status: 'pending' | 'applied' | 'offline' | 'sending';
+    lastUpdate?: string;
+    serial?: string;
+    online?: boolean;
+  }>>({});
   const timelineScrollRef = useRef<HTMLDivElement>(null);
   const playheadIntervalRef = useRef<number | null>(null);
 
