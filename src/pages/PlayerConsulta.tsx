@@ -790,6 +790,9 @@ export default function PlayerConsulta() {
     
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
 
+    // Trigger Trade Marketing Check
+    checkTradeMarketing(cleanEan);
+
     // Check cache BEFORE showing loader to make it truly instant for cached products
     const cachedKey = `product_${cleanEan}`;
     const cached = localStorage.getItem(cachedKey);
@@ -865,7 +868,7 @@ export default function PlayerConsulta() {
       setIsConsulting(false);
       startHideTimer();
     }
-  }, [isConsulting, startHideTimer]);
+  }, [isConsulting, startHideTimer, checkTradeMarketing]);
 
   const checkTradeMarketing = useCallback(async (ean: string) => {
     try {
