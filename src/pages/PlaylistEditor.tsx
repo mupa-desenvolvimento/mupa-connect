@@ -1822,7 +1822,49 @@ export default function PlaylistEditor() {
                                <span>Baixa</span>
                                <span>Alta</span>
                             </div>
-                         </div>
+                          </div>
+ 
+                          {selectedItem.type === 'video' && (
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between">
+                                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Volume do Vídeo</label>
+                                <span className="text-xs font-mono font-bold text-[#085CF0]">{selectedItem.volume}%</span>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                {selectedItem.volume === 0 ? (
+                                  <VolumeX className="h-4 w-4 text-red-500 cursor-pointer" onClick={() => updateItemVolume(selectedItem.id, 100)} />
+                                ) : (
+                                  <Volume2 className="h-4 w-4 text-[#085CF0] cursor-pointer" onClick={() => updateItemVolume(selectedItem.id, 0)} />
+                                )}
+                                <Slider 
+                                  value={[selectedItem.volume]} 
+                                  max={100} 
+                                  step={1}
+                                  className="flex-1 cursor-pointer"
+                                  onValueChange={(val) => updateItemVolume(selectedItem.id, val[0])}
+                                />
+                              </div>
+                              <div className="flex gap-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className={`flex-1 h-7 text-[9px] font-bold uppercase ${selectedItem.volume === 0 ? 'bg-red-500/20 border-red-500/50 text-red-500' : 'border-white/5 bg-white/5 text-white/40'}`}
+                                  onClick={() => updateItemVolume(selectedItem.id, 0)}
+                                >
+                                  MUDO
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="flex-1 h-7 text-[9px] font-bold uppercase border-white/5 bg-white/5 text-white/40"
+                                  onClick={() => updateItemVolume(selectedItem.id, 100)}
+                                >
+                                  100%
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+
 
                          <div className="space-y-3">
                             <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Ajuste de Escala</label>
