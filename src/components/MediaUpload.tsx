@@ -60,6 +60,21 @@ export function MediaUpload({ tenantId, companyId, currentFolderId, onUploadComp
     }
   };
 
+  const getVideoDuration = (file: File): Promise<number> => {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.onloadedmetadata = () => {
+        window.URL.revokeObjectURL(video.src);
+        resolve(Math.round(video.duration));
+      };
+      video.onerror = () => {
+        resolve(10); // Default fallback
+      };
+      video.src = URL.createObjectURL(file);
+    });
+  };
+
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length + uploads.length > 10) {
       toast.error('Máximo de 10 arquivos por vez');
