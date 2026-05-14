@@ -1700,19 +1700,57 @@ export default function PlayerConsulta() {
                             </div>
                           )}
 
-                          {/* EAN */}
-                          <div className="mt-auto pt-2 text-center text-white/55 text-[11px] font-bold tracking-widest">
-                            Código: {product.ean}
+                          {/* EAN & Trade Info */}
+                          <div className="mt-auto pt-2 flex items-center justify-between">
+                            <div className="text-white/55 text-[11px] font-bold tracking-widest uppercase">
+                              Código: {product.ean}
+                            </div>
+                            {isTradeActive && tradeCampaign && (
+                              <div className="flex items-center gap-2 bg-primary/20 px-3 py-1 rounded-full border border-primary/30">
+                                <Megaphone className="w-3 h-3 text-primary" />
+                                <span className="text-[10px] font-black uppercase text-primary tracking-tighter">Trade Ativo: {tradeCampaign.name}</span>
+                              </div>
+                            )}
                           </div>
                         </>
                       );
                     })()}
                   </div>
                 </motion.div>
+
+                {/* Terceira Coluna: EAN e Badge (Apenas Trade Mode) */}
+                {isTradeActive && (
+                  <motion.div
+                    initial={{ x: 30, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    className="h-full flex flex-col justify-center items-center gap-6"
+                  >
+                    <div className="p-6 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-md flex flex-col items-center gap-4 w-full">
+                       <Barcode className="w-12 h-12 text-white/20" />
+                       <div className="text-center">
+                         <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">EAN Escaneado</p>
+                         <p className="text-xl font-mono font-bold text-white">{product.ean}</p>
+                       </div>
+                    </div>
+                    
+                    {tradeCampaign?.media && (
+                      <div className="p-4 bg-primary/10 rounded-2xl border border-primary/20 w-full flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                           <Megaphone className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="leading-tight">
+                           <p className="text-[10px] font-bold text-white/40 uppercase">Campanha Trade</p>
+                           <p className="text-xs font-black text-white uppercase line-clamp-1">{tradeCampaign.name}</p>
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
               </div>
             )}
           </motion.div>
         )}
+
       </AnimatePresence>
 
       <Input
