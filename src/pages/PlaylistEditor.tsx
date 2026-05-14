@@ -213,11 +213,34 @@ const SortableItem = ({
       } ${isDragging ? 'shadow-2xl' : ''}`}
     >
       <div className={`absolute inset-0 ${timelineMode && hasCampaign ? 'bottom-6' : ''} transition-all duration-300`}>
-        <img 
-          src={media?.thumbnail_url || media?.file_url} 
-          alt={media?.name} 
-          className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
-        />
+        {media?.type === 'video' ? (
+          <div className="w-full h-full relative overflow-hidden bg-black">
+            {media?.thumbnail_url ? (
+              <img 
+                src={media.thumbnail_url} 
+                alt={media.name} 
+                className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
+              />
+            ) : (
+              <video 
+                src={`${media?.file_url}#t=0.5`}
+                className="w-full h-full object-cover opacity-40 group-hover:opacity-80 transition-opacity"
+                muted
+                playsInline
+                preload="metadata"
+              />
+            )}
+            <div className="absolute inset-0 flex items-center justify-center opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none">
+              <Play className="h-6 w-6 text-white fill-white/20" />
+            </div>
+          </div>
+        ) : (
+          <img 
+            src={media?.thumbnail_url || media?.file_url} 
+            alt={media?.name} 
+            className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
       </div>
 
