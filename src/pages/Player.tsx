@@ -10,7 +10,8 @@ import { ManifestService } from "@/services/ManifestService";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Monitor, Wrench, Scan } from "lucide-react";
-import * as faceapi from "face-api.js";
+import { useKioskMode } from "@/hooks/useKioskMode";
+import { PWAInstallModal } from "@/components/PWAInstallModal";
 
 interface AppearanceConfig {
   show_device_name?: boolean;
@@ -47,6 +48,19 @@ export default function Player() {
     document.documentElement.classList.add("dark");
   }, []);
   const { deviceCode, "*": extraPath } = useParams();
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [showInstallModal, setShowInstallModal] = useState(false);
+
+  useEffect(() => {
+    const checkStandalone = () => {
+      const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+      setIsStandalone(!!standalone);
+      if (!standalone && !isPreview) {
+        setShowInstallModal(true);
+      }
+    };
+    checkStandalone();
+  }, [isPreview]);
   const navigate = useNavigate();
   console.log("[Player] Initializing with deviceCode:", deviceCode, "extraPath:", extraPath);
   const [searchParams] = useSearchParams();
@@ -57,6 +71,7 @@ export default function Player() {
   const [manifest, setManifest] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState<number>(0);
+  const { isPwaInstalled, deferredPrompt, installPwa, showCursor, enterFullscreen } = useKioskMode();
   const [volume, setVolume] = useState(0); // Default muted as requested
   const [currentIndex, setCurrentIndex] = useState(0);
   const [lastIndexChange, setLastIndexChange] = useState(Date.now());
@@ -179,7 +194,10 @@ export default function Player() {
     if (deviceCode) {
       (window as any).mupa_device_code = deviceCode;
     }
-  }, [deviceCode]);
+    
+    // Auto-enter fullscreen on load
+    enterFullscreen();
+  }, [deviceCode, enterFullscreen]);
 
   // 1.5 Realtime Updates via Firebase
   useEffect(() => {

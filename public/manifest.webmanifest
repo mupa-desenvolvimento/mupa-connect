@@ -4,8 +4,12 @@
   "description": "Plataforma de Gerenciamento Digital Signage",
   "start_url": "/setup",
   "display": "fullscreen",
-  "background_color": "#050816",
-  "theme_color": "#050816",
+  "display_override": [
+    "fullscreen",
+    "standalone"
+  ],
+  "background_color": "#0a0a0c",
+  "theme_color": "#0a0a0c",
   "orientation": "any",
   "icons": [
     {

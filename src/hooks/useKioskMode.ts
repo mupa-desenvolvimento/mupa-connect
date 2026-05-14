@@ -123,7 +123,7 @@ export function useKioskMode() {
     };
   }, [requestWakeLock, enterFullscreen, wakeLock]);
 
-  // 5. Idle Cursor Hiding
+  // 5. Idle Cursor Hiding (Persistente)
   useEffect(() => {
     const resetIdle = () => {
       setLastActivity(Date.now());
@@ -135,20 +135,34 @@ export function useKioskMode() {
     window.addEventListener('mousemove', resetIdle);
     window.addEventListener('touchstart', resetIdle);
     window.addEventListener('keydown', resetIdle);
+    window.addEventListener('click', resetIdle);
+
+    // Watchdog leve para cursor
+    const cursorWatchdog = setInterval(() => {
+      const isIdle = Date.now() - lastActivity > 3000;
+      if (isIdle && showCursor) setShowCursor(false);
+    }, 1000);
 
     return () => {
       window.removeEventListener('mousemove', resetIdle);
       window.removeEventListener('touchstart', resetIdle);
       window.removeEventListener('keydown', resetIdle);
+      window.removeEventListener('click', resetIdle);
       if (idleTimeout.current) clearTimeout(idleTimeout.current);
+      clearInterval(cursorWatchdog);
     };
-  }, []);
+  }, [lastActivity, showCursor]);
 
   // 6. Block context menu
   useEffect(() => {
     const handleContextMenu = (e: MouseEvent) => e.preventDefault();
+    const handleWheel = (e: WheelEvent) => e.preventDefault();
     window.addEventListener('contextmenu', handleContextMenu);
-    return () => window.removeEventListener('contextmenu', handleContextMenu);
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      window.removeEventListener('contextmenu', handleContextMenu);
+      window.removeEventListener('wheel', handleWheel);
+    };
   }, []);
 
   const installPwa = useCallback(async () => {
