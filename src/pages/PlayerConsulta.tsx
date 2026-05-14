@@ -1275,13 +1275,28 @@ export default function PlayerConsulta() {
         </>
       )}
 
-      <div className={cn("w-full h-full transition-all duration-700", showOverlay ? "blur-md opacity-50" : "blur-0 opacity-100")}>
-        <PlayerEngine 
-          playlist={activePlaylist} 
-          onMediaChange={setCurrentIndex}
-          serial={deviceInfo?.serial}
-          volume={activePlaylist[currentIndex]?.volume ?? 100}
-        />
+      <div className={cn("w-full h-full transition-all duration-700", (showOverlay && !isTradeActive) ? "blur-md opacity-50" : "blur-0 opacity-100")}>
+        {isTradeActive && tradeCampaign?.media ? (
+          <PlayerEngine 
+            playlist={[{
+              id: tradeCampaign.media.id,
+              url: tradeCampaign.media.optimized_url || tradeCampaign.media.file_url,
+              type: tradeCampaign.media.type,
+              duration: tradeCampaign.display_time,
+              name: tradeCampaign.media.name,
+              volume: 100
+            }]}
+            onMediaChange={() => {}}
+            serial={deviceInfo?.serial}
+          />
+        ) : (
+          <PlayerEngine 
+            playlist={activePlaylist} 
+            onMediaChange={setCurrentIndex}
+            serial={deviceInfo?.serial}
+            volume={activePlaylist[currentIndex]?.volume ?? 100}
+          />
+        )}
       </div>
 
       {/* Camada de UI Overlays (Aparência) */}
