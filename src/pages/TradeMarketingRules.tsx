@@ -68,9 +68,10 @@ export default function TradeMarketingRules() {
         .from("playlist_items")
         .select(`
           media_id,
-          playlists!inner(is_active)
+          playlists!inner(is_active, tenant_id)
         `)
-        .eq("playlists.is_active", true);
+        .eq("playlists.is_active", true)
+        .eq("playlists.tenant_id", tenantId);
 
       if (itemsError) {
         console.error("Erro ao buscar itens de playlist:", itemsError);
