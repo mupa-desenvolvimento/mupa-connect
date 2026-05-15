@@ -28,6 +28,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -39,6 +40,7 @@ export default function Proposal() {
   const [clientName, setClientName] = useState("Nome do Cliente");
   const [clientCompany, setClientCompany] = useState("Empresa Exemplo");
   const [proposalDate] = useState(new Date().toLocaleDateString("pt-BR"));
+  const [showAnalytics, setShowAnalytics] = useState(true);
   
   const totalMonthly = unitPrice * quantity;
 
@@ -282,6 +284,19 @@ export default function Proposal() {
                     onChange={(e) => setQuantity(Number(e.target.value))}
                     className="bg-white/5 border-white/10 text-white focus:border-cyan-500 transition-colors"
                   />
+                </div>
+                <div className="space-y-2 flex flex-col justify-end">
+                  <div className="flex items-center space-x-2 pb-2">
+                    <Switch 
+                      id="analytics-toggle" 
+                      checked={showAnalytics}
+                      onCheckedChange={setShowAnalytics}
+                      className="data-[state=checked]:bg-cyan-500"
+                    />
+                    <Label htmlFor="analytics-toggle" className="text-slate-400 text-[10px] uppercase font-bold tracking-wider cursor-pointer">
+                      Incluir Inteligência e Analytics
+                    </Label>
+                  </div>
                 </div>
               </div>
               <div className="flex gap-3 w-full md:w-auto">
