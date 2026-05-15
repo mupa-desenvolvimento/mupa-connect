@@ -921,6 +921,7 @@ export default function PlayerConsulta() {
       }
 
       const audio = new Audio(audioUrl);
+      console.log("Audio URL:", audioUrl);
       audio.preload = "auto";
       audio.volume = 1;
       ttsAudioRef.current = audio;
