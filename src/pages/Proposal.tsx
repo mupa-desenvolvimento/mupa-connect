@@ -28,6 +28,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -39,10 +40,11 @@ export default function Proposal() {
   const [clientName, setClientName] = useState("Nome do Cliente");
   const [clientCompany, setClientCompany] = useState("Empresa Exemplo");
   const [proposalDate] = useState(new Date().toLocaleDateString("pt-BR"));
+  const [showAnalytics, setShowAnalytics] = useState(true);
   
   const totalMonthly = unitPrice * quantity;
 
-  const features = [
+  const allFeatures = [
     {
       category: "Infraestrutura e Performance",
       items: [
@@ -77,6 +79,10 @@ export default function Proposal() {
       ]
     }
   ];
+
+  const features = allFeatures.filter(cat => 
+    cat.category !== "Inteligência e Analytics" || showAnalytics
+  );
 
   const exportPDF = async () => {
     try {
@@ -190,7 +196,7 @@ export default function Proposal() {
       doc.setTextColor(50, 50, 50);
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
-      const investmentText = "O modelo de licenciamento Mupa é baseado em SaaS (Software as a Service), garantindo que sua operação esteja sempre atualizada com as últimas inovações em inteligência artificial e performance de vídeo.";
+      const investmentText = `O modelo de licenciamento Mupa é baseado em SaaS (Software as a Service), garantindo que sua operação esteja sempre atualizada com as últimas inovações em ${showAnalytics ? "inteligência artificial e " : ""}performance de vídeo.`;
       const splitInvestment = doc.splitTextToSize(investmentText, pageWidth - 30);
       doc.text(splitInvestment, 15, 40);
 
@@ -282,6 +288,19 @@ export default function Proposal() {
                     onChange={(e) => setQuantity(Number(e.target.value))}
                     className="bg-white/5 border-white/10 text-white focus:border-cyan-500 transition-colors"
                   />
+                </div>
+                <div className="space-y-2 flex flex-col justify-end">
+                  <div className="flex items-center space-x-2 pb-2">
+                    <Switch 
+                      id="analytics-toggle" 
+                      checked={showAnalytics}
+                      onCheckedChange={setShowAnalytics}
+                      className="data-[state=checked]:bg-cyan-500"
+                    />
+                    <Label htmlFor="analytics-toggle" className="text-slate-400 text-[10px] uppercase font-bold tracking-wider cursor-pointer">
+                      Incluir Inteligência e Analytics
+                    </Label>
+                  </div>
                 </div>
               </div>
               <div className="flex gap-3 w-full md:w-auto">
@@ -419,7 +438,7 @@ export default function Proposal() {
                     <tr>
                       <td className="px-8 py-6">
                         <p className="font-bold text-slate-900 dark:text-white">Licenciamento Mupa Cloud Enterprise</p>
-                        <p className="text-xs text-slate-500 mt-1">SaaS - Software as a Service. Inclui CDN, Hosting, Updates e IA.</p>
+                        <p className="text-xs text-slate-500 mt-1">SaaS - Software as a Service. Inclui CDN, Hosting, Updates{showAnalytics ? " e IA" : ""}.</p>
                       </td>
                       <td className="px-8 py-6 text-center font-bold text-slate-900 dark:text-white">{quantity}</td>
                       <td className="px-8 py-6 text-right font-medium text-slate-600 dark:text-slate-400">R$ {unitPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
