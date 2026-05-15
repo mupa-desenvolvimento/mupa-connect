@@ -13,6 +13,7 @@ import { AlertCircle, Monitor, Wrench, Scan } from "lucide-react";
 import { useKioskMode } from "@/hooks/useKioskMode";
 import { PWAInstallModal } from "@/components/PWAInstallModal";
 import * as faceapi from "face-api.js";
+import { useProductTTS } from "../../useProductTTS";
 
 interface AppearanceConfig {
   show_device_name?: boolean;
@@ -267,97 +268,7 @@ export default function Player() {
     return ScheduleResolver.getActivePlaylist(manifest);
   }, [manifest]);
 
-  const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
-  const ttsObjectUrlRef = useRef<string | null>(null);
-  const ttsAbortRef = useRef<AbortController | null>(null);
-  const audioUnlockedRef = useRef(false);
-  const audioContextRef = useRef<AudioContext | null>(null);
-
-  const ttsSpeak = useCallback(async (text: string) => {
-    const trimmed = (text || "").trim();
-    if (!trimmed) return;
-
-    if (!audioUnlockedRef.current) {
-      try {
-        const AnyAudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
-        if (AnyAudioContext) {
-          const ctx: AudioContext = audioContextRef.current || new AnyAudioContext();
-          audioContextRef.current = ctx;
-          if (ctx.state !== "running") await ctx.resume();
-          audioUnlockedRef.current = true;
-        }
-      } catch {
-      }
-    }
-
-    try {
-      ttsAbortRef.current?.abort();
-    } catch {
-    }
-    ttsAbortRef.current = new AbortController();
-
-    try {
-      const prev = ttsAudioRef.current;
-      if (prev) {
-        prev.pause();
-        prev.currentTime = 0;
-      }
-      if (ttsObjectUrlRef.current) {
-        URL.revokeObjectURL(ttsObjectUrlRef.current);
-        ttsObjectUrlRef.current = null;
-      }
-    } catch {
-    }
-
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseAnon = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-    const url = `${supabaseUrl}/functions/v1/azure-tts`;
-
-    const { data: sessionData } = await supabase.auth.getSession();
-    const jwt = sessionData?.session?.access_token || supabaseAnon;
-
-    const resp = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": supabaseAnon,
-        "Authorization": `Bearer ${jwt}`,
-      },
-      body: JSON.stringify({
-        text: trimmed,
-        voice: "pt-BR-FranciscaNeural",
-        format: "audio-24khz-48kbitrate-mono-mp3",
-      }),
-      signal: ttsAbortRef.current.signal,
-    });
-
-    if (!resp.ok) return;
-
-    const buffer = await resp.arrayBuffer();
-    const blob = new Blob([buffer], { type: resp.headers.get("content-type") || "audio/mpeg" });
-    const objectUrl = URL.createObjectURL(blob);
-    ttsObjectUrlRef.current = objectUrl;
-
-    const audio = new Audio(objectUrl);
-    audio.preload = "auto";
-    audio.volume = 1;
-    ttsAudioRef.current = audio;
-
-    audio.onended = () => {
-      try {
-        if (ttsObjectUrlRef.current === objectUrl) {
-          URL.revokeObjectURL(objectUrl);
-          ttsObjectUrlRef.current = null;
-        }
-      } catch {
-      }
-    };
-
-    try {
-      await audio.play();
-    } catch {
-    }
-  }, []);
+  const { speak: ttsSpeak } = useProductTTS();
 
   // 3. System Commands (Control Plane)
   const { lastCommand } = useDeviceCommandChannel(isPreview ? undefined : deviceUuid, {

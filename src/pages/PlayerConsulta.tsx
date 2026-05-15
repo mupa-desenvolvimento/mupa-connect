@@ -16,6 +16,7 @@ import { PWAInstallModal } from "@/components/PWAInstallModal";
 import { DevShowcaseOverlay } from "@/components/DevShowcaseOverlay";
 import { DevicePersistenceService } from "@/services/DevicePersistenceService";
 import { extractImageColors } from "@/utils/extractImageColors";
+import { useProductTTS } from "../../useProductTTS";
 
 interface AppearanceConfig {
   show_device_name?: boolean;
@@ -169,13 +170,9 @@ export default function PlayerConsulta() {
   const [fallbackImageUrl, setFallbackImageUrl] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
 
-  const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
-  const ttsObjectUrlRef = useRef<string | null>(null);
-  const ttsAbortRef = useRef<AbortController | null>(null);
   const lastSpokenEanRef = useRef<string | null>(null);
-  const audioUnlockedRef = useRef(false);
-  const audioContextRef = useRef<AudioContext | null>(null);
   const [ttsDebug, setTtsDebug] = useState<{ status: string; text?: string; error?: string } | null>(null);
+  const { speak: speakText } = useProductTTS({ onDebug: setTtsDebug });
 
 
 
@@ -848,129 +845,6 @@ export default function PlayerConsulta() {
       console.error("[Trade] Error checking rules:", err);
     }
   }, [tradeCooldowns, tradeDispatchesPerMinute, deviceInfo]);
-
-  const ensureAudioUnlocked = useCallback(async () => {
-    if (audioUnlockedRef.current) return;
-    try {
-      const AnyAudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
-      if (!AnyAudioContext) return;
-      const ctx: AudioContext = audioContextRef.current || new AnyAudioContext();
-      audioContextRef.current = ctx;
-      if (ctx.state !== "running") await ctx.resume();
-      audioUnlockedRef.current = true;
-    } catch {
-    }
-  }, []);
-
-  useEffect(() => {
-    const unlock = () => {
-      ensureAudioUnlocked().catch(() => {});
-    };
-    window.addEventListener("pointerdown", unlock, { once: true, passive: true } as any);
-    window.addEventListener("keydown", unlock, { once: true } as any);
-    return () => {
-      window.removeEventListener("pointerdown", unlock as any);
-      window.removeEventListener("keydown", unlock as any);
-    };
-  }, [ensureAudioUnlocked]);
-
-  const speakText = useCallback(async (text: string) => {
-    const trimmed = (text || "").trim();
-    if (!trimmed) return;
-
-    ensureAudioUnlocked().catch(() => {});
-    setTtsDebug({ status: "loading", text: trimmed });
-
-    try {
-      ttsAbortRef.current?.abort();
-    } catch {
-    }
-    ttsAbortRef.current = new AbortController();
-
-    try {
-      const prev = ttsAudioRef.current;
-      if (prev) {
-        prev.pause();
-        prev.currentTime = 0;
-      }
-      if (ttsObjectUrlRef.current) {
-        URL.revokeObjectURL(ttsObjectUrlRef.current);
-        ttsObjectUrlRef.current = null;
-      }
-    } catch {
-    }
-
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseAnon = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-    const url = `${supabaseUrl}/functions/v1/azure-tts`;
-
-    const { data: sessionData } = await supabase.auth.getSession();
-    const jwt = sessionData?.session?.access_token || supabaseAnon;
-
-    try {
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": supabaseAnon,
-          "Authorization": `Bearer ${jwt}`,
-        },
-        body: JSON.stringify({
-          text: trimmed,
-          voice: "pt-BR-FranciscaNeural",
-          format: "audio-24khz-48kbitrate-mono-mp3",
-        }),
-        signal: ttsAbortRef.current.signal,
-      });
-
-      if (!resp.ok) {
-        let detail = "";
-        try {
-          const ct = resp.headers.get("content-type") || "";
-          if (ct.includes("application/json")) {
-            const j = await resp.json();
-            detail = j?.error || j?.details || JSON.stringify(j);
-          } else {
-            detail = await resp.text();
-          }
-        } catch {
-        }
-        setTtsDebug({ status: "error", text: trimmed, error: `http_${resp.status}${detail ? `:${String(detail).slice(0, 80)}` : ""}` });
-        return;
-      }
-
-      const buffer = await resp.arrayBuffer();
-      const blob = new Blob([buffer], { type: resp.headers.get("content-type") || "audio/mpeg" });
-      const objectUrl = URL.createObjectURL(blob);
-      ttsObjectUrlRef.current = objectUrl;
-
-      const audio = new Audio(objectUrl);
-      audio.preload = "auto";
-      audio.volume = 1;
-      ttsAudioRef.current = audio;
-
-      setTtsDebug({ status: "playing", text: trimmed });
-
-      audio.onended = () => {
-        try {
-          if (ttsObjectUrlRef.current === objectUrl) {
-            URL.revokeObjectURL(objectUrl);
-            ttsObjectUrlRef.current = null;
-          }
-        } catch {
-        }
-      };
-
-      try {
-        await audio.play();
-      } catch {
-        setTtsDebug({ status: "blocked", text: trimmed, error: "autoplay_blocked" });
-      }
-    } catch (e: any) {
-      if (e?.name === "AbortError") return;
-      setTtsDebug({ status: "error", text: trimmed, error: e?.message || "network_error" });
-    }
-  }, []);
 
   const speakProduct = useCallback(async (p: ProductData) => {
     const name = (p?.description || "").trim();
