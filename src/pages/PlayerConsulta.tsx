@@ -173,6 +173,9 @@ export default function PlayerConsulta() {
   const ttsObjectUrlRef = useRef<string | null>(null);
   const ttsAbortRef = useRef<AbortController | null>(null);
   const lastSpokenEanRef = useRef<string | null>(null);
+  const audioUnlockedRef = useRef(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const [ttsDebug, setTtsDebug] = useState<{ status: string; text?: string; error?: string } | null>(null);
 
 
 
@@ -846,9 +849,37 @@ export default function PlayerConsulta() {
     }
   }, [tradeCooldowns, tradeDispatchesPerMinute, deviceInfo]);
 
+  const ensureAudioUnlocked = useCallback(async () => {
+    if (audioUnlockedRef.current) return;
+    try {
+      const AnyAudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!AnyAudioContext) return;
+      const ctx: AudioContext = audioContextRef.current || new AnyAudioContext();
+      audioContextRef.current = ctx;
+      if (ctx.state !== "running") await ctx.resume();
+      audioUnlockedRef.current = true;
+    } catch {
+    }
+  }, []);
+
+  useEffect(() => {
+    const unlock = () => {
+      ensureAudioUnlocked().catch(() => {});
+    };
+    window.addEventListener("pointerdown", unlock, { once: true, passive: true } as any);
+    window.addEventListener("keydown", unlock, { once: true } as any);
+    return () => {
+      window.removeEventListener("pointerdown", unlock as any);
+      window.removeEventListener("keydown", unlock as any);
+    };
+  }, [ensureAudioUnlocked]);
+
   const speakText = useCallback(async (text: string) => {
     const trimmed = (text || "").trim();
     if (!trimmed) return;
+
+    ensureAudioUnlocked().catch(() => {});
+    setTtsDebug({ status: "loading", text: trimmed });
 
     try {
       ttsAbortRef.current?.abort();
@@ -873,12 +904,15 @@ export default function PlayerConsulta() {
     const supabaseAnon = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
     const url = `${supabaseUrl}/functions/v1/azure-tts`;
 
+    const { data: sessionData } = await supabase.auth.getSession();
+    const jwt = sessionData?.session?.access_token || supabaseAnon;
+
     const resp = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "apikey": supabaseAnon,
-        "Authorization": `Bearer ${supabaseAnon}`,
+        "Authorization": `Bearer ${jwt}`,
       },
       body: JSON.stringify({
         text: trimmed,
@@ -888,7 +922,10 @@ export default function PlayerConsulta() {
       signal: ttsAbortRef.current.signal,
     });
 
-    if (!resp.ok) return;
+    if (!resp.ok) {
+      setTtsDebug({ status: "error", text: trimmed, error: `http_${resp.status}` });
+      return;
+    }
 
     const buffer = await resp.arrayBuffer();
     const blob = new Blob([buffer], { type: resp.headers.get("content-type") || "audio/mpeg" });
@@ -899,6 +936,8 @@ export default function PlayerConsulta() {
     audio.preload = "auto";
     audio.volume = 1;
     ttsAudioRef.current = audio;
+
+    setTtsDebug({ status: "playing", text: trimmed });
 
     audio.onended = () => {
       try {
@@ -913,6 +952,7 @@ export default function PlayerConsulta() {
     try {
       await audio.play();
     } catch {
+      setTtsDebug({ status: "blocked", text: trimmed });
     }
   }, []);
 
@@ -990,11 +1030,12 @@ export default function PlayerConsulta() {
   }, [isConsulting, startHideTimer, checkTradeMarketing, deviceInfo]);
 
   useEffect(() => {
+    if (!showOverlay) return;
     if (!product?.ean) return;
     if (lastSpokenEanRef.current === product.ean) return;
     lastSpokenEanRef.current = product.ean;
     speakProduct(product).catch(() => {});
-  }, [product, speakProduct]);
+  }, [showOverlay, product, speakProduct]);
 
 
   // 4.5 Realtime Commands via Firebase
@@ -1898,6 +1939,22 @@ export default function PlayerConsulta() {
           Mupa Desenvolvimento de Solucoes Tecnologicas LTDA - 50.667.125/0001-48
         </div>
       </div>
+
+      {isDevMode && (
+        <button
+          type="button"
+          onClick={() => {
+            ensureAudioUnlocked().catch(() => {});
+            handleConsult("7896098900222");
+          }}
+          className="absolute bottom-4 left-4 z-[70] rounded-full border border-white/10 bg-black/60 backdrop-blur-md px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white/80 hover:text-white"
+        >
+          TESTE EAN
+          {ttsDebug?.status ? (
+            <span className="ml-2 font-mono font-bold text-white/60">{ttsDebug.status}</span>
+          ) : null}
+        </button>
+      )}
 
       <button
         type="button"

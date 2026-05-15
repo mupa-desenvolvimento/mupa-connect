@@ -270,10 +270,25 @@ export default function Player() {
   const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
   const ttsObjectUrlRef = useRef<string | null>(null);
   const ttsAbortRef = useRef<AbortController | null>(null);
+  const audioUnlockedRef = useRef(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   const ttsSpeak = useCallback(async (text: string) => {
     const trimmed = (text || "").trim();
     if (!trimmed) return;
+
+    if (!audioUnlockedRef.current) {
+      try {
+        const AnyAudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
+        if (AnyAudioContext) {
+          const ctx: AudioContext = audioContextRef.current || new AnyAudioContext();
+          audioContextRef.current = ctx;
+          if (ctx.state !== "running") await ctx.resume();
+          audioUnlockedRef.current = true;
+        }
+      } catch {
+      }
+    }
 
     try {
       ttsAbortRef.current?.abort();
@@ -298,12 +313,15 @@ export default function Player() {
     const supabaseAnon = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
     const url = `${supabaseUrl}/functions/v1/azure-tts`;
 
+    const { data: sessionData } = await supabase.auth.getSession();
+    const jwt = sessionData?.session?.access_token || supabaseAnon;
+
     const resp = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "apikey": supabaseAnon,
-        "Authorization": `Bearer ${supabaseAnon}`,
+        "Authorization": `Bearer ${jwt}`,
       },
       body: JSON.stringify({
         text: trimmed,
