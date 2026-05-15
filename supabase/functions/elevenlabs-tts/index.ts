@@ -6,7 +6,73 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const VOICE_ID = "lrhwWp6pK3DjVVsi4Pkv";
+let cachedAutoVoiceId: string | null = null;
+
+async function resolveVoiceId(
+  elevenLabsApiKey: string,
+  requestedVoiceId?: unknown
+): Promise<string> {
+  if (typeof requestedVoiceId === "string" && requestedVoiceId.trim().length > 0) {
+    return requestedVoiceId.trim();
+  }
+
+  const envPtBr =
+    Deno.env.get("ELEVENLABS_VOICE_ID_PT_BR") ||
+    Deno.env.get("ELEVENLABS_VOICE_ID_PTBR") ||
+    Deno.env.get("ELEVENLABS_VOICE_ID_PT");
+
+  if (envPtBr && envPtBr.trim().length > 0) return envPtBr.trim();
+
+  const envAny = Deno.env.get("ELEVENLABS_VOICE_ID");
+  if (envAny && envAny.trim().length > 0) return envAny.trim();
+
+  if (cachedAutoVoiceId) return cachedAutoVoiceId;
+
+  try {
+    const resp = await fetch("https://api.elevenlabs.io/v1/voices", {
+      method: "GET",
+      headers: {
+        "xi-api-key": elevenLabsApiKey,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!resp.ok) throw new Error(`voices_list_http_${resp.status}`);
+
+    const payload = await resp.json();
+    const voices: any[] = Array.isArray(payload?.voices) ? payload.voices : [];
+    if (voices.length === 0) throw new Error("voices_list_empty");
+
+    const scored = voices
+      .map((v) => {
+        const voiceId = String(v?.voice_id || "").trim();
+        const name = String(v?.name || "");
+        const description = String(v?.description || "");
+        const labels = (v?.labels || {}) as Record<string, unknown>;
+        const accent = String(labels?.accent || "");
+        const language = String(labels?.language || labels?.lang || "");
+
+        const haystack = `${name} ${description} ${accent} ${language}`.toLowerCase();
+
+        let score = 0;
+        if (language.toLowerCase().startsWith("pt")) score += 100;
+        if (haystack.includes("pt-br") || haystack.includes("pt_br")) score += 90;
+        if (haystack.includes("brazil") || haystack.includes("brasil") || haystack.includes("brasile")) score += 80;
+        if (haystack.includes("portugu")) score += 60;
+        if (haystack.includes("brazilian")) score += 60;
+
+        return { voiceId, score };
+      })
+      .filter((x) => x.voiceId.length > 0)
+      .sort((a, b) => b.score - a.score);
+
+    cachedAutoVoiceId = (scored[0]?.voiceId || voices[0]?.voice_id || null) as string | null;
+  } catch {
+    cachedAutoVoiceId = null;
+  }
+
+  return cachedAutoVoiceId || "lrhwWp6pK3DjVVsi4Pkv";
+}
 
 async function hashText(text: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -22,7 +88,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { text } = await req.json();
+    const { text, voice_id } = await req.json();
 
     if (!text || typeof text !== "string" || text.trim().length === 0) {
       return new Response(JSON.stringify({ error: "Text is required" }), {
@@ -36,6 +102,7 @@ Deno.serve(async (req) => {
       throw new Error("ELEVENLABS_API_KEY is not configured");
     }
 
+    const resolvedVoiceId = await resolveVoiceId(ELEVENLABS_API_KEY, voice_id);
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -47,7 +114,7 @@ Deno.serve(async (req) => {
       .from("tts_audio_cache")
       .select("audio_url")
       .eq("text_hash", textHash)
-      .eq("voice_id", VOICE_ID)
+      .eq("voice_id", resolvedVoiceId)
       .maybeSingle();
 
     if (cached?.audio_url) {
@@ -57,14 +124,14 @@ Deno.serve(async (req) => {
         .from("tts_audio_cache")
         .update({ last_used_at: new Date().toISOString(), use_count: undefined })
         .eq("text_hash", textHash)
-        .eq("voice_id", VOICE_ID);
+        .eq("voice_id", resolvedVoiceId);
       
       // Use RPC-less increment: fetch current, increment, update
       const { data: current } = await supabase
         .from("tts_audio_cache")
         .select("use_count")
         .eq("text_hash", textHash)
-        .eq("voice_id", VOICE_ID)
+        .eq("voice_id", resolvedVoiceId)
         .single();
       
       if (current) {
@@ -72,10 +139,10 @@ Deno.serve(async (req) => {
           .from("tts_audio_cache")
           .update({ use_count: (current.use_count || 0) + 1, last_used_at: new Date().toISOString() })
           .eq("text_hash", textHash)
-          .eq("voice_id", VOICE_ID);
+          .eq("voice_id", resolvedVoiceId);
       }
 
-      return new Response(JSON.stringify({ audio_url: cached.audio_url, cached: true }), {
+      return new Response(JSON.stringify({ audio_url: cached.audio_url, cached: true, voice_id: resolvedVoiceId }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -83,7 +150,7 @@ Deno.serve(async (req) => {
     // Generate TTS via ElevenLabs
     console.log("[TTS] Generating audio for:", text.substring(0, 50));
     const ttsResponse = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}?output_format=mp3_44100_128`,
+      `https://api.elevenlabs.io/v1/text-to-speech/${resolvedVoiceId}?output_format=mp3_44100_128`,
       {
         method: "POST",
         headers: {
@@ -161,7 +228,7 @@ Deno.serve(async (req) => {
     await supabase.from("tts_audio_cache").upsert({
       text_hash: textHash,
       text_content: text,
-      voice_id: VOICE_ID,
+      voice_id: resolvedVoiceId,
       audio_url: audioUrl,
       use_count: 1,
       last_used_at: new Date().toISOString(),
@@ -169,7 +236,7 @@ Deno.serve(async (req) => {
 
     console.log("[TTS] Audio cached:", audioUrl);
 
-    return new Response(JSON.stringify({ audio_url: audioUrl, cached: false }), {
+    return new Response(JSON.stringify({ audio_url: audioUrl, cached: false, voice_id: resolvedVoiceId }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
