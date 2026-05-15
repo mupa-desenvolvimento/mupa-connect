@@ -109,6 +109,7 @@ Deno.serve(async (req) => {
     }
 
     const resolvedVoiceId = await resolveVoiceId(ELEVENLABS_API_KEY, voice_id);
+    console.log("Resolved Voice ID:", resolvedVoiceId);
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
