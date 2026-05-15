@@ -76,8 +76,8 @@ async function resolveVoiceId(
   } catch {
     cachedAutoVoiceId = null;
   }
-
-  return cachedAutoVoiceId || "lrhwWp6pK3DjVVsi4Pkv";
+  console.log("Auto Voice ID:", cachedAutoVoiceId);
+  return cachedAutoVoiceId || "SAz9YHcvj6GT2YYXdXww";
 }
 
 async function hashText(text: string): Promise<string> {
