@@ -51,22 +51,28 @@ async function resolveVoiceId(
         const labels = (v?.labels || {}) as Record<string, unknown>;
         const accent = String(labels?.accent || "");
         const language = String(labels?.language || labels?.lang || "");
+        const locale = String(labels?.locale || (v as any)?.locale || "");
+        const normalizedLocale = locale.toLowerCase().replaceAll("_", "-").trim();
 
         const haystack = `${name} ${description} ${accent} ${language}`.toLowerCase();
 
         let score = 0;
+        const isPtBrLocale = normalizedLocale === "pt-br";
+        if (isPtBrLocale) score += 1000;
         if (language.toLowerCase().startsWith("pt")) score += 100;
         if (haystack.includes("pt-br") || haystack.includes("pt_br")) score += 90;
         if (haystack.includes("brazil") || haystack.includes("brasil") || haystack.includes("brasile")) score += 80;
         if (haystack.includes("portugu")) score += 60;
         if (haystack.includes("brazilian")) score += 60;
 
-        return { voiceId, score };
+        return { voiceId, score, isPtBrLocale };
       })
       .filter((x) => x.voiceId.length > 0)
       .sort((a, b) => b.score - a.score);
 
-    cachedAutoVoiceId = (scored[0]?.voiceId || voices[0]?.voice_id || null) as string | null;
+    const ptBrOnly = scored.filter((x) => x.isPtBrLocale);
+    const best = (ptBrOnly.length > 0 ? ptBrOnly[0] : scored[0]) || null;
+    cachedAutoVoiceId = (best?.voiceId || voices[0]?.voice_id || null) as string | null;
   } catch {
     cachedAutoVoiceId = null;
   }
