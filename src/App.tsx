@@ -43,6 +43,7 @@ import WhatsAppManagement from "./pages/admin/WhatsApp";
 import QueryErrorsReport from "./pages/QueryErrorsReport";
 import PlayerConsulta from "./pages/PlayerConsulta";
 import Setup from "./pages/Setup";
+import Proposal from "./pages/Proposal";
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -252,7 +253,9 @@ const App = () => {
                   </ProtectedRoute>
                 } />
                 <Route path="/face-track-demo" element={<FaceTrackDemo />} />
+                <Route path="/proposta" element={<Proposal />} />
                 {/* <Route path="/app-player" element={<AppPlayerPage />} /> */}
+
               </Route>
 
               <Route path="*" element={<NotFound />} />
