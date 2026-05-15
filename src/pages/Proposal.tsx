@@ -141,7 +141,7 @@ export default function Proposal() {
       });
 
       // Footer
-      const pageCount = doc.getNumberOfPages();
+      const pageCount = (doc as any).getNumberOfPages ? (doc as any).getNumberOfPages() : ((doc as any).internal.pages?.length - 1 || 1);
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(8);
