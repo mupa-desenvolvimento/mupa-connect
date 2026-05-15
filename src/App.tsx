@@ -253,7 +253,11 @@ const App = () => {
                   </ProtectedRoute>
                 } />
                 <Route path="/face-track-demo" element={<FaceTrackDemo />} />
-                <Route path="/proposta" element={<Proposal />} />
+                <Route path="/proposta" element={
+                  <ProtectedRoute allowedRoles={["admin_global"]}>
+                    <Proposal />
+                  </ProtectedRoute>
+                } />
                 {/* <Route path="/app-player" element={<AppPlayerPage />} /> */}
 
               </Route>
