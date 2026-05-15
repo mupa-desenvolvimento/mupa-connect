@@ -16,7 +16,6 @@ import { PWAInstallModal } from "@/components/PWAInstallModal";
 import { DevShowcaseOverlay } from "@/components/DevShowcaseOverlay";
 import { DevicePersistenceService } from "@/services/DevicePersistenceService";
 import { extractImageColors } from "@/utils/extractImageColors";
-import { useProductTTS } from "../../useProductTTS";
 
 interface AppearanceConfig {
   show_device_name?: boolean;
@@ -68,6 +67,8 @@ const DEFAULT_VISUAL_COLORS = {
   cor_dominante_claro: "#FFFFFF",
   cor_dominante_escuro: "#003399"
 };
+
+const ttsAudioUrlCache = new Map<string, string>();
 
 const getLuminance = (hex: string) => {
   const rgb = hex.startsWith('#') ? hex.slice(1) : hex;
@@ -170,9 +171,12 @@ export default function PlayerConsulta() {
   const [fallbackImageUrl, setFallbackImageUrl] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
 
+  const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
+  const currentTextRef = useRef<string | null>(null);
   const lastSpokenEanRef = useRef<string | null>(null);
+  const audioUnlockedRef = useRef(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
   const [ttsDebug, setTtsDebug] = useState<{ status: string; text?: string; error?: string } | null>(null);
-  const { speak: speakText } = useProductTTS({ onDebug: setTtsDebug });
 
 
 
@@ -845,6 +849,101 @@ export default function PlayerConsulta() {
       console.error("[Trade] Error checking rules:", err);
     }
   }, [tradeCooldowns, tradeDispatchesPerMinute, deviceInfo]);
+
+  const ensureAudioUnlocked = useCallback(async () => {
+    if (audioUnlockedRef.current) return;
+    try {
+      const AnyAudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!AnyAudioContext) return;
+      const ctx: AudioContext = audioContextRef.current || new AnyAudioContext();
+      audioContextRef.current = ctx;
+      if (ctx.state !== "running") await ctx.resume();
+      audioUnlockedRef.current = true;
+    } catch {
+    }
+  }, []);
+
+  useEffect(() => {
+    const unlock = () => {
+      ensureAudioUnlocked().catch(() => {});
+    };
+    window.addEventListener("pointerdown", unlock, { once: true, passive: true } as any);
+    window.addEventListener("keydown", unlock, { once: true } as any);
+    return () => {
+      window.removeEventListener("pointerdown", unlock as any);
+      window.removeEventListener("keydown", unlock as any);
+    };
+  }, [ensureAudioUnlocked]);
+
+  const speakText = useCallback(async (text: string) => {
+    const trimmed = (text || "").trim();
+    if (!trimmed) return;
+
+    ensureAudioUnlocked().catch(() => {});
+    setTtsDebug({ status: "loading", text: trimmed });
+
+    if (currentTextRef.current === trimmed) return;
+    currentTextRef.current = trimmed;
+
+    try {
+      const prev = ttsAudioRef.current;
+      if (prev) {
+        prev.pause();
+        ttsAudioRef.current = null;
+      }
+    } catch {
+    }
+
+    try {
+      let audioUrl: string | undefined = ttsAudioUrlCache.get(trimmed);
+
+      if (!audioUrl) {
+        const { data, error } = await supabase.functions.invoke("elevenlabs-tts", {
+          body: { text: trimmed },
+        });
+
+        if (error || !data) {
+          setTtsDebug({ status: "error", text: trimmed, error: error?.message || "invoke_error" });
+          currentTextRef.current = null;
+          return;
+        }
+
+        if (data.audio_url) {
+          audioUrl = data.audio_url;
+          ttsAudioUrlCache.set(trimmed, audioUrl);
+        } else if (data.audio_base64) {
+          audioUrl = `data:audio/mpeg;base64,${data.audio_base64}`;
+        } else {
+          setTtsDebug({ status: "error", text: trimmed, error: "no_audio_returned" });
+          currentTextRef.current = null;
+          return;
+        }
+      }
+
+      const audio = new Audio(audioUrl);
+      audio.preload = "auto";
+      audio.volume = 1;
+      ttsAudioRef.current = audio;
+
+      setTtsDebug({ status: "playing", text: trimmed });
+
+      return new Promise<void>((resolve) => {
+        const done = (next: { status: string; text?: string; error?: string } | null) => {
+          if (ttsAudioRef.current === audio) ttsAudioRef.current = null;
+          currentTextRef.current = null;
+          if (next) setTtsDebug(next);
+          resolve();
+        };
+
+        audio.onended = () => done({ status: "done", text: trimmed });
+        audio.onerror = () => done({ status: "error", text: trimmed, error: "playback_error" });
+        audio.play().catch(() => done({ status: "blocked", text: trimmed, error: "autoplay_blocked" }));
+      });
+    } catch (e: any) {
+      setTtsDebug({ status: "error", text: trimmed, error: e?.message || "network_error" });
+      currentTextRef.current = null;
+    }
+  }, [ensureAudioUnlocked]);
 
   const speakProduct = useCallback(async (p: ProductData) => {
     const name = (p?.description || "").trim();

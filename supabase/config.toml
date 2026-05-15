@@ -3,3 +3,6 @@ project_id = "iurqddkuihjsmxubibao"
 [functions]
   [functions.auth-email-hook]
     verify_jwt = false
+
+[functions.elevenlabs-tts]
+verify_jwt = false

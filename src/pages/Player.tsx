@@ -13,7 +13,6 @@ import { AlertCircle, Monitor, Wrench, Scan } from "lucide-react";
 import { useKioskMode } from "@/hooks/useKioskMode";
 import { PWAInstallModal } from "@/components/PWAInstallModal";
 import * as faceapi from "face-api.js";
-import { useProductTTS } from "../../useProductTTS";
 
 interface AppearanceConfig {
   show_device_name?: boolean;
@@ -42,6 +41,8 @@ const isValidUUID = (value: any): boolean => {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   return uuidRegex.test(value);
 };
+
+const ttsAudioUrlCache = new Map<string, string>();
 
 export default function Player() {
   const { deviceCode, "*": extraPath } = useParams();
@@ -268,7 +269,84 @@ export default function Player() {
     return ScheduleResolver.getActivePlaylist(manifest);
   }, [manifest]);
 
-  const { speak: ttsSpeak } = useProductTTS();
+  const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
+  const currentTextRef = useRef<string | null>(null);
+  const audioUnlockedRef = useRef(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  const ttsSpeak = useCallback(async (text: string) => {
+    const trimmed = (text || "").trim();
+    if (!trimmed) return;
+
+    if (currentTextRef.current === trimmed) return;
+    currentTextRef.current = trimmed;
+
+    if (!audioUnlockedRef.current) {
+      try {
+        const AnyAudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
+        if (AnyAudioContext) {
+          const ctx: AudioContext = audioContextRef.current || new AnyAudioContext();
+          audioContextRef.current = ctx;
+          if (ctx.state !== "running") await ctx.resume();
+          audioUnlockedRef.current = true;
+        }
+      } catch {
+      }
+    }
+
+    try {
+      const prev = ttsAudioRef.current;
+      if (prev) {
+        prev.pause();
+        ttsAudioRef.current = null;
+      }
+    } catch {
+    }
+
+    try {
+      let audioUrl: string | undefined = ttsAudioUrlCache.get(trimmed);
+
+      if (!audioUrl) {
+        const { data, error } = await supabase.functions.invoke("elevenlabs-tts", {
+          body: { text: trimmed },
+        });
+
+        if (error || !data) {
+          currentTextRef.current = null;
+          return;
+        }
+
+        if (data.audio_url) {
+          audioUrl = data.audio_url;
+          ttsAudioUrlCache.set(trimmed, audioUrl);
+        } else if (data.audio_base64) {
+          audioUrl = `data:audio/mpeg;base64,${data.audio_base64}`;
+        } else {
+          currentTextRef.current = null;
+          return;
+        }
+      }
+
+      const audio = new Audio(audioUrl);
+      audio.preload = "auto";
+      audio.volume = 1;
+      ttsAudioRef.current = audio;
+
+      return new Promise<void>((resolve) => {
+        const done = () => {
+          if (ttsAudioRef.current === audio) ttsAudioRef.current = null;
+          currentTextRef.current = null;
+          resolve();
+        };
+
+        audio.onended = done;
+        audio.onerror = done;
+        audio.play().catch(done);
+      });
+    } catch {
+      currentTextRef.current = null;
+    }
+  }, []);
 
   // 3. System Commands (Control Plane)
   const { lastCommand } = useDeviceCommandChannel(isPreview ? undefined : deviceUuid, {
