@@ -47,10 +47,8 @@ export default function Setup() {
   }, [location]);
 
   useEffect(() => {
-    if (deferredPrompt && !isPwaInstalled) {
-      const timer = setTimeout(() => setShowInstallModal(true), 2000);
-      return () => clearTimeout(timer);
-    }
+    // PWA Install prompt removed as requested
+    setShowInstallModal(false);
   }, [deferredPrompt, isPwaInstalled]);
 
   const handleKeyboardChange = (value: string) => {
