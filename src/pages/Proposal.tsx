@@ -196,7 +196,7 @@ export default function Proposal() {
       doc.setTextColor(50, 50, 50);
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
-      const investmentText = "O modelo de licenciamento Mupa é baseado em SaaS (Software as a Service), garantindo que sua operação esteja sempre atualizada com as últimas inovações em inteligência artificial e performance de vídeo.";
+      const investmentText = `O modelo de licenciamento Mupa é baseado em SaaS (Software as a Service), garantindo que sua operação esteja sempre atualizada com as últimas inovações em ${showAnalytics ? "inteligência artificial e " : ""}performance de vídeo.`;
       const splitInvestment = doc.splitTextToSize(investmentText, pageWidth - 30);
       doc.text(splitInvestment, 15, 40);
 
@@ -438,7 +438,7 @@ export default function Proposal() {
                     <tr>
                       <td className="px-8 py-6">
                         <p className="font-bold text-slate-900 dark:text-white">Licenciamento Mupa Cloud Enterprise</p>
-                        <p className="text-xs text-slate-500 mt-1">SaaS - Software as a Service. Inclui CDN, Hosting, Updates e IA.</p>
+                        <p className="text-xs text-slate-500 mt-1">SaaS - Software as a Service. Inclui CDN, Hosting, Updates{showAnalytics ? " e IA" : ""}.</p>
                       </td>
                       <td className="px-8 py-6 text-center font-bold text-slate-900 dark:text-white">{quantity}</td>
                       <td className="px-8 py-6 text-right font-medium text-slate-600 dark:text-slate-400">R$ {unitPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
