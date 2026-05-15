@@ -44,7 +44,7 @@ export default function Proposal() {
   
   const totalMonthly = unitPrice * quantity;
 
-  const features = [
+  const allFeatures = [
     {
       category: "Infraestrutura e Performance",
       items: [
@@ -79,6 +79,10 @@ export default function Proposal() {
       ]
     }
   ];
+
+  const features = allFeatures.filter(cat => 
+    cat.category !== "Inteligência e Analytics" || showAnalytics
+  );
 
   const exportPDF = async () => {
     try {
