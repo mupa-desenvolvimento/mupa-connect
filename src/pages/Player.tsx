@@ -61,9 +61,8 @@ export default function Player() {
     const checkStandalone = () => {
       const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
       setIsStandalone(!!standalone);
-      if (!standalone && !isPreview) {
-        setShowInstallModal(true);
-      }
+      // PWA Install prompt removed as requested
+      setShowInstallModal(false);
     };
     checkStandalone();
   }, [isPreview]);
