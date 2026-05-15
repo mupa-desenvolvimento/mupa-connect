@@ -268,6 +268,80 @@ export default function Player() {
     return ScheduleResolver.getActivePlaylist(manifest);
   }, [manifest]);
 
+  const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
+  const ttsObjectUrlRef = useRef<string | null>(null);
+  const ttsAbortRef = useRef<AbortController | null>(null);
+
+  const ttsSpeak = useCallback(async (text: string) => {
+    const trimmed = (text || "").trim();
+    if (!trimmed) return;
+
+    try {
+      ttsAbortRef.current?.abort();
+    } catch {
+    }
+    ttsAbortRef.current = new AbortController();
+
+    try {
+      const prev = ttsAudioRef.current;
+      if (prev) {
+        prev.pause();
+        prev.currentTime = 0;
+      }
+      if (ttsObjectUrlRef.current) {
+        URL.revokeObjectURL(ttsObjectUrlRef.current);
+        ttsObjectUrlRef.current = null;
+      }
+    } catch {
+    }
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnon = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const url = `${supabaseUrl}/functions/v1/azure-tts`;
+
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": supabaseAnon,
+        "Authorization": `Bearer ${supabaseAnon}`,
+      },
+      body: JSON.stringify({
+        text: trimmed,
+        voice: "pt-BR-FranciscaNeural",
+        format: "audio-24khz-48kbitrate-mono-mp3",
+      }),
+      signal: ttsAbortRef.current.signal,
+    });
+
+    if (!resp.ok) return;
+
+    const buffer = await resp.arrayBuffer();
+    const blob = new Blob([buffer], { type: resp.headers.get("content-type") || "audio/mpeg" });
+    const objectUrl = URL.createObjectURL(blob);
+    ttsObjectUrlRef.current = objectUrl;
+
+    const audio = new Audio(objectUrl);
+    audio.preload = "auto";
+    audio.volume = 1;
+    ttsAudioRef.current = audio;
+
+    audio.onended = () => {
+      try {
+        if (ttsObjectUrlRef.current === objectUrl) {
+          URL.revokeObjectURL(objectUrl);
+          ttsObjectUrlRef.current = null;
+        }
+      } catch {
+      }
+    };
+
+    try {
+      await audio.play();
+    } catch {
+    }
+  }, []);
+
   // 3. System Commands (Control Plane)
   const { lastCommand } = useDeviceCommandChannel(isPreview ? undefined : deviceUuid, {
     reloadPlaylist: () => setReloadKey(k => k + 1),
@@ -276,6 +350,7 @@ export default function Player() {
     reboot: () => window.location.reload(),
     playCampaign: (id) => console.log("Play campaign", id),
     screenshot: () => Promise.resolve(""),
+    ttsSpeak,
     tenantId: deviceInfo?.tenant_id,
     companyId: deviceInfo?.company_id,
     serial: deviceInfo?.serial || deviceCode,

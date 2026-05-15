@@ -171,6 +171,11 @@ export default function PlayerConsulta() {
   const [fallbackImageUrl, setFallbackImageUrl] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
 
+  const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
+  const ttsObjectUrlRef = useRef<string | null>(null);
+  const ttsAbortRef = useRef<AbortController | null>(null);
+  const lastSpokenEanRef = useRef<string | null>(null);
+
 
 
   const [isVertical, setIsVertical] = useState(window.innerHeight > window.innerWidth);
@@ -843,11 +848,96 @@ export default function PlayerConsulta() {
     }
   }, [tradeCooldowns, tradeDispatchesPerMinute, deviceInfo]);
 
+  const speakText = useCallback(async (text: string) => {
+    const trimmed = (text || "").trim();
+    if (!trimmed) return;
+
+    try {
+      ttsAbortRef.current?.abort();
+    } catch {
+    }
+    ttsAbortRef.current = new AbortController();
+
+    try {
+      const prev = ttsAudioRef.current;
+      if (prev) {
+        prev.pause();
+        prev.currentTime = 0;
+      }
+      if (ttsObjectUrlRef.current) {
+        URL.revokeObjectURL(ttsObjectUrlRef.current);
+        ttsObjectUrlRef.current = null;
+      }
+    } catch {
+    }
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnon = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const url = `${supabaseUrl}/functions/v1/azure-tts`;
+
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": supabaseAnon,
+        "Authorization": `Bearer ${supabaseAnon}`,
+      },
+      body: JSON.stringify({
+        text: trimmed,
+        voice: "pt-BR-FranciscaNeural",
+        format: "audio-24khz-48kbitrate-mono-mp3",
+      }),
+      signal: ttsAbortRef.current.signal,
+    });
+
+    if (!resp.ok) return;
+
+    const buffer = await resp.arrayBuffer();
+    const blob = new Blob([buffer], { type: resp.headers.get("content-type") || "audio/mpeg" });
+    const objectUrl = URL.createObjectURL(blob);
+    ttsObjectUrlRef.current = objectUrl;
+
+    const audio = new Audio(objectUrl);
+    audio.preload = "auto";
+    audio.volume = 1;
+    ttsAudioRef.current = audio;
+
+    audio.onended = () => {
+      try {
+        if (ttsObjectUrlRef.current === objectUrl) {
+          URL.revokeObjectURL(objectUrl);
+          ttsObjectUrlRef.current = null;
+        }
+      } catch {
+      }
+    };
+
+    try {
+      await audio.play();
+    } catch {
+    }
+  }, []);
+
+  const speakProduct = useCallback(async (p: ProductData) => {
+    const name = (p?.description || "").trim();
+    const prices = Array.isArray(p?.stock_prices) ? p.stock_prices : [];
+    const main = prices.find((x) => Number(x.unit_pack) === 1) || prices.slice().sort((a, b) => Number(a.unit_pack) - Number(b.unit_pack))[0];
+    const unitPack = Math.max(1, Number(main?.unit_pack || 1));
+    const pricePack = Number(main?.price_pack || 0);
+    const unitPrice = unitPack > 0 ? pricePack / unitPack : pricePack;
+    const currency = unitPrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+    const phrase = name ? `${name}. ${currency}.` : `${currency}.`;
+    await speakText(phrase);
+  }, [speakText]);
+
   const handleConsult = useCallback(async (ean: string) => {
     const cleanEan = ean.trim();
     if (!cleanEan || cleanEan.length < 3) return;
     
     if (isConsulting) return;
+
+    lastSpokenEanRef.current = null;
 
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
 
@@ -900,6 +990,13 @@ export default function PlayerConsulta() {
       startHideTimer();
     }
   }, [isConsulting, startHideTimer, checkTradeMarketing, deviceInfo]);
+
+  useEffect(() => {
+    if (!product?.ean) return;
+    if (lastSpokenEanRef.current === product.ean) return;
+    lastSpokenEanRef.current = product.ean;
+    speakProduct(product).catch(() => {});
+  }, [product, speakProduct]);
 
 
   // 4.5 Realtime Commands via Firebase
