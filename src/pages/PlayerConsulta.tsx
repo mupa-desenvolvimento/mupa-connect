@@ -384,15 +384,25 @@ export default function PlayerConsulta() {
 
   // 1.5 Realtime Updates via Firebase
   useEffect(() => {
-    if (!deviceCode || isPreview) return;
-    
-    const unsubscribe = FirebaseRealtimeService.subscribeToDeviceUpdates(deviceCode, (payload) => {
-      console.log("[Realtime] Sincronizando conteúdo via Firebase...", payload);
-      setReloadKey(k => k + 1);
-    });
+    if (isPreview) return;
 
-    return () => unsubscribe();
-  }, [deviceCode, isPreview]);
+    const codes = new Set<string>();
+    if (deviceCode) codes.add(deviceCode);
+    if (deviceInfo?.serial) codes.add(deviceInfo.serial);
+    if (deviceInfo?.apelido_interno) codes.add(deviceInfo.apelido_interno);
+    if (codes.size === 0) return;
+
+    const unsubs = Array.from(codes).map((code) =>
+      FirebaseRealtimeService.subscribeToDeviceUpdates(code, (payload) => {
+        console.log("[Realtime] Sincronizando conteúdo via Firebase...", payload);
+        setReloadKey((k) => k + 1);
+      })
+    );
+
+    return () => {
+      unsubs.forEach((u) => u());
+    };
+  }, [deviceCode, deviceInfo?.serial, deviceInfo?.apelido_interno, isPreview]);
 
   // 1.8 Proactive Cache Management
   useEffect(() => {
@@ -883,29 +893,36 @@ export default function PlayerConsulta() {
 
   // 4.5 Realtime Commands via Firebase
   useEffect(() => {
-    if (!deviceCode || isPreview) return;
+    if (isPreview) return;
 
-    // Subscribe to commands (e.g., remote product consultation)
-    const unsubscribeCommands = FirebaseRealtimeService.subscribeToCommands(deviceCode, (cmd) => {
-      console.log("[Realtime] Comando recebido:", cmd);
-      if (cmd.comando === "consultar" || cmd.comando === "consultar_produto") {
-        const ean = cmd.payload?.ean || cmd.payload?.codigo;
-        if (ean) {
-          console.log("[Realtime] Executando consulta remota para EAN:", ean);
-          handleConsult(ean);
+    const codes = new Set<string>();
+    if (deviceCode) codes.add(deviceCode);
+    if (deviceInfo?.serial) codes.add(deviceInfo.serial);
+    if (deviceInfo?.apelido_interno) codes.add(deviceInfo.apelido_interno);
+    if (codes.size === 0) return;
+
+    const unsubs = Array.from(codes).map((code) =>
+      FirebaseRealtimeService.subscribeToCommands(code, (cmd) => {
+        console.log("[Realtime] Comando recebido:", cmd);
+        if (cmd.comando === "consultar" || cmd.comando === "consultar_produto") {
+          const ean = cmd.payload?.ean || cmd.payload?.codigo;
+          if (ean) {
+            console.log("[Realtime] Executando consulta remota para EAN:", ean);
+            handleConsult(ean);
+          }
+        } else if (cmd.comando === "recarregar" || cmd.comando === "reload") {
+          window.location.reload();
+        } else if (cmd.comando === "limpar_cache") {
+          localStorage.clear();
+          window.location.reload();
         }
-      } else if (cmd.comando === "recarregar" || cmd.comando === "reload") {
-        window.location.reload();
-      } else if (cmd.comando === "limpar_cache") {
-        localStorage.clear();
-        window.location.reload();
-      }
-    });
+      })
+    );
 
     return () => {
-      unsubscribeCommands();
+      unsubs.forEach((u) => u());
     };
-  }, [deviceCode, isPreview, handleConsult]);
+  }, [deviceCode, deviceInfo?.serial, deviceInfo?.apelido_interno, isPreview, handleConsult]);
 
   // AUTO DEMO LOGIC
   useEffect(() => {

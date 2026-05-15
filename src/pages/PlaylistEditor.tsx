@@ -73,6 +73,7 @@ import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { issueDeviceCommand } from "@/lib/device-commands";
 import { 
   Select,
   SelectContent,
@@ -673,6 +674,44 @@ export default function PlaylistEditor() {
           setDeviceSyncStatus(initialStatus);
 
           await FirebaseRealtimeService.notifyPlaylistDevices(currentPlaylistId);
+
+          try {
+            const tenant = tenantId || (playlistData as any)?.tenant_id;
+            const deviceIdsFromHierarchy = new Set<any>();
+            if (tenant) {
+              const { data: hierarchyData } = await (supabase as any).rpc("get_groups_hierarchy", { p_tenant_id: tenant });
+              const nodes = Array.isArray(hierarchyData) ? hierarchyData : [];
+              nodes
+                .filter((n: any) => n?.type === "device" && String(n?.resolved_playlist_id ?? "") === String(currentPlaylistId))
+                .forEach((n: any) => deviceIdsFromHierarchy.add(n.id));
+            }
+
+            let allDevices = devices;
+            if (deviceIdsFromHierarchy.size > 0) {
+              const { data: extraDevices } = await supabase
+                .from("dispositivos")
+                .select("id, serial, apelido_interno, online, atualizado")
+                .in("id", Array.from(deviceIdsFromHierarchy) as any);
+              if (extraDevices?.length) {
+                allDevices = [...allDevices, ...extraDevices];
+              }
+            }
+
+            const targetCodes = new Set<string>();
+            allDevices.forEach((d: any) => {
+              if (d.serial) targetCodes.add(String(d.serial));
+              else if (d.apelido_interno) targetCodes.add(String(d.apelido_interno));
+              else if (d.id != null) targetCodes.add(String(d.id));
+            });
+
+            await Promise.all(
+              Array.from(targetCodes).map((code) =>
+                issueDeviceCommand(code, "reload_playlist", { playlist_id: currentPlaylistId })
+              )
+            );
+          } catch (e) {
+            console.warn("Silent failure issuing device_commands reload_playlist:", e);
+          }
           
           // Simular o status de "aplicado" para dispositivos online após a notificação
           setTimeout(() => {
