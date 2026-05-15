@@ -17,8 +17,10 @@ import {
   Building2,
   MessageSquare,
   AlertOctagon,
-  Camera
+  Camera,
+  FileText
 } from "lucide-react";
+
 
 import {
   Sidebar,
@@ -57,7 +59,9 @@ export function AppSidebar() {
     { title: "Trade Inteligente", url: "/trade-marketing-rules", icon: Megaphone, visible: isMarketing || isAdmin },
     { title: "Painel NOC", url: "/admin/monitoring", icon: Activity, visible: isTecnico },
     { title: "Download de Apps", url: "/aplicativos", icon: MonitorPlay, visible: isTecnico },
+    { title: "Proposta Comercial", url: "/proposta", icon: FileText, visible: isMarketing || isAdmin },
     { title: "Face Track Demo", url: "/face-track-demo", icon: User, visible: true },
+
   ].filter((i) => i.visible);
 
   const orgItems = [
