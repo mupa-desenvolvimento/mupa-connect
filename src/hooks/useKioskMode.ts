@@ -91,10 +91,10 @@ export function useKioskMode() {
       try {
         const lock = await (navigator as any).wakeLock.request('screen');
         setWakeLock(lock);
-        console.log('Wake Lock: Active');
+        //console.log('Wake Lock: Active');
         
         lock.addEventListener('release', () => {
-          console.log('Wake Lock: Released');
+          //console.log('Wake Lock: Released');
         });
       } catch (err) {
         console.error('Wake Lock request failed:', err);

@@ -907,52 +907,68 @@ export default function PlayerConsulta() {
     const { data: sessionData } = await supabase.auth.getSession();
     const jwt = sessionData?.session?.access_token || supabaseAnon;
 
-    const resp = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": supabaseAnon,
-        "Authorization": `Bearer ${jwt}`,
-      },
-      body: JSON.stringify({
-        text: trimmed,
-        voice: "pt-BR-FranciscaNeural",
-        format: "audio-24khz-48kbitrate-mono-mp3",
-      }),
-      signal: ttsAbortRef.current.signal,
-    });
-
-    if (!resp.ok) {
-      setTtsDebug({ status: "error", text: trimmed, error: `http_${resp.status}` });
-      return;
-    }
-
-    const buffer = await resp.arrayBuffer();
-    const blob = new Blob([buffer], { type: resp.headers.get("content-type") || "audio/mpeg" });
-    const objectUrl = URL.createObjectURL(blob);
-    ttsObjectUrlRef.current = objectUrl;
-
-    const audio = new Audio(objectUrl);
-    audio.preload = "auto";
-    audio.volume = 1;
-    ttsAudioRef.current = audio;
-
-    setTtsDebug({ status: "playing", text: trimmed });
-
-    audio.onended = () => {
-      try {
-        if (ttsObjectUrlRef.current === objectUrl) {
-          URL.revokeObjectURL(objectUrl);
-          ttsObjectUrlRef.current = null;
-        }
-      } catch {
-      }
-    };
-
     try {
-      await audio.play();
-    } catch {
-      setTtsDebug({ status: "blocked", text: trimmed });
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": supabaseAnon,
+          "Authorization": `Bearer ${jwt}`,
+        },
+        body: JSON.stringify({
+          text: trimmed,
+          voice: "pt-BR-FranciscaNeural",
+          format: "audio-24khz-48kbitrate-mono-mp3",
+        }),
+        signal: ttsAbortRef.current.signal,
+      });
+
+      if (!resp.ok) {
+        let detail = "";
+        try {
+          const ct = resp.headers.get("content-type") || "";
+          if (ct.includes("application/json")) {
+            const j = await resp.json();
+            detail = j?.error || j?.details || JSON.stringify(j);
+          } else {
+            detail = await resp.text();
+          }
+        } catch {
+        }
+        setTtsDebug({ status: "error", text: trimmed, error: `http_${resp.status}${detail ? `:${String(detail).slice(0, 80)}` : ""}` });
+        return;
+      }
+
+      const buffer = await resp.arrayBuffer();
+      const blob = new Blob([buffer], { type: resp.headers.get("content-type") || "audio/mpeg" });
+      const objectUrl = URL.createObjectURL(blob);
+      ttsObjectUrlRef.current = objectUrl;
+
+      const audio = new Audio(objectUrl);
+      audio.preload = "auto";
+      audio.volume = 1;
+      ttsAudioRef.current = audio;
+
+      setTtsDebug({ status: "playing", text: trimmed });
+
+      audio.onended = () => {
+        try {
+          if (ttsObjectUrlRef.current === objectUrl) {
+            URL.revokeObjectURL(objectUrl);
+            ttsObjectUrlRef.current = null;
+          }
+        } catch {
+        }
+      };
+
+      try {
+        await audio.play();
+      } catch {
+        setTtsDebug({ status: "blocked", text: trimmed, error: "autoplay_blocked" });
+      }
+    } catch (e: any) {
+      if (e?.name === "AbortError") return;
+      setTtsDebug({ status: "error", text: trimmed, error: e?.message || "network_error" });
     }
   }, []);
 
@@ -1951,7 +1967,9 @@ export default function PlayerConsulta() {
         >
           TESTE EAN
           {ttsDebug?.status ? (
-            <span className="ml-2 font-mono font-bold text-white/60">{ttsDebug.status}</span>
+            <span className="ml-2 font-mono font-bold text-white/60">
+              {ttsDebug.status}{ttsDebug.error ? `:${ttsDebug.error}` : ""}
+            </span>
           ) : null}
         </button>
       )}
