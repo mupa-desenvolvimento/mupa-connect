@@ -120,9 +120,8 @@ export default function PlayerConsulta() {
     const checkStandalone = () => {
       const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
       setIsStandalone(!!standalone);
-      if (!standalone) {
-        setShowInstallModal(true);
-      }
+      // PWA Install prompt removed as requested
+      setShowInstallModal(false);
     };
     checkStandalone();
   }, []);
@@ -152,9 +151,8 @@ export default function PlayerConsulta() {
   const lastClickTime = useRef(0);
 
   useEffect(() => {
-    if (deferredPrompt && !isPwaInstalled && !isStandalone) {
-      setShowInstallModal(true);
-    }
+    // PWA Install prompt removed as requested
+    setShowInstallModal(false);
   }, [deferredPrompt, isPwaInstalled, isStandalone]);
 
   // MODO CONSULTA STATE
