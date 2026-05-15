@@ -1,8 +1,8 @@
 ---
 name: Bug Report
 about: Registrar uma funcionalidade incorreta ou faltante
-title: ''
-labels: ''
+title: "[BUG]"
+labels: bug
 assignees: ''
 
 ---
