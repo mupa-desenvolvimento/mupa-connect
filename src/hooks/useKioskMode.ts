@@ -155,8 +155,17 @@ export function useKioskMode() {
 
   // 6. Block context menu
   useEffect(() => {
-    const handleContextMenu = (e: MouseEvent) => e.preventDefault();
-    const handleWheel = (e: WheelEvent) => e.preventDefault();
+    const handleContextMenu = (e: MouseEvent) => {
+      // Allow context menu only if not in player page
+      if (window.location.pathname.includes('/play')) {
+        e.preventDefault();
+      }
+    };
+    const handleWheel = (e: WheelEvent) => {
+      if (window.location.pathname.includes('/play')) {
+        e.preventDefault();
+      }
+    };
     window.addEventListener('contextmenu', handleContextMenu);
     window.addEventListener('wheel', handleWheel, { passive: false });
     return () => {
