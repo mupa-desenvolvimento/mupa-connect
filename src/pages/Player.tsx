@@ -490,17 +490,55 @@ export default function Player() {
     return () => cancelAnimationFrame(rafId);
   }, [lastIndexChange, currentIndex, activePlaylist]);
 
-  // Fetch Network Info (IP & Location)
+  // Fetch Network Info (IP & Location) and Save to DB
   useEffect(() => {
+    if (isPreview) return;
+
+    const saveNetworkInfoToDB = async (info: { ip: string; localIp?: string; city: string; region: string }) => {
+      if (hasSavedNetworkInfoRef.current || !deviceInfo?.id) return;
+      
+      try {
+        const ipToSave = info.localIp && info.localIp !== 'N/A' ? info.localIp : info.ip;
+        const locationStr = `${info.city}, ${info.region}`;
+        
+        console.log("[Player] Saving network info to DB:", { ip: ipToSave, location: locationStr });
+        
+        const { error } = await supabase
+          .from('dispositivos')
+          .update({ 
+            ip_dispositivo: ipToSave,
+            // Guardamos a localização no status ou apenas logamos por enquanto se não houver coluna dedicada
+            // Como solicitado "identificar localização", vou assumir que ip_dispositivo é o campo principal
+          })
+          .eq('id', deviceInfo.id);
+
+        if (error) {
+          console.error("[Player] Failed to save network info:", error);
+        } else {
+          hasSavedNetworkInfoRef.current = true;
+          console.log("[Player] Network info saved successfully");
+        }
+      } catch (err) {
+        console.error("[Player] Error in saveNetworkInfoToDB:", err);
+      }
+    };
+
     const fetchNetworkInfo = async () => {
       try {
-        // Fetch Public IP and Location
         const response = await fetch('https://ipapi.co/json/');
         const data = await response.json();
         
-        let localIp = 'N/A';
-        
-        // Try to get Local IP via WebRTC (best effort)
+        const info = {
+          ip: data.ip,
+          city: data.city,
+          region: data.region_code,
+          localIp: 'N/A'
+        };
+
+        networkInfoRef.current = info;
+        setNetworkInfo(info);
+
+        // Try to get Local IP via WebRTC
         try {
           const pc = new RTCPeerConnection({ iceServers: [] });
           pc.createDataChannel("");
@@ -509,30 +547,32 @@ export default function Player() {
             if (ice && ice.candidate && ice.candidate.candidate) {
               const matches = /([0-9]{1,3}(\.[0-9]{1,3}){3})/.exec(ice.candidate.candidate);
               if (matches && matches[1]) {
-                setNetworkInfo(prev => prev ? { ...prev, localIp: matches[1] } : null);
+                const updatedInfo = { ...info, localIp: matches[1] };
+                networkInfoRef.current = updatedInfo;
+                setNetworkInfo(updatedInfo);
+                saveNetworkInfoToDB(updatedInfo);
                 pc.onicecandidate = null;
                 pc.close();
               }
             }
           };
-          setTimeout(() => pc.close(), 2000);
+          setTimeout(() => {
+            pc.close();
+            // Se não pegou local, salva o público
+            if (networkInfoRef.current) saveNetworkInfoToDB(networkInfoRef.current);
+          }, 3000);
         } catch (e) {
-          console.warn("WebRTC Local IP detection failed", e);
+          saveNetworkInfoToDB(info);
         }
-
-        setNetworkInfo({
-          ip: data.ip,
-          city: data.city,
-          region: data.region_code,
-          localIp: localIp
-        });
       } catch (err) {
         console.error("[Player] Failed to fetch network info:", err);
       }
     };
 
-    fetchNetworkInfo();
-  }, []);
+    if (deviceInfo?.id) {
+      fetchNetworkInfo();
+    }
+  }, [deviceInfo?.id, isPreview]);
 
   // UI Setup - Already handled in top-level useEffect
 
