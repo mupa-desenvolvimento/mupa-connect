@@ -90,6 +90,7 @@ export default function Player() {
   const [networkInfo, setNetworkInfo] = useState<{ ip: string; localIp?: string; city: string; region: string } | null>(null);
   const hasSavedNetworkInfoRef = useRef(false);
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+  const [showFullMaintenance, setShowFullMaintenance] = useState(false);
   const lastDetectionsRef = useRef<{ [key: number]: number }>({}); // Track last detection time per face index
   const faceSessionsRef = useRef<Record<number, {
     startedAt: number;
@@ -977,13 +978,27 @@ export default function Player() {
 
       {/* Maintenance Info (Bottom Right) */}
       {deviceInfo?.is_maintenance && (
-        <div className="absolute bottom-4 right-4 z-[100] p-4 rounded-xl bg-black/80 backdrop-blur-xl border border-yellow-500/50 shadow-2xl animate-in fade-in zoom-in duration-500 max-w-[300px] pointer-events-none">
-          <div className="flex items-center gap-3 mb-3 text-yellow-500">
-            <div className="h-8 w-8 rounded-lg bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20">
-              <Wrench className="h-4 w-4" />
+        <div 
+          className={cn(
+            "absolute bottom-4 right-4 z-[100] p-4 rounded-xl bg-black/80 backdrop-blur-xl border shadow-2xl animate-in fade-in zoom-in duration-500 transition-all cursor-pointer pointer-events-auto",
+            showFullMaintenance ? "w-[400px] border-primary/50" : "w-[300px] border-yellow-500/50"
+          )}
+          onClick={() => setShowFullMaintenance(!showFullMaintenance)}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3 text-yellow-500">
+              <div className="h-8 w-8 rounded-lg bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20">
+                <Wrench className="h-4 w-4" />
+              </div>
+              <div className="font-bold font-bold text-sm uppercase tracking-wider">
+                {showFullMaintenance ? "Diagnóstico Completo" : "Modo Manutenção"}
+              </div>
             </div>
-            <div className="font-bold font-bold text-sm uppercase tracking-wider">Modo Manutenção</div>
+            <button className="text-white/40 hover:text-white transition-colors">
+              <Scan className={cn("h-4 w-4", showFullMaintenance ? "rotate-45" : "")} />
+            </button>
           </div>
+
           <div className="space-y-2 font-mono text-[10px] uppercase tracking-wider">
             <div className="flex justify-between gap-4">
               <span className="text-white/40">Serial:</span>
@@ -993,18 +1008,63 @@ export default function Player() {
               <span className="text-white/40">Filial:</span>
               <span className="text-white/90 font-bold">{deviceInfo.num_filial || "—"}</span>
             </div>
-            <div className="flex justify-between gap-4">
-              <span className="text-white/40">Nome:</span>
-              <span className="text-white/90 font-bold text-right">{deviceInfo.apelido_interno || "—"}</span>
-            </div>
-            <div className="flex justify-between gap-4">
-              <span className="text-white/40">Status:</span>
-              <span className="text-yellow-500 font-bold">EM MANUTENÇÃO</span>
-            </div>
-            <div className="mt-2 pt-2 border-t border-white/5 flex justify-between gap-4">
-              <span className="text-white/40">IP Local:</span>
-              <span className="text-white/60 font-bold">{networkInfo?.localIp !== 'N/A' ? networkInfo?.localIp : networkInfo?.ip || "Detectando..."}</span>
-            </div>
+            
+            {showFullMaintenance && (
+              <>
+                <div className="flex justify-between gap-4">
+                  <span className="text-white/40">ID Interno:</span>
+                  <span className="text-white/90 font-bold">{deviceInfo.id}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-white/40">IP Público:</span>
+                  <span className="text-white/90 font-bold">{networkInfo?.ip || "Detectando..."}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-white/40">IP Local:</span>
+                  <span className="text-white/90 font-bold">{networkInfo?.localIp || "—"}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-white/40">Localização:</span>
+                  <span className="text-white/90 font-bold text-right">
+                    {networkInfo?.city ? `${networkInfo.city}, ${networkInfo.region}` : "Detectando..."}
+                  </span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-white/40">Playlist:</span>
+                  <span className="text-white/90 font-bold text-right truncate max-w-[200px]">
+                    {manifest?.name || "Nenhuma"}
+                  </span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-white/40">Itens:</span>
+                  <span className="text-white/90 font-bold">{activePlaylist.length}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-white/40">Engine:</span>
+                  <span className="text-green-500 font-bold">STABLE V2.4</span>
+                </div>
+              </>
+            )}
+
+            {!showFullMaintenance && (
+              <>
+                <div className="flex justify-between gap-4">
+                  <span className="text-white/40">Nome:</span>
+                  <span className="text-white/90 font-bold text-right">{deviceInfo.apelido_interno || "—"}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-white/40">Status:</span>
+                  <span className="text-yellow-500 font-bold">EM MANUTENÇÃO</span>
+                </div>
+                <div className="mt-2 pt-2 border-t border-white/5 flex justify-between gap-4">
+                  <span className="text-white/40">IP:</span>
+                  <span className="text-white/60 font-bold">{networkInfo?.localIp !== 'N/A' ? networkInfo?.localIp : networkInfo?.ip || "Detectando..."}</span>
+                </div>
+                <div className="mt-2 text-[8px] text-white/20 text-center animate-pulse">
+                  Clique para ver detalhes
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
