@@ -3,7 +3,7 @@
     {
       "ean": "1112223330006",
       "descricao": "Arroz Branco Tio João 5kg",
-      "preco": 29.90,
+      "preco": 29.9,
       "preco_promocional": null,
       "tipo": "normal",
       "url_imagem": "https://applicativa-marketplace-prod.s3.amazonaws.com/produtos/arroz-tio-joao-100-graos-nobres-5kg.webp"
@@ -19,7 +19,7 @@
     {
       "ean": "1112223330020",
       "descricao": "Shampoo Dove Nutritive 400ml",
-      "preco": 19.90,
+      "preco": 19.9,
       "preco_promocional": 13.27,
       "tipo": "leve_3_pague_2",
       "observacao": "Leve 3 pague 2 - Preço unitário efetivo",
@@ -28,11 +28,11 @@
     {
       "ean": "1112223330037",
       "descricao": "Whisky Johnnie Walker Red Label 1L",
-      "preco": 89.90,
-      "preco_promocional": 69.90,
+      "preco": 89.9,
+      "preco_promocional": 69.9,
       "tipo": "vip",
       "observacao": "Preço exclusivo para clientes VIP",
-      "url_imagem": "https://www.extra-imagens.com.br/bebidas/Destilados/Whisky/55013009/1311029016/whisky-johnnie-walker-red-label-1l-55013009.jpg"
+      "url_imagem": "https://emporiorocco.com.br/wp-content/uploads/2019/11/whisky-johnnie-walker-red-label_2_650.jpg"
     }
   ]
 }
