@@ -16,6 +16,8 @@ import { PWAInstallModal } from "@/components/PWAInstallModal";
 import { DevShowcaseOverlay } from "@/components/DevShowcaseOverlay";
 import { DevicePersistenceService } from "@/services/DevicePersistenceService";
 import { extractImageColors } from "@/utils/extractImageColors";
+import { lookupGertecProduct, GERTEC_TENANT_ID } from "@/services/GertecDemoService";
+
 
 interface AppearanceConfig {
   show_device_name?: boolean;
@@ -58,7 +60,10 @@ interface ProductData {
     cor_dominante_escuro: string;
   } | null;
   is_cached?: boolean;
+  tipo?: string;
+  observacao?: string;
 }
+
 
 const DEFAULT_PRODUCT_IMAGE = "https://qtbkvshbmqlszncxlcuc.supabase.co/storage/v1/object/public/dsl-uploads/kqrRuPz304ckV2bn5HmQpveeQQo1/821f6c4e-8d26-4bd2-90bd-a52929afc73e.png";
 const DEFAULT_VISUAL_COLORS = {
@@ -1000,6 +1005,37 @@ export default function PlayerConsulta() {
     setLastConsultedEan(cleanEan);
 
     try {
+      // 1. Verificar se é um produto demo da Gertec
+      const gertecProduct = lookupGertecProduct(cleanEan);
+      if (gertecProduct) {
+        console.log("[Player] Gertec Demo Product found:", cleanEan);
+        const finalProduct = {
+          ean: gertecProduct.ean,
+          internal_id: gertecProduct.ean,
+          description: gertecProduct.descricao,
+          tipo: gertecProduct.tipo,
+          observacao: gertecProduct.observacao,
+          stock_prices: [
+            { 
+              unit_pack: 1, 
+              price_pack: gertecProduct.preco, 
+              price_prom_pack: gertecProduct.preco_promocional || undefined,
+              stock_avaliable: 999 
+            }
+          ],
+          visual: buildVisual(cleanEan, { imagem_url: gertecProduct.url_imagem })
+        };
+        
+        // Simular um pequeno delay para efeito visual de processamento
+        await new Promise(resolve => setTimeout(resolve, 600));
+        
+        setProduct(finalProduct);
+        localStorage.setItem(cachedKey, JSON.stringify({ data: finalProduct, timestamp: Date.now() }));
+        return;
+      }
+
+
+      // 2. Fallback para integração padrão
       const { data, error: functionError } = await supabase.functions.invoke('integra-assai', {
         body: { ean: cleanEan, store_id: deviceInfo?.num_filial || deviceInfo?.store_id }
       });
@@ -1012,6 +1048,7 @@ export default function PlayerConsulta() {
       localStorage.setItem(cachedKey, JSON.stringify({ data: finalProduct, timestamp: Date.now() }));
 
     } catch (err: any) {
+
       setError("Produto não encontrado.");
     } finally {
       setIsConsulting(false);
@@ -1750,7 +1787,7 @@ export default function PlayerConsulta() {
                       return (
                         <>
                           {/* BADGES */}
-                          <div className="flex items-center justify-center gap-3">
+                          <div className="flex items-center justify-center gap-3 flex-wrap">
                             {hasRealDiscount && badgeLabel && (
                               <>
                                 <div
@@ -1767,7 +1804,23 @@ export default function PlayerConsulta() {
                                 </div>
                               </>
                             )}
+                            {product.tipo && product.tipo !== 'normal' && (
+                              <div
+                                className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest text-white"
+                                style={{ backgroundColor: product.tipo === 'promocao' ? "#E11D48" : product.tipo === 'vip' ? "#CA8A04" : "#2563EB" }}
+                              >
+                                {product.tipo.replace(/_/g, ' ')}
+                              </div>
+                            )}
+                            {product.observacao && (
+                              <div
+                                className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest text-white bg-white/20 border border-white/10"
+                              >
+                                {product.observacao}
+                              </div>
+                            )}
                           </div>
+
 
                           {/* PREÇO PRINCIPAL */}
                           <div
