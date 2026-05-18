@@ -97,21 +97,39 @@ const isDefaultImage = (url: string | null | undefined) => {
   return url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png') || url.includes('d3db954d-0353-4d10-a92c-375058cceded.png');
 };
 
+const isUrlAllowed = (url: string | null | undefined) => {
+  if (!url) return false;
+  // Bloquear URLs suspeitas ou mal formatadas
+  try {
+    const parsed = new URL(url);
+    if (!['http:', 'https:'].includes(parsed.protocol)) return false;
+    
+    // Lista de domínios conhecidos por serem problemáticos ou bloqueados (exemplo)
+    const blockedDomains = ['example-malicious.com', 'test-error.com'];
+    if (blockedDomains.some(domain => parsed.hostname.includes(domain))) return false;
+    
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const ensureSafeImageUrl = (url: string | null | undefined) => {
-  if (!url) return null;
+  if (!url || !isUrlAllowed(url)) return null;
+  
   // Se já estiver usando o proxy ou não for do mupa, não faz nada
   if (url.includes('wsrv.nl')) return url;
   
   // Imagens externas (como as da Gertec) devem passar pelo proxy para evitar problemas de CORS e SSL
   if (url.startsWith('http')) {
+    // Para wsrv.nl, preferimos passar a URL limpa (forçando http se o servidor original tiver problemas de certificado)
     const cleanUrl = url.replace('https://', 'http://');
-    return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}`;
+    return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}&default=${encodeURIComponent(DEFAULT_PRODUCT_IMAGE)}`;
   }
   
   if (url.includes('srv-mupa.ddns.net')) {
-    // Força http para evitar o erro de SSL no servidor de origem
     const cleanUrl = url.replace('https://', 'http://');
-    return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}`;
+    return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}&default=${encodeURIComponent(DEFAULT_PRODUCT_IMAGE)}`;
   }
   return url;
 };
