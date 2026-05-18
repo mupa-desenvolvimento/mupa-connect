@@ -1679,7 +1679,7 @@ export default function PlayerConsulta() {
                 >
                   <div className="relative w-full h-full">
                     <OptimizedProductImage
-                      src={product.visual?.imagem_url || null}
+                      src={ensureSafeImageUrl(product.visual?.imagem_url) || null}
                       fallback={[
                         product.ean ? MUPA_STATIC_IMAGE(product.ean) : null,
                         fallbackImageUrl,
