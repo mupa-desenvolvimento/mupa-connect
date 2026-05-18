@@ -488,6 +488,50 @@ export default function Player() {
     return () => cancelAnimationFrame(rafId);
   }, [lastIndexChange, currentIndex, activePlaylist]);
 
+  // Fetch Network Info (IP & Location)
+  useEffect(() => {
+    const fetchNetworkInfo = async () => {
+      try {
+        // Fetch Public IP and Location
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        
+        let localIp = 'N/A';
+        
+        // Try to get Local IP via WebRTC (best effort)
+        try {
+          const pc = new RTCPeerConnection({ iceServers: [] });
+          pc.createDataChannel("");
+          pc.createOffer().then(offer => pc.setLocalDescription(offer));
+          pc.onicecandidate = (ice) => {
+            if (ice && ice.candidate && ice.candidate.candidate) {
+              const matches = /([0-9]{1,3}(\.[0-9]{1,3}){3})/.exec(ice.candidate.candidate);
+              if (matches && matches[1]) {
+                setNetworkInfo(prev => prev ? { ...prev, localIp: matches[1] } : null);
+                pc.onicecandidate = null;
+                pc.close();
+              }
+            }
+          };
+          setTimeout(() => pc.close(), 2000);
+        } catch (e) {
+          console.warn("WebRTC Local IP detection failed", e);
+        }
+
+        setNetworkInfo({
+          ip: data.ip,
+          city: data.city,
+          region: data.region_code,
+          localIp: localIp
+        });
+      } catch (err) {
+        console.error("[Player] Failed to fetch network info:", err);
+      }
+    };
+
+    fetchNetworkInfo();
+  }, []);
+
   // UI Setup - Already handled in top-level useEffect
 
   const [now, setNow] = useState(new Date());
