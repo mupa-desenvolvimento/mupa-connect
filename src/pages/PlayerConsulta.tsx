@@ -1037,6 +1037,46 @@ export default function PlayerConsulta() {
     setLastConsultedEan(cleanEan);
 
     try {
+      const deviceId = deviceInfo?.id;
+      const tenantId = deviceInfo?.tenant_id || manifest?.tenant_id;
+      const companyId = deviceInfo?.company_id;
+      const storeId = deviceInfo?.num_filial || deviceInfo?.store_id;
+      const deviceSerial = deviceInfo?.serial || deviceCode;
+      const deviceName = deviceInfo?.nome || deviceInfo?.apelido_interno;
+
+      const logQuery = async (p: any, errorType?: string, errorMsg?: string) => {
+        try {
+          if (errorType) {
+            await supabase.from("product_query_errors").insert([{
+              tenant_id: tenantId,
+              company_id: companyId,
+              store_id: isValidUUID(storeId) ? storeId : null,
+              device_serial: deviceSerial,
+              device_name: deviceName,
+              ean: cleanEan,
+              error_type: errorType,
+              error_message: errorMsg,
+              status: 'pending'
+            }]);
+          } else {
+            await supabase.from("product_queries_log").insert([{
+              tenant_id: tenantId,
+              company_id: companyId,
+              device_id: deviceId,
+              device_serial: deviceSerial,
+              ean: cleanEan,
+              descricao_produto: p?.description || p?.descricao,
+              loja: storeId?.toString(),
+              status_code: 200,
+              link_imagem: p?.visual?.imagem_url || p?.url_imagem,
+              consulted_at: new Date().toISOString()
+            }]);
+          }
+        } catch (logErr) {
+          console.error("Error logging query:", logErr);
+        }
+      };
+
       // 1. Verificar se é um produto demo da Gertec
       const gertecProduct = await lookupGertecProduct(cleanEan);
       if (gertecProduct) {
@@ -1058,29 +1098,35 @@ export default function PlayerConsulta() {
           visual: buildVisual(cleanEan, { imagem_url: gertecProduct.url_imagem })
         };
         
-        // Simular um pequeno delay para efeito visual de processamento
         await new Promise(resolve => setTimeout(resolve, 600));
         
         setProduct(finalProduct);
         localStorage.setItem(cachedKey, JSON.stringify({ data: finalProduct, timestamp: Date.now() }));
+        logQuery(finalProduct);
         return;
       }
 
-
       // 2. Fallback para integração padrão
       const { data, error: functionError } = await supabase.functions.invoke('integra-assai', {
-        body: { ean: cleanEan, store_id: deviceInfo?.num_filial || deviceInfo?.store_id }
+        body: { ean: cleanEan, store_id: storeId }
       });
 
-      if (functionError) throw functionError;
-      if (data?.error) throw new Error(data.error);
+      if (functionError) {
+        logQuery(null, 'function_error', functionError.message);
+        throw functionError;
+      }
+      
+      if (data?.error) {
+        logQuery(null, 'api_error', data.error);
+        throw new Error(data.error);
+      }
 
       const finalProduct = { ...data, visual: buildVisual(cleanEan, data.visual) };
       setProduct(finalProduct);
       localStorage.setItem(cachedKey, JSON.stringify({ data: finalProduct, timestamp: Date.now() }));
+      logQuery(finalProduct);
 
     } catch (err: any) {
-
       setError("Produto não encontrado.");
     } finally {
       setIsConsulting(false);
@@ -1399,11 +1445,52 @@ export default function PlayerConsulta() {
     );
 
     try {
+      const deviceId = deviceInfo?.id;
+      const tenantId = deviceInfo?.tenant_id || manifest?.tenant_id;
+      const companyId = deviceInfo?.company_id;
+      const storeId = deviceInfo?.num_filial || deviceInfo?.store_id;
+      const deviceSerial = deviceInfo?.serial || deviceCode;
+      const deviceName = deviceInfo?.nome || deviceInfo?.apelido_interno;
+
+      const logQuery = async (p: any, errorType?: string, errorMsg?: string) => {
+        try {
+          if (errorType) {
+            await supabase.from("product_query_errors").insert([{
+              tenant_id: tenantId,
+              company_id: companyId,
+              store_id: isValidUUID(storeId) ? storeId : null,
+              device_serial: deviceSerial,
+              device_name: deviceName,
+              product_code: cleanId,
+              error_type: errorType,
+              error_message: errorMsg,
+              status: 'pending'
+            }]);
+          } else {
+            await supabase.from("product_queries_log").insert([{
+              tenant_id: tenantId,
+              company_id: companyId,
+              device_id: deviceId,
+              device_serial: deviceSerial,
+              codigo_produto: cleanId,
+              ean: p?.ean,
+              descricao_produto: p?.description || p?.descricao,
+              loja: storeId?.toString(),
+              status_code: 200,
+              link_imagem: p?.visual?.imagem_url || p?.url_imagem,
+              consulted_at: new Date().toISOString()
+            }]);
+          }
+        } catch (logErr) {
+          console.error("Error logging manual query:", logErr);
+        }
+      };
+
       const result: any = await Promise.race([
         supabase.functions.invoke('integra-assai', {
           body: { 
             product_id: cleanId,
-            store_id: deviceInfo?.num_filial || deviceInfo?.store_id 
+            store_id: storeId
           }
         }),
         timeoutPromise
@@ -1411,9 +1498,20 @@ export default function PlayerConsulta() {
 
       const { data, error: functionError } = result;
 
-      if (functionError) throw functionError;
-      if (data?.error) throw new Error(data.error);
-      if (!data) throw new Error("Produto não encontrado");
+      if (functionError) {
+        logQuery(null, 'function_error', functionError.message);
+        throw functionError;
+      }
+      
+      if (data?.error) {
+        logQuery(null, 'api_error', data.error);
+        throw new Error(data.error);
+      }
+      
+      if (!data) {
+        logQuery(null, 'not_found', 'Produto não retornado pela função');
+        throw new Error("Produto não encontrado");
+      }
 
       console.log("[ASSAI_PRICE]", data.stock_prices);
       
@@ -1429,13 +1527,14 @@ export default function PlayerConsulta() {
         timestamp: Date.now()
       }));
       
-      // Also save by EAN if available to sync caches
       if (data.ean) {
         localStorage.setItem(`product_${data.ean}`, JSON.stringify({
           data: finalProduct,
           timestamp: Date.now()
         }));
       }
+      
+      logQuery(finalProduct);
     } catch (err: any) {
       console.error("Erro na consulta manual:", err);
       setError("Produto não localizado. Por favor, valide a sequência digitada.");
