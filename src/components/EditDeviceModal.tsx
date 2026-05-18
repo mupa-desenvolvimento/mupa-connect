@@ -54,6 +54,7 @@ const formSchema = z.object({
   device_type: z.string().nullable().optional(),
   pin: z.string().nullable().optional(),
   autostart: z.boolean().default(true),
+  orientacao: z.enum(["horizontal", "vertical"]).default("horizontal"),
 });
 
 interface EditDeviceModalProps {
