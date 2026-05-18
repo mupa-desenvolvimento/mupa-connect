@@ -2238,6 +2238,7 @@ export default function PlayerConsulta() {
         onToggleAutoDemo={setIsAutoDemoActive}
         isAutoDemoActive={isAutoDemoActive}
       />
+      </div>
     </div>
   );
 }
