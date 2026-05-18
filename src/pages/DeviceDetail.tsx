@@ -28,6 +28,7 @@ interface DeviceRow {
   num_filial: string | null;
   is_maintenance: boolean;
   playlist_id: string | null;
+  appearance_config: any;
 }
 
 export default function DeviceDetailPage() {
