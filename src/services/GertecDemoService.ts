@@ -42,7 +42,7 @@ export const GERTEC_DEMO_PRODUCTS: GertecProduct[] = [
     preco_promocional: 69.90,
     tipo: "vip",
     observacao: "Preço exclusivo para clientes VIP",
-    url_imagem: "https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcTGSQmpg636P_mGRc6ZNIkk17EE01rU3BXprm7HY1rZwnyeYMK8g2PHiI7uMOFA0z5RCjw2JwL1hAENxCsxhtq4z2hFdrv6IOujMVARE4KudXbIp30mXWX5xA"
+    url_imagem: "https://www.extra-imagens.com.br/bebidas/Destilados/Whisky/55013009/1311029016/whisky-johnnie-walker-red-label-1l-55013009.jpg"
   }
 ];
 

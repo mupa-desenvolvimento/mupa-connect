@@ -122,14 +122,13 @@ const ensureSafeImageUrl = (url: string | null | undefined) => {
   
   // Imagens externas (como as da Gertec) devem passar pelo proxy para evitar problemas de CORS e SSL
   if (url.startsWith('http')) {
-    // Para wsrv.nl, preferimos passar a URL limpa (forçando http se o servidor original tiver problemas de certificado)
-    const cleanUrl = url.replace('https://', 'http://');
-    return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}&default=${encodeURIComponent(DEFAULT_PRODUCT_IMAGE)}`;
+    // Mantemos o protocolo original (preferencialmente https) para evitar problemas de segurança e redirecionamento
+    return `https://wsrv.nl/?url=${encodeURIComponent(url)}&default=${encodeURIComponent(DEFAULT_PRODUCT_IMAGE)}&output=webp`;
   }
   
   if (url.includes('srv-mupa.ddns.net')) {
     const cleanUrl = url.replace('https://', 'http://');
-    return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}&default=${encodeURIComponent(DEFAULT_PRODUCT_IMAGE)}`;
+    return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}&default=${encodeURIComponent(DEFAULT_PRODUCT_IMAGE)}&output=webp`;
   }
   return url;
 };
