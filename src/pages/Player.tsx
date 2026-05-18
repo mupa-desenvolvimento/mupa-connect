@@ -86,7 +86,9 @@ export default function Player() {
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [faceDetectionActive, setFaceDetectionActive] = useState(false);
   const [errorInfo, setErrorInfo] = useState<{ message: string; code?: string } | null>(null);
+  const networkInfoRef = useRef<{ ip: string; localIp?: string; city: string; region: string } | null>(null);
   const [networkInfo, setNetworkInfo] = useState<{ ip: string; localIp?: string; city: string; region: string } | null>(null);
+  const hasSavedNetworkInfoRef = useRef(false);
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   const lastDetectionsRef = useRef<{ [key: number]: number }>({}); // Track last detection time per face index
   const faceSessionsRef = useRef<Record<number, {
