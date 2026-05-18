@@ -233,7 +233,7 @@ export default function PlayerConsulta() {
   useEffect(() => {
     setImageError(false);
     // Preload basic images
-    const preload = [DEFAULT_PRODUCT_IMAGE];
+    const preload = [];
     if (fallbackImageUrl) preload.push(fallbackImageUrl);
     
     preload.forEach(url => {
