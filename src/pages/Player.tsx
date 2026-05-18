@@ -965,9 +965,17 @@ export default function Player() {
               <span className="text-white/40">Status:</span>
               <span className="text-yellow-500 font-bold">EM MANUTENÇÃO</span>
             </div>
-            <div className="mt-2 pt-2 border-t border-white/5 flex justify-between gap-4">
-              <span className="text-white/40">IP Local:</span>
-              <span className="text-white/60 font-bold">Detectando...</span>
+            <div className="mt-2 pt-2 border-t border-white/5 space-y-2">
+              <div className="flex justify-between gap-4">
+                <span className="text-white/40">IP Local:</span>
+                <span className="text-white/60 font-bold">{networkInfo?.localIp !== 'N/A' ? networkInfo?.localIp : networkInfo?.ip || "Detectando..."}</span>
+              </div>
+              {networkInfo && (
+                <div className="flex justify-between gap-4">
+                  <span className="text-white/40">Localização:</span>
+                  <span className="text-white/60 font-bold">{networkInfo.city}, {networkInfo.region}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
