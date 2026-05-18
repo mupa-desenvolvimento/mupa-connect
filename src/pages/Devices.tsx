@@ -752,3 +752,23 @@ export default function DevicesPage() {
     </div>
   );
 }
+
+function ColumnHeaderMenu({ onSort, currentSort }: { onSort: (dir: "asc" | "desc") => void, currentSort: "asc" | "desc" | null }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+          <ChevronDown className={cn("h-3 w-3 transition-transform", currentSort && "text-primary opacity-100")} />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-48 bg-card/95 backdrop-blur-xl border-white/10 shadow-2xl">
+        <DropdownMenuItem onClick={() => onSort("asc")} className={cn(currentSort === "asc" && "text-primary bg-primary/10")}>
+          <ArrowUpAZ className="h-4 w-4 mr-2" /> Ordenar Crescente
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onSort("desc")} className={cn(currentSort === "desc" && "text-primary bg-primary/10")}>
+          <ArrowDownAZ className="h-4 w-4 mr-2" /> Ordenar Decrescente
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
