@@ -17,39 +17,72 @@ export default function Setup() {
   const { isPwaInstalled, deferredPrompt, installPwa, showCursor, enterFullscreen } = useKioskMode();
   const [showInstallModal, setShowInstallModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [checkingDevice, setCheckingDevice] = useState(true);
   const [isStandalone, setIsStandalone] = useState(false);
 
-  useEffect(() => {
-    const checkStandalone = () => {
-      const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
-      setIsStandalone(!!standalone);
-      // PWA Install prompt removed as requested
-      setShowInstallModal(false);
-    };
-    checkStandalone();
-  }, []);
-  const [showKeyboard, setShowKeyboard] = useState(false);
-  const [activeInput, setActiveInput] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    code_empresa: "",
-    apelido: "teste dev",
-    numero_loja: "",
-  });
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    // Se recebemos um erro via state (ex: dispositivo não encontrado no PlayerConsulta), limpamos os dados para novo setup
+    const checkExistingDevice = async () => {
+      try {
+        const serial = DevicePersistenceService.getOrCreatePersistentId();
+        console.log("[Setup] Checking for existing device with serial:", serial);
+        
+        // Verifica se o dispositivo já está registrado no banco
+        const { data: device, error } = await supabase
+          .from("dispositivos")
+          .select("id, device_type")
+          .eq("serial", serial)
+          .maybeSingle();
+
+        if (error) {
+          console.error("[Setup] Error checking device:", error);
+        }
+
+        if (device) {
+          console.log("[Setup] Registered device found, redirecting to player...");
+          // Se for player-consulta, vai pra rota de consulta, senão vai pro player padrão
+          if (device.device_type === "player-consulta") {
+            navigate(`/player-consulta/${serial}`, { replace: true });
+          } else {
+            navigate(`/play/${serial}`, { replace: true });
+          }
+          return;
+        }
+        
+        console.log("[Setup] No registered device found for serial:", serial);
+      } catch (err) {
+        console.error("[Setup] Fail during initial check:", err);
+      } finally {
+        setCheckingDevice(false);
+      }
+    };
+
+    checkExistingDevice();
+
+    const checkStandalone = () => {
+      const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+      setIsStandalone(!!standalone);
+      setShowInstallModal(false);
+    };
+    checkStandalone();
+  }, [navigate]);
+
+  useEffect(() => {
     if (location.state?.error) {
       toast.error(location.state.error);
       DevicePersistenceService.clearAllData();
     }
   }, [location]);
 
-  useEffect(() => {
-    // PWA Install prompt removed as requested
-    setShowInstallModal(false);
-  }, [deferredPrompt, isPwaInstalled]);
+  const [showKeyboard, setShowKeyboard] = useState(false);
+  const [activeInput, setActiveInput] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    code_empresa: "",
+    apelido: "Novo Player",
+    numero_loja: "",
+  });
 
   const handleKeyboardChange = (value: string) => {
     if (activeInput) {
@@ -131,6 +164,15 @@ export default function Setup() {
       setLoading(false);
     }
   };
+
+  if (checkingDevice) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-white p-4">
+        <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
+        <p className="text-slate-400 animate-pulse">Identificando dispositivo...</p>
+      </div>
+    );
+  }
 
   return (
     <div className={cn(

@@ -7,6 +7,7 @@ import { PlayerEngine } from "@/components/PlayerEngine";
 import { ManifestManager, ScheduleResolver, MediaCacheService } from "@/components/PlayerServices";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { ManifestService } from "@/services/ManifestService";
+import { DevicePersistenceService } from "@/services/DevicePersistenceService";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Monitor, Wrench, Scan } from "lucide-react";
@@ -85,6 +86,9 @@ export default function Player() {
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [faceDetectionActive, setFaceDetectionActive] = useState(false);
   const [errorInfo, setErrorInfo] = useState<{ message: string; code?: string } | null>(null);
+  const networkInfoRef = useRef<{ ip: string; localIp?: string; city: string; region: string } | null>(null);
+  const [networkInfo, setNetworkInfo] = useState<{ ip: string; localIp?: string; city: string; region: string } | null>(null);
+  const hasSavedNetworkInfoRef = useRef(false);
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   const lastDetectionsRef = useRef<{ [key: number]: number }>({}); // Track last detection time per face index
   const faceSessionsRef = useRef<Record<number, {
@@ -106,8 +110,11 @@ export default function Player() {
 
   // 1. Core Loader: Resolve Identity & Manifest (Offline-First)
   useEffect(() => {
+    const persistentId = DevicePersistenceService.getOrCreatePersistentId();
+    
     if (!deviceCode && !isPreview) {
-      navigate("/setup");
+      console.log("[Player] No deviceCode in URL, redirecting to auto-load with:", persistentId);
+      navigate(`/play/${persistentId}`, { replace: true });
       return;
     }
 
@@ -482,6 +489,90 @@ export default function Player() {
     rafId = requestAnimationFrame(checkEngineHealth);
     return () => cancelAnimationFrame(rafId);
   }, [lastIndexChange, currentIndex, activePlaylist]);
+
+  // Fetch Network Info (IP & Location) and Save to DB
+  useEffect(() => {
+    if (isPreview) return;
+
+    const saveNetworkInfoToDB = async (info: { ip: string; localIp?: string; city: string; region: string }) => {
+      if (hasSavedNetworkInfoRef.current || !deviceInfo?.id) return;
+      
+      try {
+        const ipToSave = info.localIp && info.localIp !== 'N/A' ? info.localIp : info.ip;
+        const locationStr = `${info.city}, ${info.region}`;
+        
+        console.log("[Player] Saving network info to DB:", { ip: ipToSave, location: locationStr });
+        
+        const { error } = await supabase
+          .from('dispositivos')
+          .update({ 
+            ip_dispositivo: ipToSave,
+            // Guardamos a localização no status ou apenas logamos por enquanto se não houver coluna dedicada
+            // Como solicitado "identificar localização", vou assumir que ip_dispositivo é o campo principal
+          })
+          .eq('id', deviceInfo.id);
+
+        if (error) {
+          console.error("[Player] Failed to save network info:", error);
+        } else {
+          hasSavedNetworkInfoRef.current = true;
+          console.log("[Player] Network info saved successfully");
+        }
+      } catch (err) {
+        console.error("[Player] Error in saveNetworkInfoToDB:", err);
+      }
+    };
+
+    const fetchNetworkInfo = async () => {
+      try {
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        
+        const info = {
+          ip: data.ip,
+          city: data.city,
+          region: data.region_code,
+          localIp: 'N/A'
+        };
+
+        networkInfoRef.current = info;
+        setNetworkInfo(info);
+
+        // Try to get Local IP via WebRTC
+        try {
+          const pc = new RTCPeerConnection({ iceServers: [] });
+          pc.createDataChannel("");
+          pc.createOffer().then(offer => pc.setLocalDescription(offer));
+          pc.onicecandidate = (ice) => {
+            if (ice && ice.candidate && ice.candidate.candidate) {
+              const matches = /([0-9]{1,3}(\.[0-9]{1,3}){3})/.exec(ice.candidate.candidate);
+              if (matches && matches[1]) {
+                const updatedInfo = { ...info, localIp: matches[1] };
+                networkInfoRef.current = updatedInfo;
+                setNetworkInfo(updatedInfo);
+                saveNetworkInfoToDB(updatedInfo);
+                pc.onicecandidate = null;
+                pc.close();
+              }
+            }
+          };
+          setTimeout(() => {
+            pc.close();
+            // Se não pegou local, salva o público
+            if (networkInfoRef.current) saveNetworkInfoToDB(networkInfoRef.current);
+          }, 3000);
+        } catch (e) {
+          saveNetworkInfoToDB(info);
+        }
+      } catch (err) {
+        console.error("[Player] Failed to fetch network info:", err);
+      }
+    };
+
+    if (deviceInfo?.id) {
+      fetchNetworkInfo();
+    }
+  }, [deviceInfo?.id, isPreview]);
 
   // UI Setup - Already handled in top-level useEffect
 
@@ -912,7 +1003,7 @@ export default function Player() {
             </div>
             <div className="mt-2 pt-2 border-t border-white/5 flex justify-between gap-4">
               <span className="text-white/40">IP Local:</span>
-              <span className="text-white/60 font-bold">Detectando...</span>
+              <span className="text-white/60 font-bold">{networkInfo?.localIp !== 'N/A' ? networkInfo?.localIp : networkInfo?.ip || "Detectando..."}</span>
             </div>
           </div>
         </div>

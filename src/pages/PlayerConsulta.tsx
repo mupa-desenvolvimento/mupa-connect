@@ -16,6 +16,8 @@ import { PWAInstallModal } from "@/components/PWAInstallModal";
 import { DevShowcaseOverlay } from "@/components/DevShowcaseOverlay";
 import { DevicePersistenceService } from "@/services/DevicePersistenceService";
 import { extractImageColors } from "@/utils/extractImageColors";
+import { lookupGertecProduct, GERTEC_TENANT_ID } from "@/services/GertecDemoService";
+
 
 interface AppearanceConfig {
   show_device_name?: boolean;
@@ -58,7 +60,10 @@ interface ProductData {
     cor_dominante_escuro: string;
   } | null;
   is_cached?: boolean;
+  tipo?: string;
+  observacao?: string;
 }
+
 
 const DEFAULT_PRODUCT_IMAGE = "https://qtbkvshbmqlszncxlcuc.supabase.co/storage/v1/object/public/dsl-uploads/kqrRuPz304ckV2bn5HmQpveeQQo1/821f6c4e-8d26-4bd2-90bd-a52929afc73e.png";
 const DEFAULT_VISUAL_COLORS = {
@@ -92,15 +97,38 @@ const isDefaultImage = (url: string | null | undefined) => {
   return url.includes('821f6c4e-8d26-4bd2-90bd-a52929afc73e.png') || url.includes('d3db954d-0353-4d10-a92c-375058cceded.png');
 };
 
+const isUrlAllowed = (url: string | null | undefined) => {
+  if (!url) return false;
+  // Bloquear URLs suspeitas ou mal formatadas
+  try {
+    const parsed = new URL(url);
+    if (!['http:', 'https:'].includes(parsed.protocol)) return false;
+    
+    // Lista de domínios conhecidos por serem problemáticos ou bloqueados (exemplo)
+    const blockedDomains = ['example-malicious.com', 'test-error.com'];
+    if (blockedDomains.some(domain => parsed.hostname.includes(domain))) return false;
+    
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const ensureSafeImageUrl = (url: string | null | undefined) => {
-  if (!url) return null;
+  if (!url || !isUrlAllowed(url)) return null;
+  
   // Se já estiver usando o proxy ou não for do mupa, não faz nada
   if (url.includes('wsrv.nl')) return url;
   
+  // Imagens externas (como as da Gertec) devem passar pelo proxy para evitar problemas de CORS e SSL
+  if (url.startsWith('http')) {
+    // Mantemos o protocolo original (preferencialmente https) para evitar problemas de segurança e redirecionamento
+    return `https://wsrv.nl/?url=${encodeURIComponent(url)}&default=${encodeURIComponent(DEFAULT_PRODUCT_IMAGE)}&output=webp`;
+  }
+  
   if (url.includes('srv-mupa.ddns.net')) {
-    // Força http para evitar o erro de SSL no servidor de origem
     const cleanUrl = url.replace('https://', 'http://');
-    return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}`;
+    return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}&default=${encodeURIComponent(DEFAULT_PRODUCT_IMAGE)}&output=webp`;
   }
   return url;
 };
@@ -222,7 +250,7 @@ export default function PlayerConsulta() {
   useEffect(() => {
     setImageError(false);
     // Preload basic images
-    const preload = [DEFAULT_PRODUCT_IMAGE];
+    const preload = [];
     if (fallbackImageUrl) preload.push(fallbackImageUrl);
     
     preload.forEach(url => {
@@ -234,18 +262,20 @@ export default function PlayerConsulta() {
   // Extração automática de cores quando a imagem do produto NÃO for default
   useEffect(() => {
     if (!product?.visual?.imagem_url) return;
-    const url = product.visual.imagem_url;
-    if (isDefaultImage(url)) return; // mantém cores default
+    const rawUrl = product.visual.imagem_url;
+    if (isDefaultImage(rawUrl)) return; // mantém cores default
+
+    const url = ensureSafeImageUrl(rawUrl);
+    if (!url) return;
 
     let cancelled = false;
     const run = async () => {
-      const palette =
-        (await extractImageColors(url)) ||
-        (await extractImageColors(`https://wsrv.nl/?url=${encodeURIComponent(url)}`));
+      // Tenta extrair as cores da imagem (já com proxy se necessário)
+      const palette = await extractImageColors(url);
 
       if (cancelled || !palette) return;
       setProduct(prev => {
-        if (!prev || !prev.visual || prev.visual.imagem_url !== url) return prev;
+        if (!prev || !prev.visual || prev.visual.imagem_url !== rawUrl) return prev;
         return {
           ...prev,
           visual: {
@@ -759,11 +789,18 @@ export default function PlayerConsulta() {
 
   const buildVisual = (ean: string | null | undefined, visual: any) => {
     const safeEan = typeof ean === "string" && ean.trim() ? ean.trim() : null;
+    
+    // Identifica se é um produto Gertec Demo de forma assíncrona não é possível aqui facilmente
+    // Então vamos confiar que o handleConsult já resolveu a URL correta
+    
     const mupaImage = safeEan ? MUPA_STATIC_IMAGE(safeEan) : null;
-    const hasVisual = !!visual;
+    
+    const finalImageUrl = visual?.imagem_url 
+      ? ensureSafeImageUrl(visual.imagem_url) 
+      : mupaImage;
     
     return {
-      imagem_url: ensureSafeImageUrl(visual?.imagem_url) || mupaImage || DEFAULT_PRODUCT_IMAGE,
+      imagem_url: finalImageUrl,
       cor_assinatura_produto: visual?.cor_assinatura_produto || DEFAULT_VISUAL_COLORS.cor_assinatura_produto,
       fundo_legibilidade: visual?.fundo_legibilidade || DEFAULT_VISUAL_COLORS.fundo_legibilidade,
       cor_dominante_claro: visual?.cor_dominante_claro || DEFAULT_VISUAL_COLORS.cor_dominante_claro,
@@ -1000,6 +1037,37 @@ export default function PlayerConsulta() {
     setLastConsultedEan(cleanEan);
 
     try {
+      // 1. Verificar se é um produto demo da Gertec
+      const gertecProduct = await lookupGertecProduct(cleanEan);
+      if (gertecProduct) {
+        console.log("[Player] Gertec Demo Product found:", cleanEan);
+        const finalProduct = {
+          ean: gertecProduct.ean,
+          internal_id: gertecProduct.ean,
+          description: gertecProduct.descricao,
+          tipo: gertecProduct.tipo,
+          observacao: gertecProduct.observacao,
+          stock_prices: [
+            { 
+              unit_pack: 1, 
+              price_pack: gertecProduct.preco, 
+              price_prom_pack: gertecProduct.preco_promocional || undefined,
+              stock_avaliable: 999 
+            }
+          ],
+          visual: buildVisual(cleanEan, { imagem_url: gertecProduct.url_imagem })
+        };
+        
+        // Simular um pequeno delay para efeito visual de processamento
+        await new Promise(resolve => setTimeout(resolve, 600));
+        
+        setProduct(finalProduct);
+        localStorage.setItem(cachedKey, JSON.stringify({ data: finalProduct, timestamp: Date.now() }));
+        return;
+      }
+
+
+      // 2. Fallback para integração padrão
       const { data, error: functionError } = await supabase.functions.invoke('integra-assai', {
         body: { ean: cleanEan, store_id: deviceInfo?.num_filial || deviceInfo?.store_id }
       });
@@ -1012,6 +1080,7 @@ export default function PlayerConsulta() {
       localStorage.setItem(cachedKey, JSON.stringify({ data: finalProduct, timestamp: Date.now() }));
 
     } catch (err: any) {
+
       setError("Produto não encontrado.");
     } finally {
       setIsConsulting(false);
@@ -1636,10 +1705,10 @@ export default function PlayerConsulta() {
                     <OptimizedProductImage
                       src={product.visual?.imagem_url || null}
                       fallback={[
-                        product.ean ? MUPA_STATIC_IMAGE(product.ean) : null,
+                        // Se não for um produto Gertec Demo (já carregado com visual fixo), permitimos o fallback para Mupa
+                        (product.ean ? MUPA_STATIC_IMAGE(product.ean) : null),
                         fallbackImageUrl,
-                        DEFAULT_PRODUCT_IMAGE,
-                      ]}
+                      ].filter((url) => url && !isDefaultImage(url))}
                       ean={product.ean}
                       alt={product.description}
                       isDefaultImage={isDefaultImage(product.visual?.imagem_url)}
@@ -1750,7 +1819,7 @@ export default function PlayerConsulta() {
                       return (
                         <>
                           {/* BADGES */}
-                          <div className="flex items-center justify-center gap-3">
+                          <div className="flex items-center justify-center gap-3 flex-wrap">
                             {hasRealDiscount && badgeLabel && (
                               <>
                                 <div
@@ -1767,7 +1836,23 @@ export default function PlayerConsulta() {
                                 </div>
                               </>
                             )}
+                            {product.tipo && product.tipo !== 'normal' && (
+                              <div
+                                className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest text-white"
+                                style={{ backgroundColor: product.tipo === 'promocao' ? "#E11D48" : product.tipo === 'vip' ? "#CA8A04" : "#2563EB" }}
+                              >
+                                {product.tipo.replace(/_/g, ' ')}
+                              </div>
+                            )}
+                            {product.observacao && (
+                              <div
+                                className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest text-white bg-white/20 border border-white/10"
+                              >
+                                {product.observacao}
+                              </div>
+                            )}
                           </div>
+
 
                           {/* PREÇO PRINCIPAL */}
                           <div

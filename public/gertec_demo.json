@@ -1,0 +1,38 @@
+{
+  "produtos": [
+    {
+      "ean": "1112223330006",
+      "descricao": "Arroz Branco Tio João 5kg",
+      "preco": 29.9,
+      "preco_promocional": null,
+      "tipo": "normal",
+      "url_imagem": "https://applicativa-marketplace-prod.s3.amazonaws.com/produtos/arroz-tio-joao-100-graos-nobres-5kg.webp"
+    },
+    {
+      "ean": "1112223330013",
+      "descricao": "Coca-Cola Original 2L",
+      "preco": 8.99,
+      "preco_promocional": 6.99,
+      "tipo": "promocao",
+      "url_imagem": "https://drogariasp.vteximg.com.br/arquivos/ids/1079073-1000-1000/765368---Refrigerante-Coca-Cola-Original-2L-1-_0000_Screen-Shot-2024-04-01-at-09.17.37.png?v=638475708512270000"
+    },
+    {
+      "ean": "1112223330020",
+      "descricao": "Shampoo Dove Nutritive 400ml",
+      "preco": 19.9,
+      "preco_promocional": 13.27,
+      "tipo": "leve_3_pague_2",
+      "observacao": "Leve 3 pague 2 - Preço unitário efetivo",
+      "url_imagem": "https://drogariasp.vteximg.com.br/arquivos/ids/1104756-1000-1000/325350---shampoo-dove-oleo-nutricao-400ml_0003_7891150017368_1.png?v=638518245362770000"
+    },
+    {
+      "ean": "1112223330037",
+      "descricao": "Whisky Johnnie Walker Red Label 1L",
+      "preco": 89.9,
+      "preco_promocional": 69.9,
+      "tipo": "vip",
+      "observacao": "Preço exclusivo para clientes VIP",
+      "url_imagem": "https://emporiorocco.com.br/wp-content/uploads/2019/11/whisky-johnnie-walker-red-label_2_650.jpg"
+    }
+  ]
+}
