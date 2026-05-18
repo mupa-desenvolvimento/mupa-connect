@@ -1050,6 +1050,7 @@ export default function Player() {
         }}
       />
 
+      </div>
     </div>
   );
 }
