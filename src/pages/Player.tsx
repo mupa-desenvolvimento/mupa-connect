@@ -189,6 +189,16 @@ export default function Player() {
         if (result.device) {
           setDeviceUuid(result.device.id?.toString());
           setDeviceInfo(result.device);
+          
+          // Apply orientation from appearance_config
+          if (result.device.appearance_config?.orientation === 'vertical') {
+            setIsVertical(true);
+          } else if (result.device.appearance_config?.orientation === 'horizontal') {
+            setIsVertical(false);
+          } else {
+            // Auto detect if not set
+            setIsVertical(window.innerHeight > window.innerWidth);
+          }
         }
         setIsLoading(false);
       } catch (err: any) {
