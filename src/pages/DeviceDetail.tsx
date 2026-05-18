@@ -362,6 +362,25 @@ export default function DeviceDetailPage() {
               )}
             </div>
 
+            <div className="space-y-2">
+              <Label>Orientação do Display</Label>
+              <Select 
+                value={device.appearance_config?.orientation || "horizontal"} 
+                onValueChange={(val) => setDevice(prev => prev ? { 
+                  ...prev, 
+                  appearance_config: { ...prev.appearance_config, orientation: val } 
+                } : null)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione a orientação" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="horizontal">Horizontal (Padrão)</SelectItem>
+                  <SelectItem value="vertical">Vertical (Retrato)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <Button 
               className="w-full"
               onClick={handleUpdateDevice} 
