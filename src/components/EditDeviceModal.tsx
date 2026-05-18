@@ -54,6 +54,7 @@ const formSchema = z.object({
   device_type: z.string().nullable().optional(),
   pin: z.string().nullable().optional(),
   autostart: z.boolean().default(true),
+  orientacao: z.enum(["horizontal", "vertical"]).default("horizontal"),
 });
 
 interface EditDeviceModalProps {
@@ -104,6 +105,7 @@ export function EditDeviceModal({ open, onOpenChange, device, onSuccess }: EditD
         device_type: device.device_type || "",
         pin: device.pin || "",
         autostart: device.autostart !== false,
+        orientacao: device.appearance_config?.orientation || "horizontal",
       });
     }
   }, [device, open, form]);
@@ -165,6 +167,10 @@ export function EditDeviceModal({ open, onOpenChange, device, onSuccess }: EditD
         pin: values.pin,
         autostart: values.autostart,
         atualizado: new Date().toISOString(),
+        appearance_config: {
+          ...(device.appearance_config || {}),
+          orientation: values.orientacao
+        }
       };
 
       const { error: updateError } = await supabase
@@ -446,6 +452,28 @@ export function EditDeviceModal({ open, onOpenChange, device, onSuccess }: EditD
                           <Input {...field} value={field.value || ""} placeholder="Ex: 08" />
                         </FormControl>
                         <FormDescription>Usado para relatórios e agrupamentos antigos.</FormDescription>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="orientacao"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Orientação do Display</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione a orientação" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="horizontal">Horizontal (Padrão)</SelectItem>
+                            <SelectItem value="vertical">Vertical (Retrato)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>Define se o conteúdo será renderizado em modo paisagem ou retrato.</FormDescription>
                       </FormItem>
                     )}
                   />

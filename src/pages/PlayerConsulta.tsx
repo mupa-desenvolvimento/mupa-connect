@@ -411,6 +411,17 @@ export default function PlayerConsulta() {
           if (result && result.manifest) {
             setManifest(result.manifest);
             setDeviceInfo(result.device);
+            
+            // Apply orientation from appearance_config
+            if (result.device?.appearance_config?.orientation === 'vertical') {
+              setIsVertical(true);
+            } else if (result.device?.appearance_config?.orientation === 'horizontal') {
+              setIsVertical(false);
+            } else {
+              // Auto detect if not explicitly set
+              setIsVertical(window.innerHeight > window.innerWidth);
+            }
+
             DevicePersistenceService.saveDeviceConfig(result.device);
             setIsLoading(false);
           } else {
@@ -504,6 +515,12 @@ export default function PlayerConsulta() {
           const result = await ManifestService.fetchManifest(deviceCode);
           setManifest(result.manifest);
           setDeviceInfo(result.device || device);
+          
+          if (result.device?.appearance_config?.orientation === 'vertical') {
+            setIsVertical(true);
+          } else if (result.device?.appearance_config?.orientation === 'horizontal') {
+            setIsVertical(false);
+          }
         }
       } catch (err) {
         console.warn("[Player] Background sync failed", err);
@@ -1561,7 +1578,11 @@ export default function PlayerConsulta() {
   }
 
   return (
-    <div className={cn("fixed inset-0 bg-[#f8fafc] overflow-hidden select-none touch-none overscroll-none", !showCursor && "cursor-none")} onClick={() => enterFullscreen()} onTouchStart={() => enterFullscreen()}>
+    <div className={cn("fixed inset-0 bg-[#f8fafc] overflow-hidden select-none touch-none overscroll-none flex items-center justify-center", !showCursor && "cursor-none")} onClick={() => enterFullscreen()} onTouchStart={() => enterFullscreen()}>
+      <div className={cn(
+        "relative w-full h-full overflow-hidden transition-all duration-500",
+        isVertical && "max-w-[56.25vh] aspect-[9/16] shadow-2xl bg-white"
+      )}>
       {/* Hidden camera and canvas for face detection */}
       {!isPreview && (
         <>
@@ -2217,6 +2238,7 @@ export default function PlayerConsulta() {
         onToggleAutoDemo={setIsAutoDemoActive}
         isAutoDemoActive={isAutoDemoActive}
       />
+      </div>
     </div>
   );
 }

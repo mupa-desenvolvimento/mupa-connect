@@ -86,6 +86,7 @@ export default function Player() {
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [faceDetectionActive, setFaceDetectionActive] = useState(false);
   const [errorInfo, setErrorInfo] = useState<{ message: string; code?: string } | null>(null);
+  const [isVertical, setIsVertical] = useState(false);
   const networkInfoRef = useRef<{ ip: string; localIp?: string; city: string; region: string } | null>(null);
   const [networkInfo, setNetworkInfo] = useState<{ ip: string; localIp?: string; city: string; region: string } | null>(null);
   const hasSavedNetworkInfoRef = useRef(false);
@@ -188,6 +189,16 @@ export default function Player() {
         if (result.device) {
           setDeviceUuid(result.device.id?.toString());
           setDeviceInfo(result.device);
+          
+          // Apply orientation from appearance_config
+          if (result.device.appearance_config?.orientation === 'vertical') {
+            setIsVertical(true);
+          } else if (result.device.appearance_config?.orientation === 'horizontal') {
+            setIsVertical(false);
+          } else {
+            // Auto detect if not set
+            setIsVertical(window.innerHeight > window.innerWidth);
+          }
         }
         setIsLoading(false);
       } catch (err: any) {
@@ -854,7 +865,11 @@ export default function Player() {
   }
 
   return (
-    <div className={cn("fixed inset-0 bg-black overflow-hidden text-white select-none", !showCursor && "cursor-none")}>
+    <div className={cn("fixed inset-0 bg-black overflow-hidden text-white select-none flex items-center justify-center", !showCursor && "cursor-none")}>
+      <div className={cn(
+        "relative w-full h-full overflow-hidden transition-all duration-500",
+        isVertical && "max-w-[56.25vh] aspect-[9/16] shadow-2xl"
+      )}>
       {/* Hidden camera and canvas for face detection */}
       {!isPreview && (
         <>
@@ -1035,6 +1050,7 @@ export default function Player() {
         }}
       />
 
+      </div>
     </div>
   );
 }

@@ -28,6 +28,7 @@ interface DeviceRow {
   num_filial: string | null;
   is_maintenance: boolean;
   playlist_id: string | null;
+  appearance_config: any;
 }
 
 export default function DeviceDetailPage() {
@@ -58,7 +59,7 @@ export default function DeviceDetailPage() {
 
     let query = supabase
       .from("dispositivos")
-      .select("id, apelido_interno, serial, online, num_filial, is_maintenance, playlist_id, last_player_activity_at, company_id, tenant_id")
+      .select("id, apelido_interno, serial, online, num_filial, is_maintenance, playlist_id, last_player_activity_at, company_id, tenant_id, appearance_config")
       .eq("id", Number(id));
     
     if (!isSuperAdmin) {
@@ -88,6 +89,7 @@ export default function DeviceDetailPage() {
         num_filial: data.num_filial ?? "",
         is_maintenance: !!data.is_maintenance,
         playlist_id: data.playlist_id,
+        appearance_config: data.appearance_config || {},
       });
       setNumFilial(data.num_filial ?? "");
       setDeviceName(data.apelido_interno ?? "");
@@ -107,8 +109,9 @@ export default function DeviceDetailPage() {
 
   const handlePreview = () => {
     if (!device?.device_code) return;
-    const width = window.innerWidth * 0.7;
-    const height = window.innerHeight * 0.7;
+    const isVertical = device.appearance_config?.orientation === 'vertical';
+    const width = isVertical ? window.innerHeight * 0.4 : window.innerWidth * 0.7;
+    const height = isVertical ? window.innerHeight * 0.8 : window.innerHeight * 0.7;
     const left = (window.innerWidth - width) / 2;
     const top = (window.innerHeight - height) / 2;
 
@@ -141,7 +144,8 @@ export default function DeviceDetailPage() {
       apelido_interno: deviceName,
       num_filial: numFilial,
       is_maintenance: isMaintenance,
-      playlist_id: selectedPlaylistId
+      playlist_id: selectedPlaylistId,
+      appearance_config: device.appearance_config
     };
 
     // SuperAdmin pode alterar serial e empresa
@@ -357,6 +361,25 @@ export default function DeviceDetailPage() {
                   Este dispositivo usará a playlist padrão da empresa como fallback.
                 </p>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Orientação do Display</Label>
+              <Select 
+                value={device.appearance_config?.orientation || "horizontal"} 
+                onValueChange={(val) => setDevice(prev => prev ? { 
+                  ...prev, 
+                  appearance_config: { ...prev.appearance_config, orientation: val } 
+                } : null)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione a orientação" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="horizontal">Horizontal (Padrão)</SelectItem>
+                  <SelectItem value="vertical">Vertical (Retrato)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <Button 
