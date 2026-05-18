@@ -164,7 +164,7 @@ export default function DevicesPage() {
 
   const filteredDevices = useMemo(() => {
     if (!devices) return [];
-    return devices.filter(d => {
+    let result = devices.filter(d => {
       const connStatus = getConnectionStatus(d.last_player_activity_at);
       const matchesSearch = 
         (d.apelido_interno?.toLowerCase().includes(search.toLowerCase()) || 
@@ -179,13 +179,41 @@ export default function DevicesPage() {
         playlistFilter === "has" ? !!d.playlist_id :
         !d.playlist_id;
       return matchesSearch && matchesStore && matchesGroup && matchesStatus && matchesPlaylist && matchesCompany;
-    }).sort((a, b) => {
-      // Prioridade: Sem playlist no topo
-      if (!a.playlist_id && b.playlist_id) return -1;
-      if (a.playlist_id && !b.playlist_id) return 1;
-      return (a.apelido_interno || "").localeCompare(b.apelido_interno || "");
     });
-  }, [devices, search, storeFilter, groupFilter, statusFilter, playlistFilter, companyFilter]);
+
+    if (sortConfig) {
+      result.sort((a, b) => {
+        let valA: any = a[sortConfig.key as keyof typeof a];
+        let valB: any = b[sortConfig.key as keyof typeof b];
+
+        // Handle nested properties for companies and playlists
+        if (sortConfig.key === "company") {
+          valA = a.companies?.name || "";
+          valB = b.companies?.name || "";
+        } else if (sortConfig.key === "playlist") {
+          valA = a.playlists?.name || "";
+          valB = b.playlists?.name || "";
+        } else if (sortConfig.key === "status") {
+          valA = getConnectionStatus(a.last_player_activity_at);
+          valB = getConnectionStatus(b.last_player_activity_at);
+        }
+
+        if (valA < valB) return sortConfig.direction === "asc" ? -1 : 1;
+        if (valA > valB) return sortConfig.direction === "asc" ? 1 : -1;
+        return 0;
+      });
+    } else {
+      // Default sorting
+      result.sort((a, b) => {
+        // Prioridade: Sem playlist no topo
+        if (!a.playlist_id && b.playlist_id) return -1;
+        if (a.playlist_id && !b.playlist_id) return 1;
+        return (a.apelido_interno || "").localeCompare(b.apelido_interno || "");
+      });
+    }
+
+    return result;
+  }, [devices, search, storeFilter, groupFilter, statusFilter, playlistFilter, companyFilter, sortConfig]);
 
   const groups = useMemo(() => {
     if (!devices) return [];
