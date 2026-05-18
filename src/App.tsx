@@ -44,6 +44,7 @@ import QueryErrorsReport from "./pages/QueryErrorsReport";
 import PlayerConsulta from "./pages/PlayerConsulta";
 import Setup from "./pages/Setup";
 import Proposal from "./pages/Proposal";
+import ApiIntegrationsPage from "./pages/ApiIntegrations";
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -185,6 +186,11 @@ const App = () => {
                 <Route path="/configuracoes" element={
                   <ProtectedRoute requireAdmin>
                     <Settings />
+                  </ProtectedRoute>
+                } />
+                <Route path="/integracoes-api" element={
+                  <ProtectedRoute requireAdmin>
+                    <ApiIntegrationsPage />
                   </ProtectedRoute>
                 } />
 

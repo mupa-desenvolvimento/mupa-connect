@@ -18,7 +18,8 @@ import {
   MessageSquare,
   AlertOctagon,
   Camera,
-  FileText
+  FileText,
+  Plug2
 } from "lucide-react";
 
 
@@ -68,6 +69,7 @@ export function AppSidebar() {
     { title: "Usuários", url: "/usuarios", icon: Users, visible: isAdmin },
     { title: "Lojas", url: "/lojas", icon: Store, visible: isAdmin || !!tenantId },
     { title: "Grupos", url: "/grupos", icon: Network, visible: isAdmin },
+    { title: "Integrações de API", url: "/integracoes-api", icon: Plug2, visible: isAdmin },
     { title: "Configurações", url: "/configuracoes", icon: Settings, visible: isAdmin },
   ].filter((i) => i.visible);
 
