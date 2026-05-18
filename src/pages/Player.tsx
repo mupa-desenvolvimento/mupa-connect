@@ -7,6 +7,7 @@ import { PlayerEngine } from "@/components/PlayerEngine";
 import { ManifestManager, ScheduleResolver, MediaCacheService } from "@/components/PlayerServices";
 import { FirebaseRealtimeService } from "@/services/FirebaseRealtimeService";
 import { ManifestService } from "@/services/ManifestService";
+import { DevicePersistenceService } from "@/services/DevicePersistenceService";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Monitor, Wrench, Scan } from "lucide-react";
@@ -106,8 +107,11 @@ export default function Player() {
 
   // 1. Core Loader: Resolve Identity & Manifest (Offline-First)
   useEffect(() => {
+    const persistentId = DevicePersistenceService.getOrCreatePersistentId();
+    
     if (!deviceCode && !isPreview) {
-      navigate("/setup");
+      console.log("[Player] No deviceCode in URL, redirecting to auto-load with:", persistentId);
+      navigate(`/play/${persistentId}`, { replace: true });
       return;
     }
 

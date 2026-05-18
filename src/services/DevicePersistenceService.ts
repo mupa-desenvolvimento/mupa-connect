@@ -12,21 +12,37 @@ const STORAGE_KEYS = {
 export const DevicePersistenceService = {
   /**
    * Gets or generates a persistent UUID for this device.
-   * Priority: LocalStorage -> IndexedDB (Future) -> Generated
+   * Priority: LocalStorage -> Generated
    */
   getOrCreatePersistentId: (): string => {
+    // Tenta recuperar do localStorage primeiro
     let uuid = localStorage.getItem(STORAGE_KEYS.PERSISTENT_UUID);
     
     if (!uuid) {
-      // Check if we have an old serial and reuse it or its suffix to maintain some continuity
-      const oldSerial = localStorage.getItem(STORAGE_KEYS.DEVICE_SERIAL);
-      if (oldSerial && oldSerial.startsWith("CONS-")) {
-        uuid = oldSerial;
+      // Tenta recuperar do cookie como fallback (mais difícil de limpar em alguns casos)
+      const cookieUuid = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("mupa_device_id="))
+        ?.split("=")[1];
+
+      if (cookieUuid) {
+        uuid = cookieUuid;
+        localStorage.setItem(STORAGE_KEYS.PERSISTENT_UUID, uuid);
       } else {
-        uuid = `CONS-${crypto.randomUUID().split('-')[0].toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+        // Se não houver nada, gera um novo robusto
+        // Combina UUID com timestamp para garantir unicidade absoluta
+        const timestamp = Date.now().toString(36);
+        const randomPart = crypto.randomUUID().split('-')[0].toUpperCase();
+        uuid = `CONS-${randomPart}-${timestamp}`.toUpperCase();
+        
+        localStorage.setItem(STORAGE_KEYS.PERSISTENT_UUID, uuid);
+        localStorage.setItem(STORAGE_KEYS.DEVICE_SERIAL, uuid);
+        
+        // Salva no cookie por 10 anos
+        const d = new Date();
+        d.setTime(d.getTime() + (10 * 365 * 24 * 60 * 60 * 1000));
+        document.cookie = `mupa_device_id=${uuid};expires=${d.toUTCString()};path=/;SameSite=Strict`;
       }
-      localStorage.setItem(STORAGE_KEYS.PERSISTENT_UUID, uuid);
-      localStorage.setItem(STORAGE_KEYS.DEVICE_SERIAL, uuid);
     }
     
     return uuid;
