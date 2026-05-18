@@ -76,6 +76,14 @@ export default function Setup() {
     }
   }, [location]);
 
+  const [showKeyboard, setShowKeyboard] = useState(false);
+  const [activeInput, setActiveInput] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    code_empresa: "",
+    apelido: "Novo Player",
+    numero_loja: "",
+  });
+
   const handleKeyboardChange = (value: string) => {
     if (activeInput) {
       setFormData(prev => ({
