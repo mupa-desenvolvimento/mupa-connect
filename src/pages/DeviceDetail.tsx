@@ -109,8 +109,9 @@ export default function DeviceDetailPage() {
 
   const handlePreview = () => {
     if (!device?.device_code) return;
-    const width = window.innerWidth * 0.7;
-    const height = window.innerHeight * 0.7;
+    const isVertical = device.appearance_config?.orientation === 'vertical';
+    const width = isVertical ? window.innerHeight * 0.4 : window.innerWidth * 0.7;
+    const height = isVertical ? window.innerHeight * 0.8 : window.innerHeight * 0.7;
     const left = (window.innerWidth - width) / 2;
     const top = (window.innerHeight - height) / 2;
 
