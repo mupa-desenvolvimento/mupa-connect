@@ -167,6 +167,10 @@ export function EditDeviceModal({ open, onOpenChange, device, onSuccess }: EditD
         pin: values.pin,
         autostart: values.autostart,
         atualizado: new Date().toISOString(),
+        appearance_config: {
+          ...(device.appearance_config || {}),
+          orientation: values.orientacao
+        }
       };
 
       const { error: updateError } = await supabase
