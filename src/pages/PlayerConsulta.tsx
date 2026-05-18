@@ -515,6 +515,12 @@ export default function PlayerConsulta() {
           const result = await ManifestService.fetchManifest(deviceCode);
           setManifest(result.manifest);
           setDeviceInfo(result.device || device);
+          
+          if (result.device?.appearance_config?.orientation === 'vertical') {
+            setIsVertical(true);
+          } else if (result.device?.appearance_config?.orientation === 'horizontal') {
+            setIsVertical(false);
+          }
         }
       } catch (err) {
         console.warn("[Player] Background sync failed", err);
