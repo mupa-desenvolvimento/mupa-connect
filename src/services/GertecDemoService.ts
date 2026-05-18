@@ -42,7 +42,7 @@ export const GERTEC_DEMO_PRODUCTS: GertecProduct[] = [
     preco_promocional: 69.90,
     tipo: "vip",
     observacao: "Preço exclusivo para clientes VIP",
-    url_imagem: "https://m.media-amazon.com/images/I/51ABupFD3-L._AC_SX466_.jpg"
+    url_imagem: "https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcTGSQmpg636P_mGRc6ZNIkk17EE01rU3BXprm7HY1rZwnyeYMK8g2PHiI7uMOFA0z5RCjw2JwL1hAENxCsxhtq4z2hFdrv6IOujMVARE4KudXbIp30mXWX5xA"
   }
 ];
 
