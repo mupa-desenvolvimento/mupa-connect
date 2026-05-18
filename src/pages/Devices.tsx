@@ -22,7 +22,11 @@ import {
   AlertTriangle,
   Edit2,
   CheckSquare,
-  Square
+  Square,
+  ChevronDown,
+  ArrowUpAZ,
+  ArrowDownAZ,
+  MoreVertical
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
