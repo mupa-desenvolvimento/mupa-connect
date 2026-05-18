@@ -16,6 +16,8 @@ import { PWAInstallModal } from "@/components/PWAInstallModal";
 import { DevShowcaseOverlay } from "@/components/DevShowcaseOverlay";
 import { DevicePersistenceService } from "@/services/DevicePersistenceService";
 import { extractImageColors } from "@/utils/extractImageColors";
+import { lookupGertecProduct, GERTEC_TENANT_ID } from "@/services/GertecDemoService";
+
 
 interface AppearanceConfig {
   show_device_name?: boolean;
@@ -1000,6 +1002,34 @@ export default function PlayerConsulta() {
     setLastConsultedEan(cleanEan);
 
     try {
+      // 1. Verificar se é um produto demo da Gertec
+      const gertecProduct = lookupGertecProduct(cleanEan);
+      if (gertecProduct) {
+        console.log("[Player] Gertec Demo Product found:", cleanEan);
+        const finalProduct = {
+          ean: gertecProduct.ean,
+          internal_id: gertecProduct.ean,
+          description: gertecProduct.descricao,
+          stock_prices: [
+            { 
+              unit_pack: 1, 
+              price_pack: gertecProduct.preco, 
+              price_prom_pack: gertecProduct.preco_promocional || undefined,
+              stock_avaliable: 999 
+            }
+          ],
+          visual: buildVisual(cleanEan, { imagem_url: gertecProduct.url_imagem })
+        };
+        
+        // Simular um pequeno delay para efeito visual de processamento
+        await new Promise(resolve => setTimeout(resolve, 600));
+        
+        setProduct(finalProduct);
+        localStorage.setItem(cachedKey, JSON.stringify({ data: finalProduct, timestamp: Date.now() }));
+        return;
+      }
+
+      // 2. Fallback para integração padrão
       const { data, error: functionError } = await supabase.functions.invoke('integra-assai', {
         body: { ean: cleanEan, store_id: deviceInfo?.num_filial || deviceInfo?.store_id }
       });
@@ -1012,6 +1042,7 @@ export default function PlayerConsulta() {
       localStorage.setItem(cachedKey, JSON.stringify({ data: finalProduct, timestamp: Date.now() }));
 
     } catch (err: any) {
+
       setError("Produto não encontrado.");
     } finally {
       setIsConsulting(false);
