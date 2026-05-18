@@ -22,7 +22,11 @@ import {
   AlertTriangle,
   Edit2,
   CheckSquare,
-  Square
+  Square,
+  ChevronDown,
+  ArrowUpAZ,
+  ArrowDownAZ,
+  MoreVertical
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -37,6 +41,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { issueDeviceCommand } from "@/lib/device-commands";
@@ -69,6 +80,7 @@ export default function DevicesPage() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [playlistModalOpen, setPlaylistModalOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
   const isMobile = useIsMobile();
   const { tenantId, companyId, isSuperAdmin, isTecnico, isAdmin } = useUserRole();
 
@@ -152,7 +164,7 @@ export default function DevicesPage() {
 
   const filteredDevices = useMemo(() => {
     if (!devices) return [];
-    return devices.filter(d => {
+    let result = devices.filter(d => {
       const connStatus = getConnectionStatus(d.last_player_activity_at);
       const matchesSearch = 
         (d.apelido_interno?.toLowerCase().includes(search.toLowerCase()) || 
@@ -167,13 +179,41 @@ export default function DevicesPage() {
         playlistFilter === "has" ? !!d.playlist_id :
         !d.playlist_id;
       return matchesSearch && matchesStore && matchesGroup && matchesStatus && matchesPlaylist && matchesCompany;
-    }).sort((a, b) => {
-      // Prioridade: Sem playlist no topo
-      if (!a.playlist_id && b.playlist_id) return -1;
-      if (a.playlist_id && !b.playlist_id) return 1;
-      return (a.apelido_interno || "").localeCompare(b.apelido_interno || "");
     });
-  }, [devices, search, storeFilter, groupFilter, statusFilter, playlistFilter, companyFilter]);
+
+    if (sortConfig) {
+      result.sort((a, b) => {
+        let valA: any = a[sortConfig.key as keyof typeof a];
+        let valB: any = b[sortConfig.key as keyof typeof b];
+
+        // Handle nested properties for companies and playlists
+        if (sortConfig.key === "company") {
+          valA = a.companies?.name || "";
+          valB = b.companies?.name || "";
+        } else if (sortConfig.key === "playlist") {
+          valA = a.playlists?.name || "";
+          valB = b.playlists?.name || "";
+        } else if (sortConfig.key === "status") {
+          valA = getConnectionStatus(a.last_player_activity_at);
+          valB = getConnectionStatus(b.last_player_activity_at);
+        }
+
+        if (valA < valB) return sortConfig.direction === "asc" ? -1 : 1;
+        if (valA > valB) return sortConfig.direction === "asc" ? 1 : -1;
+        return 0;
+      });
+    } else {
+      // Default sorting
+      result.sort((a, b) => {
+        // Prioridade: Sem playlist no topo
+        if (!a.playlist_id && b.playlist_id) return -1;
+        if (a.playlist_id && !b.playlist_id) return 1;
+        return (a.apelido_interno || "").localeCompare(b.apelido_interno || "");
+      });
+    }
+
+    return result;
+  }, [devices, search, storeFilter, groupFilter, statusFilter, playlistFilter, companyFilter, sortConfig]);
 
   const groups = useMemo(() => {
     if (!devices) return [];
@@ -476,21 +516,63 @@ export default function DevicesPage() {
             <Table>
 
               <TableHeader className="sticky top-0 bg-card z-10 border-b border-border/60">
-                <TableRow className="hover:bg-transparent">
+                <TableRow className="hover:bg-transparent uppercase text-[10px] font-black tracking-widest text-muted-foreground/60">
                   <TableHead className="w-10">
                     <Checkbox 
                       checked={filteredDevices.length > 0 && selectedIds.size === filteredDevices.length}
                       onCheckedChange={toggleSelectAll}
                     />
                   </TableHead>
-                  <TableHead className="w-[25%]">Dispositivo</TableHead>
-                  <TableHead>Serial</TableHead>
-                  <TableHead className="w-[120px] text-[11px] opacity-75 font-medium hidden md:table-cell">Cadastrado</TableHead>
-                  {isSuperAdmin && <TableHead>Empresa</TableHead>}
-                  <TableHead>Loja</TableHead>
-                  <TableHead>Playlist</TableHead>
-                  <TableHead>Última Atividade</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="w-[25%]">
+                    <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setSortConfig({ key: "apelido_interno", direction: sortConfig?.key === "apelido_interno" && sortConfig.direction === "asc" ? "desc" : "asc" })}>
+                      Dispositivo
+                      <ColumnHeaderMenu onSort={(dir) => setSortConfig({ key: "apelido_interno", direction: dir })} currentSort={sortConfig?.key === "apelido_interno" ? sortConfig.direction : null} />
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setSortConfig({ key: "serial", direction: sortConfig?.key === "serial" && sortConfig.direction === "asc" ? "desc" : "asc" })}>
+                      Serial
+                      <ColumnHeaderMenu onSort={(dir) => setSortConfig({ key: "serial", direction: dir })} currentSort={sortConfig?.key === "serial" ? sortConfig.direction : null} />
+                    </div>
+                  </TableHead>
+                  <TableHead className="w-[120px] text-[11px] opacity-75 font-medium hidden md:table-cell">
+                    <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setSortConfig({ key: "created_at", direction: sortConfig?.key === "created_at" && sortConfig.direction === "asc" ? "desc" : "asc" })}>
+                      Cadastrado
+                      <ColumnHeaderMenu onSort={(dir) => setSortConfig({ key: "created_at", direction: dir })} currentSort={sortConfig?.key === "created_at" ? sortConfig.direction : null} />
+                    </div>
+                  </TableHead>
+                  {isSuperAdmin && (
+                    <TableHead>
+                      <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setSortConfig({ key: "company", direction: sortConfig?.key === "company" && sortConfig.direction === "asc" ? "desc" : "asc" })}>
+                        Empresa
+                        <ColumnHeaderMenu onSort={(dir) => setSortConfig({ key: "company", direction: dir })} currentSort={sortConfig?.key === "company" ? sortConfig.direction : null} />
+                      </div>
+                    </TableHead>
+                  )}
+                  <TableHead>
+                    <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setSortConfig({ key: "num_filial", direction: sortConfig?.key === "num_filial" && sortConfig.direction === "asc" ? "desc" : "asc" })}>
+                      Loja
+                      <ColumnHeaderMenu onSort={(dir) => setSortConfig({ key: "num_filial", direction: dir })} currentSort={sortConfig?.key === "num_filial" ? sortConfig.direction : null} />
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setSortConfig({ key: "playlist", direction: sortConfig?.key === "playlist" && sortConfig.direction === "asc" ? "desc" : "asc" })}>
+                      Playlist
+                      <ColumnHeaderMenu onSort={(dir) => setSortConfig({ key: "playlist", direction: dir })} currentSort={sortConfig?.key === "playlist" ? sortConfig.direction : null} />
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setSortConfig({ key: "last_player_activity_at", direction: sortConfig?.key === "last_player_activity_at" && sortConfig.direction === "asc" ? "desc" : "asc" })}>
+                      Atividade
+                      <ColumnHeaderMenu onSort={(dir) => setSortConfig({ key: "last_player_activity_at", direction: dir })} currentSort={sortConfig?.key === "last_player_activity_at" ? sortConfig.direction : null} />
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setSortConfig({ key: "status", direction: sortConfig?.key === "status" && sortConfig.direction === "asc" ? "desc" : "asc" })}>
+                      Status
+                      <ColumnHeaderMenu onSort={(dir) => setSortConfig({ key: "status", direction: dir })} currentSort={sortConfig?.key === "status" ? sortConfig.direction : null} />
+                    </div>
+                  </TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -668,5 +750,25 @@ export default function DevicesPage() {
         }}
       />
     </div>
+  );
+}
+
+function ColumnHeaderMenu({ onSort, currentSort }: { onSort: (dir: "asc" | "desc") => void, currentSort: "asc" | "desc" | null }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+          <ChevronDown className={cn("h-3 w-3 transition-transform", currentSort && "text-primary opacity-100")} />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-48 bg-card/95 backdrop-blur-xl border-white/10 shadow-2xl">
+        <DropdownMenuItem onClick={() => onSort("asc")} className={cn(currentSort === "asc" && "text-primary bg-primary/10")}>
+          <ArrowUpAZ className="h-4 w-4 mr-2" /> Ordenar Crescente
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onSort("desc")} className={cn(currentSort === "desc" && "text-primary bg-primary/10")}>
+          <ArrowDownAZ className="h-4 w-4 mr-2" /> Ordenar Decrescente
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
