@@ -86,6 +86,7 @@ export default function Player() {
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [faceDetectionActive, setFaceDetectionActive] = useState(false);
   const [errorInfo, setErrorInfo] = useState<{ message: string; code?: string } | null>(null);
+  const [isVertical, setIsVertical] = useState(false);
   const networkInfoRef = useRef<{ ip: string; localIp?: string; city: string; region: string } | null>(null);
   const [networkInfo, setNetworkInfo] = useState<{ ip: string; localIp?: string; city: string; region: string } | null>(null);
   const hasSavedNetworkInfoRef = useRef(false);
