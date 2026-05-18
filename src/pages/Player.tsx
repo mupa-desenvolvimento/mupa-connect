@@ -900,12 +900,6 @@ export default function Player() {
                 <div className="text-[11px] uppercase tracking-[0.2em] opacity-60 font-mono font-bold">
                   {deviceInfo ? `Filial ${deviceInfo.num_filial}` : `Offline · ${deviceCode}`}
                 </div>
-                {networkInfo && (
-                  <div className="text-[9px] uppercase tracking-[0.1em] opacity-40 font-mono mt-1 flex flex-col gap-0.5">
-                    <div>IP: {networkInfo.localIp !== 'N/A' ? `${networkInfo.localIp} (Local)` : networkInfo.ip}</div>
-                    <div>{networkInfo.city}, {networkInfo.region}</div>
-                  </div>
-                )}
               </div>
             </div>
           )}
