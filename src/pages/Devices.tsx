@@ -516,21 +516,63 @@ export default function DevicesPage() {
             <Table>
 
               <TableHeader className="sticky top-0 bg-card z-10 border-b border-border/60">
-                <TableRow className="hover:bg-transparent">
+                <TableRow className="hover:bg-transparent uppercase text-[10px] font-black tracking-widest text-muted-foreground/60">
                   <TableHead className="w-10">
                     <Checkbox 
                       checked={filteredDevices.length > 0 && selectedIds.size === filteredDevices.length}
                       onCheckedChange={toggleSelectAll}
                     />
                   </TableHead>
-                  <TableHead className="w-[25%]">Dispositivo</TableHead>
-                  <TableHead>Serial</TableHead>
-                  <TableHead className="w-[120px] text-[11px] opacity-75 font-medium hidden md:table-cell">Cadastrado</TableHead>
-                  {isSuperAdmin && <TableHead>Empresa</TableHead>}
-                  <TableHead>Loja</TableHead>
-                  <TableHead>Playlist</TableHead>
-                  <TableHead>Última Atividade</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="w-[25%]">
+                    <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setSortConfig({ key: "apelido_interno", direction: sortConfig?.key === "apelido_interno" && sortConfig.direction === "asc" ? "desc" : "asc" })}>
+                      Dispositivo
+                      <ColumnHeaderMenu onSort={(dir) => setSortConfig({ key: "apelido_interno", direction: dir })} currentSort={sortConfig?.key === "apelido_interno" ? sortConfig.direction : null} />
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setSortConfig({ key: "serial", direction: sortConfig?.key === "serial" && sortConfig.direction === "asc" ? "desc" : "asc" })}>
+                      Serial
+                      <ColumnHeaderMenu onSort={(dir) => setSortConfig({ key: "serial", direction: dir })} currentSort={sortConfig?.key === "serial" ? sortConfig.direction : null} />
+                    </div>
+                  </TableHead>
+                  <TableHead className="w-[120px] text-[11px] opacity-75 font-medium hidden md:table-cell">
+                    <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setSortConfig({ key: "created_at", direction: sortConfig?.key === "created_at" && sortConfig.direction === "asc" ? "desc" : "asc" })}>
+                      Cadastrado
+                      <ColumnHeaderMenu onSort={(dir) => setSortConfig({ key: "created_at", direction: dir })} currentSort={sortConfig?.key === "created_at" ? sortConfig.direction : null} />
+                    </div>
+                  </TableHead>
+                  {isSuperAdmin && (
+                    <TableHead>
+                      <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setSortConfig({ key: "company", direction: sortConfig?.key === "company" && sortConfig.direction === "asc" ? "desc" : "asc" })}>
+                        Empresa
+                        <ColumnHeaderMenu onSort={(dir) => setSortConfig({ key: "company", direction: dir })} currentSort={sortConfig?.key === "company" ? sortConfig.direction : null} />
+                      </div>
+                    </TableHead>
+                  )}
+                  <TableHead>
+                    <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setSortConfig({ key: "num_filial", direction: sortConfig?.key === "num_filial" && sortConfig.direction === "asc" ? "desc" : "asc" })}>
+                      Loja
+                      <ColumnHeaderMenu onSort={(dir) => setSortConfig({ key: "num_filial", direction: dir })} currentSort={sortConfig?.key === "num_filial" ? sortConfig.direction : null} />
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setSortConfig({ key: "playlist", direction: sortConfig?.key === "playlist" && sortConfig.direction === "asc" ? "desc" : "asc" })}>
+                      Playlist
+                      <ColumnHeaderMenu onSort={(dir) => setSortConfig({ key: "playlist", direction: dir })} currentSort={sortConfig?.key === "playlist" ? sortConfig.direction : null} />
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setSortConfig({ key: "last_player_activity_at", direction: sortConfig?.key === "last_player_activity_at" && sortConfig.direction === "asc" ? "desc" : "asc" })}>
+                      Atividade
+                      <ColumnHeaderMenu onSort={(dir) => setSortConfig({ key: "last_player_activity_at", direction: dir })} currentSort={sortConfig?.key === "last_player_activity_at" ? sortConfig.direction : null} />
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setSortConfig({ key: "status", direction: sortConfig?.key === "status" && sortConfig.direction === "asc" ? "desc" : "asc" })}>
+                      Status
+                      <ColumnHeaderMenu onSort={(dir) => setSortConfig({ key: "status", direction: dir })} currentSort={sortConfig?.key === "status" ? sortConfig.direction : null} />
+                    </div>
+                  </TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
