@@ -80,6 +80,7 @@ export default function DevicesPage() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [playlistModalOpen, setPlaylistModalOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
   const isMobile = useIsMobile();
   const { tenantId, companyId, isSuperAdmin, isTecnico, isAdmin } = useUserRole();
 
