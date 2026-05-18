@@ -60,7 +60,10 @@ interface ProductData {
     cor_dominante_escuro: string;
   } | null;
   is_cached?: boolean;
+  tipo?: string;
+  observacao?: string;
 }
+
 
 const DEFAULT_PRODUCT_IMAGE = "https://qtbkvshbmqlszncxlcuc.supabase.co/storage/v1/object/public/dsl-uploads/kqrRuPz304ckV2bn5HmQpveeQQo1/821f6c4e-8d26-4bd2-90bd-a52929afc73e.png";
 const DEFAULT_VISUAL_COLORS = {
@@ -1010,6 +1013,8 @@ export default function PlayerConsulta() {
           ean: gertecProduct.ean,
           internal_id: gertecProduct.ean,
           description: gertecProduct.descricao,
+          tipo: gertecProduct.tipo,
+          observacao: gertecProduct.observacao,
           stock_prices: [
             { 
               unit_pack: 1, 
@@ -1028,6 +1033,7 @@ export default function PlayerConsulta() {
         localStorage.setItem(cachedKey, JSON.stringify({ data: finalProduct, timestamp: Date.now() }));
         return;
       }
+
 
       // 2. Fallback para integração padrão
       const { data, error: functionError } = await supabase.functions.invoke('integra-assai', {
