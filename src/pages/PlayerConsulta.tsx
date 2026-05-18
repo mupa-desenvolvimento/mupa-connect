@@ -102,6 +102,12 @@ const ensureSafeImageUrl = (url: string | null | undefined) => {
   // Se já estiver usando o proxy ou não for do mupa, não faz nada
   if (url.includes('wsrv.nl')) return url;
   
+  // Imagens externas (como as da Gertec) devem passar pelo proxy para evitar problemas de CORS e SSL
+  if (url.startsWith('http')) {
+    const cleanUrl = url.replace('https://', 'http://');
+    return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}`;
+  }
+  
   if (url.includes('srv-mupa.ddns.net')) {
     // Força http para evitar o erro de SSL no servidor de origem
     const cleanUrl = url.replace('https://', 'http://');
@@ -239,18 +245,20 @@ export default function PlayerConsulta() {
   // Extração automática de cores quando a imagem do produto NÃO for default
   useEffect(() => {
     if (!product?.visual?.imagem_url) return;
-    const url = product.visual.imagem_url;
-    if (isDefaultImage(url)) return; // mantém cores default
+    const rawUrl = product.visual.imagem_url;
+    if (isDefaultImage(rawUrl)) return; // mantém cores default
+
+    const url = ensureSafeImageUrl(rawUrl);
+    if (!url) return;
 
     let cancelled = false;
     const run = async () => {
-      const palette =
-        (await extractImageColors(url)) ||
-        (await extractImageColors(`https://wsrv.nl/?url=${encodeURIComponent(url)}`));
+      // Tenta extrair as cores da imagem (já com proxy se necessário)
+      const palette = await extractImageColors(url);
 
       if (cancelled || !palette) return;
       setProduct(prev => {
-        if (!prev || !prev.visual || prev.visual.imagem_url !== url) return prev;
+        if (!prev || !prev.visual || prev.visual.imagem_url !== rawUrl) return prev;
         return {
           ...prev,
           visual: {
@@ -1671,7 +1679,7 @@ export default function PlayerConsulta() {
                 >
                   <div className="relative w-full h-full">
                     <OptimizedProductImage
-                      src={product.visual?.imagem_url || null}
+                      src={ensureSafeImageUrl(product.visual?.imagem_url) || null}
                       fallback={[
                         product.ean ? MUPA_STATIC_IMAGE(product.ean) : null,
                         fallbackImageUrl,
