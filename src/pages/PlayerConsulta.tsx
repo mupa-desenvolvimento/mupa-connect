@@ -411,6 +411,17 @@ export default function PlayerConsulta() {
           if (result && result.manifest) {
             setManifest(result.manifest);
             setDeviceInfo(result.device);
+            
+            // Apply orientation from appearance_config
+            if (result.device?.appearance_config?.orientation === 'vertical') {
+              setIsVertical(true);
+            } else if (result.device?.appearance_config?.orientation === 'horizontal') {
+              setIsVertical(false);
+            } else {
+              // Auto detect if not explicitly set
+              setIsVertical(window.innerHeight > window.innerWidth);
+            }
+
             DevicePersistenceService.saveDeviceConfig(result.device);
             setIsLoading(false);
           } else {
