@@ -86,6 +86,7 @@ export default function Player() {
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [faceDetectionActive, setFaceDetectionActive] = useState(false);
   const [errorInfo, setErrorInfo] = useState<{ message: string; code?: string } | null>(null);
+  const [networkInfo, setNetworkInfo] = useState<{ ip: string; localIp?: string; city: string; region: string } | null>(null);
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   const lastDetectionsRef = useRef<{ [key: number]: number }>({}); // Track last detection time per face index
   const faceSessionsRef = useRef<Record<number, {
@@ -487,6 +488,50 @@ export default function Player() {
     return () => cancelAnimationFrame(rafId);
   }, [lastIndexChange, currentIndex, activePlaylist]);
 
+  // Fetch Network Info (IP & Location)
+  useEffect(() => {
+    const fetchNetworkInfo = async () => {
+      try {
+        // Fetch Public IP and Location
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        
+        let localIp = 'N/A';
+        
+        // Try to get Local IP via WebRTC (best effort)
+        try {
+          const pc = new RTCPeerConnection({ iceServers: [] });
+          pc.createDataChannel("");
+          pc.createOffer().then(offer => pc.setLocalDescription(offer));
+          pc.onicecandidate = (ice) => {
+            if (ice && ice.candidate && ice.candidate.candidate) {
+              const matches = /([0-9]{1,3}(\.[0-9]{1,3}){3})/.exec(ice.candidate.candidate);
+              if (matches && matches[1]) {
+                setNetworkInfo(prev => prev ? { ...prev, localIp: matches[1] } : null);
+                pc.onicecandidate = null;
+                pc.close();
+              }
+            }
+          };
+          setTimeout(() => pc.close(), 2000);
+        } catch (e) {
+          console.warn("WebRTC Local IP detection failed", e);
+        }
+
+        setNetworkInfo({
+          ip: data.ip,
+          city: data.city,
+          region: data.region_code,
+          localIp: localIp
+        });
+      } catch (err) {
+        console.error("[Player] Failed to fetch network info:", err);
+      }
+    };
+
+    fetchNetworkInfo();
+  }, []);
+
   // UI Setup - Already handled in top-level useEffect
 
   const [now, setNow] = useState(new Date());
@@ -813,6 +858,12 @@ export default function Player() {
                 <div className="text-[11px] uppercase tracking-[0.2em] opacity-60 font-mono font-bold">
                   {deviceInfo ? `Filial ${deviceInfo.num_filial}` : `Offline · ${deviceCode}`}
                 </div>
+                {networkInfo && (
+                  <div className="text-[9px] uppercase tracking-[0.1em] opacity-40 font-mono mt-1 flex flex-col gap-0.5">
+                    <div>IP: {networkInfo.localIp !== 'N/A' ? `${networkInfo.localIp} (Local)` : networkInfo.ip}</div>
+                    <div>{networkInfo.city}, {networkInfo.region}</div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -914,9 +965,17 @@ export default function Player() {
               <span className="text-white/40">Status:</span>
               <span className="text-yellow-500 font-bold">EM MANUTENÇÃO</span>
             </div>
-            <div className="mt-2 pt-2 border-t border-white/5 flex justify-between gap-4">
-              <span className="text-white/40">IP Local:</span>
-              <span className="text-white/60 font-bold">Detectando...</span>
+            <div className="mt-2 pt-2 border-t border-white/5 space-y-2">
+              <div className="flex justify-between gap-4">
+                <span className="text-white/40">IP Local:</span>
+                <span className="text-white/60 font-bold">{networkInfo?.localIp !== 'N/A' ? networkInfo?.localIp : networkInfo?.ip || "Detectando..."}</span>
+              </div>
+              {networkInfo && (
+                <div className="flex justify-between gap-4">
+                  <span className="text-white/40">Localização:</span>
+                  <span className="text-white/60 font-bold">{networkInfo.city}, {networkInfo.region}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
