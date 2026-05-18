@@ -1787,7 +1787,7 @@ export default function PlayerConsulta() {
                       return (
                         <>
                           {/* BADGES */}
-                          <div className="flex items-center justify-center gap-3">
+                          <div className="flex items-center justify-center gap-3 flex-wrap">
                             {hasRealDiscount && badgeLabel && (
                               <>
                                 <div
@@ -1804,7 +1804,23 @@ export default function PlayerConsulta() {
                                 </div>
                               </>
                             )}
+                            {product.tipo && product.tipo !== 'normal' && (
+                              <div
+                                className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest text-white"
+                                style={{ backgroundColor: product.tipo === 'promocao' ? "#E11D48" : product.tipo === 'vip' ? "#CA8A04" : "#2563EB" }}
+                              >
+                                {product.tipo.replace(/_/g, ' ')}
+                              </div>
+                            )}
+                            {product.observacao && (
+                              <div
+                                className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest text-white bg-white/20 border border-white/10"
+                              >
+                                {product.observacao}
+                              </div>
+                            )}
                           </div>
+
 
                           {/* PREÇO PRINCIPAL */}
                           <div
