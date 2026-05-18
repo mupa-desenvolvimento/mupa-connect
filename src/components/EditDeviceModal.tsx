@@ -105,6 +105,7 @@ export function EditDeviceModal({ open, onOpenChange, device, onSuccess }: EditD
         device_type: device.device_type || "",
         pin: device.pin || "",
         autostart: device.autostart !== false,
+        orientacao: device.appearance_config?.orientation || "horizontal",
       });
     }
   }, [device, open, form]);
