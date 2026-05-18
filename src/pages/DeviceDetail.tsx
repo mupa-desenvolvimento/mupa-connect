@@ -59,7 +59,7 @@ export default function DeviceDetailPage() {
 
     let query = supabase
       .from("dispositivos")
-      .select("id, apelido_interno, serial, online, num_filial, is_maintenance, playlist_id, last_player_activity_at, company_id, tenant_id")
+      .select("id, apelido_interno, serial, online, num_filial, is_maintenance, playlist_id, last_player_activity_at, company_id, tenant_id, appearance_config")
       .eq("id", Number(id));
     
     if (!isSuperAdmin) {
