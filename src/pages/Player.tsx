@@ -865,11 +865,11 @@ export default function Player() {
   }
 
   return (
-    <div className={cn(
-      "fixed inset-0 bg-black overflow-hidden text-white select-none", 
-      !showCursor && "cursor-none",
-      isVertical ? "orientation-vertical" : "orientation-horizontal"
-    )}>
+    <div className={cn("fixed inset-0 bg-black overflow-hidden text-white select-none flex items-center justify-center", !showCursor && "cursor-none")}>
+      <div className={cn(
+        "relative w-full h-full overflow-hidden transition-all duration-500",
+        isVertical && "max-w-[56.25vh] aspect-[9/16] shadow-2xl"
+      )}>
       {/* Hidden camera and canvas for face detection */}
       {!isPreview && (
         <>
