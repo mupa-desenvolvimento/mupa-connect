@@ -34,7 +34,10 @@ import {
   PlusCircle,
   Play,
   Pencil,
-  RefreshCw
+  RefreshCw,
+  MapPin,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { PlaylistChangeModal } from "./PlaylistChangeModal";
 import { cn } from "@/lib/utils";
@@ -54,6 +57,9 @@ interface DeviceLike {
   persistence?: boolean;
   playlist_id?: string | null;
   playlists?: { name: string } | null;
+  ip_dispositivo?: string | null;
+  cidade?: string | null;
+  regiao?: string | null;
 }
 
 interface Props {
@@ -173,6 +179,7 @@ export function DeviceFirebaseCommandDrawer({
   const [newActionPayload, setNewActionPayload] = useState("");
   const [editingActionId, setEditingActionId] = useState<string | null>(null);
   const [playlistModalOpen, setPlaylistModalOpen] = useState(false);
+  const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -628,10 +635,23 @@ export function DeviceFirebaseCommandDrawer({
 
             {/* DETALHES TÉCNICOS */}
             <section className="space-y-3">
-              <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                Informações Técnicas
-              </h3>
-              <div className="grid grid-cols-1 gap-2 rounded-lg border bg-muted/30 p-3 text-sm">
+              <div 
+                className="flex items-center justify-between cursor-pointer group"
+                onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
+              >
+                <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-2">
+                  Informações Técnicas
+                  {showTechnicalDetails ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                </h3>
+                <span className="text-[10px] text-primary opacity-0 group-hover:opacity-100 transition-opacity font-medium">
+                  {showTechnicalDetails ? "Recolher" : "Expandir"}
+                </span>
+              </div>
+              
+              <div className={cn(
+                "grid grid-cols-1 gap-2 rounded-lg border bg-muted/30 p-3 text-sm transition-all duration-300",
+                showTechnicalDetails ? "border-primary/30 bg-primary/5" : ""
+              )}>
                 <DetailRow
                   icon={Hash}
                   label="Serial"
@@ -643,11 +663,44 @@ export function DeviceFirebaseCommandDrawer({
                   label="Grupo"
                   value={device?.grupo_dispositivos || "—"}
                 />
-                <DetailRow
-                  icon={Activity}
-                  label="Última atividade"
-                  value={formatDate(device?.last_player_activity_at)}
-                />
+                
+                {showTechnicalDetails && (
+                  <div className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-2 mt-1 pt-2 border-t border-primary/10">
+                    <DetailRow
+                      icon={Activity}
+                      label="ID Interno"
+                      value={String(device?.id || "—")}
+                      mono
+                    />
+                    <DetailRow
+                      icon={Globe}
+                      label="IP Identificado"
+                      value={device?.ip_dispositivo || "—"}
+                      mono
+                    />
+                    <DetailRow
+                      icon={MapPin}
+                      label="Localização"
+                      value={device?.cidade ? `${device.cidade}, ${device.regiao || ""}` : "—"}
+                    />
+                    <DetailRow
+                      icon={Activity}
+                      label="Última atividade"
+                      value={formatDate(device?.last_player_activity_at)}
+                    />
+                    <div className="mt-2 text-[10px] text-muted-foreground/60 italic leading-tight border-t border-primary/5 pt-2">
+                      Informações capturadas automaticamente pelo player durante a última sessão ativa.
+                    </div>
+                  </div>
+                )}
+
+                {!showTechnicalDetails && (
+                  <DetailRow
+                    icon={Activity}
+                    label="Última atividade"
+                    value={formatDate(device?.last_player_activity_at)}
+                  />
+                )}
               </div>
             </section>
 
