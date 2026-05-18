@@ -140,21 +140,21 @@
     font-feature-settings: "cv11", "ss01";
     overscroll-behavior: none;
     touch-action: manipulation;
-    user-select: none;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
-    overflow: hidden;
-    position: fixed;
+    user-select: auto;
+    -webkit-user-select: auto;
+    -webkit-touch-callout: default;
+    overflow: auto;
+    position: relative;
     width: 100%;
     height: 100%;
-    cursor: none;
+    cursor: auto;
   }
 
   /* Prevent pull-to-refresh and other browser gestures */
   html {
-    overscroll-behavior-y: none;
+    overscroll-behavior-y: auto;
     height: 100%;
-    overflow: hidden;
+    overflow: auto;
   }
 
   /* Kiosk Mode: Hide default focus rings but keep accessibility */
