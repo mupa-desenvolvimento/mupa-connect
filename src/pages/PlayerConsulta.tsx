@@ -790,16 +790,14 @@ export default function PlayerConsulta() {
   const buildVisual = (ean: string | null | undefined, visual: any) => {
     const safeEan = typeof ean === "string" && ean.trim() ? ean.trim() : null;
     
-    // Identifica se é um produto Gertec Demo
-    const isGertecDemo = safeEan && lookupGertecProduct(safeEan);
+    // Identifica se é um produto Gertec Demo de forma assíncrona não é possível aqui facilmente
+    // Então vamos confiar que o handleConsult já resolveu a URL correta
     
     const mupaImage = safeEan ? MUPA_STATIC_IMAGE(safeEan) : null;
     
-    // Se for Gertec Demo, usamos APENAS a URL informada no JSON (ou null se não houver)
-    // Se não for Gertec, mantemos o fallback para mupaImage
     const finalImageUrl = visual?.imagem_url 
       ? ensureSafeImageUrl(visual.imagem_url) 
-      : (isGertecDemo ? null : mupaImage);
+      : mupaImage;
     
     return {
       imagem_url: finalImageUrl,
@@ -1040,7 +1038,7 @@ export default function PlayerConsulta() {
 
     try {
       // 1. Verificar se é um produto demo da Gertec
-      const gertecProduct = lookupGertecProduct(cleanEan);
+      const gertecProduct = await lookupGertecProduct(cleanEan);
       if (gertecProduct) {
         console.log("[Player] Gertec Demo Product found:", cleanEan);
         const finalProduct = {
@@ -1707,8 +1705,8 @@ export default function PlayerConsulta() {
                     <OptimizedProductImage
                       src={product.visual?.imagem_url || null}
                       fallback={[
-                        // Se não for um produto Gertec Demo, permitimos o fallback para Mupa
-                        (!lookupGertecProduct(product.ean)) ? (product.ean ? MUPA_STATIC_IMAGE(product.ean) : null) : null,
+                        // Se não for um produto Gertec Demo (já carregado com visual fixo), permitimos o fallback para Mupa
+                        (product.ean ? MUPA_STATIC_IMAGE(product.ean) : null),
                         fallbackImageUrl,
                       ].filter((url) => url && !isDefaultImage(url))}
                       ean={product.ean}
