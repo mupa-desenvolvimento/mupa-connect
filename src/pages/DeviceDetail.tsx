@@ -144,7 +144,8 @@ export default function DeviceDetailPage() {
       apelido_interno: deviceName,
       num_filial: numFilial,
       is_maintenance: isMaintenance,
-      playlist_id: selectedPlaylistId
+      playlist_id: selectedPlaylistId,
+      appearance_config: device.appearance_config
     };
 
     // SuperAdmin pode alterar serial e empresa
