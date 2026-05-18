@@ -233,7 +233,7 @@ export default function PlayerConsulta() {
   useEffect(() => {
     setImageError(false);
     // Preload basic images
-    const preload = [DEFAULT_PRODUCT_IMAGE];
+    const preload = [];
     if (fallbackImageUrl) preload.push(fallbackImageUrl);
     
     preload.forEach(url => {
@@ -773,10 +773,13 @@ export default function PlayerConsulta() {
   const buildVisual = (ean: string | null | undefined, visual: any) => {
     const safeEan = typeof ean === "string" && ean.trim() ? ean.trim() : null;
     const mupaImage = safeEan ? MUPA_STATIC_IMAGE(safeEan) : null;
-    const hasVisual = !!visual;
+    
+    // Se for um produto Gertec (identificado pelo tenant_id ou se já estamos passando a imagem do JSON)
+    // podemos ser mais rigorosos sobre NÃO usar a imagem default se o JSON forneceu uma.
+    const hasImageFromVisual = !!visual?.imagem_url;
     
     return {
-      imagem_url: ensureSafeImageUrl(visual?.imagem_url) || mupaImage || DEFAULT_PRODUCT_IMAGE,
+      imagem_url: ensureSafeImageUrl(visual?.imagem_url) || mupaImage || null,
       cor_assinatura_produto: visual?.cor_assinatura_produto || DEFAULT_VISUAL_COLORS.cor_assinatura_produto,
       fundo_legibilidade: visual?.fundo_legibilidade || DEFAULT_VISUAL_COLORS.fundo_legibilidade,
       cor_dominante_claro: visual?.cor_dominante_claro || DEFAULT_VISUAL_COLORS.cor_dominante_claro,
@@ -1683,8 +1686,7 @@ export default function PlayerConsulta() {
                       fallback={[
                         product.ean ? MUPA_STATIC_IMAGE(product.ean) : null,
                         fallbackImageUrl,
-                        DEFAULT_PRODUCT_IMAGE,
-                      ]}
+                      ].filter((url) => url && !isDefaultImage(url))}
                       ean={product.ean}
                       alt={product.description}
                       isDefaultImage={isDefaultImage(product.visual?.imagem_url)}
