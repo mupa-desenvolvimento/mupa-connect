@@ -458,6 +458,28 @@ export function EditDeviceModal({ open, onOpenChange, device, onSuccess }: EditD
 
                   <FormField
                     control={form.control}
+                    name="orientacao"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Orientação do Display</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione a orientação" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="horizontal">Horizontal (Padrão)</SelectItem>
+                            <SelectItem value="vertical">Vertical (Retrato)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>Define se o conteúdo será renderizado em modo paisagem ou retrato.</FormDescription>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
                     name="autostart"
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
