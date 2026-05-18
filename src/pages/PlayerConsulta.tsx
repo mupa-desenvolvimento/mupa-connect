@@ -1688,9 +1688,10 @@ export default function PlayerConsulta() {
                 >
                   <div className="relative w-full h-full">
                     <OptimizedProductImage
-                      src={ensureSafeImageUrl(product.visual?.imagem_url) || null}
+                      src={product.visual?.imagem_url || null}
                       fallback={[
-                        product.ean ? MUPA_STATIC_IMAGE(product.ean) : null,
+                        // Se não for um produto Gertec Demo, permitimos o fallback para Mupa
+                        (!lookupGertecProduct(product.ean)) ? (product.ean ? MUPA_STATIC_IMAGE(product.ean) : null) : null,
                         fallbackImageUrl,
                       ].filter((url) => url && !isDefaultImage(url))}
                       ean={product.ean}
