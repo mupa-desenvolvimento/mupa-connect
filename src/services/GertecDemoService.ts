@@ -16,7 +16,7 @@ export const GERTEC_DEMO_PRODUCTS: GertecProduct[] = [
     preco: 29.90,
     preco_promocional: null,
     tipo: "normal",
-    url_imagem: "https://images.tiojoao.com.br/produtos/arroz-tio-joao-5kg.jpg"
+    url_imagem: "https://applicativa-marketplace-prod.s3.amazonaws.com/produtos/arroz-tio-joao-100-graos-nobres-5kg.webp"
   },
   {
     ean: "1112223330013",
@@ -24,7 +24,7 @@ export const GERTEC_DEMO_PRODUCTS: GertecProduct[] = [
     preco: 8.99,
     preco_promocional: 6.99,
     tipo: "promocao",
-    url_imagem: "https://m.media-amazon.com/images/I/71vKq7z5JQL.jpg"
+    url_imagem: "https://drogariasp.vteximg.com.br/arquivos/ids/1079073-1000-1000/765368---Refrigerante-Coca-Cola-Original-2L-1-_0000_Screen-Shot-2024-04-01-at-09.17.37.png?v=638475708512270000"
   },
   {
     ean: "1112223330020",
@@ -33,7 +33,7 @@ export const GERTEC_DEMO_PRODUCTS: GertecProduct[] = [
     preco_promocional: 13.27,
     tipo: "leve_3_pague_2",
     observacao: "Leve 3 pague 2 - Preço unitário efetivo",
-    url_imagem: "https://m.media-amazon.com/images/I/61f4p7z5JQL.jpg"
+    url_imagem: "https://drogariasp.vteximg.com.br/arquivos/ids/1104756-1000-1000/325350---shampoo-dove-oleo-nutricao-400ml_0003_7891150017368_1.png?v=638518245362770000"
   },
   {
     ean: "1112223330037",
@@ -42,7 +42,7 @@ export const GERTEC_DEMO_PRODUCTS: GertecProduct[] = [
     preco_promocional: 69.90,
     tipo: "vip",
     observacao: "Preço exclusivo para clientes VIP",
-    url_imagem: "https://m.media-amazon.com/images/I/71z5z5JQL.jpg"
+    url_imagem: "https://m.media-amazon.com/images/I/51ABupFD3-L._AC_SX466_.jpg"
   }
 ];
 

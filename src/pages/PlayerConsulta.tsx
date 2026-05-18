@@ -772,14 +772,20 @@ export default function PlayerConsulta() {
 
   const buildVisual = (ean: string | null | undefined, visual: any) => {
     const safeEan = typeof ean === "string" && ean.trim() ? ean.trim() : null;
+    
+    // Identifica se é um produto Gertec Demo
+    const isGertecDemo = safeEan && lookupGertecProduct(safeEan);
+    
     const mupaImage = safeEan ? MUPA_STATIC_IMAGE(safeEan) : null;
     
-    // Se for um produto Gertec (identificado pelo tenant_id ou se já estamos passando a imagem do JSON)
-    // podemos ser mais rigorosos sobre NÃO usar a imagem default se o JSON forneceu uma.
-    const hasImageFromVisual = !!visual?.imagem_url;
+    // Se for Gertec Demo, usamos APENAS a URL informada no JSON (ou null se não houver)
+    // Se não for Gertec, mantemos o fallback para mupaImage
+    const finalImageUrl = visual?.imagem_url 
+      ? ensureSafeImageUrl(visual.imagem_url) 
+      : (isGertecDemo ? null : mupaImage);
     
     return {
-      imagem_url: ensureSafeImageUrl(visual?.imagem_url) || mupaImage || null,
+      imagem_url: finalImageUrl,
       cor_assinatura_produto: visual?.cor_assinatura_produto || DEFAULT_VISUAL_COLORS.cor_assinatura_produto,
       fundo_legibilidade: visual?.fundo_legibilidade || DEFAULT_VISUAL_COLORS.fundo_legibilidade,
       cor_dominante_claro: visual?.cor_dominante_claro || DEFAULT_VISUAL_COLORS.cor_dominante_claro,
@@ -1682,9 +1688,10 @@ export default function PlayerConsulta() {
                 >
                   <div className="relative w-full h-full">
                     <OptimizedProductImage
-                      src={ensureSafeImageUrl(product.visual?.imagem_url) || null}
+                      src={product.visual?.imagem_url || null}
                       fallback={[
-                        product.ean ? MUPA_STATIC_IMAGE(product.ean) : null,
+                        // Se não for um produto Gertec Demo, permitimos o fallback para Mupa
+                        (!lookupGertecProduct(product.ean)) ? (product.ean ? MUPA_STATIC_IMAGE(product.ean) : null) : null,
                         fallbackImageUrl,
                       ].filter((url) => url && !isDefaultImage(url))}
                       ean={product.ean}
